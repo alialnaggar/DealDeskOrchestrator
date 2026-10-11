@@ -3,8 +3,8 @@
 **Status: provisional, 11 October 2026.** This directory is the project copy of
 `alialnaggar/dealdeskdata` branch `phase1c-reader-draft` at commit
 `8bb6117ba24a4e8e0b7d20a70aca670f0edbb08a`. The implementation files
-retain their original relative paths. Development can continue in that branch
-until the migration is verified; after cutover, edit this repository only.
+retain their original relative paths. The migration passed the private PostgreSQL workflow; edit this repository
+for all new Phase 1C work. The old repository is a historical portfolio copy.
 
 ## What exists
 
@@ -25,7 +25,8 @@ supplier calendars, compatibility predicates and actual agent output. Two
 calibration reviews concern component/product fit and comparable prices.
 The 100 generated tests and separate 36-case evaluation set with independently
 reviewed expected findings remain to be completed. `ready_for_generation`
-remains false. See `implementation/phase1c_release_review.md` for the dated
+remains false. See `calibration-decision-sheet.md` for the two scope choices
+and `implementation/phase1c_release_review.md` for the dated
 evidence and `implementation/phase1c_data_readiness_plan.md` for the work order.
 
 ## Document precedence
