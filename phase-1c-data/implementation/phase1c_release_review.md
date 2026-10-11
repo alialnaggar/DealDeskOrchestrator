@@ -197,3 +197,10 @@ The compatibility evaluator now checks `requires_product` and
 product in another group no longer satisfies a same-group dependency. The
 regression covers both separated and shared groups. The field mark remains
 open for full generated-rule coverage and product-fit evidence.
+
+
+## Expanded agent capability note — 11 October 2026
+
+The revised [Phase 1B architecture](../../phase-1b-agent-architecture/agent-architecture-and-deal-flow.md) specifies bounded, evidence-backed alternatives and a cross-specialist recheck loop. The [Phase 1C data strategy](../design/data-strategy.md#19-structured-input-recommendation-extension--11-october-2026-target-design) maps the required facts and open trace decision. This is a **design addition**, not a completed six-agent runtime or a change to this release's calibration/field marks. The core structured input is largely sufficient; candidate identity, auditable reruns, product-fit/price evidence and independent alternative-quality cases remain open.
+
+First retain the 24-table schema and specify a typed candidate record. Test one shortage → allowed partial delivery or substitute → full affected-check rerun example with immutable submitted facts and no order, stock-reservation or human-approval side effect. Use its trace to decide whether separate correlated runs suffice or a small schema migration is justified. Expand independent scenarios and close existing fit/price reviews before describing AI-generated options as verified. Historical diagnostic outcomes do not supply an independent answer key for this experiment.
