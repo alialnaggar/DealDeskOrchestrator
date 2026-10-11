@@ -698,12 +698,12 @@ The governance layer — compatibility, pricing, policy, credit exceptions, and 
 
 The older 14-table ERD is retired as an implementation target; Sections 3–9 of this document define V2. The revised schema adds operational depth because the latest Phase 1B requires it. Future proposed scope changes must be checked against the agent-to-data map before altering the table count.
 
-## 17. Relationship to other project files
+## 17. Relationship to current repository files
 
-- `01-Deal-Desk-Orchestrator-Phase1B.md`: authoritative six-agent architecture and full fulfillment decision scope.
-- `03-Deal-Desk-Orchestrator-Phase1A.md`: literature review, unchanged by the data expansion.
-- `06-Phase1C-Calibration-Report.md`: evidence for earlier commercial/supply calibration, not yet for production operations.
-- `product_catalogue_calibration.yaml`, `commercial_supply_calibration.yaml`: earlier sellable-product and commercial parameter sources. `calibration_config.yaml`: consolidated V2 design, commercial baselines and proposed synthetic operational values. `Phase1C-operational-calibration-PROPOSAL.md`: assumptions, boundary conditions and 100-case mix rationale. `Phase1C-reference-scenario-validation.md`, `phase1c_reference_fixtures.yaml`, `validate_phase1c_reference_fixtures.py`: 14 passing hand-authored reference checks; they do not establish generator correctness or supply final evaluation answers.
+- [Phase 1B architecture](../../phase-1b-agent-architecture/agent-architecture-and-deal-flow.md) defines the six specialist responsibilities, Orchestrator, human authority, and bounded proposal/recheck target design.
+- [Phase 1A](../../phase-1a-literature-review/README.md) contains the distinct literature review and research evidence.
+- [Phase 1C README](../README.md) and [release review](../implementation/phase1c_release_review.md) report current implementation, open calibration marks and evaluation work. Historical progress passages below retain their original date and should not override those status pages.
+- [Calibration rationale](calibration-rationale.md), [calibration report](calibration-report.md), [reference-scenario validation](reference-scenario-validation.md), and [schema visualization](schema-visualization.md) record the corresponding methodology and evidence. The executable schema, configuration, fixtures and tests are in [implementation](../implementation/).
 
 ## 18. Next implementation gate
 
