@@ -477,3 +477,29 @@ ID, so a valid West path is not lost because Central has a different source.
 A cited unknown ID still fails closed. These tests do not add independent
 answer labels or a general candidate search algorithm; the generation gate
 and six field marks/two calibration reviews remain open.
+
+## Candidate trace export and replay — 11 October 2026
+
+`phase1c_candidate_trace.py` can serialize the reader-backed original and
+candidate decisions, customer request, proposed slices, source IDs, frozen
+versions/snapshot, specialist results and human comparison into a canonical
+JSON record. It writes a candidate-named sidecar with exclusive creation, so
+normal reruns cannot silently overwrite it. The record includes a SHA-256
+content digest. A verifier recomputes the digest **and** rebuilds the record
+from a fresh reader replay: changing a status fails even if someone recomputes
+the file's own hash. The PostgreSQL integration test exports to a temporary
+directory, verifies replay, rejects duplicate creation, and tests both forms
+of tampering. No candidate or agent log is written to the 24-table database.
+
+**Audit decision evidence:** a run ID plus candidate ID, frozen source-input
+digest and exact slice payload can correlate the first option and its six
+specialist decision results without another deal ID. This sidecar is an
+engineering prototype, not an immutable, access-controlled production audit
+trail: a filesystem administrator could replace both the file and its source
+inputs, and there is no retention, signing or multi-writer coordination. It
+supports continuing the first experiment without a schema change. Before
+claiming durable governance, choose a controlled append-only artifact store
+with independent retained hashes and permissions, or review a small schema
+migration. The wider multi-candidate lifecycle and actual agent execution
+remain to be tested. Six field marks, two calibration reviews and the
+independent evaluation release remain open; `ready_for_generation=false`.

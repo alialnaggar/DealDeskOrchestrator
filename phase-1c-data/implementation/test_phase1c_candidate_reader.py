@@ -2,11 +2,15 @@
 
 from copy import deepcopy
 from datetime import date
+import json
 import os
+from pathlib import Path
+import tempfile
 import unittest
 from uuid import UUID
 
 from phase1c_candidate import Candidate, DeliverySlice, FieldChange, verify_run_correlation, compare_for_human
+from phase1c_candidate_trace import build_trace_record, export_trace_once, verify_exported_trace
 
 try:
     import psycopg
@@ -120,6 +124,29 @@ class CandidateReaderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Reader-used"):
             verify_run_correlation(candidate, original, tampered)
 
+        with tempfile.TemporaryDirectory() as temp:
+            record = build_trace_record(candidate, original, checked)
+            self.assertEqual(record["payload"]["actual_source_ids"],
+                             ["IN-stock_then_confirmed_receipt", "INV-stock_then_confirmed_receipt-P"])
+            self.assertEqual(record["payload"]["original_requested_date"], "2026-09-04")
+            path = export_trace_once(temp, record)
+            self.assertEqual(verify_exported_trace(path, candidate, original, checked), record["sha256"])
+            with self.assertRaises(FileExistsError):
+                export_trace_once(temp, record)
+            altered = json.loads(Path(path).read_text())
+            altered["payload"]["candidate_decision"]["status"] = "approval_required"
+            Path(path).write_text(json.dumps(altered))
+            with self.assertRaisesRegex(ValueError, "content changed"):
+                verify_exported_trace(path, candidate, original, checked)
+            # Recomputing a self-hash does not prove provenance: fresh replay
+            # must still reject a forged decision.
+            from hashlib import sha256
+            from phase1c_candidate_trace import _canonical
+            altered["sha256"] = sha256(_canonical(altered["payload"]).encode()).hexdigest()
+            Path(path).write_text(json.dumps(altered))
+            with self.assertRaisesRegex(ValueError, "differs from replayed"):
+                verify_exported_trace(path, candidate, original, checked)
+
     def test_unavailable_date_or_false_source_cannot_pass(self):
         from phase1c_reader import read_run
         earlier = self.candidate(second_date=date(2026, 9, 4))
@@ -137,6 +164,9 @@ class CandidateReaderTests(unittest.TestCase):
         self.assertIn("no validated delivery option", comparison["human_action"])
         self.assertEqual(compare_for_human(unavailable, original, checked)["proposed"]["status"],
                          "needs_revision")
+        record = build_trace_record(unavailable, original, checked)
+        self.assertFalse(record["payload"]["human_comparison"]["verified_supply_option"])
+        self.assertEqual(record["payload"]["actual_source_ids"], [])
 
 
 if __name__ == "__main__":
