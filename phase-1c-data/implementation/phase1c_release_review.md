@@ -204,3 +204,40 @@ open for full generated-rule coverage and product-fit evidence.
 The revised [Phase 1B architecture](../../phase-1b-agent-architecture/agent-architecture-and-deal-flow.md) specifies bounded, evidence-backed alternatives and a cross-specialist recheck loop. The [Phase 1C data strategy](../design/data-strategy.md#19-structured-input-recommendation-extension--11-october-2026-target-design) maps the required facts and open trace decision. This is a **design addition**, not a completed six-agent runtime or a change to this release's calibration/field marks. The core structured input is largely sufficient; candidate identity, auditable reruns, product-fit/price evidence and independent alternative-quality cases remain open.
 
 First retain the 24-table schema and specify a typed candidate record. Test one shortage → allowed partial delivery or substitute → full affected-check rerun example with immutable submitted facts and no order, stock-reservation or human-approval side effect. Use its trace to decide whether separate correlated runs suffice or a small schema migration is justified. Expand independent scenarios and close existing fit/price reviews before describing AI-generated options as verified. Historical diagnostic outcomes do not supply an independent answer key for this experiment.
+
+## Candidate contract checkpoint — 11 October 2026
+
+The first implementation increment is `phase1c_candidate.py` with four
+contract tests in `test_phase1c_candidate.py`. A typed proposal records
+parent identity, exact changes, constraints, dated source references, frozen
+versions/snapshot, delivery slices, assumptions and the business tradeoff.
+The shortage example accounts for all 20 requested units (12 dated-stock
+units on time and eight later conditional-offer units). It rejects missing
+partial permission, lost units, a split indivisible group and reuse of the
+unchanged parent deal as a purported candidate run. This is a synthetic
+**proposal-shape and correlation test**, not a supplier proof, actual
+specialist execution, independent evaluation case or full affected-check
+rerun. The PostgreSQL workflow includes the contract test.
+
+**Evidence for the persistence decision:** `deal_runs` references a stored
+`deal_id`; `read_run` selects the submitted `agent_visible_deals` and
+`deal_lines` by that ID and does not apply changed fields from
+`input_snapshot_json`. A second run on the original deal therefore checks
+the original facts again. The deal has one requested delivery date, so it
+cannot by itself express the candidate's 12-now/8-later schedule. A new
+`deals` row with `supersedes_deal_id` would represent a new submitted
+revision, which the proposal is not. The run-log uniqueness key also treats
+attempts as retries. No schema or calibration changes are made here.
+
+**Decision to review before a schema change:** allow an explicitly typed,
+run-scoped candidate input and per-line delivery slices in the reader and
+its frozen run context, or add the smallest persisted candidate identity and
+schedule relation needed to audit that input. Either path must demonstrate
+that Configuration, Pricing, Availability, Credit, Policy and Approval all
+recompute for the *same* candidate and evidence snapshot, with the original
+submission untouched. Until then, `full_reader_recheck` is blocked. Next
+build the reader-backed experiment and human comparison after that input
+representation is reviewed; add a no-safe-option case and independent
+answer review. Six field marks, two calibration reviews, 100 generated tests
+and 36 independent evaluation variants remain open. `ready_for_generation`
+remains false.

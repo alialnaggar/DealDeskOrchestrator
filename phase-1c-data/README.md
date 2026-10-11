@@ -18,6 +18,18 @@ for all new Phase 1C work. The old repository is a historical portfolio copy.
 - The 400 historical outcomes are **provisional diagnostics**. They are not
   expected answers or training labels. Runtime specialist logs are not fabricated.
 
+## First candidate contract increment — 11 October 2026
+
+`implementation/phase1c_candidate.py` now defines a typed, side-effect-free
+partial-delivery/substitute proposal and a conservative trace boundary. Four
+unit tests exercise a 20-unit shortage proposal and fail closed on missing
+permission, missing units, split indivisible groups and a second run that
+still reads the unchanged original deal. This is a proposal-shape test, not
+an executed full alternative rerun. The reader currently selects submitted
+`deals` and `deal_lines` by ID; a second run's input snapshot cannot
+replace them. The [release review](implementation/phase1c_release_review.md#candidate-contract-checkpoint--11-october-2026)
+shows the exact persistence decision for review before any schema change.
+
 ## Still open
 
 **Expanded Phase 1B design:** The structured input and 24-table schema cover the core deal facts, but candidate identity, validated proposal outputs, source quality and complete alternatives have not been implemented or independently evaluated. Keep the schema for a first shortage → permitted partial delivery or substitute → full recheck experiment, with a typed candidate record and explicit trace. Then decide whether separate runs can auditably correlate candidates or a small schema migration is needed. Expand the scenario set and close product-fit and comparable price/cost reviews; additional rows alone do not resolve those gaps. See [data strategy Section 19](design/data-strategy.md#19-structured-input-recommendation-extension--11-october-2026-target-design) and the [Phase 1B design](../phase-1b-agent-architecture/agent-architecture-and-deal-flow.md).

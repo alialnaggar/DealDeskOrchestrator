@@ -113,6 +113,8 @@ jobs:
           PY
       - name: Validate typed runtime output envelopes
         run: python -m unittest -v test_validate_phase1c_runtime_outputs
+      - name: Check candidate proposal and trace boundary
+        run: python -m unittest -v test_phase1c_candidate
       - name: Fail closed on missing historical credit and AR snapshots
         run: python -m unittest -v test_phase1c_historical_credit
       - name: Fail closed on missing historical operational snapshots
