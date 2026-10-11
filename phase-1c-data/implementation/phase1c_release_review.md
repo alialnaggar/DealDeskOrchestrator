@@ -317,3 +317,19 @@ with independent retained hashes and permissions, or review a small schema
 migration. The wider multi-candidate lifecycle and actual agent execution
 remain to be tested. Six field marks, two calibration reviews and the
 independent evaluation release remain open; `ready_for_generation=false`.
+
+## Two-candidate isolation trial — 11 October 2026
+
+`phase1c_candidate_batch.py` adds a bounded, read-only comparison of at most
+two candidates against one parent run. It re-reads each candidate, verifies
+that both used the identical frozen source-input digest, and produces separate
+candidate trace records and human comparisons. Duplicate IDs, identical
+proposals under different IDs, mixed parent runs and a third candidate fail
+before an unbounded search can start. It never selects a candidate itself.
+The PostgreSQL regression compares one supported 8-now/2-later plan with a
+second plan whose later slice predates the binding receipt; only the first is
+listed as having a verified supply option. Each has its own trace filename
+and digest. This tests correlation and safe refusal for two alternatives,
+not candidate generation, agent execution, customer acceptance or durable
+audit storage. The schema, six field marks, two calibration reviews and
+`ready_for_generation=false` are unchanged.

@@ -11,6 +11,7 @@ from uuid import UUID
 
 from phase1c_candidate import Candidate, DeliverySlice, FieldChange, verify_run_correlation, compare_for_human
 from phase1c_candidate_trace import build_trace_record, export_trace_once, verify_exported_trace
+from phase1c_candidate_batch import compare_candidate_set
 
 try:
     import psycopg
@@ -61,12 +62,13 @@ class CandidateReaderTests(unittest.TestCase):
         self.conn.rollback()
         self.conn.close()
 
-    def candidate(self, *, second_date=date(2026, 9, 8), second_evidence=None):
+    def candidate(self, *, second_date=date(2026, 9, 8), second_evidence=None,
+                  candidate_id="C-READ-1"):
         from datetime import datetime, timezone
         stock = "INV-stock_then_confirmed_receipt-P"
         receipt = "IN-stock_then_confirmed_receipt"
         return Candidate(
-            candidate_id="C-READ-1", parent_deal_id="D-candidate-shortage",
+            candidate_id=candidate_id, parent_deal_id="D-candidate-shortage",
             parent_run_id=self.run_id, proposal_kind="partial_delivery",
             changes=(FieldChange(None, "proposed_delivery_slices",
                                  (("L-candidate-shortage", 10, date(2026, 9, 4)),),
@@ -167,6 +169,33 @@ class CandidateReaderTests(unittest.TestCase):
         record = build_trace_record(unavailable, original, checked)
         self.assertFalse(record["payload"]["human_comparison"]["verified_supply_option"])
         self.assertEqual(record["payload"]["actual_source_ids"], [])
+
+    def test_two_options_share_sources_but_keep_separate_traces(self):
+        supported = self.candidate()
+        unsupported = self.candidate(second_date=date(2026, 9, 5), candidate_id="C-READ-2")
+        package = compare_candidate_set(self.conn, self.run_id, [supported, unsupported],
+                                        reader_kwargs={"commercial_rule_mode": "compiled"})
+        self.assertEqual(package["validated_supply_option_ids"], ["C-READ-1"])
+        self.assertIsNone(package["selected_candidate_id"])
+        a, b = package["candidate_records"]
+        self.assertEqual(a["payload"]["source_input_digest"], b["payload"]["source_input_digest"])
+        self.assertNotEqual(a["payload"]["candidate_input_digest"], b["payload"]["candidate_input_digest"])
+        self.assertNotEqual(a["sha256"], b["sha256"])
+        self.assertFalse(b["payload"]["human_comparison"]["verified_supply_option"])
+        with tempfile.TemporaryDirectory() as temp:
+            first = export_trace_once(temp, a)
+            second = export_trace_once(temp, b)
+            self.assertNotEqual(first, second)
+            self.assertEqual(json.loads(first.read_text())["sha256"], a["sha256"])
+            self.assertEqual(json.loads(second.read_text())["sha256"], b["sha256"])
+        with self.assertRaisesRegex(ValueError, "distinct"):
+            compare_candidate_set(self.conn, self.run_id, [supported, supported])
+        with self.assertRaisesRegex(ValueError, "one or two"):
+            compare_candidate_set(self.conn, self.run_id, [supported, unsupported,
+                                                        self.candidate(candidate_id="C-READ-3")])
+        with self.assertRaisesRegex(ValueError, "Duplicate proposals"):
+            compare_candidate_set(self.conn, self.run_id,
+                                  [supported, self.candidate(candidate_id="C-READ-4")])
 
 
 if __name__ == "__main__":

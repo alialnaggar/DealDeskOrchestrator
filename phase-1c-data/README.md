@@ -40,6 +40,11 @@ JSON sidecar and verifies it against fresh reader replay. It can correlate the
 candidate and six deterministic results without another deal ID. The file is
 a prototype, not durable immutable audit storage; see the release review.
 
+`implementation/phase1c_candidate_batch.py` now compares two independently
+checked options on the same frozen source view, with separate IDs and trace
+records and no automatic selection. One deliberately unsupported schedule
+remains unverified. See the release review for limits.
+
 This is a **bounded, deterministic, reader-backed partial-delivery recheck**,
 not the six-agent runtime, substitute search, persisted candidate audit or
 independent alternative-quality evaluation. The separate typed contract
