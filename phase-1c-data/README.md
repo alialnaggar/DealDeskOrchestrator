@@ -35,7 +35,7 @@ the submitted date and rows remain unchanged, the candidate's original-date
 constraint stays unmet, and normal approval routing remains withheld pending
 customer acceptance. No source is reserved and no agent log is fabricated.
 
-This is a **bounded, deterministic, reader-backed partial-delivery recheck**,
+The negative path now withholds a proposed schedule whose later slice lacks\ndated binding supply, and the human comparison says no validated option exists.\nThe original customer date must appear among unmet constraints.\n\nThis is a **bounded, deterministic, reader-backed partial-delivery recheck**,
 not the six-agent runtime, substitute search, persisted candidate audit or
 independent alternative-quality evaluation. The separate typed contract
 tests remain in CI. See the [release review](implementation/phase1c_release_review.md#reader-backed-candidate-experiment--11-october-2026).

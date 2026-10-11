@@ -115,6 +115,8 @@ def review_partial_delivery(candidate: Candidate, *, original_quantities: dict[s
             raise ValueError("Indivisible configuration group split across dates")
     if not any(item.arrival_date > requested_date for item in candidate.delivery_slices):
         raise ValueError("Shortage alternative needs an explicitly later slice")
+    if "original_requested_delivery_date" not in candidate.unmet_constraints:
+        raise ValueError("Later delivery must retain the unmet original requested date")
     return {
         "candidate_id": candidate.candidate_id,
         "parent_run_id": str(candidate.parent_run_id),
@@ -173,6 +175,7 @@ def assess_reader_slices(candidate: Candidate, bundle: dict) -> dict:
     options = bundle["facts"]["lines"][0].get("shipping_options", [])
     ordered = sorted(candidate.delivery_slices, key=lambda s: s.arrival_date)
     locations = sorted({o["location"] for o in options})
+    contradictory_source = False
     for location in locations:
         cumulative = 0
         findings = []
@@ -187,13 +190,16 @@ def assess_reader_slices(candidate: Candidate, bundle: dict) -> dict:
             if option.get("stock_id"):
                 actual_ids.add(option["stock_id"])
             if set(item.evidence_ids) - actual_ids or item.commitment != "confirmed":
-                raise ValueError("Proposed source claim differs from selected binding evidence")
+                contradictory_source = True
+                break
             findings.append({"line_id": item.line_id, "quantity": item.quantity,
                              "arrival_date": item.arrival_date, "cumulative_quantity": cumulative,
                              "source_ids": sorted(actual_ids), "source_status": "binding_unreserved"})
         if len(findings) == len(ordered):
             return {"status": "supply_supported_unreserved", "location": location,
                     "original_requested_date": requested, "slices": findings}
+    if contradictory_source:
+        raise ValueError("Proposed source claim differs from selected binding evidence")
     return {"status": "unknown_or_unavailable", "location": None,
             "original_requested_date": requested, "slices": [],
             "reason": "No single location has enough dated binding supply for every slice"}
@@ -229,6 +235,8 @@ def compare_for_human(candidate: Candidate, original_bundle: dict, candidate_bun
     proposal = assemble_deal_decision(candidate_bundle)
     if proposal.get("candidate_trace", {}).get("candidate_id") != candidate.candidate_id:
         raise ValueError("Decision output is not tied to the reader-checked candidate")
+    verified_option = (proposal["candidate_trace"]["assessment"]["status"] ==
+                       "supply_supported_unreserved")
     return {
         "candidate_id": candidate.candidate_id,
         "parent_deal_id": candidate.parent_deal_id,
@@ -240,8 +248,11 @@ def compare_for_human(candidate: Candidate, original_bundle: dict, candidate_bun
                      "revision_reasons": proposal["revision_reasons"],
                      "evidence_gaps": proposal["evidence_gaps"]},
         "reader_input_digest": proposal["candidate_trace"]["candidate_input_digest"],
+        "verified_supply_option": verified_option,
         "customer_constraints_unmet": candidate.unmet_constraints,
         "assumptions": candidate.assumptions,
         "tradeoff": candidate.tradeoff,
-        "human_action": "Seek customer acceptance and prescribed internal review; no approval or delivery promise",
+        "human_action": ("Seek customer acceptance and prescribed internal review; no approval or delivery promise"
+                         if verified_option else
+                         "Request evidence or stop; no validated delivery option to present"),
     }

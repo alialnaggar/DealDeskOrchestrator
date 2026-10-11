@@ -68,8 +68,8 @@ class CandidateReaderTests(unittest.TestCase):
                                  (("L-candidate-shortage", 10, date(2026, 9, 4)),),
                                  (("L-candidate-shortage", 8, date(2026, 9, 4)),
                                   ("L-candidate-shortage", 2, second_date))),),
-            customer_constraints=("10 units", "arrival by 4 September", "partial allowed"),
-            unmet_constraints=("arrival by 4 September",),
+            customer_constraints=("10 units", "original_requested_delivery_date", "partial allowed"),
+            unmet_constraints=("original_requested_delivery_date",),
             delivery_slices=(
                 DeliverySlice("L-candidate-shortage", 8, date(2026, 9, 4), (stock,), "confirmed"),
                 DeliverySlice("L-candidate-shortage", 2, second_date,
@@ -108,6 +108,7 @@ class CandidateReaderTests(unittest.TestCase):
         self.assertEqual(comparison["proposed"]["availability"][0]["candidate_slices"][-1]["arrival_date"],
                          date(2026, 9, 8))
         self.assertIn("customer acceptance", comparison["human_action"])
+        self.assertTrue(comparison["verified_supply_option"])
         self.assertEqual(self.conn.execute(
             "SELECT requested_delivery_date,terms_json FROM deal_desk.deals WHERE deal_id='D-candidate-shortage'"
         ).fetchone(), before)
@@ -130,6 +131,12 @@ class CandidateReaderTests(unittest.TestCase):
         unavailable = self.candidate(second_date=date(2026, 9, 5))
         checked = read_run(self.conn, self.run_id, commercial_rule_mode="compiled", candidate=unavailable)
         self.assertEqual(checked["candidate_trace"]["assessment"]["status"], "unknown_or_unavailable")
+        original = read_run(self.conn, self.run_id, commercial_rule_mode="compiled")
+        comparison = compare_for_human(unavailable, original, checked)
+        self.assertFalse(comparison["verified_supply_option"])
+        self.assertIn("no validated delivery option", comparison["human_action"])
+        self.assertEqual(compare_for_human(unavailable, original, checked)["proposed"]["status"],
+                         "needs_revision")
 
 
 if __name__ == "__main__":

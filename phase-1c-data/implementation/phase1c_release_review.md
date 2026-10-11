@@ -278,3 +278,16 @@ artifact tied to the existing run/candidate digest is sufficient for the
 thesis audit, or whether persisted candidate identity/schedule fields are
 necessary. No generation field mark or calibration review closes from this
 example. `ready_for_generation` remains false.
+
+## Safe refusal and source selection — 11 October 2026
+
+The reader-backed experiment now tests a **no validated option** case: the
+second slice is requested before the dated receipt could arrive. The human
+comparison says to request evidence or stop; it does not present that
+schedule as a verified option. Any later slice must explicitly retain the
+unmet `original_requested_delivery_date` customer constraint. The source
+selector examines eligible single-location paths before rejecting an evidence
+ID, so a valid West path is not lost because Central has a different source.
+A cited unknown ID still fails closed. These tests do not add independent
+answer labels or a general candidate search algorithm; the generation gate
+and six field marks/two calibration reviews remain open.
