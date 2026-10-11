@@ -137,13 +137,13 @@ class CandidateReaderTests(unittest.TestCase):
             self.assertEqual(replay_exported_trace(
                 self.conn, path, candidate, reader_kwargs={"commercial_rule_mode": "compiled"}),
                 record["sha256"])
-            self.conn.execute("UPDATE deal_desk.deal_lines SET quoted_unit_price=901 "
-                              "WHERE deal_line_id='L-candidate-shortage'")
+            self.conn.execute("UPDATE deal_desk.inventory SET quantity_on_hand=quantity_on_hand+1 "
+                              "WHERE inventory_id='INV-stock_then_confirmed_receipt-P'")
             with self.assertRaisesRegex(ValueError, "differs from replayed"):
                 replay_exported_trace(self.conn, path, candidate,
                                       reader_kwargs={"commercial_rule_mode": "compiled"})
-            self.conn.execute("UPDATE deal_desk.deal_lines SET quoted_unit_price=900 "
-                              "WHERE deal_line_id='L-candidate-shortage'")
+            self.conn.execute("UPDATE deal_desk.inventory SET quantity_on_hand=quantity_on_hand-1 "
+                              "WHERE inventory_id='INV-stock_then_confirmed_receipt-P'")
             with self.assertRaises(FileExistsError):
                 export_trace_once(temp, record)
             altered = json.loads(Path(path).read_text())
