@@ -331,9 +331,9 @@ This stays a placeholder for now — full detail to be defined if Section 10.7 i
 
 ---
 
-## 13. Relationship to other files in this project
+## 13. Relationship to the current repository
 
-- `00-Deal-Desk-Orchestrator-Master-Progress.md` is the authoritative project-level status.
-- `03-Deal-Desk-Orchestrator-Phase1A.md` contains the completed literature-review tracking and evidence base.
-- `02-Deal-Desk-Orchestrator-Phase1C.md` defines the 24-table PostgreSQL Schema V2, the incoming-deal field contract and the synthetic-data strategy for expanded production and fulfillment. Schema and reference checks have passed; full generated data and independent agent evaluation remain pending.
-- `07-Literature-Review-Submission-Draft.md` contains the concise university-aligned literature review that justifies the governance and evaluation choices above.
+- [Root README](../README.md) is the current system functionality report and project index.
+- [Phase 1A](../phase-1a-literature-review/README.md) contains the literature review, research record, paper source index and working submission draft. It is separate from the agent and data work.
+- [Phase 1C data strategy](../phase-1c-data/design/data-strategy.md) defines the structured deal, 24-table data model and synthetic-data method. Its Section 19 maps the newer bounded candidate proposal design to the data.
+- [Phase 1C README](../phase-1c-data/README.md) and [release review](../phase-1c-data/implementation/phase1c_release_review.md) give current implementation and calibration status. Dated status passages inside the data strategy and old project/Drive copies are historical, not the current release state.
