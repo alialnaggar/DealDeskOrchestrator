@@ -519,3 +519,16 @@ and digest. This tests correlation and safe refusal for two alternatives,
 not candidate generation, agent execution, customer acceptance or durable
 audit storage. The schema, six field marks, two calibration reviews and
 `ready_for_generation=false` are unchanged.
+
+## Reader-backed sidecar replay — 11 October 2026
+
+The sidecar verifier now has an explicit `replay_exported_trace` entry point:
+it reads the original and candidate from PostgreSQL again and compares the
+saved record to that fresh result. The regression replays each of two separate
+candidate files, rejects a swapped candidate, and changes the submitted quoted
+price after export to prove that a different reader-used fact invalidates the
+saved trace. The lower-level verifier still accepts caller-supplied bundles
+and does not itself fetch facts. This strengthens the prototype correlation
+claim without making the local sidecar immutable or closing the audit storage
+decision. No schema, calibration, generation-readiness or independent answer
+review status changes.

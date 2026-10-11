@@ -86,7 +86,7 @@ def export_trace_once(directory, record):
 
 
 def verify_exported_trace(path, candidate, original_bundle, checked_bundle):
-    """Compare the saved record with a fresh assessment of the same frozen inputs."""
+    """Compare the saved record with the supplied reader bundles."""
     with Path(path).open(encoding="utf-8") as source:
         saved = json.load(source)
     if not isinstance(saved, dict) or set(saved) != {"payload", "sha256"}:
@@ -97,3 +97,17 @@ def verify_exported_trace(path, candidate, original_bundle, checked_bundle):
     if saved != expected:
         raise ValueError("Saved trace differs from replayed reader evidence or decision")
     return saved["sha256"]
+
+
+def replay_exported_trace(conn, path, candidate, *, reader_kwargs=None):
+    """Re-read the parent and candidate before verifying a saved sidecar."""
+    from phase1c_candidate import verify_run_correlation
+    from phase1c_reader import read_run
+
+    options = dict(reader_kwargs or {})
+    if "candidate" in options:
+        raise ValueError("Reader options cannot replace the trace candidate")
+    original = read_run(conn, candidate.parent_run_id, **options)
+    checked = read_run(conn, candidate.parent_run_id, candidate=candidate, **options)
+    verify_run_correlation(candidate, original, checked)
+    return verify_exported_trace(path, candidate, original, checked)

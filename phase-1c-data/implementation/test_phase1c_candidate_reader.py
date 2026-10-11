@@ -10,7 +10,8 @@ import unittest
 from uuid import UUID
 
 from phase1c_candidate import Candidate, DeliverySlice, FieldChange, verify_run_correlation, compare_for_human
-from phase1c_candidate_trace import build_trace_record, export_trace_once, verify_exported_trace
+from phase1c_candidate_trace import (build_trace_record, export_trace_once,
+                                     verify_exported_trace, replay_exported_trace)
 from phase1c_candidate_batch import compare_candidate_set
 
 try:
@@ -133,6 +134,16 @@ class CandidateReaderTests(unittest.TestCase):
             self.assertEqual(record["payload"]["original_requested_date"], "2026-09-04")
             path = export_trace_once(temp, record)
             self.assertEqual(verify_exported_trace(path, candidate, original, checked), record["sha256"])
+            self.assertEqual(replay_exported_trace(
+                self.conn, path, candidate, reader_kwargs={"commercial_rule_mode": "compiled"}),
+                record["sha256"])
+            self.conn.execute("UPDATE deal_desk.deal_lines SET quoted_unit_price=901 "
+                              "WHERE deal_line_id='L-candidate-shortage'")
+            with self.assertRaisesRegex(ValueError, "differs from replayed"):
+                replay_exported_trace(self.conn, path, candidate,
+                                      reader_kwargs={"commercial_rule_mode": "compiled"})
+            self.conn.execute("UPDATE deal_desk.deal_lines SET quoted_unit_price=900 "
+                              "WHERE deal_line_id='L-candidate-shortage'")
             with self.assertRaises(FileExistsError):
                 export_trace_once(temp, record)
             altered = json.loads(Path(path).read_text())
@@ -188,6 +199,13 @@ class CandidateReaderTests(unittest.TestCase):
             self.assertNotEqual(first, second)
             self.assertEqual(json.loads(first.read_text())["sha256"], a["sha256"])
             self.assertEqual(json.loads(second.read_text())["sha256"], b["sha256"])
+            for path, candidate, record in ((first, supported, a), (second, unsupported, b)):
+                self.assertEqual(replay_exported_trace(
+                    self.conn, path, candidate, reader_kwargs={"commercial_rule_mode": "compiled"}),
+                    record["sha256"])
+            with self.assertRaisesRegex(ValueError, "differs from replayed"):
+                replay_exported_trace(self.conn, first, unsupported,
+                                      reader_kwargs={"commercial_rule_mode": "compiled"})
         with self.assertRaisesRegex(ValueError, "distinct"):
             compare_candidate_set(self.conn, self.run_id, [supported, supported])
         with self.assertRaisesRegex(ValueError, "one or two"):

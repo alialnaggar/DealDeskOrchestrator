@@ -36,7 +36,7 @@ constraint stays unmet, and normal approval routing remains withheld pending
 customer acceptance. No source is reserved and no agent log is fabricated.
 
 The negative path now withholds a proposed schedule whose later slice lacks\ndated binding supply, and the human comparison says no validated option exists.\nThe original customer date must appear among unmet constraints.\n\n`implementation/phase1c_candidate_trace.py` now exports an exclusive-create
-JSON sidecar and verifies it against fresh reader replay. It can correlate the
+JSON sidecar. `replay_exported_trace` reads PostgreSQL again before comparing the saved record, so a changed source fact or swapped candidate fails verification. It can correlate the
 candidate and six deterministic results without another deal ID. The file is
 a prototype, not durable immutable audit storage; see the release review.
 
