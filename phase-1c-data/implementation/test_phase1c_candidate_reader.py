@@ -29,6 +29,7 @@ class CandidateReaderTests(unittest.TestCase):
         if not exists:
             load_fixture_rows()
         self.conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+        self.conn.execute("SET LOCAL search_path TO deal_desk, public")
         self.conn.execute("""INSERT INTO deal_desk.deals
             (deal_id,customer_id,salesperson_id,deal_name,submitted_at,currency_code,
              catalog_version,policy_set_code,requested_delivery_date,destination_country_code,
