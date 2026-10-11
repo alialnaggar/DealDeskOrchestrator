@@ -74,95 +74,90 @@ Every agent below maps to one or more of these real steps.
 
 ## 3. Agent architecture: six specialists, one orchestrator and shared tools
 
-**Status (26 September 2026): design specification; implementation and data generation are not yet complete.** This section incorporates the expanded fulfillment decision. The six specialists keep independent inputs, outputs and evaluation, particularly Credit & Risk versus Policy & Compliance. Rules govern hard constraints; agent reasoning can gather evidence, explain outcomes and propose bounded alternatives. A human handles decisions beyond delegated authority.
+**Design decision (11 October 2026):** A submitted deal is predominantly structured. The aim is an evidence-backed recommendation for *human* approval, not autonomous approval or a delivery promise. Specialists may investigate failed checks and propose bounded alternatives; deterministic tools validate each proposal. These are target capabilities, **not claims that six LLM specialists or alternative search have been implemented**. The Phase 1C reader and decision gate are a tested rule-based foundation; full specialist and Orchestrator execution remain open.
 
-### 3.1 Orchestrator — coordination throughout
+A specialist is a separately attributable business responsibility with typed inputs and outputs. Use ordinary code for fixed rules. Invoke a model only for a measurable task such as selecting relevant evidence, developing a constrained option, or explaining a nontrivial conflict. Do not manufacture agent activity to meet an agent count. Credit and Policy remain independent. Every result includes deal/run and candidate identity, data-as-of time, catalogue/policy versions, evidence IDs, rule IDs, status (pass, fail, conditional or unknown), and a short business explanation. Reasoning summaries are not private chain-of-thought.
 
-- **Purpose:** Accept a deal, maintain shared state, schedule eligible specialists, detect missing or contradictory evidence, handle bounded retries, and assemble an approval-ready package with an audit trail. It does not calculate domain results or choose approvers.
-- **Inputs/tools:** Submitted deal and typed agent results; workflow state, validation, logging and retry controls.
-- **Decision logic:** Enforce prerequisites and gates; start independent checks concurrently; compare outputs against shared deal identity, prices and rule versions; re-run only when missing/stale evidence can be recovered; escalate unresolved conflicts, failed tools or exhausted retries. Do not silently overwrite a specialist's result.
-- **Outputs/exceptions:** Status, consolidated findings, unresolved issues, approval route or stop/escalation, full provenance (agent inputs, evidence, outputs, errors, retries, overrides and times).
-- **Evaluation:** Completion and correct stopping, dependency/order correctness, conflict detection and disposition, trace integrity, state consistency, retry loops, latency and tool/LLM calls. Evaluate orchestration separately from each specialist's accuracy.
+### 3.1 Orchestrator — coordination, not domain authority
+
+- **Purpose:** Accept an immutable submitted deal, maintain shared run state, order eligible checks, coordinate bounded candidate revisions, compare specialist findings, and assemble the human review package. It neither computes a domain result nor chooses approval roles.
+- **Inputs/tools:** Typed deal and candidate records; specialist outputs; workflow state, data snapshot, validation, logging and retry controls. It can request a fresh authorized read, but cannot silently switch evidence snapshots inside an already frozen run.
+- **Initial flow:** Validate the deal's shape; run Configuration, then Pricing; run Fulfillment, Credit and Policy as their declared dependencies permit. A rule that explicitly needs another specialist's finding waits for it. Reconcile identities, values, versions, evidence times and contradictory statuses before Routing.
+- **Alternative flow:** When a specialist reports a recoverable issue, invite a bounded proposal, retain the original unchanged, check candidate field changes against the customer's stated constraints, create a separately identified candidate, and rerun Configuration and Pricing plus all affected downstream checks. Route only the completed, internally consistent candidate. Candidates are simulated, not accepted quotes or stock reservations. A customer's acceptance or correction becomes a linked new submission, never a hidden mutation.
+- **Limits:** Limit candidate count, search depth, tool calls and retries; deduplicate equivalent proposals. A hard incompatibility, unsupported commitment, stale critical evidence, unknown authority, or exhausted budget remains a blocker/escalation. Never turn a hypothetical supply path into a promise or choose a winner by overriding a specialist.
+- **Output/evaluation:** Original-versus-candidate comparison, evidence and assumptions, rerun dependency trace, unresolved blockers, reviewable status and audit trail. Test correct stopping, changed-field invalidation, state/version consistency, conflicts, duplicate/loop prevention, latency, cost and tool/model calls.
 
 ### 3.2 Agent 1 — Configuration Validator
 
-- **Origin/purpose:** Topic 7 (CPQ), narrowed to whether the submitted products and selected options form valid, sellable configurations. Validate each actual bundle/assembly; unrelated quote lines need not be mutually compatible.
-- **Inputs/tools:** Customer and product IDs, line quantities and configuration choices; product catalogue, compatibility rules, required attributes, lifecycle/sellability and BOM definitions where relevant.
-- **Decision logic:** Check IDs, quantities, required choices, product availability for sale, constraints among selected options and applicable BOM. Hard incompatibilities require correction or a technically verified alternative; a commercial approval cannot make an impossible assembly valid.
-- **Outputs/exceptions:** Normalized deal and per-line pass/fail/issues with rule evidence; missing facts or ambiguous catalogue versions stop or escalate rather than becoming invented defaults.
-- **Evaluation:** Invalid configuration detection, false rejection of valid combinations, exact issue attribution, evidence correctness and downstream gate behavior.
+- **Purpose/input:** Check product IDs, quantities, chosen options and true configured groups against catalogue version, sellability, compatibility rules and effective BOM (bill of materials: components required for an assembly). Unrelated lines are not automatically incompatible.
+- **Deterministic boundary:** Reject missing choices, invalid bundles, unavailable-for-sale products and hard incompatibilities. An approver cannot waive a technically impossible configuration. Installation eligibility and dependencies follow the catalogue rules; this is not an installer scheduling service.
+- **Added capability:** If the submitted choice fails, search the *offered* catalogue for an option or product satisfying the same explicit customer/site requirements. Show what changes (feature, licence, component, group, quantity) and which requirement may no longer be met. A substitute is a proposal, not a valid line until the entire configured group and BOM are rechecked.
+- **Output/evaluation:** Normalized lines, exact failing rule and evidence, verified candidate or a clear no-option/unknown result. Test invalid detection, false rejection, group completeness, customer-constraint preservation and quality of proposed alternatives. A missing catalogue version or unproven technical fit stops the candidate.
 
 ### 3.3 Agent 2 — Pricing & Margin
 
-- **Purpose:** Establish a verified deal value and commercial economics for subsequent credit, policy and routing checks.
-- **Inputs/tools:** Validated lines, quantities, proposed unit prices/discounts and terms; list prices, costs, pricing rules and applicable policy set.
-- **Decision logic:** Calculate extended prices, discount depth, cost and margins deterministically with explicit currency/rounding rules; distinguish an ordinary price or margin result from a policy exception, which Agent 5 independently classifies. Agent reasoning may explain or propose a permitted repricing.
-- **Outputs/exceptions:** Per-line and deal totals, discount and margin, rule references, flags and proposed bounded alternatives; missing/ambiguous price or cost data stops the calculation or escalates.
-- **Evaluation:** Numerical correctness, margin-floor detection, rule selection, evidence and correct deal value supplied downstream.
+- **Purpose/input:** Use valid configured lines, quantity, quoted unit prices, currency/term, effective list prices, costs and pricing rules to establish full-term value, discount and margin.
+- **Deterministic boundary:** Calculation, unit/currency/rounding conventions, margin floors and permitted prices are executed by tools. Policy separately decides whether a commercial exception is approvable. The model never supplies a number as the source of truth.
+- **Added capability:** Offer a small set of permitted repricing options for an original or substituted line (for example, price that restores a margin floor), with the verified changes to total, discount, margin and customer-facing terms. Never silently change a quote; if price evidence or a compatible comparison is missing, mark the option unknown.
+- **Output/evaluation:** Verified arithmetic, applied rule and evidence IDs, candidate price deltas and explanatory tradeoffs. Test numeric and unit correctness, floor detection, candidate legality and correct downstream value passed to Credit, Policy and Routing. Price changes require those downstream checks again.
 
 ### 3.4 Agent 3 — Availability, Production & Fulfillment
 
-- **Origin/purpose:** Topic 6 (Inventory), expanded to answer whether each proposed quantity can realistically be delivered by the requested date. This is **pre-order feasibility**; the agent does not autonomously purchase, manufacture or ship.
-- **Inputs/tools:** Validated lines, quantities, delivery location/date and configuration/BOM; inventory by location, reservations, confirmed inbound finished goods, supplier lead times and purchase commitments, components and their reservations, production resources and workforce/equipment capacity, existing jobs and schedules, working calendars, assembly durations and shipping lead times.
-- **Decision logic:** Compute available-to-promise finished goods after reservations; for shortfalls, test confirmed inbound supply, feasible procurement or BOM component coverage plus time-phased capacity and scheduling. Include transit. Treat hypothetical procurement and unscheduled production as conditional options, never confirmed supply. Check cross-deal commitments to avoid double counting.
-- **Outputs/exceptions:** Feasible and infeasible quantities, earliest supportable delivery date, limiting resources/components, confidence or commitment status, partial delivery or technically valid substitution options, evidence and any required escalation. Missing or contradictory stock, BOM, supplier or capacity facts are explicit unknowns, not a delivery promise.
-- **Evaluation:** Feasibility and date accuracy, critical-shortage recall, reservation/capacity correctness, confirmed-versus-hypothetical distinction, partial-delivery quality and evidence traceability.
+- **Purpose/input:** Assess pre-order feasibility for physical goods, configured builds, digital activation and installation eligibility, using validated groups/BOM, destination/date, dated stock and allocations, confirmed inbound, supplier offers, component supply, capability/day workforce and equipment hours, digital proof and shipping lanes.
+- **Deterministic boundary:** Calculate free stock, component demand, net capacity and supportable dates; distinguish available, confirmed, feasible-but-uncommitted, conditional, unknown and infeasible. Day-level capacity is not a factory booking. An offer or unconfirmed build is not a delivery commitment. Do not purchase, schedule, reserve or ship.
+- **Added capability:** When the requested date/quantity is unsupported, develop a limited set of options: a later supportable date, partial quantities/dates only if the customer permits them and groups stay intact, or a candidate substitute to be verified by Configuration. Describe the bottleneck, evidence time, assumptions and which option requires supplier or human confirmation. Digital activation is evidence-bound; installation remains eligibility only, not an appointment.
+- **Output/evaluation:** Per-line/group feasibility, earliest supportable dates within the represented horizon, bottleneck and commitment class, plus candidate options and explicit unknowns. Test feasibility arithmetic, no double counting across commitments, conditional-versus-confirmed distinction, partial/group legality and candidate usefulness. No represented future capacity means unknown, not an invented date.
 
 ### 3.5 Agent 4 — Credit & Risk
 
-- **Purpose:** Assess the specific customer's financial exposure and payment behavior **independently** of organizational policy compliance.
-- **Inputs/tools:** Verified deal value, customer ID and payment terms; credit profile and limit, current receivables/overdue amounts, open exposure and payment history.
-- **Decision logic:** Compute post-deal exposure with consistent treatment of committed open deals and receivables; compare against credit limit and relevant payment-risk indicators. Report facts and risk, leaving companywide contract/policy classification to Agent 5.
-- **Outputs/exceptions:** Exposure, limit headroom, payment-history evidence, OK/caution/exceeded result and explanation; stale or missing records trigger an unknown/escalation result, never an assumed pass.
-- **Evaluation:** Exposure arithmetic, at-risk detection, false passes, customer matching, stale-data handling and evidence attribution.
+- **Purpose/input:** Assess this customer's exposure and payment behavior independently of Policy, using verified full-term deal value, terms, credit profile, dated receivables, unbilled commitments and payment history.
+- **Deterministic boundary:** Calculate post-deal exposure and limit headroom without counting the proposed quote or receivables twice; show stale/missing inputs as unknown, never pass. An explanation or good payment history cannot waive an exceeded limit.
+- **Added capability:** Attribute the concern to the specific exposure or payment evidence; when an authorized fresher source is available, request a new controlled read and rerun. Compare how a *verified* lower-value candidate changes exposure, without proposing an unauthorized credit-limit change or declaring approval.
+- **Output/evaluation:** OK/caution/exceeded/unknown, amount and dated evidence, what needs refreshing, candidate delta and remaining blocker. Test arithmetic, customer identity, freshness, no double count, false passes and accurate candidate comparisons. A requested payment-term change also triggers Policy.
 
 ### 3.6 Agent 5 — Policy & Compliance
 
-- **Origin/purpose:** Topic 11 (Quote & Contract Compliance), expanded to deal-level formal policy and terms. It remains separate from Credit & Risk so failures can be attributed and tested by domain.
-- **Inputs/tools:** Validated deal and Pricing result, including verified discount/margin and terms; effective policy set, restrictions, contract/payment-term rules and authorized exception criteria. It may consume independent credit/fulfillment findings only where an explicit policy rule requires them; that dependency must be declared before scheduling.
-- **Decision logic:** Evaluate applicable thresholds and mandatory conditions deterministically; interpret non-standard wording only within bounded rules. Distinguish violation, permitted exception requiring approval, and insufficient evidence. A credit pass never cancels a policy violation, nor vice versa.
-- **Outputs/exceptions:** Rule-by-rule pass/violation/unknown with severity, evidence, required correction or exception and escalation; conflicting rule versions or missing clauses must be resolved or escalated.
-- **Evaluation:** Violation detection and severity, critical-condition recall, correct exception classification, false passes and rule provenance.
+- **Purpose/input:** Independently apply effective policy rules to validated terms and Pricing findings; consume Credit or Fulfillment only where a specific policy condition declares that dependency.
+- **Deterministic boundary:** Mandatory clauses, thresholds, permitted exception classes and hard blocks are rule-checked. A credit pass cannot cancel a policy violation. Interpretation of unusual wording is optional and bounded; structured clause codes, not free-text comments, are the primary input.
+- **Added capability:** Produce a rule-by-rule explanation and classify a problem as correctable, a configured exception needing human approval, or insufficient evidence. Suggest a *permitted* terms/price correction where possible, which must be represented as a candidate and rerun through affected specialists. A salesperson justification is not proof of a waiver.
+- **Output/evaluation:** Rule IDs, pass/violation/unknown and severity, evidence, requested correction or exception role, and reason a candidate does or does not clear a rule. Test critical-condition recall, false passes, exception classification, version selection and evidence trace. Conflicting or missing effective rules block normal routing.
 
 ### 3.7 Agent 6 — Approval Routing
 
-- **Purpose:** Determine required approval **roles and order** from the completed specialist findings; distinct from the Orchestrator, which manages execution.
-- **Inputs/tools:** Agents 1–5's validated findings, exceptions, deal size and effective approval rules/hierarchy; all unresolved issues supplied explicitly.
-- **Decision logic:** Select all applicable mandatory roles and sequencing under the approval matrix. Multiple exceptions can require multiple approvers; routing does not itself grant approval or erase a failed gate. Unresolved prerequisites route to clarification/escalation rather than normal sign-off.
-- **Outputs/exceptions:** Required roles, sequence, matched rule IDs, rationale, open blockers and escalation status; unknown or conflicting authority rules stop automatic routing.
-- **Evaluation:** Correct roles/order, missed mandatory approvers, unnecessary approvals, correct escalation and rationale traceability.
+- **Purpose/input:** From a fully checked original or candidate, read all independent findings and the effective approval matrix; choose required *roles and order*, distinct from the Orchestrator's execution management.
+- **Deterministic boundary:** Combine all applicable mandatory roles, sequencing, thresholds and unresolved blockers. Routing cannot grant approval, waive a hard failure, or turn a conditional option into a confirmed deal.
+- **Added capability:** Explain why each human role is involved, what exactly the person is being asked to review, and which blockers prevent ordinary sign-off. If the chosen candidate differs from the original, compute the route from its final verified value and findings, not cached original results.
+- **Output/evaluation:** Ordered roles and matched rule IDs or an explicit stop/clarification path, with a concise review brief. Test missing/unnecessary approvers, order, escalation, candidate-specific rerouting and rationale. An unknown authority rule stops automatic routing.
 
-### 3.8 Shared tools and the optional Deal History lookup
+### 3.8 Shared tools and optional Deal History
 
-Inventory, BOM, supplier, capacity, calendar, pricing, credit and policy queries are **controlled tools** for their relevant specialists, not automatic extra agents. The optional Deal History/Precedent lookup can return similar historical approvals to Pricing, Policy or Routing. Historical decisions give context, not permission to override current rules. Its construction is a stretch goal; it is not required for the six-agent core.
+Catalogue, BOM, inventory, supplier, capacity, shipping, digital, pricing, credit and policy reads are controlled tools, not more agents. Optional Deal History may show comparable *historical* decisions for context; it is not a permission source, an evaluation answer key, or required for the core.
 
----
+### 3.9 Candidate and recommendation contract
+
+Every alternative is a **proposal** linked to its immutable original, with a candidate ID; exact changed fields; customer requirements preserved or explicitly violated; source evidence and as-of time; catalogue/policy/snapshot versions; assumptions; commitment status; deterministic verification result; each affected specialist's output; and a human-readable tradeoff. Candidate search is limited and side-effect free. Do not assert an option is feasible when any mandatory check is missing or unknown. The package compares the submitted deal, valid checked options, conditional options, rejected options and outstanding human decisions without conflating their statuses.
+
+A customer/salesperson choosing an option must submit a linked revision and run the checks on that submission. An approver's action is a separate human event beyond a routing recommendation. No candidate proposal edits submitted facts, raises a credit limit, changes a policy, allocates stock, books production, or creates an ERP order.
 
 ## 4. Execution flow and dependencies
 
 ### 4.1 Incoming deal and data contract
 
-The submitted deal carries an identity and customer/salesperson IDs, submission time, currency and applicable catalogue/policy versions; product or service lines with quantities, proposed unit prices, selected options and bundle/fulfillment groups; payment and contract terms; destination, shipping service, requested physical arrival date, partial-delivery permission and any digital activation date or installation request; and customer requirements, special conditions, salesperson justification/comments and references to supporting evidence. The effective BOM, component quantities, required licenses/services and line dependencies are selected or validated against the catalogue rather than trusted as free-form salesperson assertions.
+The submitted deal carries identity, customer/salesperson IDs, submission time, currency and effective catalogue/policy versions; configured lines with quantities and quoted unit prices; payment/contract terms; destination, requested physical arrival date, partial-delivery permission, any digital activation date and installation request; structured customer/site requirements, justification and evidence references. Salesperson comments are supplementary, **not a required source of requirements**. Phase 1C's `deals`/`deal_lines` definitions specify the fields. Effective BOM quantities and licence dependencies are checked against the catalogue, not trusted from a comment. Discount, total and margin are derived. A submitted deal is immutable.
 
-Phase 1C Section 3.1 and the `deals`/`deal_lines` field specifications are the detailed input contract. Discounts, deal totals and margins are derived from quoted prices and rules rather than independently trusted fields. Payment method and deal type are deferred unless a defined decision or evaluation rule needs them. Installation is an eligibility check, not an installer-capacity scheduler. Missing required inputs fail validation; missing optional evidence yields an explicit unknown or conditional result when it affects a check. A correction creates a linked new submission rather than silently changing submitted facts.
+### 4.2 Initial assessment and bounded alternative loop
 
-```text
-Deal input (customer, configured lines, quantities, prices/discounts,
-            payment/contract terms, delivery destination and requested date)
-    ↓
-1. Configuration Validator → invalid/unknown: correct or escalate
-    ↓ valid normalized deal
-2. Pricing & Margin → verified deal value and economics
-    ↓
-3. Availability, Production & Fulfillment ┐
-4. Credit & Risk                           ├→ Orchestrator reconciles findings
-5. Policy & Compliance                     ┘     ↓
-                                         6. Approval Routing
-                                                ↓
-                           Approval-ready package, or stop/escalation
-```
+1. Configuration validates the submitted deal. Invalid configuration stops the *original* from normal routing, but a technically checked correction candidate may be explored.
+2. Pricing calculates the economics of valid configured lines. Fulfillment, Credit and Policy run when their actual prerequisites are satisfied; explicitly dependent policy rules wait.
+3. The Orchestrator reconciles identity, evidence time, versions and independent findings. Hard blocks, missing evidence and conflicts cannot be hidden by a favorable result from another domain.
+4. When useful and permitted, specialists propose a small bounded candidate set. The Orchestrator records changed fields and invalidates affected outputs: product/options/group changes rerun Configuration, Pricing, Fulfillment and any dependent Credit/Policy; price or quantity changes rerun Pricing and affected Fulfillment/Credit/Policy; delivery/date/partial changes rerun Fulfillment and dependent Policy; terms change Credit/Policy as applicable. Routing is always recomputed after final findings. These are conservative dependency rules; never reuse a stale result merely to save calls.
+5. Each checked candidate is classified as verified, conditional, unknown or rejected, with its own trace. Routing uses completed findings for the exact candidate and may output an escalation path when ordinary approval is unavailable. The Orchestrator assembles the comparison and hands decisions to humans.
 
-Agents 3–5 can run in parallel once their actual prerequisites are met: Credit requires verified deal value; Policy requires Pricing's output; Availability requires a valid configuration and BOM. If an explicit policy rule depends on credit or fulfillment, that portion must wait for the relevant result; never pretend such checks are independent. The Orchestrator records each agent's inputs, tools, outputs, errors and retries. It flags contradictions and missing evidence rather than silently selecting a winner. Routing runs after the findings are resolved or explicitly marked for escalation. Evaluate concurrent versus sequential latency on equivalent cases.
+Agent 3–5 parallel execution applies only when their declared inputs are ready; reruns need not restart unrelated checks if their inputs and evidence versions remain identical. Bound candidate count, loops and retries. If no safe candidate survives, the output is a correction request, evidence request, or blocked/escalated package rather than a fabricated approval-ready deal. Compare the agent-assisted run with a rule-only baseline and separately evaluate alternative quality and orchestration.
+
+### 4.3 Illustrative structured deal
+
+A customer requests 20 configured workstations by Friday at a quoted unit price. The reader shows 12 supportable by that date and the rest later. Fulfillment may propose a partial delivery only if the input permits it and indivisible groups remain intact, or a substitute from the offered catalogue. Configuration validates the substitute and BOM; Pricing recalculates its full-term value and margin; Fulfillment checks its dated supply; Credit and Policy recheck the changed value/terms; Routing recomputes roles. The package shows what is confirmed versus conditional and requests customer choice and human approval; it does not promise, reserve, or submit an ERP order.
 
 ---
 
@@ -220,26 +215,15 @@ Ali's goal for this project is not just a thesis-grade prototype — the long-te
 
 ---
 
-## 9. Final decision-authority and evaluation framework
+## 9. Decision authority, staged implementation and evaluation
 
-The literature review supports governance according to the risk and rule type. Evaluate each agent separately so errors can be attributed to Configuration, Pricing, Fulfillment, Credit, Policy or Routing, as well as to Orchestration.
+**Hard authority:** Fixed tools validate configuration, arithmetic, supply/capacity feasibility, credit exposure, policy thresholds and approval roles. An LLM may gather authorized evidence, propose a limited candidate or explain a finding; it cannot override any tool, invent evidence, waive a rule or approve/commit a deal. The human decides whether to revise, seek a configured exception, approve through the route or stop. A language-model-free specialist is valid when it better expresses the fixed responsibility.
 
-- **Deterministic or rule-validated decisions:** configuration validity, price and margin calculations, margin floors, credit-limit checks, mandatory policy conditions and approval thresholds.
-- **Bounded agent reasoning:** evidence gathering, explanation, technically verified substitution proposals, supply/production alternatives, exception interpretation and deal-package assembly.
-- **Human escalation:** missing evidence, unresolved contradictions, exceptional terms and any requested action outside the system's delegated authority.
+**Current versus target:** Phase 1C's 24-table schema, reader, deterministic decision gate and test/pilot artifacts are foundations; they do not demonstrate the six running specialist agents, Orchestrator candidate loop, independent alternative-quality evaluation or Salesforce/Odoo adapters. Implement the rule-only baseline first, then one bounded candidate loop spanning multiple specialists, then broaden options only when evidence and tests support them. The 14 reference scenarios establish narrow contracts, not complete evaluation; 400 historical diagnostics are not independent labels. Consult Phase 1C's README and release review for dated current status.
 
-The evaluation will separate final-output correctness from orchestration correctness. Planned dimensions are:
+**Evaluation by responsibility:** Measure each specialist's base-check correctness, evidence attribution, unknown handling, candidate validity and useful improvement over the original. Measure Orchestration's dependency invalidation, rerun correctness, contradictory/stale evidence handling, loop/side-effect prevention and final package consistency. Measure Routing on the exact checked candidate. Report hard-constraint violations, hallucinated/unsupported alternatives, false delivery commitments, missed approvers, unresolved conflicts, latency, cost and model/tool calls. Independently authored held-out cases must include both useful alternatives and cases where no safe option exists. Compare the final recommendation against the same-case rule-only workflow and, if feasible, a single-generalist baseline; do not presume more agents are better.
 
-- final deal-package correctness and completeness;
-- business-rule compliance and critical-subset recall;
-- approval-routing and escalation correctness;
-- trace integrity, state consistency and evidence provenance;
-- unauthorized-action, stale-state, retry-loop and unresolved-conflict counts;
-- latency, LLM/tool calls and cost.
-
-If time permits, the same cases will be run through a single-generalist baseline. This is a validity check motivated by evidence that collaboration is not universally beneficial, not an experiment designed to prove that the multi-agent system must win.
-
-Still open are the exact numeric policy thresholds, allowed enumerations, conflict-injection rates, and whether Deal History remains a documented stretch tool.
+**Open design choices:** Candidate search limits, ranking criteria (for example customer constraints, date and economics), approval UX, exact source-of-truth mapping for live integrations, and final independently reviewed evaluation cases must be specified before claiming these additions work. Accepted synthetic commercial thresholds do not imply operational calibration or evaluation labels are frozen.
 
 ---
 
@@ -269,8 +253,8 @@ Learn specifically:
 
 ### 10.3 Data & tools layer
 
-- **PostgreSQL from the start** stores deal data, pricing rules, credit records, supply/production facts, deal history and execution logs. Phase 1C specifies a 24-table Schema V2 for the expanded pre-order fulfillment scope. The schema, smoke checks, 14 reference row fixtures and deterministic decision-gate checks have passed in GitHub Actions; full generated operational data and six-agent execution remain unfinished.
-- **REST API basics** — both Salesforce and Odoo are reached over REST APIs.
+- **PostgreSQL from the start** stores deal data, pricing rules, credit records, supply/production facts, deal history and execution logs. Phase 1C specifies a 24-table Schema V2 for the expanded pre-order fulfillment scope. The schema, reference checks, reader and deterministic gate have passed relevant checks; provisional 36-deal pilot and 400 historical submission/evidence artifacts now exist. The 400-case baseline is diagnostic rather than independently reviewed labels; full six-specialist execution and evaluation remain unfinished. See Phase 1C's README and release review for current status.
+- **Integration basics** — Salesforce REST access and version-appropriate Odoo integration are optional adapter work; verify available models, permissions, plan and deployment before choosing an Odoo endpoint.
 - **OAuth basics** — Salesforce (and most real CRMs) require OAuth to access their API; need at least the simple token flow.
 
 ### 10.4 Backend & frontend (production-minded UI, not a throwaway demo)
@@ -295,8 +279,9 @@ Picked now so the code isn't written against "generic Python" and then rewired l
 
 ### 10.7 Optional CRM/ERP integration (after evaluated core)
 
-- **CRM → Salesforce Developer Edition** (free forever, real API, well documented, industry-standard)
-- **ERP → Odoo Community Edition** (free, self-hosted, real Inventory + Accounting modules — exactly what Availability and Credit agents need, real REST API, larger community than the ERPNext alternative that was also considered — chosen for the bigger community/faster troubleshooting and stronger name recognition in the thesis write-up, despite Ali having more prior hands-on experience with ERPNext)
+- **CRM → Salesforce Developer Edition (optional sandbox):** Map accessible customer/opportunity/quote and line records to the same typed deal contract. Verify actual objects, permissions, authentication and field availability; no AI capability depends on Salesforce being connected.
+- **ERP → Odoo (optional sandbox):** Map configured product, stock, purchasing, capacity and accounting records to controlled evidence contracts where available. Odoo version, Community/self-hosted deployment versus hosted plan, installed modules and access method require verification. Odoo 19 documents JSON-2 external access with hosted-plan restrictions; older RPC endpoints have announced deprecation. Do not assume a universal REST endpoint or that an inventory record proves a delivery commitment.
+- **Boundary:** Define fact ownership, external IDs, units/currency/time zone, as-of times, missing-field behavior and conflict policy. Use read-only sandbox ingestion for the thesis; no automatic order creation, reservation, credit-limit update or approval. PostgreSQL synthetic evidence stays the evaluated baseline. Salesforce REST reference: https://developer.salesforce.com/docs/platform/api-rest/guide/resources-list.html ; Odoo 19 JSON-2: https://www.odoo.com/documentation/19.0/developer/reference/external_api.html ; RPC deprecation: https://www.odoo.com/documentation/19.0/developer/reference/external_rpc_api.html .
 
 ### 10.8 Learning order (practical sequence)
 
