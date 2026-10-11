@@ -20,6 +20,9 @@ for all new Phase 1C work. The old repository is a historical portfolio copy.
 
 ## Still open
 
+**Expanded Phase 1B design:** The structured input and 24-table schema cover the core deal facts, but candidate identity, validated proposal outputs, source quality and complete alternatives have not been implemented or independently evaluated. Keep the schema for a first shortage → permitted partial delivery or substitute → full recheck experiment, with a typed candidate record and explicit trace. Then decide whether separate runs can auditably correlate candidates or a small schema migration is needed. Expand the scenario set and close product-fit and comparable price/cost reviews; additional rows alone do not resolve those gaps. See [data strategy Section 19](design/data-strategy.md#19-structured-input-recommendation-extension--11-october-2026-target-design) and the [Phase 1B design](../phase-1b-agent-architecture/agent-architecture-and-deal-flow.md).
+
+
 The six field marks cover product attributes, list price, standard cost,
 supplier calendars, compatibility predicates and actual agent output. Two
 calibration reviews concern component/product fit and comparable prices.
