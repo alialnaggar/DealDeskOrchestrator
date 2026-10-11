@@ -383,3 +383,10 @@ The compatibility predicate evaluator now honors the declared configured
 group for required/excluded product checks. A dependency in another group
 cannot satisfy the source group's rule. Full generated compatibility-rule
 coverage and detailed product fit remain open.
+
+
+## Agent-recommendation extension checkpoint — 11 October 2026
+
+Phase 1B now describes evidence-backed options across specialists and Orchestrator coordination. This is a **target behavior**, separate from the current generation/release gates and from the dated checkpoints above. The core structured submission fields are largely sufficient for the first experiment. Keep the 24-table schema; define a typed candidate record with candidate ID, parent deal, exact field changes, evidence/as-of, catalogue/policy/snapshot versions, customer constraints, commitment class, checked specialist results and tradeoff. It is not an implemented runtime type yet.
+
+Run one shortage → allowed partial delivery or offered substitute → complete affected-check rerun → human comparison case. Assert the submitted deal remains immutable; the proposal has no booking or approval side effects; conditional supply stays conditional; group and customer constraints hold; price, fulfillment, credit, policy and routing findings belong to the same candidate; and rerun traces remain auditable. Test separate correlated runs before deciding if a small candidate-identity schema migration is needed. Expand the independent scenario matrix with valid alternatives and safe refusals, then finish the existing product-fit and dated comparable-price/cost evidence reviews. **More generated rows alone cannot establish candidate validity.** Do not mark `ready_for_generation` true or count this design note as an executed agent test.
