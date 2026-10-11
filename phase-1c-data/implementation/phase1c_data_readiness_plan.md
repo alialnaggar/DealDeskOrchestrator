@@ -408,9 +408,9 @@ rerun. The PostgreSQL workflow includes the contract test.
 **Evidence for the persistence decision:** `deal_runs` references a stored
 `deal_id`; `read_run` selects the submitted `agent_visible_deals` and
 `deal_lines` by that ID and does not apply changed fields from
-`input_snapshot_json`. A second run on the original deal therefore checks
-the original facts again. The deal has one requested delivery date, so it
-cannot by itself express the candidate's 12-now/8-later schedule. A new
+`input_snapshot_json`. The original reader could only recheck the stored submission. The new
+run-scoped candidate path now assesses separate delivery slices while keeping
+the submitted date unchanged; its in-memory trace is still not persisted. A new
 `deals` row with `supersedes_deal_id` would represent a new submitted
 revision, which the proposal is not. The run-log uniqueness key also treats
 attempts as retries. No schema or calibration changes are made here.
@@ -427,3 +427,40 @@ representation is reviewed; add a no-safe-option case and independent
 answer review. Six field marks, two calibration reviews, 100 generated tests
 and 36 independent evaluation variants remain open. `ready_for_generation`
 remains false.
+
+## Reader-backed candidate experiment — 11 October 2026
+
+The draft PR now preserves `deals.requested_delivery_date` as the customer's
+original date. `Candidate.changes` describes only the separate proposed
+delivery slices, with each quantity and date; it cannot rewrite that date.
+The read-only `read_run(..., candidate=...)` path reselects the same frozen
+PostgreSQL evidence and recomputes the deterministic decision package. The
+first supported scope is one stocked or supplier-finished physical line with
+partial delivery permitted. It checks cumulative supply by each slice date
+at one location, counts only fresh stock and binding receipts, and compares
+the proposal's cited IDs to actual selected IDs. Offers and unbooked builds
+cannot become confirmed delivery. The customer-date difference remains an
+unmet constraint and keeps ordinary routing withheld pending acceptance.
+
+Correlation now uses the same parent deal/run plus a SHA-256 fingerprint of
+the reader-selected deal, lines, customer/credit, rules and operational source
+rows, frozen context and proposed slices. `verify_run_correlation` recomputes
+that fingerprint and the slice assessment; a changed source row or fabricated
+finding fails. It no longer requires a different deal ID. A human comparison
+contains the original and candidate deterministic statuses, actual source IDs,
+dates, open customer constraint, assumptions and tradeoff. It makes no approval
+or delivery commitment. The PostgreSQL test inserts an isolated submission
+inside a rolled-back transaction: ten requested units by 4 September, eight
+from dated stock by that date and two from a confirmed receipt by 8 September.
+The 24-table schema and calibration remain unchanged.
+
+**Limits and next gate:** this run-scoped candidate trace is returned in memory,
+not persisted as an agent execution or auditable candidate record. Only a
+partial-delivery scenario is reader-backed; substitute, repricing, multiple
+lines/groups, conditional offers and no-safe-option cases need their own
+source-backed tests. It is a deterministic six-responsibility recheck, not
+six AI agents. Before a schema migration, decide whether an append-only trace
+artifact tied to the existing run/candidate digest is sufficient for the
+thesis audit, or whether persisted candidate identity/schedule fields are
+necessary. No generation field mark or calibration review closes from this
+example. `ready_for_generation` remains false.

@@ -1,0 +1,135 @@
+"""A read-only candidate assessment over actual PostgreSQL reference sources."""
+
+from copy import deepcopy
+from datetime import date
+import os
+import unittest
+from uuid import UUID
+
+from phase1c_candidate import Candidate, DeliverySlice, FieldChange, verify_run_correlation, compare_for_human
+
+try:
+    import psycopg
+except ImportError:
+    psycopg = None
+
+
+@unittest.skipUnless(psycopg is not None and os.environ.get("DATABASE_URL"),
+                     "PostgreSQL integration requires DATABASE_URL")
+class CandidateReaderTests(unittest.TestCase):
+    def setUp(self):
+        from test_phase1c_reader import load_fixture_rows
+        self.conn = psycopg.connect(os.environ["DATABASE_URL"])
+        # The reference fixture is loaded by an earlier CI step. Allow this
+        # test to run alone in a fresh disposable database as well.
+        exists = self.conn.execute(
+            "SELECT EXISTS(SELECT 1 FROM deal_desk.deals WHERE deal_id=%s)",
+            ("D-stock_then_confirmed_receipt",)).fetchone()[0]
+        self.conn.rollback()
+        if not exists:
+            load_fixture_rows()
+        self.conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+        self.conn.execute("""INSERT INTO deal_desk.deals
+            (deal_id,customer_id,salesperson_id,deal_name,submitted_at,currency_code,
+             catalog_version,policy_set_code,requested_delivery_date,destination_country_code,
+             destination_region,shipping_service_code,terms_json,deal_status,dataset_type)
+            VALUES ('D-candidate-shortage','C-stock_then_confirmed_receipt','SALES-FIXTURE',
+            'Candidate shortage trial','2026-09-01 09:00+00','EUR','CATALOGUE_2026_V1',
+            'BASELINE_2026','2026-09-04','DE','Berlin','standard',
+            '{"allow_partial_delivery":true,"contract_clause_codes":["standard"],"payment_terms_days":30}',
+            'Draft','generated_test')""")
+        self.conn.execute("""INSERT INTO deal_desk.deal_lines
+            (deal_line_id,deal_id,line_number,product_id,quantity,quoted_unit_price,configuration_json)
+            VALUES ('L-candidate-shortage','D-candidate-shortage',1,
+            'stock_then_confirmed_receipt-P',10,900,'{}')""")
+        self.conn.execute("UPDATE deal_desk.deals SET deal_status='Submitted' WHERE deal_id='D-candidate-shortage'")
+        self.run_id = UUID("00000000-0000-4000-8000-000000019991")
+        self.conn.execute("""INSERT INTO deal_desk.deal_runs
+            (run_id,deal_id,original_policy_set_code,applied_policy_set_code,catalog_version_used,
+             as_of_at,data_snapshot_ref,input_snapshot_json,config_hash,run_status,started_at)
+            VALUES (%s,'D-candidate-shortage','BASELINE_2026','BASELINE_2026',
+            'CATALOGUE_2026_V1','2026-09-01 12:00+00','FIXTURE-stock_then_confirmed_receipt',
+            '{"deal_id":"D-candidate-shortage"}','FIXTURE-CONFIG','queued','2026-09-01 12:00+00')""",
+            (self.run_id,))
+
+    def tearDown(self):
+        self.conn.rollback()
+        self.conn.close()
+
+    def candidate(self, *, second_date=date(2026, 9, 8), second_evidence=None):
+        from datetime import datetime, timezone
+        stock = "INV-stock_then_confirmed_receipt-P"
+        receipt = "IN-stock_then_confirmed_receipt"
+        return Candidate(
+            candidate_id="C-READ-1", parent_deal_id="D-candidate-shortage",
+            parent_run_id=self.run_id, proposal_kind="partial_delivery",
+            changes=(FieldChange(None, "proposed_delivery_slices",
+                                 (("L-candidate-shortage", 10, date(2026, 9, 4)),),
+                                 (("L-candidate-shortage", 8, date(2026, 9, 4)),
+                                  ("L-candidate-shortage", 2, second_date))),),
+            customer_constraints=("10 units", "arrival by 4 September", "partial allowed"),
+            unmet_constraints=("arrival by 4 September",),
+            delivery_slices=(
+                DeliverySlice("L-candidate-shortage", 8, date(2026, 9, 4), (stock,), "confirmed"),
+                DeliverySlice("L-candidate-shortage", 2, second_date,
+                              (second_evidence or receipt,), "confirmed")),
+            evidence_ids=(stock, second_evidence or receipt),
+            as_of_at=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+            catalog_version="CATALOGUE_2026_V1", policy_set_code="BASELINE_2026",
+            data_snapshot_ref="FIXTURE-stock_then_confirmed_receipt",
+            assumptions=("Customer acceptance of later two units is pending",),
+            tradeoff="Eight units by request; two later with dated binding supply, pending customer acceptance.")
+
+    def test_actual_reader_sources_recheck_and_original_immutable(self):
+        from phase1c_reader import read_run
+        from phase1c_deal_decision import assemble_deal_decision
+        before = self.conn.execute(
+            "SELECT requested_delivery_date,terms_json FROM deal_desk.deals WHERE deal_id='D-candidate-shortage'"
+        ).fetchone()
+        original = read_run(self.conn, self.run_id, commercial_rule_mode="compiled")
+        candidate = self.candidate()
+        checked = read_run(self.conn, self.run_id, commercial_rule_mode="compiled", candidate=candidate)
+        verify_run_correlation(candidate, original, checked)
+        baseline = assemble_deal_decision(original)
+        result = assemble_deal_decision(checked)
+        self.assertEqual(baseline["status"], "needs_revision")
+        self.assertEqual(result["status"], "needs_revision")
+        self.assertEqual(result["candidate_trace"]["assessment"]["status"], "supply_supported_unreserved")
+        self.assertEqual(result["candidate_trace"]["rerun_specialists"],
+                         ["Configuration", "Pricing", "Availability", "Credit", "Policy", "Approval"])
+        self.assertEqual(result["specialists"]["availability"][0]["original_requested_date"], date(2026, 9, 4))
+        self.assertEqual([x["cumulative_quantity"] for x in
+                          result["specialists"]["availability"][0]["candidate_slices"]], [8, 10])
+        self.assertEqual(result["required_approvals"], [])
+        self.assertEqual(result["customer_constraints_unmet"], ["original_requested_delivery_date"])
+        comparison = compare_for_human(candidate, original, checked)
+        self.assertEqual(comparison["original_requested_date"], date(2026, 9, 4))
+        self.assertEqual(comparison["proposed"]["availability"][0]["candidate_slices"][-1]["arrival_date"],
+                         date(2026, 9, 8))
+        self.assertIn("customer acceptance", comparison["human_action"])
+        self.assertEqual(self.conn.execute(
+            "SELECT requested_delivery_date,terms_json FROM deal_desk.deals WHERE deal_id='D-candidate-shortage'"
+        ).fetchone(), before)
+        self.assertEqual(self.conn.execute(
+            "SELECT count(*) FROM deal_desk.agent_execution_log WHERE run_id=%s", (self.run_id,)
+        ).fetchone()[0], 0)
+        tampered = deepcopy(checked)
+        tampered["inventory"][0]["quantity_on_hand"] = 999
+        with self.assertRaisesRegex(ValueError, "Reader-used"):
+            verify_run_correlation(candidate, original, tampered)
+
+    def test_unavailable_date_or_false_source_cannot_pass(self):
+        from phase1c_reader import read_run
+        earlier = self.candidate(second_date=date(2026, 9, 4))
+        with self.assertRaisesRegex(ValueError, "later slice"):
+            read_run(self.conn, self.run_id, commercial_rule_mode="compiled", candidate=earlier)
+        fake_source = self.candidate(second_evidence="NOT-A-SOURCE")
+        with self.assertRaisesRegex(ValueError, "selected binding evidence"):
+            read_run(self.conn, self.run_id, commercial_rule_mode="compiled", candidate=fake_source)
+        unavailable = self.candidate(second_date=date(2026, 9, 5))
+        checked = read_run(self.conn, self.run_id, commercial_rule_mode="compiled", candidate=unavailable)
+        self.assertEqual(checked["candidate_trace"]["assessment"]["status"], "unknown_or_unavailable")
+
+
+if __name__ == "__main__":
+    unittest.main()

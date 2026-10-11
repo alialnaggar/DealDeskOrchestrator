@@ -16,7 +16,10 @@ def shortage_candidate():
     return Candidate(
         candidate_id="C-SHORT-1", parent_deal_id="D-SHORT", parent_run_id=RUN,
         proposal_kind="partial_delivery",
-        changes=(FieldChange(None, "requested_delivery_date", date(2026, 9, 4), date(2026, 9, 11)),),
+        changes=(FieldChange(None, "proposed_delivery_slices",
+                             (("L1", 20, date(2026, 9, 4)),),
+                             (("L1", 12, date(2026, 9, 4)),
+                              ("L1", 8, date(2026, 9, 11)))),),
         customer_constraints=("20 units", "partial allowed", "delivery target 4 September"),
         unmet_constraints=("delivery target 4 September",),
         delivery_slices=(DeliverySlice("L1", 12, date(2026, 9, 4), ("STOCK-12",), "confirmed"),
@@ -60,22 +63,13 @@ class CandidateContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "context"):
             replace(candidate, data_snapshot_ref="")
 
-    def test_separate_run_on_same_parent_deal_cannot_verify_candidate(self):
+    def test_original_date_is_distinct_from_candidate_schedule(self):
         candidate = shortage_candidate()
-        parent = {"run_id": RUN, "deal_id": candidate.parent_deal_id}
-        proposed = {"run_id": UUID("00000000-0000-4000-8000-000000000002"),
-                    "deal_id": candidate.parent_deal_id, "as_of_at": AS_OF,
-                    "catalog_version_used": candidate.catalog_version,
-                    "applied_policy_set_code": candidate.policy_set_code,
-                    "data_snapshot_ref": candidate.data_snapshot_ref,
-                    "input_snapshot_json": {"candidate_id": candidate.candidate_id}}
-        with self.assertRaisesRegex(ValueError, "unchanged parent"):
-            verify_run_correlation(candidate, parent, proposed)
-        proposed["deal_id"] = "D-OTHER"
-        verify_run_correlation(candidate, parent, proposed)  # Correlation only, not proof of a full rerun.
-        proposed["data_snapshot_ref"] = "SNAP-NEW"
-        with self.assertRaisesRegex(ValueError, "frozen context"):
-            verify_run_correlation(candidate, parent, proposed)
+        self.assertEqual(candidate.changes[0].before[0][2], date(2026, 9, 4))
+        self.assertEqual(candidate.delivery_slices[-1].arrival_date, date(2026, 9, 11))
+        with self.assertRaisesRegex(ValueError, "preserve"):
+            replace(candidate, changes=(FieldChange(None, "requested_delivery_date",
+                                                     date(2026, 9, 4), date(2026, 9, 11)),))
 
 
 if __name__ == "__main__":

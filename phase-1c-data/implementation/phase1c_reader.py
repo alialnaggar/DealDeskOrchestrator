@@ -26,6 +26,7 @@ from pathlib import Path
 from psycopg.rows import dict_row
 
 from phase1c_policy_decision import evaluate_compiled_policy
+from phase1c_candidate import assess_reader_slices, reader_input_digest
 
 
 def _rows(conn, query, args=()):
@@ -529,7 +530,7 @@ def _supply_findings(bundle, as_of):
 def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_resolver=None,
              historical_operational_resolver=None,
              cost_parameters=None,
-             commercial_rule_mode="auto"):
+             commercial_rule_mode="auto", candidate=None):
     """Return run context, selected evidence and derived facts. No writes.
 
     Call inside a REPEATABLE READ READ ONLY transaction for a stable DB snapshot.
@@ -684,4 +685,19 @@ def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_
                 commercial_rule_mode == "auto" and any(
                     r["rule_type"] == "category_margin_floor" for r in rules["pricing_rules"]))
     facts["commercial"] = evaluate_compiled_policy(bundle) if compiled else _commercial_findings(bundle)
+    if candidate is not None:
+        # Keep the submitted deal and its customer date unchanged. This is a
+        # read-only, run-scoped proposal with an explicit input fingerprint.
+        assessment = assess_reader_slices(candidate, bundle)
+        bundle["candidate_trace"] = {
+            "candidate_id": candidate.candidate_id,
+            "parent_run_id": str(run["run_id"]),
+            "original_requested_date": deal["requested_delivery_date"],
+            "source_input_digest": reader_input_digest(bundle),
+            "candidate_input_digest": reader_input_digest(bundle, candidate),
+            "assessment": assessment,
+            "rerun_specialists": ["Configuration", "Pricing", "Availability", "Credit", "Policy", "Approval"],
+            "persisted": False,
+        }
     return bundle
+

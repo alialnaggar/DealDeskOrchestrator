@@ -18,17 +18,27 @@ for all new Phase 1C work. The old repository is a historical portfolio copy.
 - The 400 historical outcomes are **provisional diagnostics**. They are not
   expected answers or training labels. Runtime specialist logs are not fabricated.
 
-## First candidate contract increment — 11 October 2026
+## First reader-backed candidate experiment — 11 October 2026
 
-`implementation/phase1c_candidate.py` now defines a typed, side-effect-free
-partial-delivery/substitute proposal and a conservative trace boundary. Four
-unit tests exercise a 20-unit shortage proposal and fail closed on missing
-permission, missing units, split indivisible groups and a second run that
-still reads the unchanged original deal. This is a proposal-shape test, not
-an executed full alternative rerun. The reader currently selects submitted
-`deals` and `deal_lines` by ID; a second run's input snapshot cannot
-replace them. The [release review](implementation/phase1c_release_review.md#candidate-contract-checkpoint--11-october-2026)
-shows the exact persistence decision for review before any schema change.
+`implementation/phase1c_candidate.py` defines a typed proposal whose original
+customer requested date stays in the submitted deal. Its separate delivery
+slices state proposed quantities and dates. `read_run(..., candidate=...)`
+uses the same frozen source selection as the original run, checks cumulative
+slice quantities against dated binding stock/receipt options at one location,
+and fingerprints the deal, lines, rules and selected evidence it actually
+used. `verify_run_correlation` compares those source inputs and the
+candidate assessment, without requiring a different deal ID.
+`compare_for_human` assembles original and candidate deterministic decisions.
+The PostgreSQL test uses a 10-unit shortage: eight units supported by the
+original date and two supported later by a confirmed receipt. It checks that
+the submitted date and rows remain unchanged, the candidate's original-date
+constraint stays unmet, and normal approval routing remains withheld pending
+customer acceptance. No source is reserved and no agent log is fabricated.
+
+This is a **bounded, deterministic, reader-backed partial-delivery recheck**,
+not the six-agent runtime, substitute search, persisted candidate audit or
+independent alternative-quality evaluation. The separate typed contract
+tests remain in CI. See the [release review](implementation/phase1c_release_review.md#reader-backed-candidate-experiment--11-october-2026).
 
 ## Still open
 
