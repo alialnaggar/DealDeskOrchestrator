@@ -1,3 +1,5 @@
+> **Repository status note (11 October 2026):** This is a dated validation record for the 14 reference scenarios, not a current project/Drive sync certificate or the complete evaluation set. The [Phase 1C README](../README.md) and [release review](../implementation/phase1c_release_review.md) govern current progress; the root repository README is the project index. The older Drive-check observations below are preserved as history.
+
 # Phase 1C — reference-scenario dry run
 
 **28 September 2026.** This checks the internal logic of the proposed 24-table calibration with deliberately constructed facts. Fourteen controlled cases in `phase1c_reference_fixtures.yaml` now pass `validate_phase1c_reference_fixtures.py`. This does **not** prove generated data, SQL, the agent implementation or independently authored evaluation fixtures are correct. All example quantities, hours, amounts and dates below are synthetic. The source of applicable parameters is `calibration_config.yaml` (proposed V2 operational values, baseline commercial profile).
