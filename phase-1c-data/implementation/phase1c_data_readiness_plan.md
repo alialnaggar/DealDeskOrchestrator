@@ -649,3 +649,7 @@ readiness and the draft PR status remain unchanged.
 ## Separate evaluation input preparation — 12 October 2026
 
 The read-only `phase1c_evaluation_input.py` path and PostgreSQL integration test seal source-only rows for a distinct temporary case; the fixture is rolled back and has no answer key. This checks the packaging boundary before producing frozen cases. It does not count toward 36 independently reviewed evaluation cases, change the 100 generated-test target, or close calibration, field marks or generation readiness. Next: persist a complete frozen case from a reproducible build, isolate reviewer answers, obtain independent review, then score against the same rule-only baseline and candidate system.
+
+## Compatibility dependency coverage check — 12 October 2026
+
+The existing generated-row validator now reports actual non-installation rule application, including no-rule and no-applicable-rule gaps. This makes the `compatibility_rules.condition_json` gate measurable while leaving it open. Next add deliberate dependency pass and conflict rows to the synthetic pilot and verify both the row validator and deterministic deal decision before marking coverage complete. No new dataset label, schema or calibration freeze is implied.

@@ -15,12 +15,36 @@ import re
 import yaml
 
 from phase1c_digital_units import digital_demand
+from phase1c_compatibility import evaluate_compatibility
 from validate_phase1c_data_contract import validate_payload
 
 HERE = Path(__file__).resolve().parent
 PILOT_SQL = ("phase1c_buildable_master.sql", "phase1c_sellable_catalogue.sql",
              "phase1c_vertical_pilot.sql", "phase1c_conflict_pilot.sql",
              "phase1c_stress_pilot.sql")
+
+
+def audit_dependency_coverage(rows):
+    """Measure actual rule application without turning pilot findings into labels."""
+    rules = [rule for rule in rows["compatibility_rules"]
+             if rule["rule_type"] in {"requires_product", "excludes_product",
+                                      "attribute_constraint", "required_deal_field"}]
+    products = {row["product_id"]: row for row in rows["products"]}
+    counts = {"pass": 0, "fail": 0, "unknown": 0, "unsupported": 0,
+              "not_applicable": 0}
+    for deal in rows["deals"]:
+        lines = [dict(line, attributes_json=products[line["product_id"]]["attributes_json"])
+                 for line in rows["deal_lines"]
+                 if line["deal_id"] == deal["deal_id"] and line["product_id"] in products]
+        selected = [rule for rule in rules
+                    if rule.get("catalog_version", deal.get("catalog_version")) ==
+                    deal.get("catalog_version")]
+        for finding in evaluate_compatibility(lines, deal, selected):
+            counts[finding["status"]] += 1
+    return {"configured_dependency_rules": len(rules),
+            "applicable_deal_rule_checks": sum(counts[k] for k in counts if k != "not_applicable"),
+            "finding_counts": counts,
+            "coverage_gap": not rules or not sum(counts[k] for k in counts if k != "not_applicable")}
 
 
 def validate_rows(rows, contract, *, trusted_deal_evidence=None):
@@ -116,6 +140,7 @@ def validate_rows(rows, contract, *, trusted_deal_evidence=None):
             if len(matches) != 1:
                 errors.append(f"deal_lines.{line_id}: selected BOM missing or ambiguous")
     return {"errors": errors, "counts": {key: len(value) for key, value in rows.items()},
+            "dependency_coverage": audit_dependency_coverage(rows),
             "ready_for_row_checks": not errors}
 
 

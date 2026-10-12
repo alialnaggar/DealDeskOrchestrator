@@ -478,3 +478,7 @@ readiness and the draft PR status remain unchanged.
 ## Separate evaluation input preparation — 12 October 2026
 
 A PostgreSQL test now creates a distinct synthetic product, inventory, inbound receipt, submission and run, then seals only reader-selected source rows into an input-only review packet. The packet omits derived findings and candidate outputs; overlap with named development IDs and content tampering fail. Shared customer, lane and versioned rules are stated explicitly. The fixture rolls back, so there is no durable held-out set, independent reviewer answer or agent evaluation result. **0/36** answers independently reviewed; 100 generated tests and readiness gates remain open. See `../evaluation/README.md`.
+
+## Dependency coverage gate made measurable — 12 October 2026
+
+`validate_phase1c_generated_rows.py` now runs the existing compatibility evaluator on each imported deal's source lines and reports configured non-installation rules, applicable deal-rule checks, and pass/fail/not-applicable counts. Its development example has no such rules and therefore reports a coverage gap; a paired test proves an applicable `requires_product` rule reports a failure and a non-applicable rule does not count as coverage. The currently inspected pilot SQL contains installation coverage rules but no populated `requires_product`, `excludes_product` or attribute rule. This instrument is not evidence that dependency coverage is complete. `compatibility_rules.condition_json` retains its review mark; no calibration, schema, data or readiness flag changed.
