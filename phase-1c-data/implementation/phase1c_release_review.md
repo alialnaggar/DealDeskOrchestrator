@@ -374,3 +374,18 @@ compatibility. The detailed specs are still a companion draft rather than
 runtime catalogue attributes. Product-attribute and compatibility field marks,
 price/cost evidence review, independent answer keys and generation readiness
 remain open. No price, cost, threshold or schema was changed.
+
+## Catalogue fit integration — 12 October 2026
+
+The 36 fictional component specifications have now been copied from the
+versioned companion draft into the draft catalogue's `attributes_json` rows.
+The component JSON contract permits these fields, and the 24-BOM checker
+requires the catalogue and companion facts to match exactly. The readiness
+audit now distinguishes 24 internally checked synthetic BOMs from external
+sourcing and price comparability. A changed catalogue interface, slot, power,
+cooling or platform claim fails the fit check; the reader can select the same
+catalogue attributes for future specialist use. This does not implement a
+substitute-proposing agent or certify real hardware. The six field marks,
+price/cost distribution review, independent answer keys and
+`ready_for_generation=false` remain open. No database schema, threshold,
+list price or cost changed.

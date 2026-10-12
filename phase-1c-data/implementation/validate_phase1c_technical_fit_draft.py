@@ -56,6 +56,10 @@ def validate(portfolio, draft):
     if errors:
         return {"errors": errors, "checked_boms": 0, "checked_alternatives": 0,
                 "ready_for_generation": False}
+    for cid, spec in specs.items():
+        attrs = components[cid]["attributes_json"]
+        if any(attrs.get(field) != value for field, value in spec.items()):
+            errors.append(f"{cid}: catalogue attributes differ from pinned fit draft")
 
     lines_by_bom = {}
     for line in portfolio["bom_lines"]:

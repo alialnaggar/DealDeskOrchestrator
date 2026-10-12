@@ -60,8 +60,9 @@ supplier calendars, compatibility predicates and actual agent output.
 
 Ali selected the bounded synthetic calibration scope on 12 October 2026.
 The companion fit draft now covers all 36 components and checks the 24 active
-BOMs (25 component selections). It has not yet been integrated into runtime
-catalogue attributes, and product fit and price/cost reviews remain open.
+BOMs (25 component selections). The declared specifications are now in the draft component catalogue
+attributes and checked against the pinned companion file. Internal synthetic
+fit passes, while field-level review and price/cost evidence remain open.
 The [calibration decision sheet](calibration-decision-sheet.md) now quantifies
 all 24 BOMs' missing detailed fit attributes and the draft buildable margins;
 its p90 comparison is a distribution target, not a per-product hard limit.

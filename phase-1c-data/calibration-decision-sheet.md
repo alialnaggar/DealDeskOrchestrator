@@ -11,12 +11,10 @@ deal decisions are not labels. The proposed 100-test set, separate 36-case
 evaluation set and real agent execution outputs have not been released.
 
 The 156-product catalogue has 120 sellable products and 36 components.
-Eighteen sellable items are make-to-order with 24 offered BOMs. All 36
-component rows declare a platform and role, but **none has detailed interface,
-form-factor or power attributes** in the catalogue. A separate five-part,
-one-BOM synthetic fit example tests two substitute kits; it is a rule
-demonstration, not sourced product compatibility. The other 23 BOMs lack
-that detailed check.
+Eighteen sellable items are make-to-order with 24 offered BOMs. All 36 component rows now carry declared synthetic interface, form-factor,
+power and cooling attributes. The catalogue-wide draft checker covers all
+24 BOMs and 25 possible component selections. This establishes internal
+synthetic fit for the current draft, not manufacturer-certified compatibility.
 
 Prices and costs are also draft simulation inputs. The example workstation
 has a €1,050 list price and €715 standard cost, yielding 31.90% catalogue
@@ -45,9 +43,10 @@ challenging and independently checked conflicts.
 
 ## What follows after the choice
 
-1. Record the selected scope and revise the two calibration review entries.
-2. Extend the component specifications and fit checker from one illustrative
-   BOM to all 24, or source the chosen real comparables.
+1. Record Option A as selected; retain the review marks until their evidence
+   and runtime mapping are checked.
+2. Maintain the 36 catalogue component specifications and 24-BOM checker as
+   one pinned, versioned synthetic assumption set.
 3. Calculate achieved price, cost and margin distributions from all generated
    category rows. Review the workstation's cost and price basis in that context;
    keep values provisional until the check passes.
@@ -60,9 +59,9 @@ challenging and independently checked conflicts.
 No threshold or dataset label is frozen by this sheet. The current field
 ledger still has six open marks and `ready_for_generation=false`.
 
-## Quantified draft audit — 12 October 2026
+## Quantified pre-integration audit — 12 October 2026
 
-The repository's current portfolio and cost draft enumerate 156 products,
+Before the Option A specification update, the portfolio and cost draft enumerated 156 products,
 including 36 components, 18 make-to-order sellable products and 24 active
 BOMs. Each component carries a platform and role but no interface,
 form-factor, power or thermal specification; therefore none of the 24 BOMs
@@ -77,10 +76,8 @@ a hard rule. It cannot establish the achieved percentile for all 120
 sellable products or external price realism. No values or readiness marks
 were changed by this audit.
 
-**Decision needed before calibration freeze:** choose the bounded fictional
-component and pricing model (A) or the sourced comparable model (B) in the
-table above. Under either choice, check fit for all 24 BOMs and assess the
-full generated category distributions; the audit does not settle that choice.
+**Decision recorded:** Ali selected A. The full generated category price/cost
+distribution still needs review before calibration freeze.
 
 ## Option A implementation draft — 12 October 2026
 
@@ -95,10 +92,12 @@ BOM-001. Failure cases cover mismatched shared interfaces, inadequate power,
 slots and cooling, and a component declared for the wrong platform. The old
 one-BOM pilot remains a narrow rule example.
 
-The detailed assumptions are currently a **companion review draft**. They are
-not yet part of the catalogue rows selected by the runtime reader, and
-passing a fit check does not close product-attribute/compatibility field marks
-or `ready_for_generation`. Next map reviewed specification fields into the
-catalogue and rule contracts, check the price/cost distribution for all
-sellable rows, and independently review evaluation answers. No calibration
-threshold, list price, standard cost or schema was changed by this step.
+The detailed assumptions have now been copied into the 36 draft component
+catalogue attributes and allowed by the JSON contract. The fit checker rejects
+any difference between those rows and the pinned companion file. The reader
+can select these product attributes; the current candidate alternative runtime
+does not yet use them to propose substitutions. The readiness audit reports
+24 internally checked BOMs while retaining the price-comparability, sourcing,
+independent-answer and actual-agent gates. Field-level review marks and
+`ready_for_generation=false` remain until their full evidence review. No
+threshold, list price, standard cost or schema changed.

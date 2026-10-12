@@ -141,7 +141,12 @@ json_contracts:
         optional: [installation_eligible, supported_installation_regions, option_codes, build_platform, offered_options]
       component:
         required: []
-        optional: [component_family, component_role, supported_platforms]
+        optional: [component_family, component_role, supported_platforms,
+                   storage_host_interface, network_slot_interface, board_form_factor,
+                   rated_watts, host_interface, form_factor, network_interface,
+                   psu_output_watts, supported_board_form_factors,
+                   supported_drive_form_factors, drive_slots, power_budget_watts,
+                   cooling_capacity_watts]
   deal_terms_json:
     required_on_submission:
       payment_terms_days: payment_terms_days

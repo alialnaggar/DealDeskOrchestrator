@@ -67,6 +67,13 @@ class FullSyntheticFitTests(unittest.TestCase):
         self.assertTrue(any("rated_watts must be positive" in error
                             for error in validate(self.portfolio, draft)["errors"]))
 
+    def test_catalogue_and_companion_specs_must_match(self):
+        portfolio = deepcopy(self.portfolio)
+        component = next(p for p in portfolio["products"] if p["product_id"] == "COMP-STORAGE-001")
+        component["attributes_json"]["host_interface"] = "SATA"
+        self.assertTrue(any("catalogue attributes differ" in error
+                            for error in validate(portfolio, self.draft)["errors"]))
+
 
 if __name__ == "__main__":
     unittest.main()
