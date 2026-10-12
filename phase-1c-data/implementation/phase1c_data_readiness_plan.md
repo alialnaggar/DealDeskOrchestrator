@@ -606,3 +606,21 @@ exception windows and other specialist checks were not rerun. See the
 nine-case table and exact adoption decision in
 `../calibration-decision-sheet.md`. No calibration, catalogue, schema or
 readiness flag changed.
+
+## Evaluation authoring development examples — 12 October 2026
+
+`../evaluation/` now holds two illustrative partial-delivery cases with
+submission facts and dated evidence in `development_inputs.json`. A
+separate `reviewer_oracle_draft.json` contains author-written expected
+findings. The first has binding support for two later units; the second has
+only an offer and should withhold a validated option. A new validator and
+four tests check input shape, dates, quantities, evidence references,
+answer-field leakage and premature review claims. These are **development
+examples only**: no independent reviewer has accepted the draft answers,
+the files are not access-controlled from one another, and the examples
+lack the full cross-specialist database facts. The count of independently
+reviewed cases remains **0 of 36**; the 100 generated tests remain
+unfinished. The evaluator must later use distinct frozen full cases,
+load only agent-facing facts into the system, and score against separately
+reviewed answers and the rule-only baseline. No readiness, schema or
+calibration status changes.

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "status": "development_examples_not_held_out",
+  "cases": [
+    {
+      "case_id": "DEV-PARTIAL-SUPPORTED",
+      "archetype_id": "STOCK-ALLOCATED",
+      "as_of_at": "2026-09-01T12:00:00Z",
+      "catalog_version": "CATALOGUE_2026_V1",
+      "policy_set_code": "BASELINE_2026",
+      "requested_quantity": 10,
+      "requested_delivery_date": "2026-09-04",
+      "allow_partial_delivery": true,
+      "candidate_slices": [
+        {"quantity": 8, "arrival_date": "2026-09-04", "evidence_ids": ["DEV-INV-8-A"]},
+        {"quantity": 2, "arrival_date": "2026-09-08", "evidence_ids": ["DEV-RECEIPT-2-A"]}
+      ],
+      "source_evidence": [
+        {"evidence_id": "DEV-INV-8-A", "kind": "free_inventory", "as_of_at": "2026-09-01T12:00:00Z", "quantity": 8, "available_date": "2026-09-04", "binding": true},
+        {"evidence_id": "DEV-RECEIPT-2-A", "kind": "confirmed_receipt", "as_of_at": "2026-09-01T12:00:00Z", "quantity": 2, "available_date": "2026-09-08", "binding": true}
+      ]
+    },
+    {
+      "case_id": "DEV-PARTIAL-OFFER-ONLY",
+      "archetype_id": "STOCK-ALLOCATED",
+      "as_of_at": "2026-09-01T12:00:00Z",
+      "catalog_version": "CATALOGUE_2026_V1",
+      "policy_set_code": "BASELINE_2026",
+      "requested_quantity": 10,
+      "requested_delivery_date": "2026-09-04",
+      "allow_partial_delivery": true,
+      "candidate_slices": [
+        {"quantity": 8, "arrival_date": "2026-09-04", "evidence_ids": ["DEV-INV-8-B"]},
+        {"quantity": 2, "arrival_date": "2026-09-08", "evidence_ids": ["DEV-OFFER-2-B"]}
+      ],
+      "source_evidence": [
+        {"evidence_id": "DEV-INV-8-B", "kind": "free_inventory", "as_of_at": "2026-09-01T12:00:00Z", "quantity": 8, "available_date": "2026-09-04", "binding": true},
+        {"evidence_id": "DEV-OFFER-2-B", "kind": "supplier_offer", "as_of_at": "2026-09-01T12:00:00Z", "quantity": 2, "available_date": "2026-09-08", "binding": false}
+      ]
+    }
+  ]
+}

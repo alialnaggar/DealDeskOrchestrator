@@ -96,6 +96,13 @@ the [decision sheet](calibration-decision-sheet.md) for the nine-case
 arithmetic table and the still-open adoption decision. This is not a
 complete specialist rerun.
 
+[Evaluation authoring examples](evaluation/README.md) now show the boundary
+between system-visible facts and provisional reviewer findings for one
+supported and one unsupported partial-delivery proposal. They are
+development examples, not held-out labels: **0 of 36** evaluation cases
+have independently reviewed answers, and the 100 generated tests remain
+unfinished.
+
 ## Document precedence
 
 `design/data-strategy.md` records the thesis methodology and earlier decisions.

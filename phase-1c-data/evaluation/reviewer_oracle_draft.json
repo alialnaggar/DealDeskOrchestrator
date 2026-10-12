@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "status": "provisional_author_draft_pending_independent_review",
+  "answer_key_agent_visible": false,
+  "independently_reviewed_cases": 0,
+  "cases": [
+    {
+      "case_id": "DEV-PARTIAL-SUPPORTED",
+      "review_status": "pending_independent_review",
+      "reviewer": null,
+      "expected": {
+        "original_shortfall_units_at_requested_date": 2,
+        "candidate_supply_supported": true,
+        "unmet_customer_constraints": ["original_requested_delivery_date"],
+        "human_action": "seek_customer_acceptance_and_prescribed_review",
+        "supporting_evidence_ids": ["DEV-INV-8-A", "DEV-RECEIPT-2-A"]
+      },
+      "authoring_rationale": "Eight free units cover the original date; the other two have dated confirmed supply later. The customer's requested date is still unmet for two units, so no approval or delivery promise follows."
+    },
+    {
+      "case_id": "DEV-PARTIAL-OFFER-ONLY",
+      "review_status": "pending_independent_review",
+      "reviewer": null,
+      "expected": {
+        "original_shortfall_units_at_requested_date": 2,
+        "candidate_supply_supported": false,
+        "unmet_customer_constraints": ["original_requested_delivery_date"],
+        "human_action": "request_binding_supply_or_revise_no_validated_option",
+        "supporting_evidence_ids": ["DEV-INV-8-B", "DEV-OFFER-2-B"]
+      },
+      "authoring_rationale": "Eight free units cover the original date. The offer for two later units is not a binding receipt; it cannot validate the proposed completion date."
+    }
+  ]
+}
