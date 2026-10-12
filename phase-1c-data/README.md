@@ -6,6 +6,36 @@
 retain their original relative paths. The migration passed the private PostgreSQL workflow; edit this repository
 for all new Phase 1C work. The old repository is a historical portfolio copy.
 
+## How to navigate these files — 12 October 2026
+
+The implementation folder has 175 tracked files. These are grouped by job, not 175 independent features:
+
+| Start here | What it does | Keep for release? |
+| --- | --- | --- |
+| `schema.sql`, `calibration_config.yaml`, `phase1c_data_contract.yaml`, `phase1c_scenario_matrix.yaml` | Define tables, synthetic assumptions and coverage targets | Yes; review before freeze |
+| `phase1c_reader.py`, `phase1c_deal_decision.py`, policy/compatibility helpers | Read dated evidence and compute deterministic findings | Yes |
+| `render_*.py`, `phase1c_*source*.json`, `phase1c_*inputs*.sql`, portfolio/customer files | Generate and hold provisional synthetic masters, deals and dated evidence; the numbered files are manageable shards of one dataset | Yes until a reproducible release package replaces drafts |
+| `validate_*.py`, `audit_*.py`, `test_*.py`, `phase1c_*fixtures.sql` | Check row relationships, distribution, evidence and regressions | Yes as quality gates; fixtures are development cases, not evaluation labels |
+| `phase1c_candidate*.py`, `phase1c_partial_discovery.py`, `phase1c_evaluation_input.py`, `../evaluation/` | Bounded option and evaluation preparation experiments | Keep separately identifiable; these are not final generated data or six live agents |
+| `phase1c_release_review.md`, `phase1c_data_readiness_plan.md`, `../calibration-decision-sheet.md` | Current evidence, work order and decisions awaiting review | Yes as provenance; their dated sections are a history, not separate current plans |
+
+**Current finish line for finalized Phase 1C data:** the 80 customer masters and
+400 historical submissions exist as provisional synthetic inputs, and a
+36-deal pilot passes. Next (1) resolve six field marks and two calibration
+reviews with evidence or explicit bounded synthetic assumptions; (2) freeze
+the config, source manifest and tolerances after pilot diagnostics; (3)
+generate and validate the unfinished 100 test deals and a separate 36-case
+evaluation input set with independently reviewed answers; (4) rebuild from
+the pinned seed into clean PostgreSQL twice, compare checksums and pass all
+integrity, chronology, source and distribution checks before tagging a
+dataset release. The 400 diagnostic decisions are not labels. No evaluation
+case has an independently reviewed answer (0/36). The generation readiness
+flag is false.
+
+Candidate discovery and evaluation packet preparation are useful for the
+later system, but should not displace the data gates above. Keep Phase 1A
+literature and Phase 1B target agent architecture in their own directories.
+
 ## What exists
 
 - PostgreSQL Schema V2: 24 tables. `implementation/schema.sql` is the DDL.
