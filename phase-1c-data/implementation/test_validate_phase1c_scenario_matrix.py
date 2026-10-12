@@ -24,7 +24,8 @@ class ScenarioMatrixTests(unittest.TestCase):
         self.assertEqual(result["pilot_target_deals"], 18)
         self.assertEqual(result["evaluation_target_cases"], 36)
         self.assertEqual(result, manifest(HERE, self.matrix))
-        self.assertEqual(len(result["source_sha256"]), 7)
+        self.assertEqual(len(result["source_sha256"]), 8)
+        self.assertIn("phase1c_technical_fit_draft.json", result["source_sha256"])
 
     def test_missing_evidence_family_cannot_pass(self):
         draft = deepcopy(self.matrix)

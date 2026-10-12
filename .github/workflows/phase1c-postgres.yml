@@ -161,6 +161,8 @@ jobs:
           python audit_phase1c_build_readiness.py > /tmp/phase1c_build_readiness.json
           python -m unittest -v test_validate_phase1c_technical_fit_pilot
           python validate_phase1c_technical_fit_pilot.py
+          python -m unittest -v test_validate_phase1c_technical_fit_draft
+          python validate_phase1c_technical_fit_draft.py > /tmp/phase1c_technical_fit_draft.json
           python -m unittest -v test_phase1c_component_units
           python -m unittest -v test_phase1c_digital_units
           python -m unittest -v test_phase1c_horizon

@@ -15,7 +15,8 @@ BUCKETS = {"feasible_uncommitted", "conditional_uncommitted", "revision", "unkno
            "commercial_exception"}
 SOURCES = ("schema.sql", "calibration_config.yaml", "phase1c_column_rules.yaml",
            "phase1c_data_contract.yaml", "phase1c_portfolio_draft.json",
-           "phase1c_build_cost_draft.json", "phase1c_scenario_matrix.yaml")
+           "phase1c_build_cost_draft.json", "phase1c_technical_fit_draft.json",
+           "phase1c_scenario_matrix.yaml")
 
 
 def validate(matrix, config):

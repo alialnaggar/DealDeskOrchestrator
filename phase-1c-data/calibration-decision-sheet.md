@@ -1,6 +1,6 @@
 # Phase 1C calibration decision sheet
 
-**Prepared 11 October 2026. Status: review proposal, not a frozen dataset.**
+**Scope selected by Ali on 12 October 2026: A, bounded synthetic model. Calibration and dataset remain provisional.**
 
 ## Where the data stands
 
@@ -32,13 +32,13 @@ historical decision distribution is design-induced and provisional.
 
 ## Two choices to review
 
-| Choice | A: bounded synthetic model (recommended for this thesis scope) | B: sourced product model |
+| Choice | A: bounded synthetic model (selected for the thesis scope) | B: sourced product model |
 | --- | --- | --- |
 | Components and fit | Define fictional, internally consistent kit specifications for all 24 BOMs. Check interface, slots, power and relevant thermal constraints. Explicitly state that these are synthetic assumptions, not manufacturer-certified configurations. | Identify comparable real product and component configurations, document dates and sources, then transform them to fictional rows with verified fit rules. |
 | Prices and costs | Keep values as declared synthetic experimental parameters. Treat the workstation's 31.90% margin as one draft observation above the proposed category p90 of 28%, not an automatic failure. Check the full category distribution after generation, then adjust a *proposed* parameter only if the distribution or cost basis warrants it. Never claim a market margin. | Find dated like-for-like prices with matching currency, unit and tax basis. Costs still need a clearly synthetic procurement assumption unless supportable evidence exists. |
 | Trade-off | Reproducible and suitable for testing agent decision correctness under stated assumptions; no claim that it mirrors a real provider's catalogue or margins. | Stronger external realism, substantially more sourcing and cross-part verification work before data freeze. |
 
-**Recommendation:** A. The thesis tests whether governed agents use available
+**Decision rationale:** A. The thesis tests whether governed agents use available
 facts and constraints correctly. A consistent synthetic company with explicit
 assumptions supports that evaluation. It should still include genuinely
 challenging and independently checked conflicts.
@@ -81,3 +81,24 @@ were changed by this audit.
 component and pricing model (A) or the sourced comparable model (B) in the
 table above. Under either choice, check fit for all 24 BOMs and assess the
 full generated category distributions; the audit does not settle that choice.
+
+## Option A implementation draft — 12 October 2026
+
+Ali selected the bounded fictional specification and price/cost model. The
+selection defines the evidence claim: internal consistency under declared
+synthetic assumptions, not manufacturer-certified fit or observed market
+margins. `implementation/phase1c_technical_fit_draft.json` explicitly lists
+interface, form-factor, slot, power and cooling assumptions for all 36
+components. `validate_phase1c_technical_fit_draft.py` checks all 24 active
+BOMs and 25 possible selected component sets, including both candidates in
+BOM-001. Failure cases cover mismatched shared interfaces, inadequate power,
+slots and cooling, and a component declared for the wrong platform. The old
+one-BOM pilot remains a narrow rule example.
+
+The detailed assumptions are currently a **companion review draft**. They are
+not yet part of the catalogue rows selected by the runtime reader, and
+passing a fit check does not close product-attribute/compatibility field marks
+or `ready_for_generation`. Next map reviewed specification fields into the
+catalogue and rule contracts, check the price/cost distribution for all
+sellable rows, and independently review evaluation answers. No calibration
+threshold, list price, standard cost or schema was changed by this step.

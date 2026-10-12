@@ -531,3 +531,17 @@ and does not itself fetch facts. This strengthens the prototype correlation
 claim without making the local sidecar immutable or closing the audit storage
 decision. No schema, calibration, generation-readiness or independent answer
 review status changes.
+
+## Bounded synthetic fit scope selected — 12 October 2026
+
+Ali selected Option A in `../calibration-decision-sheet.md`: fictional but
+internally checked product/component specifications and declared synthetic
+prices and costs. The new companion fit draft enumerates all 36 components;
+its checker covers 24 active BOMs and 25 possible component sets, including
+the substitute in BOM-001. It checks interfaces, board/drive form factors,
+drive slots, platform, power and cooling and rejects deliberately incompatible
+variants. This is an internal synthetic fit check, not manufacturer-certified
+compatibility. The detailed specs are still a companion draft rather than
+runtime catalogue attributes. Product-attribute and compatibility field marks,
+price/cost evidence review, independent answer keys and generation readiness
+remain open. No price, cost, threshold or schema was changed.

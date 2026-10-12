@@ -56,14 +56,18 @@ tests remain in CI. See the [release review](implementation/phase1c_release_revi
 
 
 The six field marks cover product attributes, list price, standard cost,
-supplier calendars, compatibility predicates and actual agent output. Two
-calibration reviews concern component/product fit and comparable prices.
+supplier calendars, compatibility predicates and actual agent output.
+
+Ali selected the bounded synthetic calibration scope on 12 October 2026.
+The companion fit draft now covers all 36 components and checks the 24 active
+BOMs (25 component selections). It has not yet been integrated into runtime
+catalogue attributes, and product fit and price/cost reviews remain open.
 The [calibration decision sheet](calibration-decision-sheet.md) now quantifies
 all 24 BOMs' missing detailed fit attributes and the draft buildable margins;
 its p90 comparison is a distribution target, not a per-product hard limit.
 The 100 generated tests and separate 36-case evaluation set with independently
 reviewed expected findings remain to be completed. `ready_for_generation`
-remains false. See `calibration-decision-sheet.md` for the two scope choices
+remains false. See `calibration-decision-sheet.md` for the selected scope
 and `implementation/phase1c_release_review.md` for the dated
 evidence and `implementation/phase1c_data_readiness_plan.md` for the work order.
 
