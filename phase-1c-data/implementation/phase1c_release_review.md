@@ -345,3 +345,18 @@ and does not itself fetch facts. This strengthens the prototype correlation
 claim without making the local sidecar immutable or closing the audit storage
 decision. No schema, calibration, generation-readiness or independent answer
 review status changes.
+
+## Calibration review evidence clarification — 12 October 2026
+
+A review of the current 156-product portfolio, 24 BOMs and 18-product build
+cost draft found no detailed interface/form-factor/power/thermal attributes
+on any of the 36 components. Structural BOM coverage and rollup arithmetic
+therefore do not validate physical fit. Exactly one of the 18 draft buildable
+product margins exceeds its proposed category p90 value: workstation
+`SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-009` is 31.90% against 28%.
+A category p90 is a distribution target, not a hard ceiling for each SKU;
+this one comparison cannot justify an automatic price or cost rewrite. The
+full 120-product generated distribution and comparable unit/date/tax basis
+remain to be checked. See `../calibration-decision-sheet.md` for the exact
+bounded-synthetic versus sourced-comparable choice. This is a read-only
+review; no calibration, schema or readiness status has changed.
