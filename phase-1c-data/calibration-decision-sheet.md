@@ -144,3 +144,47 @@ replay, and must be tested on the same 120 rows. Separately review the
 workstation cost/price assumption and the units, dates and tax basis of price
 examples. This audit changes no prices, costs, thresholds, schema, field
 marks or `ready_for_generation=false` status.
+
+## Bounded margin spread sensitivity experiment — 12 October 2026
+
+The read-only `implementation/experiment_phase1c_margin_spread.py` compares
+the current catalogue with a **proposal**, leaving the SQL fixtures and
+calibration YAML untouched. Within each category, it orders the 102 generated
+product IDs by a SHA-256 digest of the configured seed and ID. It assigns a
+margin within the existing proposed p10/p50/p90 band by linear interpolation
+of rank, capped at p10 and p90, then recalculates synthetic cost from the
+unchanged list price. The 18 buildable products keep their explicit BOM-based
+draft costs. The JSON report includes the source-input digest and every
+generated product's current and proposed cost, list margin and 10% discount
+status. A changed seed changes the provisional draw as well as assignments.
+
+| Diagnostic at a 10% quoted discount | Current fixture | Bounded experiment |
+| --- | ---: | ---: |
+| Sellable products | 120 | 120 |
+| Generated products with recalculated cost | 0 | 102 |
+| Buildable draft costs changed | 0 | 0 |
+| Products below the BASELINE_2026 category margin floor | 12 | 41 |
+| Products with nonpositive quoted margin | 0 | 2 |
+
+Thirty-one product statuses change: 28 cross from at/above the floor to
+positive below-floor margin, two cross to nonpositive margin, and one moves
+from below-floor to at/above-floor margin. The current 12 below-floor products are all
+servers. The experimental counts by category are cloud 3, cybersecurity 3,
+workplace 7, enterprise software 4, support 2, networking 7,
+implementation services 2, servers 11 and storage 2. The experiment expands
+the achieved margin spread in most categories; the server category remains
+largely fixed because ten of its twelve products are buildable and unchanged.
+This is a **single-line arithmetic sensitivity check**. A positive below-floor line might be blocked or sent for an authorized
+exception review under the full rules; the two nonpositive lines would meet
+the baseline hard-block margin condition. This is not an agent decision or a
+validated deal outcome.
+
+**Decision for Ali before any calibration freeze:** whether to adopt a
+reviewed bounded synthetic spread for the 102 generated products or retain
+the fixed-p50 simplification. If adopted, review category shape, the effect
+on each baseline/lenient/strict policy profile and the independent evaluation
+cases before regenerating prices/costs and manifests. The proposed spread
+still derives cost from a target margin rather than sourced procurement
+evidence; it does not establish like-for-like commercial realism. The
+workstation outlier, six field marks, two calibration reviews,
+`ready_for_generation=false` and the independent answer gate remain open.

@@ -577,3 +577,19 @@ a unit because capabilities, dates and tax basis have not been matched.
 measurement repeatable; see `../calibration-decision-sheet.md` for the
 exact fixed-p50-versus-bounded-variation decision to review. No commercial
 number, threshold, schema or readiness flag was changed.
+
+## Bounded margin spread sensitivity — 12 October 2026
+
+A read-only experiment assigns the 102 generated products a reproducible
+margin inside each category's proposed p10/p50/p90 band, using seeded product
+ranks. It keeps list prices and all 18 buildable costs unchanged and reports
+each generated product's experimental cost alongside its original. With a
+hypothetical 10% quote discount, 12 current rows versus 41 experimental rows
+are below the BASELINE_2026 category floor; two experimental workstation rows
+have nonpositive quoted margin. Thirty-one product statuses change. This
+checks sensitivity of line arithmetic only, not a full deal or specialist
+rerun. The result is explicitly provisional: neither a new calibrated cost
+basis nor a sourced comparable. The exact decision and caveats are in
+`../calibration-decision-sheet.md`. Tests and a CI JSON artifact pin the
+experiment. The catalogue, policy thresholds, schema, field marks and
+`ready_for_generation=false` remain unchanged.

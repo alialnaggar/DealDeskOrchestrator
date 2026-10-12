@@ -80,6 +80,15 @@ p90 targets. This is a generator property, not market evidence. The
 review before calibration freeze; neither price comparability nor generation
 readiness is closed.
 
+A read-only bounded margin experiment now compares the current fixed-p50
+costs with a seeded synthetic spread for the 102 generated catalogue rows.
+At a hypothetical 10% discount, 12 current rows and 41 experimental rows
+would fall below their baseline category floor; two experimental rows have
+nonpositive margin. This is line arithmetic, not a full deal result. The
+[decision sheet](calibration-decision-sheet.md) records the evidence and
+the choice to review before any calibration freeze. The catalogue and
+generation readiness are unchanged.
+
 ## Document precedence
 
 `design/data-strategy.md` records the thesis methodology and earlier decisions.
