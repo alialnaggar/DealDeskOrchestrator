@@ -593,3 +593,16 @@ basis nor a sourced comparable. The exact decision and caveats are in
 `../calibration-decision-sheet.md`. Tests and a CI JSON artifact pin the
 experiment. The catalogue, policy thresholds, schema, field marks and
 `ready_for_generation=false` remain unchanged.
+
+## Three-profile margin sensitivity — 12 October 2026
+
+The read-only spread report now evaluates 0%, 10% and 20% quoted discounts
+under lenient, baseline and strict category floors, preserving each changed
+product ID. At strict 10%, the count below floor changes from 55 to 56, while
+39 individual product statuses change. At baseline 10%, the count changes
+from 12 to 41, including two nonpositive proposed lines. This remains
+line-margin arithmetic, not a full deal decision: discount approvals,
+exception windows and other specialist checks were not rerun. See the
+nine-case table and exact adoption decision in
+`../calibration-decision-sheet.md`. No calibration, catalogue, schema or
+readiness flag changed.

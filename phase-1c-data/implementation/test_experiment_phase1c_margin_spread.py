@@ -60,6 +60,27 @@ class MarginSpreadExperimentTests(unittest.TestCase):
         self.assertNotEqual([x["list_price_eur"] for x in original["product_deltas"]],
                             [x["list_price_eur"] for x in changed["product_deltas"]])
 
+    def test_three_policy_profiles_show_identity_changes_hidden_by_totals(self):
+        scenarios = experiment(self.portfolio, self.costs, self.config,
+                               self.contract)["profile_scenarios"]
+        self.assertEqual(len(scenarios), 9)
+        for row in scenarios:
+            self.assertEqual(sum(row["current"].values()), 120)
+            self.assertEqual(sum(row["experiment"].values()), 120)
+            self.assertEqual(len(row["changed_product_ids"]), row["changed_line_statuses"])
+        baseline = next(row for row in scenarios if row["profile"] == "BASELINE_2026"
+                        and row["quote_discount_pct"] == 10)
+        strict = next(row for row in scenarios if row["profile"] == "STRICT_EXPERIMENT"
+                      and row["quote_discount_pct"] == 10)
+        self.assertEqual((baseline["current"]["below_floor"],
+                          baseline["experiment"]["below_floor"],
+                          baseline["experiment"]["nonpositive"],
+                          baseline["changed_line_statuses"]), (12, 39, 2, 31))
+        self.assertEqual((strict["current"]["below_floor"],
+                          strict["experiment"]["below_floor"],
+                          strict["experiment"]["nonpositive"],
+                          strict["changed_line_statuses"]), (55, 54, 2, 39))
+
     def test_invalid_or_incomplete_proposal_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "invalid bounded margin band"):
             proposed_margin(0, 10, {"p10": 20, "p50": 10, "p90": 30})

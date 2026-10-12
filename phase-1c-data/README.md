@@ -89,6 +89,13 @@ nonpositive margin. This is line arithmetic, not a full deal result. The
 the choice to review before any calibration freeze. The catalogue and
 generation readiness are unchanged.
 
+The bounded margin report now compares all three configured policy profiles
+at 0%, 10% and 20% discounts. Under strict rules at 10%, 39 individual
+product statuses change despite a below-floor total of 55 versus 56. See
+the [decision sheet](calibration-decision-sheet.md) for the nine-case
+arithmetic table and the still-open adoption decision. This is not a
+complete specialist rerun.
+
 ## Document precedence
 
 `design/data-strategy.md` records the thesis methodology and earlier decisions.

@@ -188,3 +188,32 @@ still derives cost from a target margin rather than sourced procurement
 evidence; it does not establish like-for-like commercial realism. The
 workstation outlier, six field marks, two calibration reviews,
 `ready_for_generation=false` and the independent answer gate remain open.
+
+## Policy-profile sensitivity follow-up — 12 October 2026
+
+The same read-only report now computes line-margin states for every sellable
+product under the three configured policy profiles and 0%, 10% and 20% quote
+discounts. The table counts lines below their category floor, **including**
+nonpositive margin. Parentheses show nonpositive lines, which are a hard-block
+margin condition in the profiles. Exact changed product IDs are in the
+versioned CI report.
+
+| Profile | Discount | Current below floor (nonpositive) | Proposed below floor (nonpositive) | Product statuses changed |
+| --- | ---: | ---: | ---: | ---: |
+| Lenient | 0% | 0 (0) | 0 (0) | 0 |
+| Lenient | 10% | 0 (0) | 18 (2) | 18 |
+| Lenient | 20% | 55 (39) | 65 (38) | 42 |
+| Baseline | 0% | 0 (0) | 0 (0) | 0 |
+| Baseline | 10% | 12 (0) | 41 (2) | 31 |
+| Baseline | 20% | 55 (39) | 72 (38) | 46 |
+| Strict | 0% | 0 (0) | 12 (0) | 12 |
+| Strict | 10% | 55 (0) | 56 (2) | 39 |
+| Strict | 20% | 79 (39) | 84 (38) | 50 |
+
+At strict 10%, almost equal totals hide 39 changed product identities.
+This supports retaining per-case findings in independent evaluation rather
+than using an aggregate count as the answer key. The quote is an unrounded
+arithmetic percentage of list price; discount approvals, exception windows,
+deal totals, and other specialists are **not** simulated by this report.
+Neither these observations nor the p10/p50/p90 targets authorize a
+calibration freeze. The adoption decision above remains open.

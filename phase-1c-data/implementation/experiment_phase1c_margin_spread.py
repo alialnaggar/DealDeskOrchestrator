@@ -41,6 +41,33 @@ def floor_status(price, cost, floor, discount=Decimal("0.10")):
     return "nonpositive" if margin <= 0 else "below_floor" if margin < floor else "at_or_above_floor"
 
 
+def profile_scenarios(records, profiles):
+    """Count line-margin states only, without inferring deal outcomes."""
+    scenarios = []
+    for profile in ("LENIENT_EXPERIMENT", "BASELINE_2026", "STRICT_EXPERIMENT"):
+        floors = profiles[profile]["pricing"]["category_margin_floor_pct"]
+        for discount_pct in (0, 10, 20):
+            discount = Decimal(discount_pct) / 100
+            current = {"at_or_above_floor": 0, "below_floor": 0, "nonpositive": 0}
+            proposal = current.copy()
+            changed_ids = []
+            for pid, (category, price, old, new, source) in records.items():
+                floor = number(floors[category])
+                before = floor_status(price, old, floor, discount)
+                after = floor_status(price, new, floor, discount)
+                current[before] += 1
+                proposal[after] += 1
+                if before != after:
+                    changed_ids.append(pid)
+            scenarios.append({
+                "profile": profile, "quote_discount_pct": discount_pct,
+                "current": current, "experiment": proposal,
+                "changed_line_statuses": len(changed_ids),
+                "changed_product_ids": sorted(changed_ids),
+            })
+    return scenarios
+
+
 def experiment(portfolio, costs, config, contract):
     generated = product_rows(portfolio, costs, config, contract)
     by_category = defaultdict(list)
@@ -52,7 +79,8 @@ def experiment(portfolio, costs, config, contract):
             (set(buildable) | {row[0] for row in generated}) != set(sellable)):
         raise ValueError("expected complete 102 + 18 sellable catalogue")
     targets = config["commercial_supply"]["standard_cost"]["target_list_margin_percent_by_category"]
-    floors = config["governance"]["profiles"]["BASELINE_2026"]["pricing"]["category_margin_floor_pct"]
+    profiles = config["governance"]["profiles"]
+    floors = profiles["BASELINE_2026"]["pricing"]["category_margin_floor_pct"]
     seed = config["random_seed"]
     records = {}
     for category, rows in by_category.items():
@@ -141,6 +169,7 @@ def experiment(portfolio, costs, config, contract):
         "generated_costs_recalculated": 102, "buildable_costs_unchanged": 18,
         "prices_unchanged": True, "categories": categories,
         "product_deltas": sorted(product_deltas, key=lambda row: row["product_id"]),
+        "profile_scenarios": profile_scenarios(records, profiles),
         "interpretation": "single-line arithmetic at a fixed 10% discount; not a full deal decision",
         "calibration_frozen": False, "price_comparability_verified": False,
         "ready_for_generation": False,
