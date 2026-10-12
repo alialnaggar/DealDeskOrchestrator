@@ -101,3 +101,46 @@ does not yet use them to propose substitutions. The readiness audit reports
 independent-answer and actual-agent gates. Field-level review marks and
 `ready_for_generation=false` remain until their full evidence review. No
 threshold, list price, standard cost or schema changed.
+
+## Provisional full-catalogue distribution audit — 12 October 2026
+
+`implementation/audit_phase1c_price_distribution.py` reproduces the 120
+sellable rows from the checked-in portfolio, 18 buildable cost drafts and the
+same deterministic generator used for the other 102 rows. It uses linear
+interpolation on the sorted rows for empirical p10, p50 and p90; percentages
+below are rounded to two decimals. The checker rejects incomplete or
+duplicate buildable costs and invalid price/cost values. Its CI artifact is a
+diagnostic, not a market-calibration certificate.
+
+| Category | Rows (generated / buildable) | Achieved margin p90 | Proposed margin p90 |
+| --- | ---: | ---: | ---: |
+| Cloud subscriptions | 12 (12 / 0) | 38.00% | 55.00% |
+| Cybersecurity | 12 (12 / 0) | 32.00% | 48.00% |
+| End-user workplace | 18 (16 / 2) | 18.18% | 28.00% |
+| Enterprise software | 18 (18 / 0) | 45.00% | 65.00% |
+| Support and warranty | 10 (10 / 0) | 42.00% | 60.00% |
+| Networking | 16 (16 / 0) | 21.00% | 32.00% |
+| Implementation services | 12 (12 / 0) | 48.00% | 65.00% |
+| Servers and compute | 12 (2 / 10) | 16.07% | 25.00% |
+| Storage and protection | 10 (4 / 6) | 19.01% | 28.00% |
+
+All 102 generated rows are within 0.01 percentage point of their category's
+proposed p50 margin because their costs are set directly from that p50. This
+is an algorithmic concentration, not a finding about the market. The one
+individual row above a proposed p90 remains workstation
+`SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-009` (31.90%); the achieved
+workplace p90 is still 18.18%. An individual row can exceed a distribution
+percentile without violating a hard rule. The report also groups price
+percentiles by category, billing model and unit, so device prices are not
+pooled with annual licences or monthly capacity. Even rows sharing those
+fields may describe different product capabilities; these are not sourced
+like-for-like comparables.
+
+**Exact calibration decision for review before a freeze:** retain the fixed
+p50 synthetic cost ratio as an explicit simplification, or specify a bounded,
+seeded variation that produces a reviewed category margin spread. Either
+choice must preserve each product's cost basis, BOM rollup and deterministic
+replay, and must be tested on the same 120 rows. Separately review the
+workstation cost/price assumption and the units, dates and tax basis of price
+examples. This audit changes no prices, costs, thresholds, schema, field
+marks or `ready_for_generation=false` status.

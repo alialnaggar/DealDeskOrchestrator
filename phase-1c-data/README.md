@@ -72,6 +72,14 @@ remains false. See `calibration-decision-sheet.md` for the selected scope
 and `implementation/phase1c_release_review.md` for the dated
 evidence and `implementation/phase1c_data_readiness_plan.md` for the work order.
 
+The full provisional price audit now covers all 120 sellable products.
+The 102 generated non-buildable costs derive almost exactly from the proposed
+category p50 margin, so the nine achieved p90 margins sit below their proposed
+p90 targets. This is a generator property, not market evidence. The
+[decision sheet](calibration-decision-sheet.md) records the exact choice to
+review before calibration freeze; neither price comparability nor generation
+readiness is closed.
+
 ## Document precedence
 
 `design/data-strategy.md` records the thesis methodology and earlier decisions.

@@ -2,6 +2,8 @@
 
 This private repository is the active source of truth for the thesis. The project is organized into [Phase 1A: literature review](phase-1a-literature-review/README.md), [Phase 1B: agent architecture](phase-1b-agent-architecture/README.md), and [Phase 1C: synthetic data and implementation](phase-1c-data/README.md). New work belongs here; `alialnaggar/dealdeskdata` is a historical portfolio copy.
 
+**Phase 1C update, 12 October 2026:** Ali selected the bounded synthetic fit model. The 36 component specifications are in the draft catalogue and checked across 24 BOMs; a separate repeatable audit now measures provisional price and margin distributions for all 120 sellable products. The [calibration decision sheet](phase-1c-data/calibration-decision-sheet.md) lists the unresolved cost variation decision. The six field reviews, two calibration reviews, independent evaluation set and generation gate remain open. The [draft PR](https://github.com/alialnaggar/DealDeskOrchestrator/pull/1) holds these increments.
+
 # System functionality report
 
 *Design and implementation status checked 11 October 2026.* This report synthesizes the [Phase 1B specification](phase-1b-agent-architecture/agent-architecture-and-deal-flow.md) and [Phase 1C data strategy](phase-1c-data/design/data-strategy.md). **Target design and implemented functionality are different:** see the [Phase 1C release review](phase-1c-data/implementation/phase1c_release_review.md) for dated technical status.

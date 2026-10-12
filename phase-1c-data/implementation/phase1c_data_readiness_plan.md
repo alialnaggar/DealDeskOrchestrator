@@ -560,3 +560,20 @@ substitute-proposing agent or certify real hardware. The six field marks,
 price/cost distribution review, independent answer keys and
 `ready_for_generation=false` remain open. No database schema, threshold,
 list price or cost changed.
+
+## Full provisional price-distribution audit — 12 October 2026
+
+The reproducible audit now measures all 120 sellable catalogue rows: 102
+deterministically generated fixture rows and 18 explicit buildable drafts.
+All 102 generated margins are effectively pinned to their category p50;
+the achieved category p90 margins are therefore below the proposed p90
+targets in all nine categories. This is a property of the generator, not
+evidence that those targets or market prices are correct. One workstation
+individual margin remains 31.90% above its proposed category p90 of 28%,
+while the workplace distribution's achieved p90 is 18.18%. Price summaries
+are separated by billing model and unit, and remain provisional even within
+a unit because capabilities, dates and tax basis have not been matched.
+`audit_phase1c_price_distribution.py` and its CI artifact make the
+measurement repeatable; see `../calibration-decision-sheet.md` for the
+exact fixed-p50-versus-bounded-variation decision to review. No commercial
+number, threshold, schema or readiness flag was changed.
