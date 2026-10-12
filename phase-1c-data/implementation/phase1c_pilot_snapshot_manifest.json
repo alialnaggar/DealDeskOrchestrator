@@ -9,7 +9,7 @@
     {
       "path": "phase1c_buildable_master.sql",
       "role": "pilot_sql",
-      "sha256": "9e661692cc6d39017b317cfe5110cf759a7dff3c87f41e2c438468739c390336"
+      "sha256": "e9520cb46312d70d45821dde0e094aebc9da7e7b041a1cadcb443c1fda2513c9"
     },
     {
       "path": "phase1c_sellable_catalogue.sql",
@@ -39,7 +39,7 @@
     {
       "path": "phase1c_data_contract.yaml",
       "role": "contract",
-      "sha256": "492e18f7583a84949d2b4efeafc3e53d0b7f32647e76d1b90493c4e283b211d9"
+      "sha256": "8a75411c13d7260c557e83371e35f0fa9a65905b5f902f633986fc1bd293974d"
     },
     {
       "path": "phase1c_scenario_matrix.yaml",
