@@ -641,3 +641,7 @@ new held-out case or full specialist outcome label is claimed. See
 `../evaluation/README.md`. Independently reviewed evaluation cases remain
 **0/36** and the 100 generated tests are unfinished. Schema, calibration,
 readiness and the draft PR status remain unchanged.
+
+## Reader-fact partial-delivery discovery — 12 October 2026
+
+`phase1c_partial_discovery.py` now derives one partial-delivery candidate from the reader's selected shipping options for a single ungrouped finished-product line. The reference shortage yields eight units by the unchanged 4 September customer date and two by the binding 8 September receipt, followed by a fresh PostgreSQL reader pass, all six deterministic checks, and a human comparison with no automatic selection. Tests cover permission and missing supply; the database test withdraws the confirmed receipt and expects no proposal. The source trace still records what the reader used, with no separate deal ID or schema migration. This is a bounded development fixture, with no independent outcome label, reservation, customer acceptance, substitute search or AI specialist implementation. Field marks, calibration review, 100 generated tests, held-out 36 answers (0 independently reviewed) and `ready_for_generation=false` remain open.

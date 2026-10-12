@@ -13,6 +13,7 @@ from phase1c_candidate import Candidate, DeliverySlice, FieldChange, verify_run_
 from phase1c_candidate_trace import (build_trace_record, export_trace_once,
                                      verify_exported_trace, replay_exported_trace)
 from phase1c_candidate_batch import compare_candidate_set
+from phase1c_partial_discovery import discover_partial_delivery, discover_and_recheck
 from score_phase1c_reader_trial import score
 
 try:
@@ -160,6 +161,49 @@ class CandidateReaderTests(unittest.TestCase):
             Path(path).write_text(json.dumps(altered))
             with self.assertRaisesRegex(ValueError, "differs from replayed"):
                 verify_exported_trace(path, candidate, original, checked)
+
+    def test_discovery_uses_reader_facts_and_full_recheck(self):
+        from phase1c_reader import read_run
+        original = read_run(self.conn, self.run_id, commercial_rule_mode="compiled")
+        candidate, reason = discover_partial_delivery(original)
+        self.assertIn("full recheck", reason)
+        self.assertEqual(candidate.changes[0].before,
+                         (("L-candidate-shortage", 10, date(2026, 9, 4)),))
+        self.assertEqual([(s.quantity, s.arrival_date, s.evidence_ids)
+                          for s in candidate.delivery_slices], [
+            (8, date(2026, 9, 4), ("INV-stock_then_confirmed_receipt-P",)),
+            (2, date(2026, 9, 8), ("IN-stock_then_confirmed_receipt",))])
+        result = discover_and_recheck(self.conn, self.run_id,
+                                      reader_kwargs={"commercial_rule_mode": "compiled"})
+        self.assertEqual(result["status"], "review_option")
+        self.assertIsNone(result["selected_candidate_id"])
+        self.assertEqual(result["comparison"]["validated_supply_option_ids"],
+                         [candidate.candidate_id])
+        record = result["comparison"]["candidate_records"][0]
+        self.assertEqual(record["payload"]["human_comparison"]["original_requested_date"],
+                         "2026-09-04")
+        self.assertEqual(record["payload"]["actual_source_ids"],
+                         ["IN-stock_then_confirmed_receipt", "INV-stock_then_confirmed_receipt-P"])
+
+    def test_discovery_fails_closed_when_permission_or_supply_missing(self):
+        from phase1c_reader import read_run
+        original = read_run(self.conn, self.run_id, commercial_rule_mode="compiled")
+        forbidden = deepcopy(original)
+        forbidden["deal"]["terms_json"]["allow_partial_delivery"] = False
+        self.assertIsNone(discover_partial_delivery(forbidden)[0])
+        no_receipt = deepcopy(original)
+        no_receipt["facts"]["lines"][0]["shipping_options"] = [
+            o for o in no_receipt["facts"]["lines"][0]["shipping_options"]
+            if not o["supply_ids"]]
+        self.assertIsNone(discover_partial_delivery(no_receipt)[0])
+        # A real reader re-read must also refuse a formerly supported proposal
+        # when the confirmed receipt is withdrawn before the snapshot cutoff.
+        self.conn.execute("UPDATE deal_desk.inbound_supply SET status='Cancelled' "
+                          "WHERE supply_id='IN-stock_then_confirmed_receipt'")
+        result = discover_and_recheck(self.conn, self.run_id,
+                                      reader_kwargs={"commercial_rule_mode": "compiled"})
+        self.assertEqual(result["status"], "no_proposal")
+        self.assertIn("binding full supply", result["reason"])
 
     def test_unavailable_date_or_false_source_cannot_pass(self):
         from phase1c_reader import read_run

@@ -122,3 +122,7 @@ Phase 1B remain in their own top-level directories.
 The repository workflow `.github/workflows/phase1c-postgres.yml` runs the
 PostgreSQL checks from `phase-1c-data/implementation`. Do not promote pilot
 diagnostics to labels without the independent calibration and evaluation gate.
+
+## Bounded proposal discovery from reader facts — 12 October 2026
+
+`implementation/phase1c_partial_discovery.py` forms one deterministic partial-delivery proposal for a single ungrouped finished-product line when the customer permits partial delivery. It uses the reader-selected shipping options, keeps the customer's requested date in the submitted record, and requires a distinct dated binding source for the later quantity at the same location. It then re-reads the run and requires the existing six-check candidate comparison to support the option. Missing permission, no complete later supply or changed source facts yield no review option. No stock is reserved and customer acceptance remains pending. This is a development capability, not a live proposing agent or a held-out evaluation result; generation readiness, calibration and schema are unchanged.
