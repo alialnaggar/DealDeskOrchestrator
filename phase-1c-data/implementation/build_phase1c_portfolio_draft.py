@@ -53,6 +53,10 @@ AS_OF = "2026-10-06T12:00:00Z"
 
 def build(config):
     catalogue = config["product_catalogue"]["metadata"]["catalogue_version"]
+    fit_draft = json.loads((HERE / "phase1c_technical_fit_draft.json").read_text(encoding="utf-8"))
+    if fit_draft["catalog_version"] != catalogue:
+        raise ValueError("fit draft catalogue version differs")
+    component_specs = fit_draft["component_specs"]
     params = config["fulfillment_production_calibration"]["proposed_parameters"]
     products, mto_ids = [], []
     platform_by_product = {}
@@ -109,13 +113,17 @@ def build(config):
                     break
                 remaining -= size
             components_by_platform[platform][family].append(pid)
+            attributes = {"archetype_code": f"COMP-{family.upper()}",
+                          "demand_class": "regular", "component_family": family,
+                          "component_role": COMPONENT_ROLES[family][0],
+                          "supported_platforms": [platform]}
+            if pid not in component_specs:
+                raise ValueError(f"{pid}: missing pinned component specification")
+            attributes.update(component_specs[pid])
             products.append({"product_id": pid, "catalog_version": catalogue,
                              "is_sellable": False, "product_type": "component",
                              "fulfillment_mode": "component",
-                             "attributes_json": {"archetype_code": f"COMP-{family.upper()}",
-                                                 "demand_class": "regular", "component_family": family,
-                                                 "component_role": COMPONENT_ROLES[family][0],
-                                                 "supported_platforms": [platform]}})
+                             "attributes_json": attributes})
 
     # Two workstations and four rack servers have two explicitly offered
     # variants at one catalogue price; the remaining twelve have one. Eighteen of the
@@ -123,6 +131,8 @@ def build(config):
     variants = [(pid, variant) for index, pid in enumerate(mto_ids)
                 for variant in (["standard", "alternate"] if index < 6 else ["standard"])]
     assert len(variants) == 24 and len(component_ids) == 36
+    if set(component_specs) != set(component_ids):
+        raise ValueError("pinned component specifications differ from generated component IDs")
     counts = Counter(platform_by_product[pid] for pid, _ in variants)
     component_slots = {platform: {} for platform in components_by_platform}
     for platform, families in components_by_platform.items():
