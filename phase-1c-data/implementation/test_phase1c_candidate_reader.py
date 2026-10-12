@@ -184,6 +184,13 @@ class CandidateReaderTests(unittest.TestCase):
                          "2026-09-04")
         self.assertEqual(record["payload"]["actual_source_ids"],
                          ["IN-stock_then_confirmed_receipt", "INV-stock_then_confirmed_receipt-P"])
+        self.conn.execute("UPDATE deal_desk.inventory SET quantity_on_hand=quantity_on_hand+1 "
+                          "WHERE inventory_id='INV-stock_then_confirmed_receipt-P'")
+        changed = discover_and_recheck(self.conn, self.run_id,
+                                       reader_kwargs={"commercial_rule_mode": "compiled"})
+        self.assertEqual(changed["status"], "review_option")
+        self.assertEqual([s.quantity for s in changed["candidate"].delivery_slices], [9, 1])
+        self.assertNotEqual(changed["candidate"].candidate_id, candidate.candidate_id)
 
     def test_discovery_fails_closed_when_permission_or_supply_missing(self):
         from phase1c_reader import read_run
