@@ -194,6 +194,15 @@ jobs:
           python compile_phase1c_policy.py --output /tmp/phase1c_compiled_rules.sql
           psql -X -v ON_ERROR_STOP=1 -f /tmp/phase1c_compiled_rules.sql
           psql -X -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN IF (SELECT count(*) FROM deal_desk.pricing_rules) <> 33 OR (SELECT count(*) FROM deal_desk.policy_rules) <> 51 OR (SELECT count(*) FROM deal_desk.approval_rules) <> 21 THEN RAISE EXCEPTION 'Incomplete compiled policy rows'; END IF; END \$\$;"
+      - name: Audit global dependency impact on existing submissions
+        run: |
+          python -m unittest -v test_audit_phase1c_dependency_scope
+          python audit_phase1c_dependency_scope.py --output /tmp/phase1c_dependency_scope.json
+      - name: Preserve dependency scope evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-dependency-scope
+          path: /tmp/phase1c_dependency_scope.json
       - name: Diagnose 400 historical baseline decisions
         run: |
           python -m unittest -v test_render_phase1c_historical_service_coverage
