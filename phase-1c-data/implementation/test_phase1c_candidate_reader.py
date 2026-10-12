@@ -13,6 +13,7 @@ from phase1c_candidate import Candidate, DeliverySlice, FieldChange, verify_run_
 from phase1c_candidate_trace import (build_trace_record, export_trace_once,
                                      verify_exported_trace, replay_exported_trace)
 from phase1c_candidate_batch import compare_candidate_set
+from score_phase1c_reader_trial import score
 
 try:
     import psycopg
@@ -186,6 +187,28 @@ class CandidateReaderTests(unittest.TestCase):
         unsupported = self.candidate(second_date=date(2026, 9, 5), candidate_id="C-READ-2")
         package = compare_candidate_set(self.conn, self.run_id, [supported, unsupported],
                                         reader_kwargs={"commercial_rule_mode": "compiled"})
+        oracle = json.loads((Path(__file__).resolve().parent.parent / "evaluation" /
+                             "reader_trial_oracle_draft.json").read_text())
+        diagnostic = score(package, oracle)
+        self.assertTrue(diagnostic["all_checks_match_draft"])
+        self.assertEqual(diagnostic["original_rule_only_status"], "needs_revision")
+        self.assertEqual(diagnostic["independently_reviewed_cases"], 0)
+        self.assertEqual((diagnostic["false_supported_options"],
+                          diagnostic["missed_supported_options"]), (0, 0))
+        forged = deepcopy(package)
+        forged["candidate_records"][0]["payload"]["human_comparison"]["verified_supply_option"] = False
+        from hashlib import sha256
+        from phase1c_candidate_trace import _canonical
+        forged["candidate_records"][0]["sha256"] = sha256(
+            _canonical(forged["candidate_records"][0]["payload"]).encode()).hexdigest()
+        self.assertTrue(score(forged, oracle)["candidate_results"][0]["missed_supported_option"])
+        forged = deepcopy(package)
+        forged["candidate_records"][0]["payload"]["actual_source_ids"] = []
+        with self.assertRaisesRegex(ValueError, "content digest"):
+            score(forged, oracle)
+        forged["candidate_records"][0]["sha256"] = sha256(
+            _canonical(forged["candidate_records"][0]["payload"]).encode()).hexdigest()
+        self.assertFalse(score(forged, oracle)["all_checks_match_draft"])
         self.assertEqual(package["validated_supply_option_ids"], ["C-READ-1"])
         self.assertIsNone(package["selected_candidate_id"])
         a, b = package["candidate_records"]

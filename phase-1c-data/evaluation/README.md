@@ -37,3 +37,25 @@ from those facts before running the agents; then compare the same cases
 against the rule-only baseline and score specialist errors, trace integrity,
 useful alternatives and safe refusal. Do not use the 400 historical
 diagnostic outcomes as labels.
+
+## Database-backed development scoring trial
+
+`reader_trial_oracle_draft.json` is a separate, **unreviewed** reference for
+the existing PostgreSQL shortage regression. The test first reads the
+original deal and independently rechecks two proposed delivery dates, then
+loads this draft and calls `score_phase1c_reader_trial.py`. The scorer
+compares the rule-only original status, original customer date, selected
+source IDs, proposed dates, six rerun responsibilities, unmet constraints,
+human action, and whether each option has validated supply. It also rejects
+an unauthorized selection and altered trace content. A supported 8-now /
+2-on-8-September option and an unsupported 8-now / 2-on-5-September option
+both keep the original requested date of 4 September. The latter is
+unsupported because its proposed date precedes the confirmed receipt.
+
+This trial reuses a **development regression fixture**. Its expected
+findings were authored from that fixture and are pending independent review;
+it is not hidden, not a newly generated evaluation row, and not one of the
+36 held-out cases. A trace hash detects changes to the scorer input, while
+the separate reader-backed replay test checks the underlying database
+facts. Neither provides an access-controlled independent oracle. The
+reported count of independently reviewed cases remains **0/36**.

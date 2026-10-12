@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "status": "provisional_author_draft_pending_independent_review",
+  "case_id": "DEV-READER-SHORTAGE-PAIR",
+  "review_status": "pending_independent_review",
+  "reviewer": null,
+  "independently_reviewed_cases": 0,
+  "original_requested_date": "2026-09-04",
+  "original_decision_status": "needs_revision",
+  "selected_candidate_id": null,
+  "rerun_specialists": ["Configuration", "Pricing", "Availability", "Credit", "Policy", "Approval"],
+  "candidates": [
+    {
+      "candidate_id": "C-READ-1",
+      "proposed_later_date": "2026-09-08",
+      "candidate_decision_status": "needs_revision",
+      "supply_supported": true,
+      "actual_source_ids": ["IN-stock_then_confirmed_receipt", "INV-stock_then_confirmed_receipt-P"],
+      "unmet_customer_constraints": ["original_requested_delivery_date"],
+      "human_action_contains": "customer acceptance"
+    },
+    {
+      "candidate_id": "C-READ-2",
+      "proposed_later_date": "2026-09-05",
+      "candidate_decision_status": "needs_revision",
+      "supply_supported": false,
+      "actual_source_ids": [],
+      "unmet_customer_constraints": ["original_requested_delivery_date"],
+      "human_action_contains": "no validated delivery option"
+    }
+  ],
+  "authoring_rationale": "The existing PostgreSQL reference fixture has eight free units by 4 September and a confirmed receipt for two by 8 September. The original ten-unit date is unmet. The 8 September split is supply-supported but needs customer acceptance. The 5 September split precedes the binding receipt and must not be presented as validated."
+}

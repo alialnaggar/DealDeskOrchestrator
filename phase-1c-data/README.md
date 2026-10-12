@@ -103,6 +103,12 @@ development examples, not held-out labels: **0 of 36** evaluation cases
 have independently reviewed answers, and the 100 generated tests remain
 unfinished.
 
+The [evaluation development pack](evaluation/README.md) now includes a
+PostgreSQL-backed scoring trial: it checks the original rule-only deal and
+two reader-backed candidate traces against a separate, provisional draft.
+The trial reuses a regression fixture and has no independently accepted
+answer. It does not increase the **0/36** reviewed evaluation count.
+
 ## Document precedence
 
 `design/data-strategy.md` records the thesis methodology and earlier decisions.

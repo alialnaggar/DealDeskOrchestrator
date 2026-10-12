@@ -453,3 +453,20 @@ unfinished. The evaluator must later use distinct frozen full cases,
 load only agent-facing facts into the system, and score against separately
 reviewed answers and the rule-only baseline. No readiness, schema or
 calibration status changes.
+
+## Reader-backed development evaluation scorer — 12 October 2026
+
+The existing PostgreSQL shortage regression now runs its rule-only original
+decision and two separately rechecked candidate options **before** loading a
+provisional reviewer-only draft. A small scorer compares the actual source
+IDs, original customer date, later slice dates, decision statuses, six
+deterministic reruns, human actions and no automatic selection against that
+draft. It reports false supported options, missed supported options and
+per-field mismatches. A tampered trace digest is rejected; rehashed false
+support or omitted evidence fails the provisional comparison. This is a
+development diagnostic over an existing reference fixture. The oracle has
+not been reviewed independently, no agent produced either proposal and no
+new held-out case or full specialist outcome label is claimed. See
+`../evaluation/README.md`. Independently reviewed evaluation cases remain
+**0/36** and the 100 generated tests are unfinished. Schema, calibration,
+readiness and the draft PR status remain unchanged.
