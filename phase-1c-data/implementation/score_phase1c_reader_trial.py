@@ -40,7 +40,9 @@ def score(package, oracle):
         comparison = payload["human_comparison"]
         actual_supply = comparison["verified_supply_option"]
         expected_supply = item["supply_supported"]
-        actual_date = comparison["proposed"]["availability"][0]["candidate_slices"][-1]["arrival_date"]
+        # An unsupported option has no reader-validated slices. Its proposed
+        # date remains in the typed candidate input, not in a supported plan.
+        actual_date = payload["candidate"]["delivery_slices"][-1]["arrival_date"]
         checks = {
             "original_rule_only_status": payload["original_decision"]["status"] == oracle["original_decision_status"],
             "original_customer_date": payload["original_requested_date"] == oracle["original_requested_date"],
