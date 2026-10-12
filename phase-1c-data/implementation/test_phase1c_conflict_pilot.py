@@ -9,6 +9,7 @@ import unittest
 import yaml
 
 from render_phase1c_conflict_pilot import build, CASE_MAP
+from render_phase1c_dependency_pilot import build as build_dependency, CASES as DEPENDENCY_CASES, RULE_ID as DEPENDENCY_RULE
 from validate_phase1c_generated_rows import audit_dependency_coverage, load_rows
 
 try:
@@ -126,53 +127,27 @@ class ConflictReaderTests(unittest.TestCase):
                 self.assertEqual(assemble_deal_decision(bundle)["status"], "needs_evidence")
 
     def test_isolated_required_product_pass_and_conflict_reach_deal_gate(self):
-        """Exercise a real reader rule without changing shared pilot outcomes."""
-        source = "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-004"
-        target = "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-005"
+        """Generated pair proves coverage and restores every shared rule/outcome."""
+        baseline = assemble_deal_decision(self.read("CREDIT-LIMIT"))
+        portfolio = json.loads((HERE / "phase1c_portfolio_draft.json").read_text())
+        sql = build_dependency(portfolio)
+        self.assertEqual(sql, build_dependency(portfolio))
+        self.assertEqual(sql.count("INSERT INTO deals "), 2)
+        self.assertNotIn("expected_decision", sql)
         self.conn.execute("SAVEPOINT dependency_trial")
         try:
-            self.conn.execute("""INSERT INTO deal_desk.compatibility_rules
-                (compatibility_rule_id,catalog_version,rule_name,rule_type,scope_type,
-                 source_product_id,target_product_id,condition_json,severity,message,priority)
-                VALUES ('TRIAL-REQUIRES-ADDON','CATALOGUE_2026_V1',
-                'Synthetic product dependency','requires_product','whole_deal',%s,%s,
-                '{"operator":"present"}','blocker','Add-on required',1)""", (source, target))
-            for index, include_target in ((21, False), (22, True)):
-                deal_id = f"DEP-TRIAL-{index}"
+            for statement in re.findall(r"^(?:INSERT INTO|UPDATE deals SET) .*?;",
+                                        sql, re.M | re.S):
+                self.conn.execute(statement)
+            for index, include_target in DEPENDENCY_CASES:
                 run_id = f"00000000-0000-4000-8000-{270000 + index:012d}"
-                self.conn.execute("""INSERT INTO deal_desk.deals
-                    (deal_id,customer_id,salesperson_id,deal_name,submitted_at,currency_code,
-                     catalog_version,policy_set_code,requested_delivery_date,
-                     destination_country_code,destination_region,shipping_service_code,
-                     terms_json,deal_status,dataset_type)
-                    VALUES (%s,'CONFLICT-CUST-06','SALES-001','Dependency trial',
-                    '2026-09-01 10:00+00','EUR','CATALOGUE_2026_V1','BASELINE_2026',
-                    '2026-09-10','DE','DE-NW','standard',
-                    '{"payment_terms_days":30,"contract_clause_codes":["standard"],"allow_partial_delivery":false}',
-                    'Draft','generated_test')""", (deal_id,))
-                for number, product in enumerate((source, target) if include_target else (source,), 1):
-                    self.conn.execute("""INSERT INTO deal_desk.deal_lines
-                        (deal_line_id,deal_id,line_number,product_id,quantity,
-                         quoted_unit_price,configuration_json)
-                        SELECT %s,%s,%s,product_id,1,list_price,'{}'
-                        FROM deal_desk.products WHERE product_id=%s""",
-                        (f"DEP-LINE-{index}-{number}", deal_id, number, product))
-                self.conn.execute("UPDATE deal_desk.deals SET deal_status='Submitted' WHERE deal_id=%s",
-                                  (deal_id,))
-                self.conn.execute("""INSERT INTO deal_desk.deal_runs
-                    (run_id,deal_id,original_policy_set_code,applied_policy_set_code,
-                     catalog_version_used,as_of_at,data_snapshot_ref,input_snapshot_json,
-                     config_hash,run_status,started_at)
-                    VALUES (%s,%s,'BASELINE_2026','BASELINE_2026','CATALOGUE_2026_V1',
-                    '2026-09-01 12:00+00','DEP-TRIAL-SNAPSHOT','{}',
-                    'dependency-trial','queued','2026-09-01 12:00+00')""", (run_id, deal_id))
                 bundle = read_run(self.conn, run_id, commercial_rule_mode="compiled")
                 finding = next(f for f in bundle["facts"]["compatibility"]
-                               if f["compatibility_rule_id"] == "TRIAL-REQUIRES-ADDON")
+                               if f["compatibility_rule_id"] == DEPENDENCY_RULE)
                 decision = assemble_deal_decision(bundle)
                 self.assertEqual(finding["status"], "pass" if include_target else "fail")
                 matching_blocks = [b for b in decision["blocks"]
-                                   if b.get("rule_id") == "TRIAL-REQUIRES-ADDON"]
+                                   if b.get("rule_id") == DEPENDENCY_RULE]
                 self.assertEqual(bool(matching_blocks), not include_target)
                 self.assertEqual(decision["status"] == "blocked", not include_target)
             coverage = audit_dependency_coverage(load_rows(self.conn))
@@ -182,6 +157,10 @@ class ConflictReaderTests(unittest.TestCase):
         finally:
             self.conn.execute("ROLLBACK TO SAVEPOINT dependency_trial")
             self.conn.execute("RELEASE SAVEPOINT dependency_trial")
+        self.assertEqual(assemble_deal_decision(self.read("CREDIT-LIMIT")), baseline)
+        self.assertEqual(self.conn.execute(
+            "SELECT count(*) FROM deal_desk.compatibility_rules "
+            "WHERE compatibility_rule_id=%s", (DEPENDENCY_RULE,)).fetchone()[0], 0)
 
 
 if __name__ == "__main__":

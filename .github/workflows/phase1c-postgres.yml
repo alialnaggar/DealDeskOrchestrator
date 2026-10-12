@@ -217,8 +217,10 @@ jobs:
         run: python -m unittest -v test_phase1c_historical_inputs
       - name: Freeze dated historical credit and AR views
         run: python -m unittest -v test_render_phase1c_historical_credit
-      - name: Read thirteen source conflict cases
-        run: python -m unittest -v test_phase1c_conflict_pilot.ConflictReaderTests
+      - name: Read thirteen source conflict cases and isolated generated dependency pair
+        run: |
+          python render_phase1c_dependency_pilot.py
+          python -m unittest -v test_phase1c_conflict_pilot.ConflictReaderTests
       - name: Check mixed pilot replay and contention
         run: python -m unittest -v test_phase1c_stress_pilot.StressReaderTests
       - name: Measure pilot decisions and source provenance
