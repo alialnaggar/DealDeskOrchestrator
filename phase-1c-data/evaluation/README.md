@@ -59,3 +59,7 @@ it is not hidden, not a newly generated evaluation row, and not one of the
 the separate reader-backed replay test checks the underlying database
 facts. Neither provides an access-controlled independent oracle. The
 reported count of independently reviewed cases remains **0/36**.
+
+## Separate database input preparation — 12 October 2026
+
+`implementation/phase1c_evaluation_input.py` prepares a source-only packet from a separate PostgreSQL submission and operational source IDs. The integration fixture uses a distinct product, inventory, receipt, deal and run, with 11 requested units on 3 September; it shares versioned policy, shipping lane and customer master context. The packet contains the selected reader input rows and a SHA-256 seal, with no reader-derived findings, proposed option, score or reviewer answer. The preparation check rejects overlap with named development deal and source IDs, and detects tampering. The case is rolled back after the test: no durable frozen evaluation release or independently reviewed answer exists yet. It is **not counted among the 36**. A separate reviewer still needs a frozen complete case and an isolated answer key before any agent run or baseline scoring. Readiness and calibration remain unchanged.

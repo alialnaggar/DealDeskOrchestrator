@@ -14,6 +14,7 @@ from phase1c_candidate_trace import (build_trace_record, export_trace_once,
                                      verify_exported_trace, replay_exported_trace)
 from phase1c_candidate_batch import compare_candidate_set
 from phase1c_partial_discovery import discover_partial_delivery, discover_and_recheck
+from phase1c_evaluation_input import prepare_review_input, verify_review_input
 from score_phase1c_reader_trial import score
 
 try:
@@ -211,6 +212,70 @@ class CandidateReaderTests(unittest.TestCase):
                                       reader_kwargs={"commercial_rule_mode": "compiled"})
         self.assertEqual(result["status"], "no_proposal")
         self.assertIn("binding full supply", result["reason"])
+
+    def test_distinct_input_only_evaluation_preparation(self):
+        from phase1c_reader import read_run
+        from phase1c_candidate import reader_input_digest
+        self.conn.execute("""INSERT INTO deal_desk.products
+            (product_id,product_code,catalog_version,product_name,category,product_type,
+             attributes_json,list_price,standard_cost,billing_model,unit_of_measure,
+             is_active,is_sellable,fulfillment_mode,stock_uom)
+            SELECT 'eval_prep_stock-P','EVAL-PREP-STOCK',catalog_version,
+                   'Independent review preparation',category,product_type,attributes_json,
+                   list_price,standard_cost,billing_model,unit_of_measure,is_active,
+                   is_sellable,fulfillment_mode,stock_uom
+            FROM deal_desk.products WHERE product_id='stock_then_confirmed_receipt-P'""")
+        self.conn.execute("""INSERT INTO deal_desk.inventory
+            (inventory_id,product_id,location_id,quantity_on_hand,quantity_allocated,snapshot_at)
+            SELECT 'INV-EVAL-PREP-1','eval_prep_stock-P',location_id,5,0,snapshot_at
+            FROM deal_desk.inventory WHERE inventory_id='INV-stock_then_confirmed_receipt-P'""")
+        self.conn.execute("""INSERT INTO deal_desk.inbound_supply
+            (supply_id,purchase_order_id,product_id,location_id,quantity,quantity_allocated,
+             expected_date,confirmed_at,status,reference_number,evidence_ref,valid_until)
+            SELECT 'IN-EVAL-PREP-1',purchase_order_id,'eval_prep_stock-P',location_id,
+                   7,0,expected_date,confirmed_at,status,'REF-EVAL-PREP-1',
+                   evidence_ref,valid_until FROM deal_desk.inbound_supply
+            WHERE supply_id='IN-stock_then_confirmed_receipt'""")
+        self.conn.execute("""INSERT INTO deal_desk.deals
+            (deal_id,customer_id,salesperson_id,deal_name,submitted_at,currency_code,
+             catalog_version,policy_set_code,requested_delivery_date,destination_country_code,
+             destination_region,shipping_service_code,terms_json,deal_status,dataset_type)
+            VALUES ('D-eval-prep-1','C-stock_then_confirmed_receipt','SALES-FIXTURE',
+            'Separate input review case','2026-09-01 09:00+00','EUR','CATALOGUE_2026_V1',
+            'BASELINE_2026','2026-09-03','DE','Berlin','standard',
+            '{"allow_partial_delivery":true,"contract_clause_codes":["standard"],"payment_terms_days":30}',
+            'Draft','generated_test')""")
+        self.conn.execute("""INSERT INTO deal_desk.deal_lines
+            (deal_line_id,deal_id,line_number,product_id,quantity,quoted_unit_price,configuration_json)
+            VALUES ('L-eval-prep-1','D-eval-prep-1',1,'eval_prep_stock-P',11,900,'{}')""")
+        self.conn.execute("UPDATE deal_desk.deals SET deal_status='Submitted' WHERE deal_id='D-eval-prep-1'")
+        review_run = UUID("00000000-0000-4000-8000-000000019992")
+        self.conn.execute("""INSERT INTO deal_desk.deal_runs
+            (run_id,deal_id,original_policy_set_code,applied_policy_set_code,catalog_version_used,
+             as_of_at,data_snapshot_ref,input_snapshot_json,config_hash,run_status,started_at)
+            VALUES (%s,'D-eval-prep-1','BASELINE_2026','BASELINE_2026',
+            'CATALOGUE_2026_V1','2026-09-01 12:00+00','EVAL-PREP-SNAPSHOT-1',
+            '{"deal_id":"D-eval-prep-1"}','EVAL-PREP-CONFIG','queued','2026-09-01 12:00+00')""",
+            (review_run,))
+        bundle = read_run(self.conn, review_run, commercial_rule_mode="compiled")
+        packet = prepare_review_input(bundle, case_id="EVAL-PREP-1",
+            excluded_deal_ids=("D-candidate-shortage", "D-stock_then_confirmed_receipt"),
+            excluded_source_ids=("INV-stock_then_confirmed_receipt-P",
+                                 "IN-stock_then_confirmed_receipt"))
+        self.assertTrue(verify_review_input(packet, expected_case_id="EVAL-PREP-1",
+                                            expected_source_digest=reader_input_digest(bundle)))
+        self.assertNotIn("facts", packet["payload"])
+        self.assertNotIn("candidate_trace", packet["payload"])
+        self.assertEqual(packet["payload"]["source_rows"]["deal"]["requested_delivery_date"],
+                         "2026-09-03")
+        forged = deepcopy(packet)
+        forged["payload"]["source_rows"]["inventory"][0]["quantity_on_hand"] = "500"
+        with self.assertRaisesRegex(ValueError, "seal differs"):
+            verify_review_input(forged, expected_case_id="EVAL-PREP-1",
+                                expected_source_digest=reader_input_digest(bundle))
+        with self.assertRaisesRegex(ValueError, "reuses development"):
+            prepare_review_input(bundle, case_id="EVAL-PREP-1",
+                                 excluded_source_ids=("INV-EVAL-PREP-1",))
 
     def test_unavailable_date_or_false_source_cannot_pass(self):
         from phase1c_reader import read_run
