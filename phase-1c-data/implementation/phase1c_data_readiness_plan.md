@@ -653,3 +653,7 @@ The read-only `phase1c_evaluation_input.py` path and PostgreSQL integration test
 ## Compatibility dependency coverage check — 12 October 2026
 
 The existing generated-row validator now reports actual non-installation rule application, including no-rule and no-applicable-rule gaps. This makes the `compatibility_rules.condition_json` gate measurable while leaving it open. Next add deliberate dependency pass and conflict rows to the synthetic pilot and verify both the row validator and deterministic deal decision before marking coverage complete. No new dataset label, schema or calibration freeze is implied.
+
+## Isolated dependency decision trial — 12 October 2026
+
+An integration test constructs two temporary submitted deals over the existing pilot catalogue and dated stock: one includes a required add-on and one omits it. A typed `requires_product` blocker must pass for the first and produce an attributed configuration block for the second after a full PostgreSQL reader and deterministic deal decision. The row coverage audit sees both results. The test rolls back its rule and deals, preserving all pilot and historical outcomes. This proves the rule path, not generated-set coverage; `compatibility_rules.condition_json` remains open until the reproducible generator includes deliberate dependency cases. No schema, calibration or readiness flag changed.

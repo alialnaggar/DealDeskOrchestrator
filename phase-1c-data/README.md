@@ -160,3 +160,5 @@ diagnostics to labels without the independent calibration and evaluation gate.
 The separate evaluation-input preparation trial is documented in [evaluation/README.md](evaluation/README.md). It proves a distinct database case can be packaged without derived findings, but has no durable frozen case or independent answer. The reviewed count remains **0/36**; generation readiness remains false.
 
 The row validator now reports whether a configured product-dependency or attribute rule actually applies to a generated deal, with pass/fail/not-applicable counts. This exposes a remaining compatibility coverage gap without promoting draft data to ready. See the release review.
+
+A temporary PostgreSQL dependency trial now verifies a required add-on passes when present and blocks when missing; it does not add permanent generated cases or close the compatibility review mark. See the release review.
