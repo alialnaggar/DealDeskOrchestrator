@@ -10,7 +10,7 @@ import unittest
 
 import yaml
 
-from render_phase1c_generated_test_batch import SOURCE_FILES, build
+from render_phase1c_generated_test_batch import SOURCE_FILES, build, eligible_customers
 from validate_phase1c_scenario_matrix import generated_case_plan
 
 try:
@@ -25,6 +25,7 @@ if psycopg is not None:
 
 HERE = Path(__file__).resolve().parent
 FILES = ("phase1c_buildable_master.sql", "phase1c_sellable_catalogue.sql",
+         "phase1c_customer_master.sql",
          "phase1c_vertical_pilot.sql", "phase1c_conflict_pilot.sql",
          "phase1c_stress_pilot.sql", "phase1c_dependency_pilot.sql",
          "phase1c_generated_test_batch.sql")
@@ -35,7 +36,7 @@ class GeneratedBatchRenderTests(unittest.TestCase):
         matrix = yaml.safe_load((HERE / "phase1c_scenario_matrix.yaml").read_text())
         hashes = {name: hashlib.sha256((HERE / name).read_bytes()).hexdigest()
                   for name in SOURCE_FILES}
-        sql, report = build(matrix, hashes)
+        sql, report = build(matrix, hashes, (HERE / "phase1c_customer_master.sql").read_text())
         self.assertEqual(sql, (HERE / "phase1c_generated_test_batch.sql").read_text())
         self.assertEqual(report, json.loads(
             (HERE / "phase1c_generated_test_batch_report.json").read_text()))
@@ -43,6 +44,9 @@ class GeneratedBatchRenderTests(unittest.TestCase):
         self.assertEqual((report["v1_deals"], report["v2_dependency_deals"],
                           report["line_count"], report["source_template_count"]),
                          (98, 2, 101, 20))
+        self.assertEqual((report["eligible_customer_count"], report["customer_reassignment_count"]),
+                         (37, 75))
+        self.assertEqual(len(set(eligible_customers((HERE / "phase1c_customer_master.sql").read_text()))), 37)
         self.assertNotIn("target_bucket", sql)
         self.assertNotIn("historical_decision", sql)
         self.assertNotIn("expected_decision", sql)
@@ -75,6 +79,7 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 self.assertEqual(result["supplier_calendar_coverage"]["offers_missing_calendar"], [])
                 statuses, modes, customers = Counter(), Counter(), Counter()
                 fulfillment, availability_sources = Counter(), Counter()
+                eligible = set(eligible_customers((HERE / "phase1c_customer_master.sql").read_text()))
                 for index, slot in enumerate(generated_case_plan(matrix), 1):
                     run_id = f"00000000-0000-4000-8000-{310000 + index:012d}"
                     bundle = read_run(conn, run_id, commercial_rule_mode="compiled")
@@ -84,6 +89,16 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                     self.assertNotEqual(decision["status"], "approved")
                     statuses[decision["status"]] += 1
                     customers[bundle["deal"]["customer_id"]] += 1
+                    if bundle["deal"]["customer_id"] in eligible:
+                        profile = conn.execute(
+                            "SELECT credit_status, risk_rating, commitments_as_of_at "
+                            "FROM customer_credit_profiles WHERE customer_id=%s",
+                            (bundle["deal"]["customer_id"],)).fetchone()
+                        self.assertEqual(profile[0], "Active")
+                        self.assertIn(profile[1], ("Low", "Medium"))
+                        self.assertLessEqual(profile[2], bundle["run"]["as_of_at"])
+                    if slot["archetype_id"] == "CREDIT-LIMIT":
+                        self.assertNotIn(bundle["deal"]["customer_id"], eligible)
                     modes.update(line["fulfillment_mode"] for line in bundle["lines"])
                     fulfillment.update(fact["fulfillment_status"] for fact in bundle["facts"]["lines"]
                                        if "fulfillment_status" in fact)
@@ -115,6 +130,7 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 self.assertEqual(diagnostic["deal_count"], 100)
                 self.assertEqual(sum(modes.values()), 101)
                 self.assertGreaterEqual(len(statuses), 2)
+                self.assertGreaterEqual(len(customers), 50)
                 if os.environ.get("PHASE1C_BATCH_DIAGNOSTIC"):
                     Path(os.environ["PHASE1C_BATCH_DIAGNOSTIC"]).write_text(
                         json.dumps(diagnostic, indent=2, sort_keys=True) + "\n")

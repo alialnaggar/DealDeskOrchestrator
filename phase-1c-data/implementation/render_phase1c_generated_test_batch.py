@@ -11,6 +11,7 @@ from decimal import Decimal
 import hashlib
 import json
 from pathlib import Path
+import re
 
 import yaml
 
@@ -35,14 +36,30 @@ V2_TEMPLATES = {"DEPENDENCY-PASS": "DEP-V2-DEAL-22",
 MULTIPLIERS = (Decimal("1.00"), Decimal("0.98"), Decimal("0.96"),
                Decimal("0.94"), Decimal("0.92"), Decimal("0.90"))
 SOURCE_FILES = ("phase1c_scenario_matrix.yaml", "phase1c_vertical_pilot.sql",
-                "phase1c_conflict_pilot.sql", "phase1c_dependency_pilot.sql")
+                "phase1c_conflict_pilot.sql", "phase1c_dependency_pilot.sql",
+                "phase1c_customer_master.sql")
+
+
+def eligible_customers(customer_sql):
+    """Select dated, active credit contexts with room for ordinary pilot quotes."""
+    rows = re.findall(
+        r"INSERT INTO customer_credit_profiles .*?VALUES \('(SYN-CUST-\d+)', '([^']+)', '([^']+)', '[^']+', '[^']+', '([^']+)', '([^']+)'",
+        customer_sql)
+    if len(rows) != 80:
+        raise ValueError("customer master must contain 80 credit profiles")
+    selected = [customer for customer, limit, committed, risk, status in rows
+                if status == "Active" and risk in ("Low", "Medium")
+                and Decimal(limit) - Decimal(committed) > Decimal("150000")]
+    if len(selected) != 37:
+        raise ValueError("eligible customer pool drift")
+    return selected
 
 
 def quote(value):
     return "'" + value.replace("'", "''") + "'"
 
 
-def build(matrix, source_hashes):
+def build(matrix, source_hashes, customer_sql):
     plan = generated_case_plan(matrix)
     if len(plan) != 100 or set(V1_TEMPLATES) != {c["id"] for c in matrix["archetypes"]}:
         raise ValueError("100-case source mapping differs from reviewed archetypes")
@@ -51,6 +68,8 @@ def build(matrix, source_hashes):
            "SET search_path TO deal_desk, public;\n"]
     variants = Counter()
     templates = Counter()
+    customers = eligible_customers(customer_sql)
+    reassigned = 0
     for index, slot in enumerate(plan, 1):
         archetype, deal = slot["archetype_id"], slot["case_id"]
         if archetype in V1_TEMPLATES:
@@ -64,13 +83,19 @@ def build(matrix, source_hashes):
         variants[archetype] += 1
         multiplier = MULTIPLIERS[min(variant, len(MULTIPLIERS) - 1)]
         qdeal, qtemplate = quote(deal), quote(template)
+        # Preserve the first reference variant and the credit-limit archetype.
+        # Different billing countries may ship to the unchanged requested destination.
+        customer_expr = "customer_id"
+        if archetype in V1_TEMPLATES and archetype != "CREDIT-LIMIT" and variant:
+            customer_expr = quote(customers[reassigned % len(customers)])
+            reassigned += 1
         out.append(
             "INSERT INTO deals (deal_id,supersedes_deal_id,customer_id,salesperson_id,"
             "deal_name,submitted_at,currency_code,catalog_version,policy_set_code,"
             "requested_delivery_date,destination_country_code,destination_region,"
             "shipping_service_code,terms_json,exception_justification,requirements_json,"
             "evidence_refs_json,salesperson_comments,deal_status,dataset_type) "
-            f"SELECT {qdeal},NULL,customer_id,salesperson_id,"
+            f"SELECT {qdeal},NULL,{customer_expr},salesperson_id,"
             f"{quote('Synthetic generated quote ' + f'{index:03d}')},submitted_at,"
             "currency_code,catalog_version,policy_set_code,requested_delivery_date,"
             "destination_country_code,destination_region,shipping_service_code,"
@@ -106,6 +131,8 @@ def build(matrix, source_hashes):
         "v1_deals": sum(p["catalog_version"] == matrix["catalog_version"] for p in plan),
         "v2_dependency_deals": len(plan) - sum(p["catalog_version"] == matrix["catalog_version"] for p in plan),
         "source_template_count": len(templates),
+        "eligible_customer_count": len(customers),
+        "customer_reassignment_count": reassigned,
         "source_reuse_limit": "18_V1_and_2_V2_development_states;_not_independent_source_distribution",
         "line_count": 101,
         "source_sha256": source_hashes,
@@ -121,7 +148,7 @@ def main():
     matrix = yaml.safe_load((HERE / "phase1c_scenario_matrix.yaml").read_text())
     hashes = {name: hashlib.sha256((HERE / name).read_bytes()).hexdigest()
               for name in SOURCE_FILES}
-    sql, report = build(matrix, hashes)
+    sql, report = build(matrix, hashes, (HERE / "phase1c_customer_master.sql").read_text())
     rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.check:
         if SQL_PATH.read_text() != sql or REPORT_PATH.read_text() != rendered:
