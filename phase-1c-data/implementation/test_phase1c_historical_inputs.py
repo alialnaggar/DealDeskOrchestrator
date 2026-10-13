@@ -96,7 +96,7 @@ class HistoricalInputDatabaseTests(unittest.TestCase):
             rows["products"] = [row for row in rows["products"] if row["product_id"] in product_ids]
             rows["deals"] = [row for row in rows["deals"] if row["deal_id"].startswith("HIST-DEAL-")]
             rows["deal_lines"] = [row for row in rows["deal_lines"] if row["deal_id"].startswith("HIST-DEAL-")]
-            for table in ("suppliers", "inventory", "purchase_orders", "inbound_supply",
+            for table in ("suppliers", "supplier_items", "inventory", "purchase_orders", "inbound_supply",
                           "production_capacity", "shipping_lanes", "compatibility_rules"):
                 rows[table] = []
             contract = yaml.safe_load((HERE / "phase1c_data_contract.yaml").read_text())
