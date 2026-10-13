@@ -84,11 +84,14 @@ class ReaderReferenceTests(unittest.TestCase):
 
     def test_supplier_calendar_estimate_is_conditional(self):
         import json
-        # The reference fixture has no typed calendar. It must not invent dates.
-        self.assertEqual(self.read(3)["facts"]["lines"][0]["supplier_offer_estimates"], [])
+        # A missing calendar cannot yield an estimated date.
         with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
             conn.execute("SET search_path TO deal_desk, public")
             try:
+                conn.execute("UPDATE suppliers SET order_calendar_json='{}'::jsonb WHERE supplier_id=%s",
+                             ("S-offer_without_supplier_commitment",))
+                self.assertEqual(read_run(conn, "00000000-0000-4000-8000-000000030001")
+                                 ["facts"]["lines"][0]["supplier_offer_estimates"], [])
                 conn.execute("UPDATE suppliers SET order_calendar_json=%s::jsonb WHERE supplier_id=%s",
                              (json.dumps({"working_weekdays": [1, 2, 3, 4],
                                           "holiday_dates": [], "time_zone": "Europe/Berlin"}),
