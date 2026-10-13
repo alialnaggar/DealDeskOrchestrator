@@ -1,5 +1,6 @@
 {
   "customer_reassignment_count": 63,
+  "dated_stock_variant_count": 5,
   "eligible_customer_count": 37,
   "generated_deals": 100,
   "line_count": 101,
@@ -12,7 +13,7 @@
     "phase1c_vertical_pilot.sql": "1507790596acd9712d03a8d88d3fdda4c521a08cc008354bc28fa3660928f4e6"
   },
   "source_template_count": 20,
-  "sql_sha256": "360cf4a57cd42bb773b8f388ae8798b4775adcfcb412a872d281606ea38b67d0",
+  "sql_sha256": "1a0d6f114604f5a7116cd662fc4c3bc100f355e9000f8f9050630a5b76837fbb",
   "status": "provisional_source_reuse",
   "v1_deals": 98,
   "v2_dependency_deals": 2

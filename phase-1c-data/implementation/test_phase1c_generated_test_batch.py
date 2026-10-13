@@ -46,6 +46,7 @@ class GeneratedBatchRenderTests(unittest.TestCase):
                          (98, 2, 101, 20))
         self.assertEqual((report["eligible_customer_count"], report["customer_reassignment_count"]),
                          (37, 63))
+        self.assertEqual(report["dated_stock_variant_count"], 5)
         self.assertEqual(len(set(eligible_customers((HERE / "phase1c_customer_master.sql").read_text()))), 37)
         self.assertNotIn("target_bucket", sql)
         self.assertNotIn("historical_decision", sql)
@@ -79,7 +80,14 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 self.assertEqual(result["supplier_calendar_coverage"]["offers_missing_calendar"], [])
                 statuses, modes, customers = Counter(), Counter(), Counter()
                 fulfillment, availability_sources = Counter(), Counter()
+                baseline = assemble_deal_decision(read_run(
+                    conn, "00000000-0000-4000-8000-000000260001",
+                    commercial_rule_mode="compiled"))
+                self.assertIn("PILOT-STOCK-005", {
+                    source for finding in baseline["specialists"]["availability"]
+                    for source in finding["source_ids"]})
                 eligible = set(eligible_customers((HERE / "phase1c_customer_master.sql").read_text()))
+                stocked_variant = 0
                 for index, slot in enumerate(generated_case_plan(matrix), 1):
                     run_id = f"00000000-0000-4000-8000-{310000 + index:012d}"
                     bundle = read_run(conn, run_id, commercial_rule_mode="compiled")
@@ -105,6 +113,15 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                     availability_sources.update(source
                         for finding in decision["specialists"]["availability"]
                         for source in finding["source_ids"])
+                    if slot["archetype_id"] == "STOCK-READY":
+                        sources = {source for finding in decision["specialists"]["availability"]
+                                   for source in finding["source_ids"]}
+                        expected = ("PILOT-STOCK-005" if stocked_variant == 0
+                                    else f"GEN-STOCK-{stocked_variant:03d}")
+                        self.assertIn(expected, sources)
+                        self.assertEqual(bundle["run"]["as_of_at"].hour,
+                                         12 + (15 * stocked_variant) // 60)
+                        stocked_variant += 1
                     if index in (99, 100):
                         finding = next(f for f in bundle["facts"]["compatibility"]
                                        if f["compatibility_rule_id"] == "V2-REQUIRES-ADDON")
@@ -131,6 +148,9 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 self.assertEqual(sum(modes.values()), 101)
                 self.assertGreaterEqual(len(statuses), 2)
                 self.assertGreaterEqual(len(customers), 50)
+                self.assertEqual(stocked_variant, 6)
+                self.assertTrue({f"GEN-STOCK-{i:03d}" for i in range(1, 6)}
+                                <= set(availability_sources))
                 if os.environ.get("PHASE1C_BATCH_DIAGNOSTIC"):
                     Path(os.environ["PHASE1C_BATCH_DIAGNOSTIC"]).write_text(
                         json.dumps(diagnostic, indent=2, sort_keys=True) + "\n")

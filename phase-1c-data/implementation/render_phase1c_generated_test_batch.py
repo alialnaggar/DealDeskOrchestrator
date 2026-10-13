@@ -7,6 +7,7 @@ independent source distribution or evaluation oracle.
 
 import argparse
 from collections import Counter
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import hashlib
 import json
@@ -39,6 +40,7 @@ MULTIPLIERS = (Decimal("1.00"), Decimal("0.98"), Decimal("0.96"),
 SOURCE_FILES = ("phase1c_scenario_matrix.yaml", "phase1c_vertical_pilot.sql",
                 "phase1c_conflict_pilot.sql", "phase1c_dependency_pilot.sql",
                 "phase1c_customer_master.sql")
+STOCK_QUANTITIES = (3, 4, 2, 5, 3)
 
 
 def eligible_customers(customer_sql):
@@ -71,6 +73,7 @@ def build(matrix, source_hashes, customer_sql):
     templates = Counter()
     customers = eligible_customers(customer_sql)
     reassigned = 0
+    stock_variants = 0
     for index, slot in enumerate(plan, 1):
         archetype, deal = slot["archetype_id"], slot["case_id"]
         if archetype in V1_TEMPLATES:
@@ -91,6 +94,20 @@ def build(matrix, source_hashes, customer_sql):
                 and archetype not in EARLY_RUN_ARCHETYPES and variant):
             customer_expr = quote(customers[reassigned % len(customers)])
             reassigned += 1
+        stock_as_of = None
+        if archetype == "STOCK-READY" and variant:
+            # A later observation is visible only to this variant's later run.
+            stock_variants += 1
+            stock_as_of = datetime(2026, 9, 1, 12, tzinfo=timezone.utc) + timedelta(minutes=15 * variant)
+            observed_at = stock_as_of - timedelta(minutes=5)
+            stock_id = f"GEN-STOCK-{variant:03d}"
+            out.append(
+                "INSERT INTO inventory (inventory_id,product_id,location_id,"
+                "quantity_on_hand,quantity_allocated,snapshot_at) "
+                f"SELECT {quote(stock_id)},product_id,location_id,"
+                f"{STOCK_QUANTITIES[variant - 1]},quantity_allocated,"
+                f"{quote(observed_at.isoformat())}::timestamptz "
+                "FROM inventory WHERE inventory_id='PILOT-STOCK-005';\n")
         out.append(
             "INSERT INTO deals (deal_id,supersedes_deal_id,customer_id,salesperson_id,"
             "deal_name,submitted_at,currency_code,catalog_version,policy_set_code,"
@@ -112,14 +129,16 @@ def build(matrix, source_hashes, customer_sql):
             "fulfillment_group_code,requested_activation_date,installation_requested "
             f"FROM deal_lines WHERE deal_id={qtemplate};\n")
         out.append(f"UPDATE deals SET deal_status='Submitted' WHERE deal_id={qdeal};\n")
+        as_of_expr = quote(stock_as_of.isoformat()) + "::timestamptz" if stock_as_of else "as_of_at"
+        snapshot_expr = quote(f"GEN-STOCK-SNAPSHOT-{variant:03d}") if stock_as_of else "data_snapshot_ref"
         out.append(
             "INSERT INTO deal_runs (run_id,deal_id,original_policy_set_code,"
             "applied_policy_set_code,catalog_version_used,as_of_at,data_snapshot_ref,"
             "input_snapshot_json,config_hash,run_status,started_at) "
             f"SELECT {quote(f'00000000-0000-4000-8000-{310000 + index:012d}')}::uuid,"
             f"{qdeal},original_policy_set_code,applied_policy_set_code,"
-            "catalog_version_used,as_of_at,data_snapshot_ref,input_snapshot_json,"
-            "'provisional-100-batch','queued',started_at "
+            f"catalog_version_used,{as_of_expr},{snapshot_expr},input_snapshot_json,"
+            f"'provisional-100-batch','queued',{as_of_expr if stock_as_of else 'started_at'} "
             f"FROM deal_runs WHERE deal_id={qtemplate};\n")
     out.append("DO $batch$ BEGIN "
                "IF (SELECT count(*) FROM deals WHERE deal_id LIKE 'GEN-TEST-%') <> 100 "
@@ -135,6 +154,7 @@ def build(matrix, source_hashes, customer_sql):
         "source_template_count": len(templates),
         "eligible_customer_count": len(customers),
         "customer_reassignment_count": reassigned,
+        "dated_stock_variant_count": stock_variants,
         "source_reuse_limit": "18_V1_and_2_V2_development_states;_not_independent_source_distribution",
         "line_count": 101,
         "source_sha256": source_hashes,
