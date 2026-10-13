@@ -1,5 +1,6 @@
 """Reproduce and read the provisional 100-deal generated-test batch."""
 
+from collections import Counter
 import hashlib
 import json
 import os
@@ -72,6 +73,8 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 self.assertEqual(result["dependency_coverage"]["finding_counts"]["pass"], 2)
                 self.assertEqual(result["dependency_coverage"]["finding_counts"]["fail"], 2)
                 self.assertEqual(result["supplier_calendar_coverage"]["offers_missing_calendar"], [])
+                statuses, modes, customers = Counter(), Counter(), Counter()
+                fulfillment, availability_sources = Counter(), Counter()
                 for index, slot in enumerate(generated_case_plan(matrix), 1):
                     run_id = f"00000000-0000-4000-8000-{310000 + index:012d}"
                     bundle = read_run(conn, run_id, commercial_rule_mode="compiled")
@@ -79,12 +82,42 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                     self.assertEqual(bundle["run"]["catalog_version_used"], slot["catalog_version"])
                     decision = assemble_deal_decision(bundle)
                     self.assertNotEqual(decision["status"], "approved")
+                    statuses[decision["status"]] += 1
+                    customers[bundle["deal"]["customer_id"]] += 1
+                    modes.update(line["fulfillment_mode"] for line in bundle["lines"])
+                    fulfillment.update(fact["fulfillment_status"] for fact in bundle["facts"]["lines"]
+                                       if "fulfillment_status" in fact)
+                    availability_sources.update(source
+                        for finding in decision["specialists"]["availability"]
+                        for source in finding["source_ids"])
                     if index in (99, 100):
                         finding = next(f for f in bundle["facts"]["compatibility"]
                                        if f["compatibility_rule_id"] == "V2-REQUIRES-ADDON")
                         self.assertEqual(finding["status"], "pass" if index == 99 else "fail")
                         self.assertEqual(any(b.get("rule_id") == "V2-REQUIRES-ADDON"
                                              for b in decision["blocks"]), index == 100)
+                diagnostic = {
+                    "status": "development_diagnostic_not_answer_key",
+                    "deal_count": sum(statuses.values()),
+                    "decision_status_counts": dict(sorted(statuses.items())),
+                    "line_mode_counts": dict(sorted(modes.items())),
+                    "fulfillment_status_counts": dict(sorted(fulfillment.items())),
+                    "distinct_customer_count": len(customers),
+                    "distinct_availability_source_ids": len(availability_sources),
+                    "top_availability_source_reuse": [
+                        {"source_id": source, "finding_attributions": count}
+                        for source, count in sorted(availability_sources.items(),
+                                                    key=lambda item: (-item[1], item[0]))[:10]],
+                    "source_template_count": 20,
+                    "limitations": ["source_states_reused_across_submissions",
+                                    "no_independent_answers_or_evaluation_cases"],
+                }
+                self.assertEqual(diagnostic["deal_count"], 100)
+                self.assertEqual(sum(modes.values()), 101)
+                self.assertGreaterEqual(len(statuses), 2)
+                if os.environ.get("PHASE1C_BATCH_DIAGNOSTIC"):
+                    Path(os.environ["PHASE1C_BATCH_DIAGNOSTIC"]).write_text(
+                        json.dumps(diagnostic, indent=2, sort_keys=True) + "\n")
             finally:
                 conn.rollback()
 
