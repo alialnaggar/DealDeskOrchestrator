@@ -184,6 +184,16 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                             "digital_capacity": sorted(row["digital_capacity_id"]
                                                        for row in bundle["digital_capacity"]),
                         },
+                        "service_facts": [
+                            {"status": service["status"],
+                             "coverage": service["coverage"],
+                             "coverage_rule_ids": service["coverage_rule_ids"],
+                             "requested_date": (service["requested_date"].isoformat()
+                                                if service["requested_date"] else None),
+                             "slot_committed": service["slot_committed"]}
+                            for fact in bundle["facts"]["lines"]
+                            for service in [fact.get("service")] if service is not None
+                        ],
                         "service_coverage_rule_ids": sorted({
                             source for fact in bundle["facts"]["lines"]
                             for source in fact.get("service", {}).get("coverage_rule_ids", [])
@@ -272,13 +282,22 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 source_case_reuse = Counter(
                     source for case in case_observations
                     for source in case["availability_finding_source_ids"])
+                service_facts = [service for case in case_observations
+                                 for service in case["service_facts"]]
+                source_gap_cases = [case["case_id"] for case in case_observations
+                                    if not case["availability_finding_source_ids"]]
                 case_review = {
                     "status": "development_observations_for_independent_review",
                     "independent_answers_reviewed": 0,
                     "availability_source_id_case_reuse": dict(sorted(source_case_reuse.items())),
-                    "cases_without_attributed_availability_source_ids": [
-                        case["case_id"] for case in case_observations
-                        if not case["availability_finding_source_ids"]],
+                    "cases_without_attributed_availability_source_ids": source_gap_cases,
+                    "service_review_summary": {
+                        "service_line_count": len(service_facts),
+                        "coverage_counts": dict(sorted(Counter(
+                            service["coverage"] for service in service_facts).items())),
+                        "slot_committed_count": sum(service["slot_committed"]
+                                                    for service in service_facts),
+                    },
                     "cases": case_observations,
                     "limitations": [
                         "observed_decisions_are_not_expected_answers",
@@ -286,6 +305,8 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                         "source_reuse_does_not_prove_independence",
                     ],
                 }
+                self.assertEqual(case_review["service_review_summary"]["service_line_count"], 11)
+                self.assertEqual(case_review["service_review_summary"]["slot_committed_count"], 0)
                 diagnostic = {
                     "status": "development_diagnostic_not_answer_key",
                     "deal_count": sum(statuses.values()),
@@ -334,6 +355,13 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 if os.environ.get("PHASE1C_CASE_REVIEW"):
                     Path(os.environ["PHASE1C_CASE_REVIEW"]).write_text(
                         json.dumps(case_review, indent=2, sort_keys=True) + "\n")
+                    print("Case review summary: " + json.dumps({
+                        "cases": len(case_observations),
+                        "cases_without_attributed_availability_ids": len(source_gap_cases),
+                        "service": case_review["service_review_summary"],
+                        "most_reused_source_ids": sorted(
+                            source_case_reuse.items(), key=lambda item: (-item[1], item[0]))[:5],
+                    }, sort_keys=True))
                 if os.environ.get("PHASE1C_BATCH_DIAGNOSTIC"):
                     Path(os.environ["PHASE1C_BATCH_DIAGNOSTIC"]).write_text(
                         json.dumps(diagnostic, indent=2, sort_keys=True) + "\n")
