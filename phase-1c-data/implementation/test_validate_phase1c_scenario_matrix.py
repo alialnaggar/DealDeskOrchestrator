@@ -6,7 +6,7 @@ import unittest
 
 import yaml
 
-from validate_phase1c_scenario_matrix import manifest, validate
+from validate_phase1c_scenario_matrix import generated_case_plan, manifest, validate
 
 
 HERE = Path(__file__).resolve().parent
@@ -23,6 +23,13 @@ class ScenarioMatrixTests(unittest.TestCase):
         result = manifest(HERE, self.matrix)
         self.assertEqual(result["pilot_target_deals"], 18)
         self.assertEqual(result["evaluation_target_cases"], 36)
+        self.assertEqual(result["generated_test_target_cases"], 100)
+        plan = generated_case_plan(self.matrix)
+        self.assertEqual(len(plan), 100)
+        self.assertEqual(len({case["case_id"] for case in plan}), 100)
+        self.assertEqual(sum(case["catalog_version"] == "CATALOGUE_2026_V2" for case in plan), 2)
+        self.assertTrue(all(set(case) == {"case_id", "archetype_id", "catalog_version"}
+                            and case["case_id"].startswith("GEN-TEST-") for case in plan))
         self.assertEqual(result, manifest(HERE, self.matrix))
         self.assertEqual(len(result["source_sha256"]), 8)
         self.assertIn("phase1c_technical_fit_draft.json", result["source_sha256"])
@@ -33,6 +40,14 @@ class ScenarioMatrixTests(unittest.TestCase):
         draft["pilot"]["target_deals"] = len(draft["archetypes"])
         draft["evaluation"]["target_cases"] = len(draft["archetypes"]) * 2
         self.assertTrue(any("mode coverage differs" in error for error in validate(draft, self.config)))
+
+    def test_release_allocation_rejects_missing_dependency_or_extra_slot(self):
+        draft = deepcopy(self.matrix)
+        draft["generated_test_release"]["versioned_dependency_cases"]["archetype_ids"].pop()
+        self.assertTrue(any("dependency slots" in error for error in validate(draft, self.config)))
+        draft = deepcopy(self.matrix)
+        draft["generated_test_release"]["extra_archetype_ids"].pop()
+        self.assertTrue(any("total 100" in error for error in validate(draft, self.config)))
 
     def test_evaluation_isolation_is_required(self):
         draft = deepcopy(self.matrix)

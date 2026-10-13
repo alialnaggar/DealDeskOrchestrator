@@ -49,7 +49,7 @@
     {
       "path": "phase1c_scenario_matrix.yaml",
       "role": "scenario_matrix",
-      "sha256": "ebf98a7823c6d82f9d8c46ba1750a13e705e6f4f7cd28c0709fd4cbdefef86b6"
+      "sha256": "58509c75cca989344ca592ca0ce0d2b2aea7b89d11da4b46a26e17439f7bff2c"
     },
     {
       "path": "phase1c_vertical_provider_manifest.json",

@@ -19,6 +19,21 @@ SOURCES = ("schema.sql", "calibration_config.yaml", "phase1c_column_rules.yaml",
            "phase1c_scenario_matrix.yaml")
 
 
+def generated_case_plan(matrix):
+    """Allocate source-only release slots; this is not a generated dataset."""
+    release = matrix["generated_test_release"]
+    archetypes = [case["id"] for case in matrix["archetypes"]]
+    assigned = (archetypes * release["base_cases_per_archetype"] +
+                release["extra_archetype_ids"] +
+                release["versioned_dependency_cases"]["archetype_ids"])
+    return [{"case_id": f"GEN-TEST-{index:03d}",
+             "archetype_id": archetype,
+             "catalog_version": (release["versioned_dependency_cases"]["catalog_version"]
+                                 if archetype in release["versioned_dependency_cases"]["archetype_ids"]
+                                 else matrix["catalog_version"])}
+            for index, archetype in enumerate(assigned, 1)]
+
+
 def validate(matrix, config):
     errors = []
     cases = matrix.get("archetypes")
@@ -66,6 +81,24 @@ def validate(matrix, config):
         errors.append(f"finding buckets differ: missing={sorted(BUCKETS - buckets)}")
     if not {"CREDIT-LIMIT", "PRICE-FLOOR", "POLICY-CLAUSE"}.issubset(ids):
         errors.append("pricing, credit and policy cross-cutting cases are required")
+    release = matrix.get("generated_test_release", {})
+    extension = release.get("versioned_dependency_cases", {})
+    extras = release.get("extra_archetype_ids")
+    dependencies = extension.get("archetype_ids")
+    if release.get("status") != "allocation_only_provisional" or release.get("separate_from_development_pilot") is not True:
+        errors.append("100-case allocation must remain separate and provisional")
+    if type(release.get("base_cases_per_archetype")) is not int or release["base_cases_per_archetype"] < 1:
+        errors.append("generated-test base allocation must be a positive integer")
+    if not isinstance(extras, list) or len(extras) != len(set(extras)) or not set(extras).issubset(ids):
+        errors.append("generated-test extras must be unique declared archetypes")
+    if dependencies != ["DEPENDENCY-PASS", "DEPENDENCY-CONFLICT"] or extension.get("catalog_version") != "CATALOGUE_2026_V2":
+        errors.append("generated-test dependency slots must use the reviewed V2 pilot scope")
+    if not errors:
+        plan = generated_case_plan(matrix)
+        if release.get("target_cases") != 100 or len(plan) != 100:
+            errors.append("generated-test allocation must total 100 distinct slots")
+        if len({case["case_id"] for case in plan}) != len(plan):
+            errors.append("generated-test case IDs must be unique")
     return errors
 
 
@@ -75,6 +108,9 @@ def manifest(root, matrix):
         "status": "pilot_design_provisional",
         "seed": matrix["random_seed"],
         "pilot_target_deals": matrix["pilot"]["target_deals"],
+        "generated_test_target_cases": len(generated_case_plan(matrix)),
+        "generated_test_allocation_sha256": hashlib.sha256(json.dumps(
+            generated_case_plan(matrix), sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
         "evaluation_target_cases": matrix["evaluation"]["target_cases"],
         "source_sha256": {name: hashlib.sha256((root / name).read_bytes()).hexdigest()
                           for name in SOURCES},

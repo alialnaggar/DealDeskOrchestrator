@@ -10,6 +10,24 @@ evaluation:
   separate_output: true
   answer_keys_agent_visible: false
   oracle_rule: independently_review_expected_findings_from_frozen_facts
+generated_test_release:
+  status: allocation_only_provisional
+  target_cases: 100
+  separate_from_development_pilot: true
+  base_cases_per_archetype: 5
+  extra_archetype_ids:
+    - STOCK-READY
+    - STOCK-ALLOCATED
+    - SUPPLY-CONFIRMED
+    - SUPPLY-OFFER-ONLY
+    - BUILD-READY
+    - DIGITAL-NO-PROOF
+    - SERVICE-OUTSIDE
+    - CREDIT-LIMIT
+  versioned_dependency_cases:
+    catalog_version: CATALOGUE_2026_V2
+    archetype_ids: [DEPENDENCY-PASS, DEPENDENCY-CONFLICT]
+  # This allocates source-only inputs; no SQL rows or answer keys are released yet.
 pilot:
   target_deals: 18
   one_deal_per_archetype: true
