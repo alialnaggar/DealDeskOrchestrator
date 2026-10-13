@@ -1,0 +1,16 @@
+{
+  "generated_deals": 100,
+  "line_count": 101,
+  "source_reuse_limit": "18_V1_and_2_V2_development_states;_not_independent_source_distribution",
+  "source_sha256": {
+    "phase1c_conflict_pilot.sql": "b8ccc2c1e5dad05be8975a6b4e76602e0900e090e5ed89c263926bef8211fca8",
+    "phase1c_dependency_pilot.sql": "c4e90d6a953a14efb39b462540db5794653f153a0a16c36359817efe6ef98660",
+    "phase1c_scenario_matrix.yaml": "8402c4c31ef3a77d5e3b9dcb27eeac42a3dddfe398a3fd5d924e3d3b0913cf99",
+    "phase1c_vertical_pilot.sql": "1507790596acd9712d03a8d88d3fdda4c521a08cc008354bc28fa3660928f4e6"
+  },
+  "source_template_count": 20,
+  "sql_sha256": "51201e1f85c4ed3114030f7a8ec36b5a14470cf378b832aee1293c6d6c230ae8",
+  "status": "provisional_source_reuse",
+  "v1_deals": 98,
+  "v2_dependency_deals": 2
+}

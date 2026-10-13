@@ -219,6 +219,10 @@ jobs:
           python compile_phase1c_policy.py --output /tmp/phase1c_compiled_rules.sql
           psql -X -v ON_ERROR_STOP=1 -f /tmp/phase1c_compiled_rules.sql
           psql -X -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN IF (SELECT count(*) FROM deal_desk.pricing_rules) <> 33 OR (SELECT count(*) FROM deal_desk.policy_rules) <> 51 OR (SELECT count(*) FROM deal_desk.approval_rules) <> 21 THEN RAISE EXCEPTION 'Incomplete compiled policy rows'; END IF; END \$\$;"
+      - name: Import and read 100 provisional generated-test submissions
+        run: |
+          python render_phase1c_generated_test_batch.py --check
+          python -m unittest -v test_phase1c_generated_test_batch
       - name: Audit global dependency impact on existing submissions
         run: |
           python -m unittest -v test_audit_phase1c_dependency_scope

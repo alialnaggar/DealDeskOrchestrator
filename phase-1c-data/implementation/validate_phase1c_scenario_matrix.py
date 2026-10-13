@@ -85,8 +85,8 @@ def validate(matrix, config):
     extension = release.get("versioned_dependency_cases", {})
     extras = release.get("extra_archetype_ids")
     dependencies = extension.get("archetype_ids")
-    if release.get("status") != "allocation_only_provisional" or release.get("separate_from_development_pilot") is not True:
-        errors.append("100-case allocation must remain separate and provisional")
+    if release.get("status") != "generated_rows_provisional" or release.get("separate_from_development_pilot") is not True:
+        errors.append("100-case rows must remain separate and provisional")
     if type(release.get("base_cases_per_archetype")) is not int or release["base_cases_per_archetype"] < 1:
         errors.append("generated-test base allocation must be a positive integer")
     if not isinstance(extras, list) or len(extras) != len(set(extras)) or not set(extras).issubset(ids):

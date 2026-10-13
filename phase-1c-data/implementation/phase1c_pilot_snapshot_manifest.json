@@ -44,12 +44,12 @@
     {
       "path": "phase1c_data_contract.yaml",
       "role": "contract",
-      "sha256": "eff857e0b2b86cfed39f673dbb80e9a5f44e1a01ba8e0a869ffdfc7e357faf16"
+      "sha256": "fb455d53631466ca2145f80bec5d9038eb5523a87f12fa84146ee884ede56b60"
     },
     {
       "path": "phase1c_scenario_matrix.yaml",
       "role": "scenario_matrix",
-      "sha256": "58509c75cca989344ca592ca0ce0d2b2aea7b89d11da4b46a26e17439f7bff2c"
+      "sha256": "8402c4c31ef3a77d5e3b9dcb27eeac42a3dddfe398a3fd5d924e3d3b0913cf99"
     },
     {
       "path": "phase1c_vertical_provider_manifest.json",

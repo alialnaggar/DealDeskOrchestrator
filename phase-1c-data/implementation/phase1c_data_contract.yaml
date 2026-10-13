@@ -26,6 +26,7 @@ catalogue_extensions:
       - SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-004-V2
       - SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-005-V2
     deal_ids: [DEP-V2-DEAL-21, DEP-V2-DEAL-22]
+    generated_test_deal_ids: [GEN-TEST-099, GEN-TEST-100]
     rule_id: V2-REQUIRES-ADDON
 
 controlled_vocabularies:

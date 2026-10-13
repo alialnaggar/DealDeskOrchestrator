@@ -57,7 +57,7 @@ def validate_rows(rows, contract, *, trusted_deal_evidence=None):
     extension = contract["catalogue_extensions"]["dependency_pilot"]
     extension_version = extension["catalog_version"]
     extension_products = set(extension["product_ids"])
-    extension_deals = set(extension["deal_ids"])
+    extension_deals = set(extension["deal_ids"]) | set(extension["generated_test_deal_ids"])
     if len(products) != len(rows["products"]) or len(deals) != len(rows["deals"]):
         errors.append("duplicate product or deal ID in validation input")
 
