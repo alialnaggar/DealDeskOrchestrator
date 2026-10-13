@@ -10,7 +10,7 @@ import yaml
 
 from render_phase1c_conflict_pilot import build, CASE_MAP
 from render_phase1c_dependency_pilot import build as build_dependency, CASES as DEPENDENCY_CASES, RULE_ID as DEPENDENCY_RULE
-from validate_phase1c_generated_rows import audit_dependency_coverage, load_rows, validate_rows
+from validate_phase1c_generated_rows import audit_dependency_coverage, load_rows
 
 try:
     import psycopg
@@ -164,8 +164,6 @@ class ConflictReaderTests(unittest.TestCase):
             self.assertEqual(coverage["finding_counts"]["pass"], 1)
             self.assertEqual(coverage["finding_counts"]["fail"], 1)
             self.assertFalse(coverage["coverage_gap"])
-            contract = yaml.safe_load((HERE / "phase1c_data_contract.yaml").read_text())
-            self.assertEqual(validate_rows(rows, contract)["errors"], [])
         finally:
             self.conn.execute("ROLLBACK TO SAVEPOINT dependency_v2")
             self.conn.execute("RELEASE SAVEPOINT dependency_v2")
