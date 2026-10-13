@@ -48,6 +48,7 @@ class GeneratedBatchRenderTests(unittest.TestCase):
                          (37, 63))
         self.assertEqual(report["dated_stock_variant_count"], 5)
         self.assertEqual(report["dated_component_stock_variant_count"], 5)
+        self.assertEqual(report["dated_confirmed_supply_variant_count"], 5)
         self.assertEqual(len(set(eligible_customers((HERE / "phase1c_customer_master.sql").read_text()))), 37)
         self.assertNotIn("target_bucket", sql)
         self.assertNotIn("historical_decision", sql)
@@ -97,9 +98,24 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 self.assertIn("PILOT-STOCK-002", {
                     source for finding in build_baseline["specialists"]["availability"]
                     for source in finding["source_ids"]})
+                supplier_baseline_bundle = read_run(
+                    conn, "00000000-0000-4000-8000-000000260002",
+                    commercial_rule_mode="compiled")
+                self.assertFalse(any(row["supply_id"].startswith("GEN-INBOUND-")
+                                     for row in supplier_baseline_bundle["inbound_supply"]))
+                supplier_baseline = assemble_deal_decision(supplier_baseline_bundle)
+                self.assertIn("PILOT-INBOUND-001", {
+                    source for finding in supplier_baseline["specialists"]["availability"]
+                    for source in finding["source_ids"]})
+                stress_bundle = read_run(
+                    conn, "00000000-0000-4000-8000-000000270001",
+                    commercial_rule_mode="compiled")
+                self.assertFalse(any(row["supply_id"].startswith("GEN-INBOUND-")
+                                     for row in stress_bundle["inbound_supply"]))
                 eligible = set(eligible_customers((HERE / "phase1c_customer_master.sql").read_text()))
                 stocked_variant = 0
                 build_variant = 0
+                supply_variant = 0
                 for index, slot in enumerate(generated_case_plan(matrix), 1):
                     run_id = f"00000000-0000-4000-8000-{310000 + index:012d}"
                     bundle = read_run(conn, run_id, commercial_rule_mode="compiled")
@@ -154,12 +170,35 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                                           bundle["run"]["as_of_at"].minute),
                                          (12, 10 * build_variant))
                         build_variant += 1
+                    if archetype == "SUPPLY-CONFIRMED":
+                        expected = ("PILOT-INBOUND-001" if supply_variant == 0
+                                    else f"GEN-INBOUND-{supply_variant:03d}")
+                        self.assertIn(expected, sources_for_case)
+                        self.assertEqual(bundle["lines"][0]["quantity"],
+                                         1 if supply_variant == 0 else supply_variant + 2)
+                        self.assertEqual((bundle["run"]["as_of_at"].hour,
+                                          bundle["run"]["as_of_at"].minute),
+                                         (12, 0) if supply_variant == 0
+                                         else (14, 10 * supply_variant))
+                        if supply_variant:
+                            receipt = next(row for row in bundle["inbound_supply"]
+                                           if row["supply_id"] == expected)
+                            self.assertLessEqual(receipt["confirmed_at"],
+                                                 bundle["run"]["as_of_at"])
+                            self.assertFalse(any(
+                                row["supply_id"] == f"GEN-INBOUND-{later:03d}"
+                                for row in bundle["inbound_supply"]
+                                for later in range(supply_variant + 1, 6)))
+                        supply_variant += 1
                     if index in (99, 100):
                         finding = next(f for f in bundle["facts"]["compatibility"]
                                        if f["compatibility_rule_id"] == "V2-REQUIRES-ADDON")
                         self.assertEqual(finding["status"], "pass" if index == 99 else "fail")
                         self.assertEqual(any(b.get("rule_id") == "V2-REQUIRES-ADDON"
                                              for b in decision["blocks"]), index == 100)
+                self.assertEqual(supply_variant, 6)
+                self.assertTrue({f"GEN-INBOUND-{n:03d}" for n in range(1, 6)}
+                                <= set(availability_sources))
                 diagnostic = {
                     "status": "development_diagnostic_not_answer_key",
                     "deal_count": sum(statuses.values()),

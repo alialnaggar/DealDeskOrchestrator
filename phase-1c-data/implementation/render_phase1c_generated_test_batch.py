@@ -76,6 +76,7 @@ def build(matrix, source_hashes, customer_sql):
     reassigned = 0
     stock_variants = 0
     component_stock_variants = 0
+    confirmed_supply_variants = 0
     for index, slot in enumerate(plan, 1):
         archetype, deal = slot["archetype_id"], slot["case_id"]
         if archetype in V1_TEMPLATES:
@@ -123,6 +124,29 @@ def build(matrix, source_hashes, customer_sql):
                 f"{BUILD_STOCK_QUANTITIES[variant - 1]},quantity_allocated,"
                 f"{quote(observed_at.isoformat())}::timestamptz "
                 "FROM inventory WHERE inventory_id='PILOT-STOCK-002';\n")
+        supply_as_of = None
+        if archetype == "SUPPLY-CONFIRMED" and variant:
+            # Stress runs use 14:00; these confirmations become visible later.
+            confirmed_supply_variants += 1
+            supply_as_of = datetime(2026, 9, 1, 14, tzinfo=timezone.utc) + timedelta(minutes=10 * variant)
+            confirmed_at = supply_as_of - timedelta(minutes=5)
+            po_id = f"GEN-PO-{variant:03d}"
+            receipt_id = f"GEN-INBOUND-{variant:03d}"
+            out.append(
+                "INSERT INTO purchase_orders (purchase_order_id,supplier_id,reference_number,"
+                "ordered_at,confirmed_at,status,destination_location_id) "
+                f"SELECT {quote(po_id)},supplier_id,{quote(po_id)},"
+                "'2026-09-01T14:00:00+00:00'::timestamptz,"
+                f"{quote(confirmed_at.isoformat())}::timestamptz,status,destination_location_id "
+                "FROM purchase_orders WHERE purchase_order_id='PILOT-PO-001';\n")
+            out.append(
+                "INSERT INTO inbound_supply (supply_id,purchase_order_id,product_id,location_id,"
+                "quantity,quantity_allocated,expected_date,confirmed_at,status,reference_number,"
+                "evidence_ref,valid_until) "
+                f"SELECT {quote(receipt_id)},{quote(po_id)},product_id,location_id,"
+                f"1,0,expected_date,{quote(confirmed_at.isoformat())}::timestamptz,"
+                f"status,{quote(receipt_id)},{quote('GEN-SUPPLIER-CONFIRMATION-' + f'{variant:03d}')},"
+                "valid_until FROM inbound_supply WHERE supply_id='PILOT-INBOUND-001';\n")
         out.append(
             "INSERT INTO deals (deal_id,supersedes_deal_id,customer_id,salesperson_id,"
             "deal_name,submitted_at,currency_code,catalog_version,policy_set_code,"
@@ -135,17 +159,20 @@ def build(matrix, source_hashes, customer_sql):
             "destination_country_code,destination_region,shipping_service_code,"
             "terms_json,exception_justification,requirements_json,evidence_refs_json,"
             f"salesperson_comments,'Draft','generated_test' FROM deals WHERE deal_id={qtemplate};\n")
+        quantity_expr = str(variant + 2) if supply_as_of else "quantity"
         out.append(
             "INSERT INTO deal_lines (deal_line_id,deal_id,line_number,product_id,quantity,"
             "quoted_unit_price,configuration_json,fulfillment_group_code,"
             "requested_activation_date,installation_requested) "
             f"SELECT {quote(deal + '-LINE-')} || line_number,{qdeal},line_number,product_id,"
-            f"quantity,ROUND(quoted_unit_price * {multiplier},2),configuration_json,"
+            f"{quantity_expr},ROUND(quoted_unit_price * {multiplier},2),configuration_json,"
             "fulfillment_group_code,requested_activation_date,installation_requested "
             f"FROM deal_lines WHERE deal_id={qtemplate};\n")
         out.append(f"UPDATE deals SET deal_status='Submitted' WHERE deal_id={qdeal};\n")
-        as_of_expr = quote(stock_as_of.isoformat()) + "::timestamptz" if stock_as_of else "as_of_at"
-        snapshot_expr = (quote(f"GEN-{'BUILD' if archetype == 'BUILD-READY' else 'STOCK'}-SNAPSHOT-{variant:03d}")
+        run_as_of = supply_as_of or stock_as_of
+        as_of_expr = quote(run_as_of.isoformat()) + "::timestamptz" if run_as_of else "as_of_at"
+        snapshot_expr = (quote(f"GEN-SUPPLY-SNAPSHOT-{variant:03d}") if supply_as_of else
+                         quote(f"GEN-{'BUILD' if archetype == 'BUILD-READY' else 'STOCK'}-SNAPSHOT-{variant:03d}")
                          if stock_as_of else "data_snapshot_ref")
         out.append(
             "INSERT INTO deal_runs (run_id,deal_id,original_policy_set_code,"
@@ -154,7 +181,7 @@ def build(matrix, source_hashes, customer_sql):
             f"SELECT {quote(f'00000000-0000-4000-8000-{310000 + index:012d}')}::uuid,"
             f"{qdeal},original_policy_set_code,applied_policy_set_code,"
             f"catalog_version_used,{as_of_expr},{snapshot_expr},input_snapshot_json,"
-            f"'provisional-100-batch','queued',{as_of_expr if stock_as_of else 'started_at'} "
+            f"'provisional-100-batch','queued',{as_of_expr if run_as_of else 'started_at'} "
             f"FROM deal_runs WHERE deal_id={qtemplate};\n")
     out.append("DO $batch$ BEGIN "
                "IF (SELECT count(*) FROM deals WHERE deal_id LIKE 'GEN-TEST-%') <> 100 "
@@ -172,6 +199,7 @@ def build(matrix, source_hashes, customer_sql):
         "customer_reassignment_count": reassigned,
         "dated_stock_variant_count": stock_variants,
         "dated_component_stock_variant_count": component_stock_variants,
+        "dated_confirmed_supply_variant_count": confirmed_supply_variants,
         "source_reuse_limit": "18_V1_and_2_V2_development_states;_not_independent_source_distribution",
         "line_count": 101,
         "source_sha256": source_hashes,
