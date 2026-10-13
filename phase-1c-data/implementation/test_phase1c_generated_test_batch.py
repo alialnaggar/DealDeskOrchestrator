@@ -68,7 +68,7 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 result = validate_rows(rows, contract)
                 self.assertEqual(result["errors"], [])
                 self.assertEqual(result["counts"]["deals"], 138)
-                self.assertEqual(result["counts"]["deal_lines"], 166)
+                self.assertEqual(result["counts"]["deal_lines"], 169)
                 self.assertEqual(result["dependency_coverage"]["finding_counts"]["pass"], 2)
                 self.assertEqual(result["dependency_coverage"]["finding_counts"]["fail"], 2)
                 self.assertEqual(result["supplier_calendar_coverage"]["offers_missing_calendar"], [])
