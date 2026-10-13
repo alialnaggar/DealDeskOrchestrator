@@ -1,6 +1,6 @@
 """Reproduce and read the provisional 100-deal generated-test batch."""
 
-from collections import Counter
+from collections import Counter, defaultdict
 import hashlib
 import json
 import os
@@ -81,6 +81,10 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 self.assertEqual(result["supplier_calendar_coverage"]["offers_missing_calendar"], [])
                 statuses, modes, customers = Counter(), Counter(), Counter()
                 fulfillment, availability_sources = Counter(), Counter()
+                by_archetype_status = defaultdict(Counter)
+                by_archetype_fulfillment = defaultdict(Counter)
+                by_archetype_customers = defaultdict(set)
+                by_archetype_sources = defaultdict(set)
                 baseline = assemble_deal_decision(read_run(
                     conn, "00000000-0000-4000-8000-000000260001",
                     commercial_rule_mode="compiled"))
@@ -105,6 +109,9 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                     self.assertNotEqual(decision["status"], "approved")
                     statuses[decision["status"]] += 1
                     customers[bundle["deal"]["customer_id"]] += 1
+                    archetype = slot["archetype_id"]
+                    by_archetype_status[archetype][decision["status"]] += 1
+                    by_archetype_customers[archetype].add(bundle["deal"]["customer_id"])
                     if bundle["deal"]["customer_id"] in eligible:
                         profile = conn.execute(
                             "SELECT credit_status, risk_rating, commitments_as_of_at "
@@ -116,11 +123,17 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                     if slot["archetype_id"] == "CREDIT-LIMIT":
                         self.assertNotIn(bundle["deal"]["customer_id"], eligible)
                     modes.update(line["fulfillment_mode"] for line in bundle["lines"])
-                    fulfillment.update(fact["fulfillment_status"] for fact in bundle["facts"]["lines"]
-                                       if "fulfillment_status" in fact)
+                    fulfillment_for_case = [fact["fulfillment_status"] for fact in bundle["facts"]["lines"]
+                                            if "fulfillment_status" in fact]
+                    fulfillment.update(fulfillment_for_case)
+                    by_archetype_fulfillment[archetype].update(fulfillment_for_case)
+                    sources_for_case = {source
+                        for finding in decision["specialists"]["availability"]
+                        for source in finding["source_ids"]}
                     availability_sources.update(source
                         for finding in decision["specialists"]["availability"]
                         for source in finding["source_ids"])
+                    by_archetype_sources[archetype].update(sources_for_case)
                     if slot["archetype_id"] == "STOCK-READY":
                         sources = {source for finding in decision["specialists"]["availability"]
                                    for source in finding["source_ids"]}
@@ -160,8 +173,21 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                         for source, count in sorted(availability_sources.items(),
                                                     key=lambda item: (-item[1], item[0]))[:10]],
                     "source_template_count": 20,
+                    "archetype_distribution": {
+                        archetype: {
+                            "deals": sum(counts.values()),
+                            "decision_status_counts": dict(sorted(counts.items())),
+                            "fulfillment_status_counts": dict(sorted(by_archetype_fulfillment[archetype].items())),
+                            "distinct_customer_count": len(by_archetype_customers[archetype]),
+                            "distinct_availability_source_ids": len(by_archetype_sources[archetype]),
+                        }
+                        for archetype, counts in sorted(by_archetype_status.items())},
+                    "archetypes_with_one_observed_decision_status": sorted(
+                        archetype for archetype, counts in by_archetype_status.items()
+                        if len(counts) == 1),
                     "limitations": ["source_states_reused_across_submissions",
-                                    "no_independent_answers_or_evaluation_cases"],
+                                    "no_independent_answers_or_evaluation_cases",
+                                    "observed_statuses_are_not_expected_answers"],
                 }
                 self.assertEqual(diagnostic["deal_count"], 100)
                 self.assertEqual(sum(modes.values()), 101)
@@ -169,6 +195,12 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 self.assertGreaterEqual(len(customers), 50)
                 self.assertEqual(stocked_variant, 6)
                 self.assertEqual(build_variant, 6)
+                self.assertEqual(set(by_archetype_status),
+                                 {case["id"] for case in matrix["archetypes"]} |
+                                 {"DEPENDENCY-PASS", "DEPENDENCY-CONFLICT"})
+                self.assertEqual(sum(sum(counts.values()) for counts in by_archetype_status.values()), 100)
+                self.assertEqual(sum(sum(counts.values()) for counts in by_archetype_fulfillment.values()),
+                                 sum(fulfillment.values()))
                 self.assertTrue({f"GEN-STOCK-{i:03d}" for i in range(1, 6)}
                                 <= set(availability_sources))
                 self.assertTrue({f"GEN-BUILD-STOCK-{i:03d}" for i in range(1, 6)}
