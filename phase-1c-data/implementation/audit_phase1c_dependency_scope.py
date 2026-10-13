@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 import re
 
-from render_phase1c_dependency_pilot import SOURCE, TARGET
+from render_phase1c_dependency_pilot import BASE_SOURCE as SOURCE, BASE_TARGET as TARGET
 
 HERE = Path(__file__).resolve().parent
 INPUTS = (
