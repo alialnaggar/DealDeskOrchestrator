@@ -114,6 +114,8 @@ jobs:
           coverage = report['dependency_coverage']
           assert report['counts']['deals'] == 38
           assert report['counts']['products'] == 158
+          assert report['supplier_calendar_coverage']['offers_with_typed_calendar'] >= 1
+          assert not report['supplier_calendar_coverage']['offers_missing_calendar']
           assert coverage['finding_counts']['pass'] == 1
           assert coverage['finding_counts']['fail'] == 1
           assert not coverage['coverage_gap']

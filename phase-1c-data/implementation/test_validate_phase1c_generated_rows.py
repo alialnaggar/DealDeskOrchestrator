@@ -21,6 +21,7 @@ def example():
                       "unit_of_measure": "device", "is_active": True, "is_sellable": True}],
         "suppliers": [{"supplier_id": "SUP-1", "order_calendar_json": {
             "working_weekdays": [1, 2, 3, 4, 5], "holiday_dates": [], "time_zone": "Europe/Amsterdam"}}],
+        "supplier_items": [{"supplier_item_id": "OFFER-1", "supplier_id": "SUP-1"}],
         "inventory": [{"inventory_id": "INV-1", "location_id": "WH-EU-CENTRAL"}],
         "purchase_orders": [], "inbound_supply": [],
         "production_capacity": [{"capacity_id": "CAP-1", "location_id": "WH-EU-CENTRAL",
@@ -47,8 +48,17 @@ class GeneratedRowTests(unittest.TestCase):
     def test_connected_typed_rows(self):
         result = validate_rows(example(), CONTRACT)
         self.assertEqual(result["errors"], [])
+        self.assertEqual(result["supplier_calendar_coverage"]["offers_with_typed_calendar"], 1)
         self.assertEqual(result["dependency_coverage"]["configured_dependency_rules"], 0)
         self.assertTrue(result["dependency_coverage"]["coverage_gap"])
+
+    def test_offer_without_typed_supplier_calendar_is_attributed(self):
+        rows = example()
+        rows["suppliers"][0]["order_calendar_json"] = {}
+        result = validate_rows(rows, CONTRACT)
+        self.assertEqual(result["supplier_calendar_coverage"]["offers_missing_calendar"], ["OFFER-1"])
+        self.assertTrue(any("supplier_items.OFFER-1: typed supplier calendar missing" in e
+                            for e in result["errors"]))
 
     def test_dependency_coverage_counts_real_applicability_and_failures(self):
         rows = example()

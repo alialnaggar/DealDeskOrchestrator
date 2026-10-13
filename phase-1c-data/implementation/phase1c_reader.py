@@ -63,6 +63,14 @@ def _workday(start, weekdays):
     return day
 
 
+def _supplier_lead_date(order_date, lead_days, weekdays):
+    """Indicative supplier workday offset; no order cutoff or commitment inferred."""
+    day = _workday(order_date, weekdays)
+    for _ in range(lead_days):
+        day = _workday(day + timedelta(days=1), weekdays)
+    return day
+
+
 def _arrival(ready_date, ready_time, lane):
     weekdays = set(lane["dispatch_weekdays_json"])
     if not weekdays:
@@ -334,7 +342,28 @@ def _supply_findings(bundle, as_of):
         else:
             line_fact["fulfillment_status"] = "conditional" if any(x["product_id"] == product for x in bundle["supplier_offers"]) else "infeasible"
         if not options and line["fulfillment_mode"] == "supplier_finished":
-            line_fact["supplier_offer_days"] = [x["lead_days_mode"] for x in bundle["supplier_offers"] if x["product_id"] == product]
+            matching_offers = [x for x in bundle["supplier_offers"] if x["product_id"] == product]
+            line_fact["supplier_offer_days"] = [x["lead_days_mode"] for x in matching_offers]
+            estimates = []
+            for offer in matching_offers:
+                calendar = offer.get("order_calendar_json")
+                if not isinstance(calendar, dict) or not calendar.get("working_weekdays") or calendar.get("holiday_dates") != []:
+                    continue
+                weekdays = set(calendar["working_weekdays"])
+                if not weekdays.issubset(set(range(1, 8))):
+                    continue
+                order_date = as_of.astimezone(ZoneInfo(calendar["time_zone"])).date()
+                estimates.append({
+                    "supplier_item_id": offer["supplier_item_id"],
+                    "supplier_id": offer["supplier_id"],
+                    "source": "uncommitted_supplier_offer",
+                    "binding": False,
+                    "order_date": order_date,
+                    "earliest": _supplier_lead_date(order_date, offer["lead_days_min"], weekdays),
+                    "mode": _supplier_lead_date(order_date, offer["lead_days_mode"], weekdays),
+                    "latest": _supplier_lead_date(order_date, offer["lead_days_max"], weekdays),
+                })
+            line_fact["supplier_offer_estimates"] = estimates
     plans = []
     aggregate_components = defaultdict(lambda: Decimal(0))
     for b in bundle["bom"]:
@@ -601,7 +630,7 @@ def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_
         po.destination_location_id FROM deal_desk.inbound_supply s
         LEFT JOIN deal_desk.purchase_orders po USING(purchase_order_id)
         WHERE s.product_id=ANY(%s) AND (s.confirmed_at IS NULL OR s.confirmed_at<=%s)""", (stock_products, as_of))
-        offers = _rows(conn, """SELECT si.* FROM deal_desk.supplier_items si JOIN deal_desk.suppliers s USING(supplier_id)
+        offers = _rows(conn, """SELECT si.*, s.order_calendar_json FROM deal_desk.supplier_items si JOIN deal_desk.suppliers s USING(supplier_id)
         WHERE si.product_id=ANY(%s) AND si.is_active AND s.status='active'
         AND si.valid_from<=%s::date AND (si.valid_to IS NULL OR si.valid_to>=%s::date)""", (stock_products, as_of, as_of))
         capacities = _latest(_rows(conn, "SELECT * FROM deal_desk.production_capacity WHERE snapshot_at<=%s AND capacity_date>=%s::date", (as_of, as_of)), ("location_id", "capability_code", "resource_type", "capacity_date"), as_of)

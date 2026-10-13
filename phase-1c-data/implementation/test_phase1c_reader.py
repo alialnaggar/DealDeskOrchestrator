@@ -82,6 +82,31 @@ class ReaderReferenceTests(unittest.TestCase):
         self.assertFalse(b["facts"]["lines"][0]["shipping_by_request"])
         self.assertEqual(b["facts"]["lines"][0]["fulfillment_status"], "conditional")
 
+    def test_supplier_calendar_estimate_is_conditional(self):
+        import json
+        # The reference fixture has no typed calendar. It must not invent dates.
+        self.assertEqual(self.read(3)["facts"]["lines"][0]["supplier_offer_estimates"], [])
+        with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+            conn.execute("SET search_path TO deal_desk, public")
+            try:
+                conn.execute("UPDATE suppliers SET order_calendar_json=%s::jsonb WHERE supplier_id=%s",
+                             (json.dumps({"working_weekdays": [1, 2, 3, 4],
+                                          "holiday_dates": [], "time_zone": "Europe/Berlin"}),
+                              "S-offer_without_supplier_commitment"))
+                bundle = read_run(conn, "00000000-0000-4000-8000-000000030001")
+                fact = bundle["facts"]["lines"][0]
+                estimate = fact["supplier_offer_estimates"][0]
+                self.assertEqual(estimate["supplier_item_id"], "OFFER-offer_without_supplier_commitment")
+                self.assertEqual((estimate["earliest"], estimate["mode"], estimate["latest"]),
+                                 (date(2026, 9, 15), date(2026, 9, 17), date(2026, 9, 22)))
+                self.assertFalse(estimate["binding"])
+                self.assertEqual(fact["fulfillment_status"], "conditional")
+                self.assertFalse(fact["shipping_by_request"])
+                self.assertEqual(bundle["facts"]["supply"]["binding_receipts"]
+                                 ["offer_without_supplier_commitment-P"], [])
+            finally:
+                conn.rollback()
+
     def test_digital_binding(self):
         d = self.read(4)["facts"]["lines"][0]["digital"]
         self.assertEqual(d["concurrent_demand"], 5)

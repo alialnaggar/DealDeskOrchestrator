@@ -76,9 +76,20 @@ def validate_rows(rows, contract, *, trusted_deal_evidence=None):
                                 ("shipping_lanes", "origin_location_id", "origin_time_zone")):
         for row in rows[table]:
             check_location(table, row, column, zone)
+    suppliers = {row["supplier_id"]: row for row in rows["suppliers"]}
+    offers = rows.get("supplier_items", [])
+    calendar_coverage = {"offers_total": len(offers), "offers_with_typed_calendar": 0,
+                         "offers_missing_calendar": []}
     for row in rows["suppliers"]:
         for error in validate_payload("supplier_calendar", row["order_calendar_json"], contract):
             errors.append(f"suppliers.{row['supplier_id']}: {error}")
+    for offer in offers:
+        supplier = suppliers.get(offer["supplier_id"])
+        if supplier is None or validate_payload("supplier_calendar", supplier["order_calendar_json"], contract):
+            calendar_coverage["offers_missing_calendar"].append(offer["supplier_item_id"])
+            errors.append(f"supplier_items.{offer['supplier_item_id']}: typed supplier calendar missing")
+        else:
+            calendar_coverage["offers_with_typed_calendar"] += 1
     for row in rows["shipping_lanes"]:
         for error in validate_payload("shipping_weekdays", row["dispatch_weekdays_json"], contract):
             errors.append(f"shipping_lanes.{row['lane_id']}: {error}")
@@ -165,12 +176,13 @@ def validate_rows(rows, contract, *, trusted_deal_evidence=None):
                 errors.append(f"deal_lines.{line_id}: selected BOM missing or ambiguous")
     return {"errors": errors, "counts": {key: len(value) for key, value in rows.items()},
             "dependency_coverage": audit_dependency_coverage(rows),
+            "supplier_calendar_coverage": calendar_coverage,
             "ready_for_row_checks": not errors}
 
 
 def load_rows(conn):
     from psycopg.rows import dict_row
-    tables = ("products", "suppliers", "inventory", "purchase_orders", "inbound_supply",
+    tables = ("products", "suppliers", "supplier_items", "inventory", "purchase_orders", "inbound_supply",
               "production_capacity", "shipping_lanes", "compatibility_rules", "bom_headers",
               "deals", "deal_lines")
     with conn.cursor(row_factory=dict_row) as cur:
