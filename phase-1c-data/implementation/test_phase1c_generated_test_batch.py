@@ -56,11 +56,15 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
         with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
             conn.execute("SET search_path TO deal_desk, public")
             try:
+                before = {table: {row[next(iter(row))] for row in records}
+                          for table, records in load_rows(conn).items()}
                 for name in FILES:
                     for statement in re.findall(r"^(?:INSERT INTO|UPDATE deals SET) .*?;",
                                                 (HERE / name).read_text(), re.M | re.S):
                         conn.execute(statement)
-                rows = load_rows(conn)
+                rows = {table: [row for row in records
+                                if row[next(iter(row))] not in before[table]]
+                        for table, records in load_rows(conn).items()}
                 result = validate_rows(rows, contract)
                 self.assertEqual(result["errors"], [])
                 self.assertEqual(result["counts"]["deals"], 138)
