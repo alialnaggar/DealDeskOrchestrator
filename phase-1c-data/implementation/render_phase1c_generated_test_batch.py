@@ -33,6 +33,7 @@ V1_TEMPLATES = {
 }
 V2_TEMPLATES = {"DEPENDENCY-PASS": "DEP-V2-DEAL-22",
                 "DEPENDENCY-CONFLICT": "DEP-V2-DEAL-21"}
+EARLY_RUN_ARCHETYPES = {"BUILD-SUBSTITUTE", "BUILD-CAPACITY-STALE", "BUILD-HORIZON"}
 MULTIPLIERS = (Decimal("1.00"), Decimal("0.98"), Decimal("0.96"),
                Decimal("0.94"), Decimal("0.92"), Decimal("0.90"))
 SOURCE_FILES = ("phase1c_scenario_matrix.yaml", "phase1c_vertical_pilot.sql",
@@ -86,7 +87,8 @@ def build(matrix, source_hashes, customer_sql):
         # Preserve the first reference variant and the credit-limit archetype.
         # Different billing countries may ship to the unchanged requested destination.
         customer_expr = "customer_id"
-        if archetype in V1_TEMPLATES and archetype != "CREDIT-LIMIT" and variant:
+        if (archetype in V1_TEMPLATES and archetype != "CREDIT-LIMIT"
+                and archetype not in EARLY_RUN_ARCHETYPES and variant):
             customer_expr = quote(customers[reassigned % len(customers)])
             reassigned += 1
         out.append(

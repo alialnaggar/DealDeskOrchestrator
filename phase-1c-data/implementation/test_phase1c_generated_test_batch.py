@@ -45,7 +45,7 @@ class GeneratedBatchRenderTests(unittest.TestCase):
                           report["line_count"], report["source_template_count"]),
                          (98, 2, 101, 20))
         self.assertEqual((report["eligible_customer_count"], report["customer_reassignment_count"]),
-                         (37, 75))
+                         (37, 63))
         self.assertEqual(len(set(eligible_customers((HERE / "phase1c_customer_master.sql").read_text()))), 37)
         self.assertNotIn("target_bucket", sql)
         self.assertNotIn("historical_decision", sql)
