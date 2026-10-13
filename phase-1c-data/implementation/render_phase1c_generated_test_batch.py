@@ -41,6 +41,7 @@ SOURCE_FILES = ("phase1c_scenario_matrix.yaml", "phase1c_vertical_pilot.sql",
                 "phase1c_conflict_pilot.sql", "phase1c_dependency_pilot.sql",
                 "phase1c_customer_master.sql")
 STOCK_QUANTITIES = (3, 4, 2, 5, 3)
+BUILD_STOCK_QUANTITIES = (2, 3, 2, 4, 2)
 
 
 def eligible_customers(customer_sql):
@@ -74,6 +75,7 @@ def build(matrix, source_hashes, customer_sql):
     customers = eligible_customers(customer_sql)
     reassigned = 0
     stock_variants = 0
+    component_stock_variants = 0
     for index, slot in enumerate(plan, 1):
         archetype, deal = slot["archetype_id"], slot["case_id"]
         if archetype in V1_TEMPLATES:
@@ -108,6 +110,19 @@ def build(matrix, source_hashes, customer_sql):
                 f"{STOCK_QUANTITIES[variant - 1]},quantity_allocated,"
                 f"{quote(observed_at.isoformat())}::timestamptz "
                 "FROM inventory WHERE inventory_id='PILOT-STOCK-005';\n")
+        if archetype == "BUILD-READY" and variant:
+            # The BOM's compute component is independently observed before
+            # the existing 13:00 stress-pilot snapshot for this same SKU.
+            component_stock_variants += 1
+            stock_as_of = datetime(2026, 9, 1, 12, tzinfo=timezone.utc) + timedelta(minutes=10 * variant)
+            observed_at = stock_as_of - timedelta(minutes=5)
+            out.append(
+                "INSERT INTO inventory (inventory_id,product_id,location_id,"
+                "quantity_on_hand,quantity_allocated,snapshot_at) "
+                f"SELECT {quote(f'GEN-BUILD-STOCK-{variant:03d}')},product_id,location_id,"
+                f"{BUILD_STOCK_QUANTITIES[variant - 1]},quantity_allocated,"
+                f"{quote(observed_at.isoformat())}::timestamptz "
+                "FROM inventory WHERE inventory_id='PILOT-STOCK-002';\n")
         out.append(
             "INSERT INTO deals (deal_id,supersedes_deal_id,customer_id,salesperson_id,"
             "deal_name,submitted_at,currency_code,catalog_version,policy_set_code,"
@@ -130,7 +145,8 @@ def build(matrix, source_hashes, customer_sql):
             f"FROM deal_lines WHERE deal_id={qtemplate};\n")
         out.append(f"UPDATE deals SET deal_status='Submitted' WHERE deal_id={qdeal};\n")
         as_of_expr = quote(stock_as_of.isoformat()) + "::timestamptz" if stock_as_of else "as_of_at"
-        snapshot_expr = quote(f"GEN-STOCK-SNAPSHOT-{variant:03d}") if stock_as_of else "data_snapshot_ref"
+        snapshot_expr = (quote(f"GEN-{'BUILD' if archetype == 'BUILD-READY' else 'STOCK'}-SNAPSHOT-{variant:03d}")
+                         if stock_as_of else "data_snapshot_ref")
         out.append(
             "INSERT INTO deal_runs (run_id,deal_id,original_policy_set_code,"
             "applied_policy_set_code,catalog_version_used,as_of_at,data_snapshot_ref,"
@@ -155,6 +171,7 @@ def build(matrix, source_hashes, customer_sql):
         "eligible_customer_count": len(customers),
         "customer_reassignment_count": reassigned,
         "dated_stock_variant_count": stock_variants,
+        "dated_component_stock_variant_count": component_stock_variants,
         "source_reuse_limit": "18_V1_and_2_V2_development_states;_not_independent_source_distribution",
         "line_count": 101,
         "source_sha256": source_hashes,
