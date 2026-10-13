@@ -133,6 +133,7 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 build_variant = 0
                 supply_variant = 0
                 digital_variant = 0
+                case_observations = []
                 for index, slot in enumerate(generated_case_plan(matrix), 1):
                     run_id = f"00000000-0000-4000-8000-{310000 + index:012d}"
                     bundle = read_run(conn, run_id, commercial_rule_mode="compiled")
@@ -167,6 +168,34 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                         for finding in decision["specialists"]["availability"]
                         for source in finding["source_ids"])
                     by_archetype_sources[archetype].update(sources_for_case)
+                    case_observations.append({
+                        "case_id": slot["case_id"],
+                        "archetype_id": archetype,
+                        "catalog_version": slot["catalog_version"],
+                        "run_as_of_at": bundle["run"]["as_of_at"].isoformat(),
+                        "customer_id": bundle["deal"]["customer_id"],
+                        "line_modes": [line["fulfillment_mode"] for line in bundle["lines"]],
+                        "observed_decision_status": decision["status"],
+                        "observed_fulfillment_statuses": fulfillment_for_case,
+                        "availability_finding_source_ids": sorted(sources_for_case),
+                        "reader_visible_raw_source_ids": {
+                            "inventory": sorted(row["inventory_id"] for row in bundle["inventory"]),
+                            "inbound_supply": sorted(row["supply_id"] for row in bundle["inbound_supply"]),
+                            "digital_capacity": sorted(row["digital_capacity_id"]
+                                                       for row in bundle["digital_capacity"]),
+                        },
+                        "service_coverage_rule_ids": sorted({
+                            source for fact in bundle["facts"]["lines"]
+                            for source in fact.get("service", {}).get("coverage_rule_ids", [])
+                        }),
+                        "applicable_compatibility_rules": sorted(
+                            [{"rule_id": finding["compatibility_rule_id"],
+                              "observed_status": finding["status"]}
+                             for finding in bundle["facts"]["compatibility"]
+                             if finding["status"] in ("pass", "fail")],
+                            key=lambda row: row["rule_id"]),
+                        "independent_review": "pending",
+                    })
                     if slot["archetype_id"] == "STOCK-READY":
                         sources = {source for finding in decision["specialists"]["availability"]
                                    for source in finding["source_ids"]}
@@ -235,6 +264,28 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                                 <= set(availability_sources))
                 self.assertTrue({f"GEN-DIGITAL-POOL-{n:03d}" for n in range(1, 5)}
                                 <= set(availability_sources))
+                self.assertEqual(len(case_observations), 100)
+                self.assertEqual(len({case["case_id"] for case in case_observations}), 100)
+                self.assertEqual({source for case in case_observations
+                                  for source in case["availability_finding_source_ids"]},
+                                 set(availability_sources))
+                source_case_reuse = Counter(
+                    source for case in case_observations
+                    for source in case["availability_finding_source_ids"])
+                case_review = {
+                    "status": "development_observations_for_independent_review",
+                    "independent_answers_reviewed": 0,
+                    "availability_source_id_case_reuse": dict(sorted(source_case_reuse.items())),
+                    "cases_without_attributed_availability_source_ids": [
+                        case["case_id"] for case in case_observations
+                        if not case["availability_finding_source_ids"]],
+                    "cases": case_observations,
+                    "limitations": [
+                        "observed_decisions_are_not_expected_answers",
+                        "reader_visible_raw_rows_are_not_necessarily_binding_or_used_in_findings",
+                        "source_reuse_does_not_prove_independence",
+                    ],
+                }
                 diagnostic = {
                     "status": "development_diagnostic_not_answer_key",
                     "deal_count": sum(statuses.values()),
@@ -280,6 +331,9 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                                 <= set(availability_sources))
                 self.assertTrue({f"GEN-BUILD-STOCK-{i:03d}" for i in range(1, 6)}
                                 <= set(availability_sources))
+                if os.environ.get("PHASE1C_CASE_REVIEW"):
+                    Path(os.environ["PHASE1C_CASE_REVIEW"]).write_text(
+                        json.dumps(case_review, indent=2, sort_keys=True) + "\n")
                 if os.environ.get("PHASE1C_BATCH_DIAGNOSTIC"):
                     Path(os.environ["PHASE1C_BATCH_DIAGNOSTIC"]).write_text(
                         json.dumps(diagnostic, indent=2, sort_keys=True) + "\n")
