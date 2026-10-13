@@ -77,6 +77,7 @@ def build(matrix, source_hashes, customer_sql):
     stock_variants = 0
     component_stock_variants = 0
     confirmed_supply_variants = 0
+    dated_digital_variants = 0
     for index, slot in enumerate(plan, 1):
         archetype, deal = slot["archetype_id"], slot["case_id"]
         if archetype in V1_TEMPLATES:
@@ -147,6 +148,24 @@ def build(matrix, source_hashes, customer_sql):
                 f"1,0,expected_date,{quote(confirmed_at.isoformat())}::timestamptz,"
                 f"status,{quote(receipt_id)},{quote('GEN-SUPPLIER-CONFIRMATION-' + f'{variant:03d}')},"
                 "valid_until FROM inbound_supply WHERE supply_id='PILOT-INBOUND-001';\n")
+        digital_as_of = None
+        if archetype == "DIGITAL-PROVED" and variant:
+            # Existing pilot and stress reads precede these development snapshots.
+            dated_digital_variants += 1
+            digital_as_of = datetime(2026, 9, 1, 14, tzinfo=timezone.utc) + timedelta(minutes=10 * variant)
+            observed_at = digital_as_of - timedelta(minutes=5)
+            out.append(
+                "INSERT INTO digital_capacity (digital_capacity_id,product_id,"
+                "configuration_signature_json,provider_id,region_code,term_code,"
+                "capacity_unit,capacity_total,quantity_allocated,activation_lead_days,"
+                "commitment_status,confirmed_at,valid_until,snapshot_at,evidence_ref) "
+                f"SELECT {quote(f'GEN-DIGITAL-POOL-{variant:03d}')},product_id,"
+                "configuration_signature_json,provider_id,region_code,term_code,"
+                f"capacity_unit,{10 + variant},quantity_allocated,activation_lead_days,"
+                "commitment_status,confirmed_at,valid_until,"
+                f"{quote(observed_at.isoformat())}::timestamptz,"
+                f"{quote(f'GEN-PROVIDER-REFERENCE-{variant:03d}')} "
+                "FROM digital_capacity WHERE digital_capacity_id='PILOT-POOL-001';\n")
         out.append(
             "INSERT INTO deals (deal_id,supersedes_deal_id,customer_id,salesperson_id,"
             "deal_name,submitted_at,currency_code,catalog_version,policy_set_code,"
@@ -169,9 +188,10 @@ def build(matrix, source_hashes, customer_sql):
             "fulfillment_group_code,requested_activation_date,installation_requested "
             f"FROM deal_lines WHERE deal_id={qtemplate};\n")
         out.append(f"UPDATE deals SET deal_status='Submitted' WHERE deal_id={qdeal};\n")
-        run_as_of = supply_as_of or stock_as_of
+        run_as_of = supply_as_of or digital_as_of or stock_as_of
         as_of_expr = quote(run_as_of.isoformat()) + "::timestamptz" if run_as_of else "as_of_at"
-        snapshot_expr = (quote(f"GEN-SUPPLY-SNAPSHOT-{variant:03d}") if supply_as_of else
+        snapshot_expr = (quote(f"GEN-DIGITAL-SNAPSHOT-{variant:03d}") if digital_as_of else
+                         quote(f"GEN-SUPPLY-SNAPSHOT-{variant:03d}") if supply_as_of else
                          quote(f"GEN-{'BUILD' if archetype == 'BUILD-READY' else 'STOCK'}-SNAPSHOT-{variant:03d}")
                          if stock_as_of else "data_snapshot_ref")
         out.append(
@@ -200,6 +220,7 @@ def build(matrix, source_hashes, customer_sql):
         "dated_stock_variant_count": stock_variants,
         "dated_component_stock_variant_count": component_stock_variants,
         "dated_confirmed_supply_variant_count": confirmed_supply_variants,
+        "dated_digital_variant_count": dated_digital_variants,
         "source_reuse_limit": "18_V1_and_2_V2_development_states;_not_independent_source_distribution",
         "line_count": 101,
         "source_sha256": source_hashes,

@@ -49,6 +49,7 @@ class GeneratedBatchRenderTests(unittest.TestCase):
         self.assertEqual(report["dated_stock_variant_count"], 5)
         self.assertEqual(report["dated_component_stock_variant_count"], 5)
         self.assertEqual(report["dated_confirmed_supply_variant_count"], 5)
+        self.assertEqual(report["dated_digital_variant_count"], 4)
         self.assertEqual(len(set(eligible_customers((HERE / "phase1c_customer_master.sql").read_text()))), 37)
         self.assertNotIn("target_bucket", sql)
         self.assertNotIn("historical_decision", sql)
@@ -112,10 +113,26 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                     commercial_rule_mode="compiled")
                 self.assertFalse(any(row["supply_id"].startswith("GEN-INBOUND-")
                                      for row in stress_bundle["inbound_supply"]))
+                digital_baseline_bundle = read_run(
+                    conn, "00000000-0000-4000-8000-000000260004",
+                    commercial_rule_mode="compiled")
+                self.assertEqual([p["digital_capacity_id"]
+                                  for p in digital_baseline_bundle["digital_capacity"]],
+                                 ["PILOT-POOL-001"])
+                digital_baseline = assemble_deal_decision(digital_baseline_bundle)
+                self.assertIn("PILOT-POOL-001", {
+                    source for finding in digital_baseline["specialists"]["availability"]
+                    for source in finding["source_ids"]})
+                digital_stress_bundle = read_run(
+                    conn, "00000000-0000-4000-8000-000000270003",
+                    commercial_rule_mode="compiled")
+                self.assertFalse(any(p["digital_capacity_id"].startswith("GEN-DIGITAL-POOL-")
+                                     for p in digital_stress_bundle["digital_capacity"]))
                 eligible = set(eligible_customers((HERE / "phase1c_customer_master.sql").read_text()))
                 stocked_variant = 0
                 build_variant = 0
                 supply_variant = 0
+                digital_variant = 0
                 for index, slot in enumerate(generated_case_plan(matrix), 1):
                     run_id = f"00000000-0000-4000-8000-{310000 + index:012d}"
                     bundle = read_run(conn, run_id, commercial_rule_mode="compiled")
@@ -190,6 +207,22 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                                 for row in bundle["inbound_supply"]
                                 for later in range(supply_variant + 1, 6)))
                         supply_variant += 1
+                    if archetype == "DIGITAL-PROVED":
+                        expected = ("PILOT-POOL-001" if digital_variant == 0
+                                    else f"GEN-DIGITAL-POOL-{digital_variant:03d}")
+                        self.assertIn(expected, sources_for_case)
+                        self.assertEqual((bundle["run"]["as_of_at"].hour,
+                                          bundle["run"]["as_of_at"].minute),
+                                         (12, 0) if digital_variant == 0
+                                         else (14, 10 * digital_variant))
+                        selected = bundle["digital_capacity"]
+                        self.assertEqual([p["digital_capacity_id"] for p in selected], [expected])
+                        self.assertFalse(bundle["facts"]["lines"][0]["digital"]["pools"][0]["full_term_verified"])
+                        if digital_variant:
+                            self.assertEqual(selected[0]["capacity_total"], 10 + digital_variant)
+                            self.assertLessEqual(selected[0]["snapshot_at"],
+                                                 bundle["run"]["as_of_at"])
+                        digital_variant += 1
                     if index in (99, 100):
                         finding = next(f for f in bundle["facts"]["compatibility"]
                                        if f["compatibility_rule_id"] == "V2-REQUIRES-ADDON")
@@ -197,7 +230,10 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                         self.assertEqual(any(b.get("rule_id") == "V2-REQUIRES-ADDON"
                                              for b in decision["blocks"]), index == 100)
                 self.assertEqual(supply_variant, 6)
+                self.assertEqual(digital_variant, 5)
                 self.assertTrue({f"GEN-INBOUND-{n:03d}" for n in range(1, 6)}
+                                <= set(availability_sources))
+                self.assertTrue({f"GEN-DIGITAL-POOL-{n:03d}" for n in range(1, 5)}
                                 <= set(availability_sources))
                 diagnostic = {
                     "status": "development_diagnostic_not_answer_key",
