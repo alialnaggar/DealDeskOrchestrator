@@ -217,3 +217,7 @@ arithmetic percentage of list price; discount approvals, exception windows,
 deal totals, and other specialists are **not** simulated by this report.
 Neither these observations nor the p10/p50/p90 targets authorize a
 calibration freeze. The adoption decision above remains open.
+
+## Versioned dependency pilot count — 13 October 2026
+
+The 156-row V1 catalogue and its 120 sellable/36 component mix remain the calibration baseline. A separate generated_test V2 pilot extension clones two of its sellable fictional products with new versioned IDs to test a dependency rule without changing V1 submissions. The database holds 158 product rows when this extension is imported, but the category price and margin audit still measures the 120 V1 sellable products. The extra V2 rows are copies for rule coverage, not new market comparables or approval to freeze the two calibration reviews. `ready_for_generation=false`.

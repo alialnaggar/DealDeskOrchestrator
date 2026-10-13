@@ -96,10 +96,33 @@ jobs:
             -f phase1c_buildable_master.sql -f phase1c_sellable_catalogue.sql \
             -f phase1c_vertical_pilot.sql -f phase1c_conflict_pilot.sql \
             -f phase1c_stress_pilot.sql -c ROLLBACK
-      - name: Validate typed pilot rows and controlled locations
+      - name: Load versioned dependency extension after the 36-deal pilot
+        run: |
+          python render_phase1c_dependency_pilot.py --check
+          psql -X -v ON_ERROR_STOP=1 -v phase1c_keep_transaction=1 \
+            -f phase1c_buildable_master.sql -f phase1c_sellable_catalogue.sql \
+            -f phase1c_vertical_pilot.sql -f phase1c_conflict_pilot.sql \
+            -f phase1c_stress_pilot.sql -f phase1c_dependency_pilot.sql -c ROLLBACK
+      - name: Validate typed pilot rows and dependency coverage
         run: |
           python -m unittest -v test_validate_phase1c_generated_rows
-          python validate_phase1c_generated_rows.py --load-pilot
+          python validate_phase1c_generated_rows.py --load-pilot > /tmp/phase1c_row_validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/phase1c_row_validation.json').read_text())
+          coverage = report['dependency_coverage']
+          assert report['counts']['deals'] == 38
+          assert report['counts']['products'] == 158
+          assert coverage['finding_counts']['pass'] == 1
+          assert coverage['finding_counts']['fail'] == 1
+          assert not coverage['coverage_gap']
+          PY
+      - name: Preserve typed row and dependency report
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-row-validation
+          path: /tmp/phase1c_row_validation.json
       - name: Validate independent evidence manifest contracts
         run: |
           python -m unittest -v test_validate_phase1c_evidence_manifests

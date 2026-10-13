@@ -32,6 +32,11 @@
       "sha256": "1bc0ce984d2a34295015009cc51bcf167a30f689e1352bcafa05e798b6328134"
     },
     {
+      "path": "phase1c_dependency_pilot.sql",
+      "role": "pilot_sql",
+      "sha256": "c4e90d6a953a14efb39b462540db5794653f153a0a16c36359817efe6ef98660"
+    },
+    {
       "path": "calibration_config.yaml",
       "role": "calibration",
       "sha256": "dda3df36a6bdbf802cc135e7ed54b966f9b573d6c1efd97e3d4ea31716e039b2"
@@ -39,7 +44,7 @@
     {
       "path": "phase1c_data_contract.yaml",
       "role": "contract",
-      "sha256": "8a75411c13d7260c557e83371e35f0fa9a65905b5f902f633986fc1bd293974d"
+      "sha256": "eff857e0b2b86cfed39f673dbb80e9a5f44e1a01ba8e0a869ffdfc7e357faf16"
     },
     {
       "path": "phase1c_scenario_matrix.yaml",

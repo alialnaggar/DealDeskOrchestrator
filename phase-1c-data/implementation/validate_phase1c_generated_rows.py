@@ -21,7 +21,7 @@ from validate_phase1c_data_contract import validate_payload
 HERE = Path(__file__).resolve().parent
 PILOT_SQL = ("phase1c_buildable_master.sql", "phase1c_sellable_catalogue.sql",
              "phase1c_vertical_pilot.sql", "phase1c_conflict_pilot.sql",
-             "phase1c_stress_pilot.sql")
+             "phase1c_stress_pilot.sql", "phase1c_dependency_pilot.sql")
 
 
 def audit_dependency_coverage(rows):
@@ -53,6 +53,11 @@ def validate_rows(rows, contract, *, trusted_deal_evidence=None):
     regions = contract["controlled_vocabularies"]["destination_regions"]
     products = {row["product_id"]: row for row in rows["products"]}
     deals = {row["deal_id"]: row for row in rows["deals"]}
+    baseline_version = contract["controlled_vocabularies"]["catalog_version"]
+    extension = contract["catalogue_extensions"]["dependency_pilot"]
+    extension_version = extension["catalog_version"]
+    extension_products = set(extension["product_ids"])
+    extension_deals = set(extension["deal_ids"])
     if len(products) != len(rows["products"]) or len(deals) != len(rows["deals"]):
         errors.append("duplicate product or deal ID in validation input")
 
@@ -78,16 +83,32 @@ def validate_rows(rows, contract, *, trusted_deal_evidence=None):
         for error in validate_payload("shipping_weekdays", row["dispatch_weekdays_json"], contract):
             errors.append(f"shipping_lanes.{row['lane_id']}: {error}")
     for row in rows["products"]:
+        version = row.get("catalog_version", baseline_version)
+        if version != baseline_version and not (
+                version == extension_version and row["product_id"] in extension_products):
+            errors.append(f"products.{row['product_id']}: unlisted catalogue extension")
         mode = row["fulfillment_mode"]
         mode = "physical" if mode in {"stocked_finished", "supplier_finished", "make_to_order"} else mode
         for error in validate_payload("product_attributes", row["attributes_json"], contract, mode=mode):
             errors.append(f"products.{row['product_id']}: {error}")
     for row in rows["compatibility_rules"]:
+        version = row.get("catalog_version", baseline_version)
+        if version != baseline_version and not (
+                version == extension_version and
+                row["compatibility_rule_id"] == extension["rule_id"] and
+                row.get("source_product_id") in extension_products and
+                row.get("target_product_id") in extension_products):
+            errors.append(f"compatibility_rules.{row['compatibility_rule_id']}: unlisted catalogue extension")
         for error in validate_payload("compatibility_condition", row["condition_json"], contract,
                                       mode=row["rule_type"]):
             errors.append(f"compatibility_rules.{row['compatibility_rule_id']}: {error}")
     for row in rows["deals"]:
         deal_id = row["deal_id"]
+        version = row.get("catalog_version", baseline_version)
+        if version != baseline_version and not (
+                version == extension_version and deal_id in extension_deals and
+                row["dataset_type"] == "generated_test"):
+            errors.append(f"deals.{deal_id}: unlisted catalogue extension")
         for kind, column in (("deal_terms", "terms_json"), ("requirements", "requirements_json"),
                              ("evidence_refs", "evidence_refs_json")):
             for error in validate_payload(kind, row[column], contract):
@@ -118,6 +139,9 @@ def validate_rows(rows, contract, *, trusted_deal_evidence=None):
         if not deal or not product:
             errors.append(f"deal_lines.{line_id}: unknown deal or product")
             continue
+        if (deal.get("catalog_version", baseline_version) !=
+                product.get("catalog_version", baseline_version)):
+            errors.append(f"deal_lines.{line_id}: product/deal catalogue versions differ")
         if not product["is_sellable"] or not product["is_active"]:
             errors.append(f"deal_lines.{line_id}: product not active sellable")
         mode = product["fulfillment_mode"]

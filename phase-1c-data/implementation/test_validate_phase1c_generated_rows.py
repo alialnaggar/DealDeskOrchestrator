@@ -67,6 +67,15 @@ class GeneratedRowTests(unittest.TestCase):
         self.assertEqual(result["finding_counts"]["not_applicable"], 1)
         self.assertTrue(result["coverage_gap"])
 
+    def test_unlisted_catalogue_version_cannot_enter_generated_rows(self):
+        rows = example()
+        rows["products"][0]["catalog_version"] = "CATALOGUE_2026_V2"
+        rows["deals"][0]["catalog_version"] = "CATALOGUE_2026_V1"
+        errors = validate_rows(rows, CONTRACT)["errors"]
+        self.assertTrue(any("unlisted catalogue extension" in error for error in errors))
+        self.assertTrue(any("product/deal catalogue versions differ" in error
+                            for error in errors))
+
     def test_unknown_location_zone_option_and_unresolved_evidence_fail(self):
         rows = example()
         rows["inventory"][0]["location_id"] = "WH-EU-NORTH"
