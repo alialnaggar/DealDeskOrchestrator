@@ -13,7 +13,7 @@
     "phase1c_vertical_pilot.sql": "1507790596acd9712d03a8d88d3fdda4c521a08cc008354bc28fa3660928f4e6"
   },
   "source_template_count": 20,
-  "sql_sha256": "1a0d6f114604f5a7116cd662fc4c3bc100f355e9000f8f9050630a5b76837fbb",
+  "sql_sha256": "ba2350d9447c76445228d90c95fe36e4f773df5fc05ad1523e1a56b2121dda0d",
   "status": "provisional_source_reuse",
   "v1_deals": 98,
   "v2_dependency_deals": 2

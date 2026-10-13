@@ -119,8 +119,9 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                         expected = ("PILOT-STOCK-005" if stocked_variant == 0
                                     else f"GEN-STOCK-{stocked_variant:03d}")
                         self.assertIn(expected, sources)
-                        self.assertEqual(bundle["run"]["as_of_at"].hour,
-                                         12 + (15 * stocked_variant) // 60)
+                        self.assertEqual((bundle["run"]["as_of_at"].hour,
+                                          bundle["run"]["as_of_at"].minute),
+                                         (12, 10 * stocked_variant))
                         stocked_variant += 1
                     if index in (99, 100):
                         finding = next(f for f in bundle["facts"]["compatibility"]

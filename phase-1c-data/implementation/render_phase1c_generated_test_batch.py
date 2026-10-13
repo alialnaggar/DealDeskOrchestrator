@@ -98,7 +98,7 @@ def build(matrix, source_hashes, customer_sql):
         if archetype == "STOCK-READY" and variant:
             # A later observation is visible only to this variant's later run.
             stock_variants += 1
-            stock_as_of = datetime(2026, 9, 1, 12, tzinfo=timezone.utc) + timedelta(minutes=15 * variant)
+            stock_as_of = datetime(2026, 9, 1, 12, tzinfo=timezone.utc) + timedelta(minutes=10 * variant)
             observed_at = stock_as_of - timedelta(minutes=5)
             stock_id = f"GEN-STOCK-{variant:03d}"
             out.append(
