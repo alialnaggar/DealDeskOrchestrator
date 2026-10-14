@@ -1,4 +1,82 @@
 {
+  "business_contract": {
+    "approval": {
+      "at": "2026-10-14T19:04:52Z",
+      "by": "Ali",
+      "decisions": [
+        "F1",
+        "C1",
+        "C2",
+        "G1",
+        "S1",
+        "R1"
+      ],
+      "instruction": "approve contnue",
+      "proposal_commit": "1b97d2326e7f3e574eacb9b9c29703d9c982be41",
+      "scope": "Versioned evaluation input and renewed review; no schema change, calibration freeze or answer acceptance."
+    },
+    "contract_id": "DDO-EVALUATION-CONTRACT-V2",
+    "costing": {
+      "basis": "Per catalogue unit, fictional tax-exclusive values; no additional freight/tax adjustment in these cases.",
+      "currency": "EUR",
+      "missing_cost_parameters": "No independent labour/overhead reconstruction or reconciled BOM rollup may be claimed when cost_parameters is null.",
+      "procurement_offer_cost": "Same-product declared standard cost for these cases; supports uncommitted procurement, does not replace quote-margin cost.",
+      "quote_margin_cost": "Versioned submitted-line catalogue standard_cost",
+      "workstation_loaded_standard_cost_eur": "715.00"
+    },
+    "digital_term": {
+      "claim": "Conservative simulation convention; not legal contract interpretation.",
+      "coverage": "covers_from <= activation date and covers_until >= anniversary end date",
+      "end": "activation date plus contract_months using calendar months, clamped to last day of shorter month",
+      "start": "requested_activation_date"
+    },
+    "evaluation_input_version": 2,
+    "evidence_age": {
+      "future_timestamps_allowed": false,
+      "interpretation": "Older, future or missing observations do not establish current availability/exposure; request refreshed evidence rather than infer impossibility. Provider proof also needs matching identity, quantity, term, binding dates and validity. These are fictional conventions, not externally validated service levels.",
+      "provider_verification_max_elapsed_days": 7,
+      "snapshot_max_elapsed_hours": 24,
+      "snapshot_sources": [
+        "inventory",
+        "production_capacity",
+        "digital_capacity",
+        "credit_commitments"
+      ],
+      "upper_boundary_inclusive": true
+    },
+    "gates": {
+      "approval_required": "Applicable human review route can be presented; approval has not been granted.",
+      "blocked": "Hard prohibition or invalid configuration.",
+      "multiple_findings": "Retain subordinate findings and human actions when a higher-precedence gate applies; distinguish missing supply from a feasible uncommitted alternative.",
+      "needs_commitment": "A feasible conditional alternative needs a supplier, provider, production or service commitment.",
+      "needs_evidence": "Adequate current facts are missing.",
+      "needs_revision": "Submitted quantity, date or region cannot be supported as submitted and requires a changed proposal.",
+      "precedence": [
+        "blocked",
+        "needs_revision",
+        "needs_evidence",
+        "needs_commitment",
+        "approval_required"
+      ]
+    },
+    "routing": {
+      "boundary": "No automatic approval, reservation, supplier/provider commitment or delivery promise.",
+      "higher_or_additional_roles": "Only when their own explicit higher sales, Finance or Legal rules trigger.",
+      "supported_but_late_physical_fulfillment": "At least Sales Director reviews a proposed date change; requested date still requires revision and human/customer acceptance."
+    },
+    "schema_version": 1,
+    "service_scope": {
+      "eligible_region": "Coverage only; no booked service slot.",
+      "ineligible_region": "Requires a changed service or destination proposal.",
+      "installation_requested_false": "Removes an additional installation request, not a scheduled-service line's regional requirement.",
+      "regional_rule_type": "installation_eligibility",
+      "uses": [
+        "requested installation eligibility",
+        "scheduled-service regional coverage"
+      ]
+    },
+    "status": "approved_synthetic_business_conventions_not_released_answers"
+  },
   "cases": [
     {
       "case_id": "EVAL-PREP-001",
@@ -50,7 +128,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:01:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-001-SOURCES",
             "deal_id": "EVAL36-001-DEAL",
             "input_snapshot_json": {
@@ -188,7 +266,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:02:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-002-SOURCES",
             "deal_id": "EVAL36-002-DEAL",
             "input_snapshot_json": {
@@ -326,7 +404,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:03:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-003-SOURCES",
             "deal_id": "EVAL36-003-DEAL",
             "input_snapshot_json": {
@@ -464,7 +542,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:04:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-004-SOURCES",
             "deal_id": "EVAL36-004-DEAL",
             "input_snapshot_json": {
@@ -602,7 +680,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:05:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-005-SOURCES",
             "deal_id": "EVAL36-005-DEAL",
             "input_snapshot_json": {
@@ -740,7 +818,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:06:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-006-SOURCES",
             "deal_id": "EVAL36-006-DEAL",
             "input_snapshot_json": {
@@ -878,7 +956,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:07:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-007-SOURCES",
             "deal_id": "EVAL36-007-DEAL",
             "input_snapshot_json": {
@@ -974,7 +1052,7 @@
             "supplier_id": "EVAL36-007-SUPPLIER",
             "supplier_item_id": "EVAL36-007-OFFER",
             "supplier_sku": "EVAL36-007-SKU",
-            "unit_cost": "47.50",
+            "unit_cost": "2386.20",
             "valid_from": "2026-08-20",
             "valid_to": "2026-09-30"
           }
@@ -1051,7 +1129,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:08:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-008-SOURCES",
             "deal_id": "EVAL36-008-DEAL",
             "input_snapshot_json": {
@@ -1147,7 +1225,7 @@
             "supplier_id": "EVAL36-008-SUPPLIER",
             "supplier_item_id": "EVAL36-008-OFFER",
             "supplier_sku": "EVAL36-008-SKU",
-            "unit_cost": "47.50",
+            "unit_cost": "2386.20",
             "valid_from": "2026-08-20",
             "valid_to": "2026-09-30"
           }
@@ -1224,7 +1302,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:09:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-009-SOURCES",
             "deal_id": "EVAL36-009-DEAL",
             "input_snapshot_json": {
@@ -1293,7 +1371,7 @@
             "supplier_id": "EVAL36-009-SUPPLIER",
             "supplier_item_id": "EVAL36-009-OFFER",
             "supplier_sku": "EVAL36-009-SKU",
-            "unit_cost": "47.50",
+            "unit_cost": "2386.20",
             "valid_from": "2026-08-20",
             "valid_to": "2026-09-30"
           }
@@ -1370,7 +1448,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:10:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-010-SOURCES",
             "deal_id": "EVAL36-010-DEAL",
             "input_snapshot_json": {
@@ -1439,7 +1517,7 @@
             "supplier_id": "EVAL36-010-SUPPLIER",
             "supplier_item_id": "EVAL36-010-OFFER",
             "supplier_sku": "EVAL36-010-SKU",
-            "unit_cost": "47.50",
+            "unit_cost": "2386.20",
             "valid_from": "2026-08-20",
             "valid_to": "2026-09-30"
           }
@@ -1516,7 +1594,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:11:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-011-SOURCES",
             "deal_id": "EVAL36-011-DEAL",
             "input_snapshot_json": {
@@ -1612,7 +1690,7 @@
             "supplier_id": "EVAL36-011-SUPPLIER",
             "supplier_item_id": "EVAL36-011-OFFER",
             "supplier_sku": "EVAL36-011-SKU",
-            "unit_cost": "47.50",
+            "unit_cost": "2386.20",
             "valid_from": "2026-08-20",
             "valid_to": "2026-09-30"
           }
@@ -1689,7 +1767,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:12:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-012-SOURCES",
             "deal_id": "EVAL36-012-DEAL",
             "input_snapshot_json": {
@@ -1785,7 +1863,7 @@
             "supplier_id": "EVAL36-012-SUPPLIER",
             "supplier_item_id": "EVAL36-012-OFFER",
             "supplier_sku": "EVAL36-012-SKU",
-            "unit_cost": "47.50",
+            "unit_cost": "2386.20",
             "valid_from": "2026-08-20",
             "valid_to": "2026-09-30"
           }
@@ -1866,7 +1944,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:13:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-013-SOURCES",
             "deal_id": "EVAL36-013-DEAL",
             "input_snapshot_json": {
@@ -2250,7 +2328,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:14:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-014-SOURCES",
             "deal_id": "EVAL36-014-DEAL",
             "input_snapshot_json": {
@@ -2634,7 +2712,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:15:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-015-SOURCES",
             "deal_id": "EVAL36-015-DEAL",
             "input_snapshot_json": {
@@ -2982,7 +3060,7 @@
             "supplier_id": "EVAL36-015-SUPPLIER",
             "supplier_item_id": "EVAL36-015-OFFER",
             "supplier_sku": "EVAL36-015-SKU",
-            "unit_cost": "47.50",
+            "unit_cost": "50.00",
             "valid_from": "2026-08-20",
             "valid_to": "2026-09-30"
           }
@@ -3063,7 +3141,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:16:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-016-SOURCES",
             "deal_id": "EVAL36-016-DEAL",
             "input_snapshot_json": {
@@ -3411,7 +3489,7 @@
             "supplier_id": "EVAL36-016-SUPPLIER",
             "supplier_item_id": "EVAL36-016-OFFER",
             "supplier_sku": "EVAL36-016-SKU",
-            "unit_cost": "47.50",
+            "unit_cost": "50.00",
             "valid_from": "2026-08-20",
             "valid_to": "2026-09-30"
           }
@@ -3492,7 +3570,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:17:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-017-SOURCES",
             "deal_id": "EVAL36-017-DEAL",
             "input_snapshot_json": {
@@ -3876,7 +3954,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:18:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-018-SOURCES",
             "deal_id": "EVAL36-018-DEAL",
             "input_snapshot_json": {
@@ -4260,7 +4338,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:19:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-019-SOURCES",
             "deal_id": "EVAL36-019-DEAL",
             "input_snapshot_json": {
@@ -4608,7 +4686,7 @@
             "supplier_id": "EVAL36-019-SUPPLIER",
             "supplier_item_id": "EVAL36-019-OFFER",
             "supplier_sku": "EVAL36-019-SKU",
-            "unit_cost": "47.50",
+            "unit_cost": "240.00",
             "valid_from": "2026-08-20",
             "valid_to": "2026-09-30"
           }
@@ -4689,7 +4767,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:20:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-020-SOURCES",
             "deal_id": "EVAL36-020-DEAL",
             "input_snapshot_json": {
@@ -5037,7 +5115,7 @@
             "supplier_id": "EVAL36-020-SUPPLIER",
             "supplier_item_id": "EVAL36-020-OFFER",
             "supplier_sku": "EVAL36-020-SKU",
-            "unit_cost": "47.50",
+            "unit_cost": "240.00",
             "valid_from": "2026-08-20",
             "valid_to": "2026-09-30"
           }
@@ -5140,7 +5218,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:21:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-021-SOURCES",
             "deal_id": "EVAL36-021-DEAL",
             "input_snapshot_json": {
@@ -5297,7 +5375,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:22:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-022-SOURCES",
             "deal_id": "EVAL36-022-DEAL",
             "input_snapshot_json": {
@@ -5431,7 +5509,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:23:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-023-SOURCES",
             "deal_id": "EVAL36-023-DEAL",
             "input_snapshot_json": {
@@ -5565,7 +5643,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:24:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-024-SOURCES",
             "deal_id": "EVAL36-024-DEAL",
             "input_snapshot_json": {
@@ -5722,7 +5800,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:25:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-025-SOURCES",
             "deal_id": "EVAL36-025-DEAL",
             "input_snapshot_json": {
@@ -5879,7 +5957,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:26:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-026-SOURCES",
             "deal_id": "EVAL36-026-DEAL",
             "input_snapshot_json": {
@@ -6028,7 +6106,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:27:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-027-SOURCES",
             "deal_id": "EVAL36-027-DEAL",
             "input_snapshot_json": {
@@ -6155,7 +6233,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:28:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-028-SOURCES",
             "deal_id": "EVAL36-028-DEAL",
             "input_snapshot_json": {
@@ -6282,7 +6360,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:29:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-029-SOURCES",
             "deal_id": "EVAL36-029-DEAL",
             "input_snapshot_json": {
@@ -6409,7 +6487,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:30:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-030-SOURCES",
             "deal_id": "EVAL36-030-DEAL",
             "input_snapshot_json": {
@@ -6518,7 +6596,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:31:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-031-SOURCES",
             "deal_id": "EVAL36-031-DEAL",
             "input_snapshot_json": {
@@ -6656,7 +6734,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:32:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-032-SOURCES",
             "deal_id": "EVAL36-032-DEAL",
             "input_snapshot_json": {
@@ -6794,7 +6872,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:33:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-033-SOURCES",
             "deal_id": "EVAL36-033-DEAL",
             "input_snapshot_json": {
@@ -6932,7 +7010,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:34:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-034-SOURCES",
             "deal_id": "EVAL36-034-DEAL",
             "input_snapshot_json": {
@@ -7070,7 +7148,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:35:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-035-SOURCES",
             "deal_id": "EVAL36-035-DEAL",
             "input_snapshot_json": {
@@ -7208,7 +7286,7 @@
             "applied_policy_set_code": "BASELINE_2026",
             "as_of_at": "2026-09-01T12:36:00+00:00",
             "catalog_version_used": "CATALOGUE_2026_V1",
-            "config_hash": "947a5d733f8e09eeb0eb575238db438b2b1a806d13330fa6ebcfb7648c6bf2b4",
+            "config_hash": "4c4412abc64cc6763d08b834a7f08d08bf664a35d9a5e9566fa032848cb7e0a4",
             "data_snapshot_ref": "EVAL36-036-SOURCES",
             "deal_id": "EVAL36-036-DEAL",
             "input_snapshot_json": {
@@ -7297,5 +7375,6 @@
       }
     }
   ],
+  "evaluation_input_version": 2,
   "schema_version": 1
 }

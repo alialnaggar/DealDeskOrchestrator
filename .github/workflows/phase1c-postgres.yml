@@ -303,7 +303,7 @@ jobs:
           createdb deal_desk_evaluation_inputs
           psql -X -v ON_ERROR_STOP=1 -d deal_desk_evaluation_inputs -f schema.sql
           psql -X -v ON_ERROR_STOP=1 -d deal_desk_evaluation_inputs -f /tmp/phase1c_compiled_rules.sql
-          EVALUATION_DATABASE_URL=postgresql://postgres:phase1c_ci_only@localhost:5432/deal_desk_evaluation_inputs PHASE1C_EVALUATION_PACKETS=/tmp/phase1c_evaluation_packets python -m unittest -v test_phase1c_evaluation_cases
+          EVALUATION_DATABASE_URL=postgresql://postgres:phase1c_ci_only@localhost:5432/deal_desk_evaluation_inputs PHASE1C_EVALUATION_PACKETS=/tmp/phase1c_evaluation_packets PHASE1C_EVALUATION_PACKETS_V1=/tmp/phase1c_evaluation_packets_v1 python -m unittest -v test_phase1c_evaluation_cases
       - name: Preserve provisional evaluation inputs without answers
         uses: actions/upload-artifact@v4
         with:
@@ -323,7 +323,7 @@ jobs:
           if-no-files-found: error
       - name: Validate separate model review drafts against pinned facts
         run: |
-          python phase1c_evaluation_review.py --review-file ../evaluation/reviews/model_review_draft.json --packet-directory /tmp/phase1c_evaluation_packets > /tmp/phase1c_model_review_validation.json
+          python phase1c_evaluation_review.py --index ../evaluation/archive/v1/provisional_packet_index.json --review-file ../evaluation/reviews/model_review_draft.json --packet-directory /tmp/phase1c_evaluation_packets_v1 > /tmp/phase1c_model_review_validation.json
           python - <<'PY'
           import json
           from pathlib import Path
@@ -352,4 +352,10 @@ jobs:
         with:
           name: phase1c-evaluation-contract-audit
           path: /tmp/phase1c_evaluation_contract_audit.json
+          if-no-files-found: error
+      - name: Preserve original v1 review sources separately
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-provisional-evaluation-inputs-v1
+          path: /tmp/phase1c_evaluation_packets_v1
           if-no-files-found: error

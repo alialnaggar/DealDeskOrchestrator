@@ -52,6 +52,55 @@ class EvaluationAuthoringTests(unittest.TestCase):
             checked += 1
         self.assertEqual(checked, 4)
 
+    def test_v2_changes_only_approved_offers_and_config_fingerprint(self):
+        from copy import deepcopy
+        current, manifest = build_from_files()
+        archived = json.loads((OUTPUT_DIR / "archive/v1/provisional_cases.json").read_text())
+        self.assertEqual(current["evaluation_input_version"], 2)
+        self.assertEqual(current["business_contract"]["approval"]["decisions"], ["F1", "C1", "C2", "G1", "S1", "R1"])
+        self.assertEqual(current["business_contract"]["evidence_age"]["snapshot_max_elapsed_hours"], 24)
+        changed = {}
+        for before, after in zip(archived["cases"], current["cases"]):
+            old, new = deepcopy(before), deepcopy(after)
+            old["tables"]["deal_runs"][0].pop("config_hash")
+            new["tables"]["deal_runs"][0].pop("config_hash")
+            for a, b in zip(old["tables"].get("supplier_items", []), new["tables"].get("supplier_items", [])):
+                a_cost, b_cost = a.pop("unit_cost"), b.pop("unit_cost")
+                if a_cost != b_cost:
+                    changed[after["case_id"]] = b_cost
+            self.assertEqual(old, new)
+        expected = {f"EVAL-PREP-{i:03}": "2386.20" for i in range(7, 13)}
+        expected.update({f"EVAL-PREP-{i:03}": "50.00" for i in (15, 16)})
+        expected.update({f"EVAL-PREP-{i:03}": "240.00" for i in (19, 20)})
+        self.assertEqual(changed, expected)
+        old_manifest = json.loads((OUTPUT_DIR / "archive/v1/provisional_authoring_manifest.json").read_text())
+        self.assertEqual(hashlib.sha256(render(archived).encode()).hexdigest(), old_manifest["inputs_sha256"])
+
+    def test_contract_is_sealed_and_cannot_be_rebound(self):
+        from copy import deepcopy
+        from phase1c_candidate import INPUT_TABLES, reader_input_digest
+        from phase1c_evaluation_input import prepare_review_input, verify_review_input
+        bundle = {key: [] for key in INPUT_TABLES}
+        bundle["deal"] = {"deal_id": "source-fixture"}
+        bundle["run"] = dict(run_id="fixture-run", deal_id="source-fixture", as_of_at="2026-09-01T12:00:00+00:00",
+                             catalog_version_used="fixture", applied_policy_set_code="fixture",
+                             data_snapshot_ref="fixture", config_hash="fixture")
+        contract = {"contract_id": "fixture", "snapshot_hours": 24}
+        legacy = prepare_review_input(bundle, case_id="EVAL-PREP-TEST")
+        packet = prepare_review_input(bundle, case_id="EVAL-PREP-TEST", business_contract=contract)
+        self.assertNotEqual(legacy["sha256"], packet["sha256"])
+        self.assertEqual(packet["payload"]["source_rows"], legacy["payload"]["source_rows"])
+        self.assertTrue(verify_review_input(packet, expected_case_id="EVAL-PREP-TEST",
+                        expected_source_digest=reader_input_digest(bundle), expected_business_contract=contract))
+        changed = deepcopy(packet)
+        changed["payload"]["business_contract"]["snapshot_hours"] = 48
+        changed["sha256"] = hashlib.sha256(json.dumps(changed["payload"],sort_keys=True,separators=(",", ":")).encode()).hexdigest()
+        with self.assertRaisesRegex(ValueError, "contract differs"):
+            verify_review_input(changed, expected_case_id="EVAL-PREP-TEST",
+                                expected_source_digest=reader_input_digest(bundle), expected_business_contract=contract)
+        with self.assertRaises(ValueError):
+            verify_review_input(packet, expected_case_id="EVAL-PREP-TEST", expected_source_digest=reader_input_digest(bundle))
+
     def test_reproducible_separate_36_source_cases(self):
         inputs, manifest = build_from_files()
         self.assertEqual(len(inputs["cases"]), 36)
@@ -90,6 +139,17 @@ class EvaluationAuthoringTests(unittest.TestCase):
                      "Dedicated disposable PostgreSQL database required")
 class EvaluationDatabaseTests(unittest.TestCase):
     def test_reader_packets_reproduce_without_development_or_cross_case_sources(self):
+        inputs, authoring = build_from_files()
+        self._export(inputs, authoring, OUTPUT_DIR, inputs["business_contract"],
+                     os.environ.get("PHASE1C_EVALUATION_PACKETS"))
+
+    def test_archived_v1_packets_remain_bound_to_first_review(self):
+        archive = OUTPUT_DIR / "archive" / "v1"
+        self._export(json.loads((archive / "provisional_cases.json").read_text()),
+                     json.loads((archive / "provisional_authoring_manifest.json").read_text()),
+                     archive, None, os.environ.get("PHASE1C_EVALUATION_PACKETS_V1"))
+
+    def _export(self, inputs, authoring, pinned_directory, business_contract, output_directory):
         from phase1c_reader import read_run, load_provider_evidence
         from phase1c_evaluation_input import (prepare_heldout_review_input,
                                               operational_source_ids, verify_review_input)
@@ -97,10 +157,9 @@ class EvaluationDatabaseTests(unittest.TestCase):
         from validate_phase1c_generated_rows import load_rows, validate_rows
         import yaml
 
-        inputs, authoring = build_from_files()
         development = json.loads((HERE / "phase1c_development_source_exclusions.json").read_text())
         historical = json.loads((HERE / "phase1c_historical_source_exclusions.json").read_text())
-        output = Path(os.environ["PHASE1C_EVALUATION_PACKETS"]) if os.environ.get("PHASE1C_EVALUATION_PACKETS") else None
+        output = Path(output_directory) if output_directory else None
         if output:
             output.mkdir(parents=True, exist_ok=True)
         index, selected_across_cases = [], set()
@@ -145,14 +204,15 @@ class EvaluationDatabaseTests(unittest.TestCase):
                                               digital_evidence_resolver=resolver)
                             packet = prepare_heldout_review_input(
                                 bundle, case_id=case["case_id"], development_manifest=development,
-                                historical_manifest=historical)
+                                historical_manifest=historical, business_contract=business_contract)
                             repeated = prepare_heldout_review_input(
                                 read_run(conn, run_id, commercial_rule_mode="compiled", digital_evidence_resolver=resolver),
                                 case_id=case["case_id"], development_manifest=development,
-                                historical_manifest=historical)
+                                historical_manifest=historical, business_contract=business_contract)
                         self.assertEqual(packet, repeated)
                         self.assertTrue(verify_review_input(packet, expected_case_id=case["case_id"],
-                                                           expected_source_digest=reader_input_digest(bundle)))
+                                                           expected_source_digest=reader_input_digest(bundle),
+                                                           expected_business_contract=business_contract))
                         self.assertFalse(keys_in(packet) & FORBIDDEN)
                         selected = operational_source_ids(bundle)
                         expected_ids = {
@@ -179,8 +239,11 @@ class EvaluationDatabaseTests(unittest.TestCase):
         packet_index = {"schema_version": 1, "input_case_count": 36, "independently_reviewed_answers": 0,
                         "source_definition_sha256": authoring["inputs_sha256"],
                         "cases": index}
+        if business_contract is not None:
+            packet_index.update(evaluation_input_version=2, business_contract_sha256=hashlib.sha256(
+                json.dumps(business_contract, sort_keys=True, separators=(",", ":")).encode()).hexdigest())
         self.assertEqual(packet_index, json.loads(
-            (OUTPUT_DIR / "provisional_packet_index.json").read_text()))
+            (pinned_directory / "provisional_packet_index.json").read_text()))
         if output:
             (output / "packet_index.json").write_text(render(packet_index))
         print("Evaluation input preparation: 36 reproducible packets; 0 independently reviewed answers")

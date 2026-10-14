@@ -231,3 +231,7 @@ The 156-row V1 catalogue and its 120 sellable/36 component mix remain the calibr
 | Price and cost basis | The 102 generated sellable costs target category p50. A read-only seeded spread changes 31 baseline 10%-discount product states and produces two nonpositive margins; source units, dates, tax basis and the €1,050 workstation need review. | Retain fixed p50 as a disclosed regression-data simplification for this first release, or choose the reviewed bounded spread and recheck all profile/deal effects before adoption. Neither choice claims market-comparable prices. |
 
 These are proposals for review, not approvals. No cost, threshold, schema or release flag changes here; both calibration reviews and `ready_for_generation=false` remain open.
+
+## Evaluation contract approval boundary — 14 October 2026
+
+Ali approved the version-2 evaluation business conventions and correction of ten evaluation-only supplier offer costs. This approval does not accept the V1 product mix or fixed-p50/spread calibration choices, freeze master costs or close either calibration review. Master prices/costs and all three policy profiles remain unchanged. The same 36 cases require renewed source-based review; accepted answers remain 0/36 and `ready_for_generation=false`.

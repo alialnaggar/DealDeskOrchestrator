@@ -22,7 +22,7 @@ SOURCE_FILES = ("phase1c_scenario_matrix.yaml", "phase1c_portfolio_draft.json",
                 "phase1c_build_cost_draft.json", "calibration_config.yaml",
                 "phase1c_data_contract.yaml", "phase1c_buildable_master.sql",
                 "phase1c_sellable_catalogue.sql", "render_phase1c_evaluation_cases.py",
-                "render_phase1c_sellable_catalogue.py")
+                "render_phase1c_sellable_catalogue.py", "phase1c_evaluation_business_contract.json")
 CATALOG = "CATALOGUE_2026_V1"
 POLICY = "BASELINE_2026"
 PRODUCTS = {
@@ -45,7 +45,7 @@ def render(value):
     return json.dumps(value, sort_keys=True, indent=2, default=str) + "\n"
 
 
-def build(portfolio, costs, config, contract, matrix, source_hashes):
+def build(portfolio, costs, config, contract, matrix, source_hashes, business_contract):
     if matrix["evaluation"]["target_cases"] != 36 or len(matrix["archetypes"]) != 18:
         raise ValueError("Evaluation authoring requires the 18-archetype/36-case contract")
     if matrix["evaluation"]["variants_per_archetype"] != 2:
@@ -53,6 +53,8 @@ def build(portfolio, costs, config, contract, matrix, source_hashes):
     priced = product_rows(portfolio, costs, config, contract)
     prices = {row[0]: Decimal(row[7]) for row in priced}
     standard_cost = {row[0]: Decimal(row[8]) for row in priced}
+    standard_cost.update({key: Decimal(value) for key, value in costs["component_standard_costs_eur"].items()})
+    standard_cost.update({p["product_id"]: Decimal(str(p["product_standard_cost_eur"])) for p in costs["products"]})
     prices.update({p["product_id"]: Decimal(str(p["product_list_price_eur"]))
                    for p in costs["products"]})
     assumptions = hashlib.sha256(canonical(source_hashes).encode()).hexdigest()
@@ -105,7 +107,7 @@ def build(portfolio, costs, config, contract, matrix, source_hashes):
                 add("supplier_items", supplier_item_id=prefix + "-OFFER", supplier_id=supplier,
                     product_id=sku, supplier_sku=prefix + "-SKU", minimum_order_qty=1,
                     order_multiple=1, lead_days_min=1 + variant, lead_days_mode=3 + variant,
-                    lead_days_max=5 + variant, unit_cost="47.50", currency_code="EUR",
+                    lead_days_max=5 + variant, unit_cost=str(standard_cost[sku].quantize(Decimal("0.01"))), currency_code="EUR",
                     valid_from="2026-08-20", valid_to="2026-09-30", is_active=True)
 
             def receipt(sku, amount, arrival, cancelled=False):
@@ -225,9 +227,11 @@ def build(portfolio, costs, config, contract, matrix, source_hashes):
             cases.append({"case_id": case_id, "tables": tables, "provider_manifest": provider_manifest})
             authoring.append({"case_id": case_id, "archetype_id": kind, "variant": variant + 1,
                               "source_review": "pending", "independent_answer_review": "pending"})
-    inputs = {"schema_version": 1, "cases": cases}
+    inputs = {"schema_version": 1, "evaluation_input_version": 2,
+              "business_contract": business_contract, "cases": cases}
     manifest = {"schema_version": 1, "status": "provisional_author_inputs_not_reviewed_answers",
                 "source_sha256": source_hashes, "inputs_sha256": hashlib.sha256(render(inputs).encode()).hexdigest(),
+                "evaluation_input_version": 2, "business_contract_sha256": hashlib.sha256(canonical(business_contract).encode()).hexdigest(),
                 "authored_input_cases": len(cases), "independently_reviewed_answers": 0,
                 "shared_context": ["V1 fictional catalogue", "BOMs and production requirements", "compiled baseline policy", "canonical location and region codes"],
                 "limitations": ["case author knows development archetypes", "only five selected sellable SKUs",
@@ -242,7 +246,8 @@ def build_from_files():
                  yaml.safe_load((HERE / "calibration_config.yaml").read_text()),
                  yaml.safe_load((HERE / "phase1c_data_contract.yaml").read_text()),
                  yaml.safe_load((HERE / "phase1c_scenario_matrix.yaml").read_text()),
-                 {p: hashlib.sha256((HERE / p).read_bytes()).hexdigest() for p in SOURCE_FILES})
+                 {p: hashlib.sha256((HERE / p).read_bytes()).hexdigest() for p in SOURCE_FILES},
+                 read_json("phase1c_evaluation_business_contract.json"))
 
 
 def main():

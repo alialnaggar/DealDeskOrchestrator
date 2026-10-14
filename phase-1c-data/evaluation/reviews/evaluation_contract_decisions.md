@@ -1,6 +1,8 @@
-# Evaluation contract decisions for Ali — pending, 14 October 2026
+# Evaluation contract decisions — approved for version 2, 14 October 2026
 
-**Recommendation: approve the bounded evaluation-contract proposal below for a versioned second review. This is not a calibration freeze, schema change or acceptance of the 36 answers.** No proposal in this document has been adopted. The first-pass source pin and model draft remain intact. Accepted independent answers: **0/36**.
+**Decision recorded:** Ali approved F1, C1/C2, G1, S1 and R1 on 14 October 2026 at 19:04:52 UTC with “approve contnue”, authorizing versioned inputs and renewed review. This does not freeze calibration, change the schema or accept any answer. The historical proposal and evidence below are retained; references to pending approval describe the pre-adoption checkpoint. Version 1 source pins and its model draft remain intact. Accepted independent answers: **0/36**.
+
+The adopted system-visible contract is [`phase1c_evaluation_business_contract.json`](../../implementation/phase1c_evaluation_business_contract.json). Version 2 includes it in every source packet and in generator-source hashing. Ten evaluation supplier-item costs are corrected to the same-product declared standards. CI separately replays archived version 1 and current version 2; the first model draft stays bound to version 1.
 
 ## Evidence and method
 

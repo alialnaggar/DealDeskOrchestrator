@@ -1,5 +1,6 @@
 {
   "authored_input_cases": 36,
+  "business_contract_sha256": "6e6990f014e061acd61039bdc128af753fc0116d4c1e7d60dafcdfb2108f7971",
   "cases": [
     {
       "archetype_id": "STOCK-READY",
@@ -254,8 +255,9 @@
       "variant": 2
     }
   ],
+  "evaluation_input_version": 2,
   "independently_reviewed_answers": 0,
-  "inputs_sha256": "5b3168a6871ebb2cfdcaa0c594c9ff6e34ab300708661146c22a994f85a09977",
+  "inputs_sha256": "6d3b823a5426e6824ad7513cd611c540b6ba5b71c2ae52cee13fcabf875dc804",
   "limitations": [
     "case author knows development archetypes",
     "only five selected sellable SKUs",
@@ -274,10 +276,11 @@
     "phase1c_build_cost_draft.json": "a0ec9bffac77612641aa0f47b71bc52761f307080470e9250ec0b9448a4d0186",
     "phase1c_buildable_master.sql": "e9520cb46312d70d45821dde0e094aebc9da7e7b041a1cadcb443c1fda2513c9",
     "phase1c_data_contract.yaml": "fb455d53631466ca2145f80bec5d9038eb5523a87f12fa84146ee884ede56b60",
+    "phase1c_evaluation_business_contract.json": "324fc6e318de65360daab9074181e1a38e6761036425cc89738281e257a32be3",
     "phase1c_portfolio_draft.json": "5f556c2b511099e8f8743b4a8ad9405c889d6e92f0b4364bc8aee94506925405",
     "phase1c_scenario_matrix.yaml": "8402c4c31ef3a77d5e3b9dcb27eeac42a3dddfe398a3fd5d924e3d3b0913cf99",
     "phase1c_sellable_catalogue.sql": "adf25015e67f99e594492e634f9c8cd558eec7b259c076cad13cb4625917c540",
-    "render_phase1c_evaluation_cases.py": "286b5c4c34f01630e12ad3a927a83de6e8f863ad8b142390cbd34a4f6a3259cc",
+    "render_phase1c_evaluation_cases.py": "e17efe64bfec587d90da2555bb9df51df30bfb59bcb27637ed52ec39ff461d4e",
     "render_phase1c_sellable_catalogue.py": "ae3fb44c68be0205ac6990a334187ef2dc1c1de8c50dcab396080412ede622fb"
   },
   "status": "provisional_author_inputs_not_reviewed_answers"

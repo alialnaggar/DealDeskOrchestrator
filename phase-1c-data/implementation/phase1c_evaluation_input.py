@@ -99,7 +99,7 @@ def excluded_ids_from_manifest(manifest, *, expected_run_count, expected_deal_co
     return {value for values in payload["source_ids_by_table"].values() for value in values}
 
 
-def prepare_review_input(bundle, *, case_id, excluded_deal_ids=(), excluded_source_ids=()):
+def prepare_review_input(bundle, *, case_id, excluded_deal_ids=(), excluded_source_ids=(), business_contract=None):
     """Copy selected source rows only, and seal them for later reviewer comparison."""
     if not case_id.startswith("EVAL-PREP-"):
         raise ValueError("Evaluation preparation needs a distinct case ID")
@@ -117,11 +117,13 @@ def prepare_review_input(bundle, *, case_id, excluded_deal_ids=(), excluded_sour
     payload = json.loads(_canonical({"case_id": case_id, "run_context": context,
                                      "source_rows": source,
                                      "source_input_digest": reader_input_digest(bundle)}))
+    if business_contract is not None:
+        payload["business_contract"] = json.loads(_canonical(business_contract))
     return {"payload": payload, "sha256": sha256(_canonical(payload).encode()).hexdigest()}
 
 
 def prepare_heldout_review_input(bundle, *, case_id, development_manifest,
-                                 historical_manifest):
+                                 historical_manifest, business_contract=None):
     """Require both pinned source registries for a future held-out input."""
     if not isinstance(development_manifest, dict) or not isinstance(historical_manifest, dict):
         raise ValueError("Held-out preparation requires development and historical exclusion manifests")
@@ -140,14 +142,18 @@ def prepare_heldout_review_input(bundle, *, case_id, development_manifest,
     return prepare_review_input(
         bundle, case_id=case_id,
         excluded_deal_ids=set(payload["deal_ids"]) | set(historical["deal_ids"]),
-        excluded_source_ids=excluded_sources | historical_sources)
+        excluded_source_ids=excluded_sources | historical_sources, business_contract=business_contract)
 
 
-def verify_review_input(packet, *, expected_case_id, expected_source_digest):
+def verify_review_input(packet, *, expected_case_id, expected_source_digest, expected_business_contract=None):
+    fields = {"case_id", "run_context", "source_rows", "source_input_digest"}
+    if expected_business_contract is not None:
+        fields.add("business_contract")
+    if packet.get("payload", {}).get("business_contract") != expected_business_contract:
+        raise ValueError("Review business contract differs")
     if (packet.get("payload", {}).get("case_id") != expected_case_id or
             packet["payload"].get("source_input_digest") != expected_source_digest or
-            set(packet["payload"]) != {"case_id", "run_context", "source_rows",
-                                       "source_input_digest"} or
+            set(packet["payload"]) != fields or
             set(packet["payload"]["source_rows"]) != set(INPUT_TABLES) or
             packet.get("sha256") != sha256(_canonical(packet["payload"]).encode()).hexdigest()):
         raise ValueError("Review input identity, source set or seal differs")

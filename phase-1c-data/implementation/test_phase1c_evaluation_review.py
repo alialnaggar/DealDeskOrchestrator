@@ -131,6 +131,21 @@ class ReviewWorkspaceTests(unittest.TestCase):
         changed["cases"][0]["case_id"] = "EVAL-PREP-OTHER"
         self.assertTrue(self.check(changed)["errors"])
 
+    def test_business_contract_references_are_hash_bound(self):
+        self.packet["payload"]["business_contract"] = {"costing": {"currency": "EUR"}}
+        self.packet["sha256"] = digest(self.packet["payload"])
+        self.index["cases"][0]["packet_sha256"] = self.packet["sha256"]
+        self.blank = build_review_workspace(self.index)
+        (self.folder / "EVAL-PREP-TEST.json").write_text(render(self.packet))
+        draft = self.draft()
+        draft["cases"][0]["findings"]["Pricing"]["evidence_refs"].append(
+            {"document": "packet", "pointer": "/business_contract/costing/currency"})
+        self.assertEqual(self.check(draft)["errors"], [])
+        self.packet["payload"]["business_contract"]["costing"]["currency"] = "USD"
+        self.packet["sha256"] = digest(self.packet["payload"])
+        (self.folder / "EVAL-PREP-TEST.json").write_text(render(self.packet))
+        self.assertTrue(self.check(draft)["errors"])
+
     def test_json_pointer_escapes_and_array_indices(self):
         self.assertEqual(resolve_pointer({"a/b~c": [7]}, "/a~1b~0c/0"), 7)
         for bad in ("/a/-1", "/a/00", "/a/1"):

@@ -96,7 +96,9 @@ def audit_inputs(index, directory, comparison_hours=Decimal(24)):
     return {'schema_version': 1, 'status': 'contract_adjudication_facts_not_answers',
             'input_index_sha256': digest(index), 'verified_source_and_provider_hashes': 72,
             'comparison_window_hours': str(comparison_hours),
-            'comparison_basis': 'Current reader _fresh default; observed implementation, not an approved evaluation contract.',
+            'comparison_basis': ('Approved synthetic contract comparison; source age is not a commitment or answer.'
+                                 if 'business_contract_sha256' in index else
+                                 'Current reader _fresh default; observed implementation, not an approved evaluation contract.'),
             'independently_reviewed_answers': 0,
             'cases_outside_comparison_window': outside,
             'cases_with_different_offer_and_standard_cost': divergent, 'cases': cases}

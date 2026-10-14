@@ -171,7 +171,7 @@ def validate_review_workspace(workspace, index, *, packet_directory=None):
                     continue
                 pointer = ref["pointer"]
                 permitted = ((ref["document"] == "packet" and
-                              (pointer.startswith("/source_rows/") or pointer.startswith("/run_context/")))
+                              (pointer.startswith("/source_rows/") or pointer.startswith("/run_context/") or pointer.startswith("/business_contract/")))
                              or (ref["document"] == "provider" and
                                  (pointer == "/records" or pointer.startswith("/records/"))))
                 try:
@@ -203,8 +203,9 @@ def main():
     action.add_argument("--check-template", action="store_true")
     action.add_argument("--review-file", type=Path)
     parser.add_argument("--packet-directory", type=Path)
+    parser.add_argument("--index", type=Path, default=EVALUATION / "provisional_packet_index.json")
     args = parser.parse_args()
-    index = json.loads((EVALUATION / "provisional_packet_index.json").read_text())
+    index = json.loads(args.index.read_text())
     template_path = EVALUATION / "provisional_review_template.json"
     expected = render(build_review_workspace(index))
     if args.write_template:
