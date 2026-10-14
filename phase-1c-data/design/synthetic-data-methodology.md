@@ -66,3 +66,7 @@ The registry also pins 154 run and 152 deal identities. Future held-out packet a
 
 
 The reader selects workshop production-capacity rows only for submissions with a make-to-order line. A stocked-only evaluation-preparation example had previously carried irrelevant global capacity IDs from development; the pinned-ID gate exposed this. The scoped reader passed current and historical PostgreSQL regressions, retained the same 154-run exclusion registry and generated outcome distribution, and let the separate input-only example clear the ID gate. This does not establish semantic independence or a reviewed answer.
+
+## Historical exclusion inventory — 14 October 2026
+
+The historical baseline audit now constructs a sealed, source-only registry from the 400 reader-selected historical views and exports it separately from observed decision diagnostics in PostgreSQL CI. Its run/deal and operational source IDs provide an inventory for future held-out isolation; the current mandatory held-out preparation still checks only the pinned 154-run development registry. The 400-run export must be pinned and enforced before evaluation authoring counts a frozen case. ID separation alone does not rule out copied source facts or shared business context, and no historical diagnosis becomes an evaluation label.

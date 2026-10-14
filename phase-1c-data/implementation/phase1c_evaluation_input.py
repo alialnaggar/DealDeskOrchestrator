@@ -56,7 +56,16 @@ def build_development_exclusion_manifest(bundles):
     return {"payload": payload, "sha256": sha256(_canonical(payload).encode()).hexdigest()}
 
 
-def excluded_ids_from_manifest(manifest, *, expected_run_count, expected_deal_count=None):
+def build_historical_exclusion_manifest(bundles):
+    """Seal the 400 dated historical reads without their diagnostic decisions."""
+    manifest = build_development_exclusion_manifest(bundles)
+    manifest["payload"]["status"] = "historical_reader_selected_sources_not_evaluation_answers"
+    manifest["sha256"] = sha256(_canonical(manifest["payload"]).encode()).hexdigest()
+    return manifest
+
+
+def excluded_ids_from_manifest(manifest, *, expected_run_count, expected_deal_count=None,
+                               expected_status="development_reader_selected_sources_not_evaluation_answers"):
     """Verify a pinned development registry before passing IDs to preparation."""
     payload = manifest.get("payload")
     if (not isinstance(payload, dict)
@@ -64,7 +73,7 @@ def excluded_ids_from_manifest(manifest, *, expected_run_count, expected_deal_co
                                 "deal_count", "run_ids", "deal_ids",
                                 "source_ids_by_table"}
             or payload["schema_version"] != 1
-            or payload["status"] != "development_reader_selected_sources_not_evaluation_answers"
+            or payload["status"] != expected_status
             or payload["run_count"] != expected_run_count
             or not isinstance(payload["deal_count"], int)
             or not 0 < payload["deal_count"] <= expected_run_count
@@ -134,3 +143,4 @@ def verify_review_input(packet, *, expected_case_id, expected_source_digest):
             packet.get("sha256") != sha256(_canonical(packet["payload"]).encode()).hexdigest()):
         raise ValueError("Review input identity, source set or seal differs")
     return True
+

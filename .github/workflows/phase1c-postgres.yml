@@ -251,7 +251,12 @@ jobs:
       - name: Diagnose 400 historical baseline decisions
         run: |
           python -m unittest -v test_render_phase1c_historical_service_coverage
-          python audit_phase1c_historical_baseline.py --output /tmp/phase1c_historical_baseline.json
+          python audit_phase1c_historical_baseline.py --output /tmp/phase1c_historical_baseline.json --exclusion-output /tmp/phase1c_historical_source_exclusions.json
+      - name: Preserve source-only historical exclusion registry
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-historical-source-exclusions
+          path: /tmp/phase1c_historical_source_exclusions.json
       - name: Preserve provisional historical diagnostic
         if: always()
         uses: actions/upload-artifact@v4
@@ -290,3 +295,4 @@ jobs:
         run: python -m unittest -v test_phase1c_deal_decision
       - name: Recheck a proposed partial delivery against PostgreSQL sources
         run: python -m unittest -v test_phase1c_candidate_reader
+

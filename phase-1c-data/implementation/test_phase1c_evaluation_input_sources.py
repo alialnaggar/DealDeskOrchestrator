@@ -8,10 +8,27 @@ import unittest
 from phase1c_candidate import INPUT_TABLES, reader_input_digest
 from phase1c_evaluation_input import (prepare_review_input, verify_review_input,
     build_development_exclusion_manifest, excluded_ids_from_manifest,
-    prepare_heldout_review_input)
+    build_historical_exclusion_manifest, prepare_heldout_review_input)
 
 
 class EvaluationSourceIsolationTests(unittest.TestCase):
+    def test_historical_registry_separates_inputs_from_diagnostics(self):
+        historical = [self.bundle("inventory", "inventory_id", "HIST-INV-1")]
+        manifest = build_historical_exclusion_manifest(historical)
+        self.assertEqual(excluded_ids_from_manifest(
+            manifest, expected_run_count=1, expected_deal_count=1,
+            expected_status="historical_reader_selected_sources_not_evaluation_answers"),
+            {"HIST-INV-1"})
+        self.assertNotIn("status_counts", manifest["payload"])
+        with self.assertRaisesRegex(ValueError, "seal differs"):
+            excluded_ids_from_manifest(manifest, expected_run_count=1)
+        tampered = deepcopy(manifest)
+        tampered["payload"]["deal_ids"].append("ANOTHER-DEAL")
+        with self.assertRaisesRegex(ValueError, "seal differs"):
+            excluded_ids_from_manifest(
+                tampered, expected_run_count=1,
+                expected_status="historical_reader_selected_sources_not_evaluation_answers")
+
     def bundle(self, table, column, source_id):
         bundle = {key: [] for key in INPUT_TABLES}
         bundle["deal"] = {"deal_id": "EVAL-SOURCE-DEAL-1"}
@@ -125,3 +142,4 @@ class EvaluationSourceIsolationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

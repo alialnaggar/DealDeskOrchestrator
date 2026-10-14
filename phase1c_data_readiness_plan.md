@@ -743,3 +743,7 @@ The exclusion registry now includes run and deal identities, and the held-out pr
 
 
 The mandatory registry exposed irrelevant global production-capacity rows in the separate stocked-only example. The reader now loads capacity only for make-to-order submissions, and the PostgreSQL regressions preserved historical, pilot and 100-case observations. The pinned registry remained identical. Continue with distinct dated source construction and independent review for the actual 36 cases; the repaired example is still not counted.
+
+## Historical evaluation-source boundary — 14 October 2026
+
+The 400-run historical baseline audit now emits a separate sealed input identity registry alongside its diagnostic report. The export includes run/deal and reader-selected operational source IDs, and no deterministic decisions. The PostgreSQL workflow uploads it independently. Next pin the 400-run result, require it together with the existing 154-run development registry during held-out authoring, and inspect shared context and near-duplicate facts. This is a preparation step, not one of the 36 frozen evaluation cases or reviewed answers. The six field marks, two calibration reviews and `ready_for_generation=false` are unchanged.

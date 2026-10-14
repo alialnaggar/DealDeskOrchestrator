@@ -264,3 +264,7 @@ the separate stocked-only preparation example; after this scope correction,
 that example passes the registry check. PostgreSQL regressions preserve the
 100-case observed distribution and the registry's contents. No evaluation
 answer has been independently reviewed.
+
+## Historical source exclusion export — 14 October 2026
+
+The PostgreSQL historical baseline audit now exports a separate sealed registry of the 400 historical run/deal IDs and reader-selected inventory, inbound, production and digital source row IDs. It contains no observed decisions or answers and is published as the `phase1c-historical-source-exclusions` CI artifact. The development registry still covers 154 runs separately. This makes the previously missing historical identity set measurable; held-out preparation does **not yet require** this new registry. Pin and verify the artifact, then enforce both registries and inspect shared customer, supplier, policy, lane and service context before counting any evaluation case. The 36-case set has 0 independently reviewed answers; six field marks, two calibration reviews and `ready_for_generation=false` remain.
