@@ -28,6 +28,9 @@ def age_observation(value, as_of, comparison_hours):
 
 
 def audit_case(payload, comparison_hours):
+    contract = payload.get('business_contract')
+    if contract is not None and Decimal(contract['evidence_age']['snapshot_max_elapsed_hours']) != comparison_hours:
+        raise ValueError('Comparison window differs from the declared business contract')
     rows = payload['source_rows']
     as_of = payload['run_context']['as_of_at']
     observations = []

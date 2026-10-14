@@ -29,6 +29,9 @@ class ContractAuditTests(unittest.TestCase):
         self.assertEqual(len(offer['matching_standard_costs']), 1)
         self.assertEqual(offer['matching_standard_costs'][0]['offer_minus_standard_cost'], '-2.50')
         self.assertIn('/bom_lines/', offer['matching_standard_costs'][0]['pointer'])
+        payload['business_contract'] = {'evidence_age': {'snapshot_max_elapsed_hours': 24}}
+        with self.assertRaisesRegex(ValueError, 'declared business contract'):
+            audit_case(payload, Decimal(48))
 
     def test_index_completeness_and_tampered_source(self):
         with TemporaryDirectory() as tmp:
