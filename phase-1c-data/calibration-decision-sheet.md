@@ -221,3 +221,13 @@ calibration freeze. The adoption decision above remains open.
 ## Versioned dependency pilot count — 13 October 2026
 
 The 156-row V1 catalogue and its 120 sellable/36 component mix remain the calibration baseline. A separate generated_test V2 pilot extension clones two of its sellable fictional products with new versioned IDs to test a dependency rule without changing V1 submissions. The database holds 158 product rows when this extension is imported, but the category price and margin audit still measures the 120 V1 sellable products. The extra V2 rows are copies for rule coverage, not new market comparables or approval to freeze the two calibration reviews. `ready_for_generation=false`.
+
+
+## 14 October 2026 — exact open calibration decisions
+
+| Review | Evidence | Proposed choice for Ali |
+| --- | --- | --- |
+| Component/product mix | V1 has 156 products: 120 sellable and 36 components. The generated dependency pilot adds two V2 copies solely for rule coverage. | Accept the bounded fictional 36/156 V1 mix for Option A after field review of component fit; do not count V2 copies as market samples. |
+| Price and cost basis | The 102 generated sellable costs target category p50. A read-only seeded spread changes 31 baseline 10%-discount product states and produces two nonpositive margins; source units, dates, tax basis and the €1,050 workstation need review. | Retain fixed p50 as a disclosed regression-data simplification for this first release, or choose the reviewed bounded spread and recheck all profile/deal effects before adoption. Neither choice claims market-comparable prices. |
+
+These are proposals for review, not approvals. No cost, threshold, schema or release flag changes here; both calibration reviews and `ready_for_generation=false` remain open.

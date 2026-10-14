@@ -10,7 +10,8 @@ import unittest
 
 import yaml
 
-from render_phase1c_generated_test_batch import SOURCE_FILES, build, eligible_customers
+from render_phase1c_generated_test_batch import (SOURCE_FILES, build,
+    eligible_customers, render_digital_manifest)
 from validate_phase1c_scenario_matrix import generated_case_plan
 
 try:
@@ -19,7 +20,7 @@ except ImportError:
     psycopg = None
 
 if psycopg is not None:
-    from phase1c_reader import read_run
+    from phase1c_reader import read_run, load_provider_evidence
     from phase1c_deal_decision import assemble_deal_decision
     from validate_phase1c_generated_rows import load_rows, validate_rows
 
@@ -38,6 +39,13 @@ class GeneratedBatchRenderTests(unittest.TestCase):
                   for name in SOURCE_FILES}
         sql, report = build(matrix, hashes, (HERE / "phase1c_customer_master.sql").read_text())
         self.assertEqual(sql, (HERE / "phase1c_generated_test_batch.sql").read_text())
+        provider_manifest = render_digital_manifest(
+            (HERE / "phase1c_vertical_provider_manifest.json").read_text(),
+            (HERE / "phase1c_conflict_provider_manifest.json").read_text())
+        report["provider_manifest_sha256"] = hashlib.sha256(
+            provider_manifest.encode()).hexdigest()
+        self.assertEqual(provider_manifest,
+                         (HERE / "phase1c_generated_provider_manifest.json").read_text())
         self.assertEqual(report, json.loads(
             (HERE / "phase1c_generated_test_batch_report.json").read_text()))
         self.assertEqual(len(generated_case_plan(matrix)), 100)
@@ -128,6 +136,8 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                     commercial_rule_mode="compiled")
                 self.assertFalse(any(p["digital_capacity_id"].startswith("GEN-DIGITAL-POOL-")
                                      for p in digital_stress_bundle["digital_capacity"]))
+                provider_resolver = load_provider_evidence(
+                    HERE / "phase1c_generated_provider_manifest.json")
                 eligible = set(eligible_customers((HERE / "phase1c_customer_master.sql").read_text()))
                 stocked_variant = 0
                 build_variant = 0
@@ -136,7 +146,8 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 case_observations = []
                 for index, slot in enumerate(generated_case_plan(matrix), 1):
                     run_id = f"00000000-0000-4000-8000-{310000 + index:012d}"
-                    bundle = read_run(conn, run_id, commercial_rule_mode="compiled")
+                    bundle = read_run(conn, run_id, commercial_rule_mode="compiled",
+                                      digital_evidence_resolver=provider_resolver)
                     self.assertEqual(bundle["deal"]["deal_id"], slot["case_id"])
                     self.assertEqual(bundle["run"]["catalog_version_used"], slot["catalog_version"])
                     decision = assemble_deal_decision(bundle)
@@ -184,6 +195,13 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                             "digital_capacity": sorted(row["digital_capacity_id"]
                                                        for row in bundle["digital_capacity"]),
                         },
+                        "digital_facts": [
+                            {"status": digital["status"],
+                             "full_term_verified": any(pool["full_term_verified"]
+                                                       for pool in digital.get("pools", []))}
+                            for fact in bundle["facts"]["lines"]
+                            for digital in [fact.get("digital")] if digital is not None
+                        ],
                         "service_facts": [
                             {"status": service["status"],
                              "coverage": service["coverage"],
@@ -256,12 +274,19 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                                          else (14, 10 * digital_variant))
                         selected = bundle["digital_capacity"]
                         self.assertEqual([p["digital_capacity_id"] for p in selected], [expected])
-                        self.assertFalse(bundle["facts"]["lines"][0]["digital"]["pools"][0]["full_term_verified"])
+                        self.assertTrue(bundle["facts"]["lines"][0]["digital"]["pools"][0]["full_term_verified"])
+                        self.assertEqual(bundle["facts"]["lines"][0]["digital"]["status"],
+                                         "confirmed_by_date")
                         if digital_variant:
                             self.assertEqual(selected[0]["capacity_total"], 10 + digital_variant)
                             self.assertLessEqual(selected[0]["snapshot_at"],
                                                  bundle["run"]["as_of_at"])
                         digital_variant += 1
+                    if archetype in ("DIGITAL-NO-PROOF", "DIGITAL-EXPIRED"):
+                        self.assertFalse(any(
+                            pool["full_term_verified"]
+                            for fact in bundle["facts"]["lines"]
+                            for pool in fact.get("digital", {}).get("pools", [])))
                     if index in (99, 100):
                         finding = next(f for f in bundle["facts"]["compatibility"]
                                        if f["compatibility_rule_id"] == "V2-REQUIRES-ADDON")
@@ -286,9 +311,22 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                                  for service in case["service_facts"]]
                 source_gap_cases = [case["case_id"] for case in case_observations
                                     if not case["availability_finding_source_ids"]]
+                reused_source_case_count = sum(
+                    any(source_case_reuse[source] > 1
+                        for source in case["availability_finding_source_ids"])
+                    for case in case_observations)
                 case_review = {
                     "status": "development_observations_for_independent_review",
                     "independent_answers_reviewed": 0,
+                    "distribution_review": {
+                        "customer_count": len(customers),
+                        "line_mode_counts": dict(sorted(modes.items())),
+                        "observed_decision_status_counts": dict(sorted(statuses.items())),
+                        "distinct_availability_source_ids": len(source_case_reuse),
+                        "source_ids_used_in_one_case": sum(n == 1 for n in source_case_reuse.values()),
+                        "cases_with_reused_attributed_source": reused_source_case_count,
+                        "source_template_count": 20,
+                    },
                     "availability_source_id_case_reuse": dict(sorted(source_case_reuse.items())),
                     "cases_without_attributed_availability_source_ids": source_gap_cases,
                     "service_review_summary": {
@@ -359,6 +397,7 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                         "cases": len(case_observations),
                         "cases_without_attributed_availability_ids": len(source_gap_cases),
                         "service": case_review["service_review_summary"],
+                        "distribution": case_review["distribution_review"],
                         "most_reused_source_ids": sorted(
                             source_case_reuse.items(), key=lambda item: (-item[1], item[0]))[:5],
                     }, sort_keys=True))
@@ -371,3 +410,4 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

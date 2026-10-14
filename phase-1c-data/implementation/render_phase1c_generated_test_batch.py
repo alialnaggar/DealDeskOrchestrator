@@ -21,6 +21,7 @@ from validate_phase1c_scenario_matrix import generated_case_plan
 HERE = Path(__file__).resolve().parent
 SQL_PATH = HERE / "phase1c_generated_test_batch.sql"
 REPORT_PATH = HERE / "phase1c_generated_test_batch_report.json"
+PROVIDER_PATH = HERE / "phase1c_generated_provider_manifest.json"
 V1_TEMPLATES = {
     "STOCK-READY": 1, "SUPPLY-CONFIRMED": 2, "BUILD-READY": 3,
     "DIGITAL-PROVED": 4, "SERVICE-COVERED": 5,
@@ -39,7 +40,8 @@ MULTIPLIERS = (Decimal("1.00"), Decimal("0.98"), Decimal("0.96"),
                Decimal("0.94"), Decimal("0.92"), Decimal("0.90"))
 SOURCE_FILES = ("phase1c_scenario_matrix.yaml", "phase1c_vertical_pilot.sql",
                 "phase1c_conflict_pilot.sql", "phase1c_dependency_pilot.sql",
-                "phase1c_customer_master.sql")
+                "phase1c_customer_master.sql", "phase1c_vertical_provider_manifest.json",
+                "phase1c_conflict_provider_manifest.json")
 STOCK_QUANTITIES = (3, 4, 2, 5, 3)
 BUILD_STOCK_QUANTITIES = (2, 3, 2, 4, 2)
 
@@ -57,6 +59,35 @@ def eligible_customers(customer_sql):
     if len(selected) != 37:
         raise ValueError("eligible customer pool drift")
     return selected
+
+
+def render_digital_manifest(base_text, conflict_text):
+    """Separate synthetic provider proof for the five DIGITAL-PROVED cases."""
+    base = json.loads(base_text)
+    if base.get("schema_version") != 1 or len(base.get("records", [])) != 1:
+        raise ValueError("Expected one controlled pilot provider proof")
+    reference = base["records"][0]
+    if reference["evidence_ref"] != "PILOT-PROVIDER-PROOF-001":
+        raise ValueError("Pilot provider evidence drift")
+    records = [reference]
+    for variant in range(1, 5):
+        observed_at = datetime(2026, 9, 1, 14, tzinfo=timezone.utc) + timedelta(minutes=10 * variant - 5)
+        record = dict(reference)
+        record.update({
+            "evidence_ref": f"GEN-PROVIDER-REFERENCE-{variant:03d}",
+            "capacity_total": 10 + variant,
+            "issued_at": observed_at.isoformat(),
+            "verified_at": observed_at.isoformat(),
+        })
+        records.append(record)
+    conflict = json.loads(conflict_text)
+    expired = [row for row in conflict.get("records", [])
+               if row.get("evidence_ref") == "CONFLICT-PROOF-11"]
+    if conflict.get("schema_version") != 1 or len(expired) != 1:
+        raise ValueError("Expected controlled partial-term provider proof")
+    records.append(expired[0])
+    return json.dumps({"schema_version": 1, "records": records},
+                      indent=2, sort_keys=True) + "\n"
 
 
 def quote(value):
@@ -237,13 +268,20 @@ def main():
     hashes = {name: hashlib.sha256((HERE / name).read_bytes()).hexdigest()
               for name in SOURCE_FILES}
     sql, report = build(matrix, hashes, (HERE / "phase1c_customer_master.sql").read_text())
+    provider_manifest = render_digital_manifest(
+        (HERE / "phase1c_vertical_provider_manifest.json").read_text(),
+        (HERE / "phase1c_conflict_provider_manifest.json").read_text())
+    report["provider_manifest_sha256"] = hashlib.sha256(
+        provider_manifest.encode()).hexdigest()
     rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.check:
-        if SQL_PATH.read_text() != sql or REPORT_PATH.read_text() != rendered:
+        if (SQL_PATH.read_text() != sql or REPORT_PATH.read_text() != rendered
+                or PROVIDER_PATH.read_text() != provider_manifest):
             raise SystemExit("generated-test batch differs from source generator")
     else:
         SQL_PATH.write_text(sql)
         REPORT_PATH.write_text(rendered)
+        PROVIDER_PATH.write_text(provider_manifest)
     print(f"{report['generated_deals']} provisional deals; hash {report['sql_sha256']}")
 
 

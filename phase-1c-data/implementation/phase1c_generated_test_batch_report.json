@@ -7,13 +7,16 @@
   "eligible_customer_count": 37,
   "generated_deals": 100,
   "line_count": 101,
+  "provider_manifest_sha256": "d66569e7d2a350037ca598d18567923ad0cb7f69411c5b18d92a04a8a7ed9c0d",
   "source_reuse_limit": "18_V1_and_2_V2_development_states;_not_independent_source_distribution",
   "source_sha256": {
     "phase1c_conflict_pilot.sql": "b8ccc2c1e5dad05be8975a6b4e76602e0900e090e5ed89c263926bef8211fca8",
+    "phase1c_conflict_provider_manifest.json": "d948a5c372e64cfe119bd2ed2f2c4409ebbd183b24a749bd0585acc15a2cf3c5",
     "phase1c_customer_master.sql": "9749b850e79a5be34ae6483132996da71a104e38e71f978d8b0e4515239a2ec1",
     "phase1c_dependency_pilot.sql": "c4e90d6a953a14efb39b462540db5794653f153a0a16c36359817efe6ef98660",
     "phase1c_scenario_matrix.yaml": "8402c4c31ef3a77d5e3b9dcb27eeac42a3dddfe398a3fd5d924e3d3b0913cf99",
-    "phase1c_vertical_pilot.sql": "1507790596acd9712d03a8d88d3fdda4c521a08cc008354bc28fa3660928f4e6"
+    "phase1c_vertical_pilot.sql": "1507790596acd9712d03a8d88d3fdda4c521a08cc008354bc28fa3660928f4e6",
+    "phase1c_vertical_provider_manifest.json": "e539d02bbcf97292616c46b60ac788078c3d982208dcd7eae9f2626cfc2e94be"
   },
   "source_template_count": 20,
   "sql_sha256": "8d5356b412b8fe6d2a8bb93b353cd9c4286339ef27c80c07735f05356191974b",
