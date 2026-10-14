@@ -1,10 +1,11 @@
 """Report source facts for contract adjudication; never derive evaluation labels."""
 import argparse
-from datetime import datetime
-from decimal import Decimal
+from datetime import datetime, date, timedelta
+from decimal import Decimal, ROUND_CEILING
 import hashlib
 import json
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 def digest(value):
@@ -25,6 +26,124 @@ def age_observation(value, as_of, comparison_hours):
     return {'snapshot_at': value, 'age_hours': str(age),
             'future_dated': age < 0,
             'within_comparison_window': 0 <= age <= comparison_hours}
+
+
+def quote_credit_arithmetic(rows):
+    """Full submitted commercial quantity, never concurrent digital demand."""
+    lines, revenue, profit, listed = [], Decimal(0), Decimal(0), Decimal(0)
+    for i, row in enumerate(rows['lines']):
+        qty, price, cost, list_price = map(Decimal, (row['quantity'], row['quoted_unit_price'], row['standard_cost'], row['list_price']))
+        if min(qty, price, list_price) <= 0:
+            raise ValueError('Positive quantity, quoted price and list price required')
+        amount = qty * price
+        margin = (price - cost) * 100 / price
+        floors = [(j, r) for j, r in enumerate(rows['rules']['pricing_rules'])
+                  if r['rule_type'] == 'category_margin_floor' and r['scope_value'] == row['category']]
+        if len(floors) != 1:
+            raise ValueError('One declared category floor required')
+        j, floor = floors[0]
+        lines.append({'pointer': f'/source_rows/lines/{i}', 'quantity': str(qty),
+                      'revenue_eur': str(amount), 'standard_cost_total_eur': str(qty * cost),
+                      'discount_pct': str((list_price - price) * 100 / list_price),
+                      'margin_pct': str(margin), 'category_floor_pct': str(floor['condition_json']['margin_pct_lt']),
+                      'floor_shortfall_points': str(Decimal(floor['condition_json']['margin_pct_lt']) - margin),
+                      'floor_pointer': f'/source_rows/rules/pricing_rules/{j}'})
+        revenue += amount; profit += qty * (price - cost); listed += qty * list_price
+    commitments = Decimal(rows['credit']['unbilled_committed_amount'])
+    ar = sum((Decimal(row['outstanding_amount']) for row in rows['receivables']), Decimal(0))
+    limit = Decimal(rows['credit']['credit_limit'])
+    if limit <= 0 or revenue <= 0:
+        raise ValueError('Positive limit and revenue required')
+    exposure = revenue + commitments + ar
+    return {'lines': lines, 'deal_revenue_eur': str(revenue), 'deal_margin_pct': str(profit * 100 / revenue),
+            'deal_discount_pct': str((listed - revenue) * 100 / listed),
+            'unbilled_commitments_eur': str(commitments), 'receivables_eur': str(ar),
+            'exposure_eur': str(exposure), 'credit_limit_eur': str(limit),
+            'credit_excess_pct': str(max(Decimal(0), (exposure / limit - 1) * 100)),
+            'qualification': 'Arithmetic over supplied snapshot; no approval, label or freshness acceptance.'}
+
+
+def advance_workdays(day, count, weekdays, holidays=()):
+    if not weekdays or any(type(d) is not int or not 1 <= d <= 7 for d in weekdays) or type(count) is not int or count < 0:
+        raise ValueError('Invalid working-day calendar or lead')
+    holidays = set(holidays)
+    while count:
+        day += timedelta(days=1)
+        if day.isoweekday() in weekdays and day.isoformat() not in holidays:
+            count -= 1
+    return day
+
+
+def offer_operation_projections(payload, comparison_hours):
+    """Bounded one-line, unit-output, separate-day schedule illustrations.
+
+    Other material/configuration and actual cutoff/commitments require review.
+    This never selects an overall gate, calls the reader or fabricates a booking.
+    """
+    rows, as_of = payload['source_rows'], payload['run_context']['as_of_at']
+    projections = []
+    if len(rows['lines']) != 1:
+        return [{'qualification': 'Multi-line projection unsupported; review manually.'}]
+    line = rows['lines'][0]
+    boms = [b for b in rows['bom'] if b['finished_product_id'] == line['product_id']
+            and b['configuration_signature_json'] == line['configuration_json'] and b['status'] == 'active']
+    for i, offer in enumerate(rows['supplier_offers']):
+        if line['fulfillment_mode'] == 'make_to_order':
+            if len(boms) != 1 or Decimal(boms[0]['output_quantity']) != 1:
+                projections.append({'offer_pointer': f'/source_rows/supplier_offers/{i}',
+                                    'qualification': 'Unique unit-output BOM required; review manually.'})
+                continue
+            bom = boms[0]
+            if not any(b['bom_id'] == bom['bom_id'] and b['component_product_id'] == offer['product_id'] for b in rows['bom_lines']):
+                continue
+            requirements = sorted((r for r in rows['requirements'] if r['bom_id'] == bom['bom_id'] and r['status'] == 'active'), key=lambda r:r['operation_seq'])
+        elif offer['product_id'] == line['product_id'] and line['fulfillment_mode'] == 'supplier_finished':
+            requirements = []
+        else:
+            continue
+        cal = offer['order_calendar_json']
+        order_day = stamp(as_of).astimezone(ZoneInfo(cal['time_zone'])).date()
+        lanes = [(j, lane) for j, lane in enumerate(rows['shipping_lanes']) if lane['is_active']
+                 and lane['destination_country_code'] == rows['deal']['destination_country_code']
+                 and lane['destination_region'] == rows['deal']['destination_region']
+                 and lane['shipping_service_code'] == rows['deal']['shipping_service_code']]
+        for label in ('min', 'mode', 'max'):
+            receipt = advance_workdays(order_day, offer[f'lead_days_{label}'], cal['working_weekdays'], cal['holiday_dates'])
+            for j, lane in lanes:
+                operations, ready, missing = [], receipt, None
+                for req in requirements:
+                    qty = Decimal(line['quantity'])
+                    batches = (qty / Decimal(req['batch_size'])).to_integral_value(rounding=ROUND_CEILING)
+                    hours = qty * Decimal(req['hours_per_unit']) + batches * Decimal(req['setup_hours'])
+                    candidates = [(k, c) for k, c in enumerate(rows['production_capacity'])
+                                  if c['location_id'] == lane['origin_location_id'] and c['capability_code'] == req['capability_code']
+                                  and c['resource_type'] == req['resource_type'] and c['status'] == 'active'
+                                  and date.fromisoformat(c['capacity_date']) >= ready
+                                  and (not operations or c['capacity_date'] > operations[-1]['date'])
+                                  and age_observation(c['snapshot_at'], as_of, comparison_hours)['within_comparison_window']
+                                  and Decimal(c['available_capacity_hours']) - Decimal(c['allocated_capacity_hours']) >= hours]
+                    if not candidates:
+                        missing = req['capability_code']
+                        break
+                    k, capacity = min(candidates, key=lambda pair:(pair[1]['capacity_date'], pair[1]['capacity_id']))
+                    ready = date.fromisoformat(capacity['capacity_date'])
+                    operations.append({'capability': req['capability_code'], 'date': ready.isoformat(),
+                                       'hours_required': str(hours), 'capacity_pointer': f'/source_rows/production_capacity/{k}'})
+                arrival = None
+                if missing is None:
+                    if not lane['dispatch_weekdays_json']:
+                        raise ValueError('Dispatch calendar required')
+                    while ready.isoweekday() not in lane['dispatch_weekdays_json']:
+                        ready += timedelta(days=1)
+                    arrival = advance_workdays(ready, lane['transit_workdays'], [1, 2, 3, 4, 5]).isoformat()
+                projections.append({'offer_pointer': f'/source_rows/supplier_offers/{i}',
+                                    'lane_pointer': f'/source_rows/shipping_lanes/{j}', 'lead_assumption': label,
+                                    'hypothetical_order_date': order_day.isoformat(), 'component_or_product_receipt': receipt.isoformat(),
+                                    'operations': operations, 'missing_operation_observation': missing,
+                                    'indicative_arrival': arrival,
+                                    'requested_date': rows['deal']['requested_delivery_date'],
+                                    'qualification': 'Uncommitted projection; separate-day operations, weekday transit, same-day dispatch requires cutoff confirmation. Remaining materials/configuration and actual commitments are not certified.'})
+    return projections
 
 
 def audit_case(payload, comparison_hours):
@@ -70,7 +189,9 @@ def audit_case(payload, comparison_hours):
     return {'case_id': payload['case_id'], 'as_of_at': as_of,
             'observations': observations, 'offers': offers,
             'cost_parameters_present': rows['cost_parameters'] is not None,
-            'lines': lines, 'service_rules': service_rules}
+            'lines': lines, 'service_rules': service_rules,
+            'quote_credit_arithmetic': quote_credit_arithmetic(rows),
+            'conditional_offer_projections': offer_operation_projections(payload, comparison_hours)}
 
 
 def audit_inputs(index, directory, comparison_hours=Decimal(24)):
@@ -90,6 +211,8 @@ def audit_inputs(index, directory, comparison_hours=Decimal(24)):
             raise ValueError(f'{cid}: provider hash differs')
         if packet['payload']['case_id'] != cid:
             raise ValueError(f'{cid}: payload identity differs')
+        if 'business_contract_sha256' in index and digest(packet['payload'].get('business_contract')) != index['business_contract_sha256']:
+            raise ValueError(f'{cid}: declared business contract hash differs')
         cases.append(audit_case(packet['payload'], comparison_hours))
     outside = sorted({case['case_id'] for case in cases
                       if any(not item['within_comparison_window'] for item in case['observations'])})
