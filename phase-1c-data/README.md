@@ -286,3 +286,10 @@ The reproducible 100-case generator now writes five new allocated-stock and four
 ## Review workspace for the 36 inputs — 14 October 2026
 
 A single blank reviewer template now binds all 36 pinned input/provider hashes and provides space for the six responsibility findings, source references, rationale and human actions. The review checker rejects changed sources, invented references and incomplete drafts. Its complete-draft count is separate from independent answer acceptance: the reviewed count remains 0/36. See the evaluation README for the reviewer-only workflow. No expected finding is prefilled and no release/calibration gate is closed.
+
+## Service-region source correction — 14 October 2026
+
+Author source inspection found that `EVAL-PREP-029` and `EVAL-PREP-030` had only an eligible DE-NW rule while submitting DE-BY. The reader's exact-region lookup therefore had no matching record: missing coverage is unknown, not an explicit denial. The source definitions now state `country_code=DE`, `region=DE-BY`, `eligible=false` for those two cases. A source-condition test requires an explicit matching rule for all four service cases. This repairs authoring intent before independent answer review; it is not a reviewed answer key.
+
+The regenerated source-definition SHA-256 is `5b3168a6871ebb2cfdcaa0c594c9ff6e34ab300708661146c22a994f85a09977`. All 36 packet hashes and blank review bindings are regenerated because the generator-source fingerprint is part of each run's context; the substantive region condition changes are confined to those two cases. The earlier `7dff...` definition/index is superseded. CI must reproduce the current packet index from a fresh database. No historical/pilot/generated-regression input, schema, calibration value or reviewed answer changed (0/36).
+

@@ -255,7 +255,7 @@
     }
   ],
   "independently_reviewed_answers": 0,
-  "inputs_sha256": "7dff0db52b976d377d346c2bb56de22bf38b8161458729397e718572576222d6",
+  "inputs_sha256": "5b3168a6871ebb2cfdcaa0c594c9ff6e34ab300708661146c22a994f85a09977",
   "limitations": [
     "case author knows development archetypes",
     "only five selected sellable SKUs",
@@ -277,7 +277,7 @@
     "phase1c_portfolio_draft.json": "5f556c2b511099e8f8743b4a8ad9405c889d6e92f0b4364bc8aee94506925405",
     "phase1c_scenario_matrix.yaml": "8402c4c31ef3a77d5e3b9dcb27eeac42a3dddfe398a3fd5d924e3d3b0913cf99",
     "phase1c_sellable_catalogue.sql": "adf25015e67f99e594492e634f9c8cd558eec7b259c076cad13cb4625917c540",
-    "render_phase1c_evaluation_cases.py": "779af079f48d0e15dd3dc4abd30bc450879cafc0f2752ecbbc3e9f1375e77951",
+    "render_phase1c_evaluation_cases.py": "286b5c4c34f01630e12ad3a927a83de6e8f863ad8b142390cbd34a4f6a3259cc",
     "render_phase1c_sellable_catalogue.py": "ae3fb44c68be0205ac6990a334187ef2dc1c1de8c50dcab396080412ede622fb"
   },
   "status": "provisional_author_inputs_not_reviewed_answers"

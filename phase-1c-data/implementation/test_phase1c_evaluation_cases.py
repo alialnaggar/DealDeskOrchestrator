@@ -35,6 +35,23 @@ def keys_in(value):
 
 
 class EvaluationAuthoringTests(unittest.TestCase):
+    def test_service_cases_have_an_explicit_condition_for_the_submitted_region(self):
+        inputs, manifest = build_from_files()
+        intent = {row["case_id"]: row["archetype_id"] for row in manifest["cases"]}
+        checked = 0
+        for case in inputs["cases"]:
+            archetype = intent[case["case_id"]]
+            if archetype not in ("SERVICE-COVERED", "SERVICE-OUTSIDE"):
+                continue
+            deal = case["tables"]["deals"][0]
+            matches = [rule["condition_json"] for rule in case["tables"]["compatibility_rules"]
+                       if rule["condition_json"]["country_code"] == deal["destination_country_code"]
+                       and rule["condition_json"]["region"] == deal["destination_region"]]
+            self.assertEqual(len(matches), 1)
+            self.assertIs(matches[0]["eligible"], archetype == "SERVICE-COVERED")
+            checked += 1
+        self.assertEqual(checked, 4)
+
     def test_reproducible_separate_36_source_cases(self):
         inputs, manifest = build_from_files()
         self.assertEqual(len(inputs["cases"]), 36)

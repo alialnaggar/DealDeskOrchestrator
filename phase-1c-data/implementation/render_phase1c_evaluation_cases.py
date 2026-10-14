@@ -192,7 +192,9 @@ def build(portfolio, costs, config, contract, matrix, source_hashes):
                 add("compatibility_rules", compatibility_rule_id=prefix + "-SERVICE-COVERAGE",
                     catalog_version=CATALOG, rule_name="Declared synthetic service region",
                     rule_type="installation_eligibility", scope_type="line", source_product_id=product,
-                    condition_json={"country_code": "DE", "region": "DE-NW", "eligible": True},
+                    condition_json={"country_code": "DE",
+                                    "region": "DE-BY" if kind == "SERVICE-OUTSIDE" else "DE-NW",
+                                    "eligible": kind != "SERVICE-OUTSIDE"},
                     severity="blocker", message="Synthetic regional eligibility", priority=1)
             terms = {"payment_terms_days": 30, "allow_partial_delivery": variant == 1,
                      "contract_clause_codes": ["legal_review"] if kind == "POLICY-CLAUSE" else ["standard"]}

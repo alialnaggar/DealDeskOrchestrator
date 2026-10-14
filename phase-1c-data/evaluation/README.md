@@ -8,9 +8,15 @@ The repository now contains reproducible source definitions for **36 provisional
 
 CI uses a separate disposable database and loads each case alone with the shared masters. It validates typed rows, reads the case twice, compares source-only packets, checks both pinned exclusion registries and rejects cross-case operational ID reuse. It exports input packets and provider records separately from authoring metadata. It does not assemble, score or publish expected deal decisions. A separate reviewer must inspect complete facts and record answers outside these inputs before baseline or agent evaluation. Calibration, six field marks, two calibration reviews and `ready_for_generation=false` remain open.
 
+## Service-region source correction — 14 October 2026
+
+Author source inspection found that `EVAL-PREP-029` and `EVAL-PREP-030` had only an eligible DE-NW rule while submitting DE-BY. The reader's exact-region lookup therefore had no matching record: missing coverage is unknown, not an explicit denial. The source definitions now state `country_code=DE`, `region=DE-BY`, `eligible=false` for those two cases. A source-condition test requires an explicit matching rule for all four service cases. This repairs authoring intent before independent answer review; it is not a reviewed answer key.
+
+The regenerated source-definition SHA-256 is `5b3168a6871ebb2cfdcaa0c594c9ff6e34ab300708661146c22a994f85a09977`. All 36 packet hashes and blank review bindings are regenerated because the generator-source fingerprint is part of each run's context; the substantive region condition changes are confined to those two cases. The earlier `7dff...` definition/index is superseded. CI must reproduce the current packet index from a fresh database. No historical/pilot/generated-regression input, schema, calibration value or reviewed answer changed (0/36).
+
 ## Pinned packet index and review procedure — 14 October 2026
 
-The first [PostgreSQL authoring run](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/38586442975) produced 36 replay-equal input packets and separate provider files. Its [pinned index](provisional_packet_index.json) stores each payload hash and provider-file hash and the source-definition SHA-256 `7dff0db52b976d377d346c2bb56de22bf38b8161458729397e718572576222d6`. A fresh CI database must reproduce the index exactly. This pins input content; it does not freeze calibration or certify answers.
+The initial [PostgreSQL authoring run](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/38586442975) produced 36 replay-equal input packets and separate provider files. The current [pinned index](provisional_packet_index.json), including the correction above, stores each payload hash and provider-file hash and the source-definition SHA-256 `5b3168a6871ebb2cfdcaa0c594c9ff6e34ab300708661146c22a994f85a09977`. A fresh CI database must reproduce the index exactly. This pins input content; it does not freeze calibration or certify answers.
 
 | File or artifact | Role |
 | --- | --- |

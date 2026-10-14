@@ -608,3 +608,10 @@ The generator now gives five repeated `STOCK-ALLOCATED` inputs separate later sn
 ## Reviewer workspace integrity — 14 October 2026
 
 The 36-case review template is empty and bound to the pinned packet index. The new structural checker validates reviewer provenance, all six responsibility findings, evidence pointers into pinned source/provider documents, rationales and required human action. Tampering, invented pointers, missing responsibilities and false independent-review/release claims fail source-only tests. It counts structurally complete drafts separately and always reports zero independently reviewed answers; acceptance and answer correctness are not certified by hash or shape checks. The template stays outside the source packet artifact. Six field marks, two calibration reviews and `ready_for_generation=false` remain open.
+
+## Service-region source correction — 14 October 2026
+
+Author source inspection found that `EVAL-PREP-029` and `EVAL-PREP-030` had only an eligible DE-NW rule while submitting DE-BY. The reader's exact-region lookup therefore had no matching record: missing coverage is unknown, not an explicit denial. The source definitions now state `country_code=DE`, `region=DE-BY`, `eligible=false` for those two cases. A source-condition test requires an explicit matching rule for all four service cases. This repairs authoring intent before independent answer review; it is not a reviewed answer key.
+
+The regenerated source-definition SHA-256 is `5b3168a6871ebb2cfdcaa0c594c9ff6e34ab300708661146c22a994f85a09977`. All 36 packet hashes and blank review bindings are regenerated because the generator-source fingerprint is part of each run's context; the substantive region condition changes are confined to those two cases. The earlier `7dff...` definition/index is superseded. CI must reproduce the current packet index from a fresh database. No historical/pilot/generated-regression input, schema, calibration value or reviewed answer changed (0/36).
+
