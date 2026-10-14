@@ -191,6 +191,30 @@ class ReviewWorkspaceTests(unittest.TestCase):
         change=self.amendments();change["cases"][0]["findings"]["Approval"]["evidence_refs"]=[{"document":"packet","pointer":"/business_contract/invented"}]
         self.assertTrue(self.check(self.amend(change))["errors"])
 
+    def test_v2_derived_hard_blocks_do_not_route_current_submission(self):
+        """Check the tracked amendment view, while leaving the model draft intact."""
+        review_dir = EVALUATION / "reviews"
+        source_path = review_dir / "model_review_v2_draft.json"
+        original = json.loads(source_path.read_text())
+        before = deepcopy(original)
+        index = json.loads((EVALUATION / "provisional_packet_index.json").read_text())
+        amendments = json.loads((review_dir / "v2_author_amendments.json").read_text())
+        derived = apply_review_amendments(
+            original, index, amendments,
+            source_review_sha256=hashlib.sha256(source_path.read_bytes()).hexdigest())
+        self.assertEqual(original, before)
+        self.assertEqual(derived["independently_reviewed_answers"], 0)
+        self.assertFalse(derived["answer_key_agent_visible"])
+        for number in range(31, 35):
+            case_id = f"EVAL-PREP-{number:03d}"
+            case = next(c for c in derived["cases"] if c["case_id"] == case_id)
+            self.assertEqual(case["overall"]["decision_status"], "blocked")
+            actions = case["overall"]["human_actions"]
+            self.assertTrue(any("No executable approval route" in action for action in actions))
+            self.assertFalse(any("Submit the supported or revised proposal to" in action
+                                 for action in actions))
+            self.assertEqual(case["reviewer"]["method"], "model_assisted")
+
     def test_json_pointer_escapes_and_array_indices(self):
         self.assertEqual(resolve_pointer({"a/b~c": [7]}, "/a~1b~0c/0"), 7)
         for bad in ("/a/-1", "/a/00", "/a/1"):
