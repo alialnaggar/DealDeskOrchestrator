@@ -735,3 +735,5 @@ The input-only evaluation preparation now rejects caller-listed development inve
 ## 14 October 2026 — next evaluation authoring input
 
 Use the `phase1c-development-source-exclusions` CI artifact from the selected release commit to reject raw operational row-ID overlap with the 154 development runs. Validate its seal and scope first. This is narrower than true independence: separately check historical source reuse, shared context, new-ID copies, dates and answer leakage before freezing any of the planned 36 evaluation inputs. No evaluation answer or release flag is created by the registry.
+
+The 154-run/152-deal registry is now pinned under `phase-1c-data/implementation/phase1c_development_source_exclusions.json` and regenerated in CI; measured counts are inventory 49, inbound 12, production 14 and digital 10. Use its verified union and a separate development deal-ID exclusion set for the 36 input cases, then inspect historical and semantic reuse. Neither artifact nor ID uniqueness supplies a reviewed expected answer.

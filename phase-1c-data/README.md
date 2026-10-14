@@ -248,3 +248,5 @@ reader-selected stock, inbound, production and digital row IDs across the
 against this concrete set. It contains no answers and does not establish
 independent 36-case inputs; historical and shared-context overlap still need
 review. See [evaluation/README.md](evaluation/README.md).
+
+The measured pinned registry is [`implementation/phase1c_development_source_exclusions.json`](implementation/phase1c_development_source_exclusions.json) (49 stock, 12 inbound, 14 production and 10 digital selected IDs). CI regenerates and compares it; reviewer decisions and independent evaluation answers remain open.

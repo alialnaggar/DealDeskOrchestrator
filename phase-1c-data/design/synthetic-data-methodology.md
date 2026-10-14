@@ -58,3 +58,5 @@ Before a final data-release statement: complete six field-owner marks (product a
 ### Development-source registry for later evaluation input authoring
 
 In a rollback-only PostgreSQL test, 16 reference runs plus 38 connected pilot/dependency runs and 100 generated runs are read to create a sealed CI registry of selected stock, inbound, production-capacity and digital-capacity row IDs. The later evaluation-preparation caller can validate its hash and expected 154-run/152-deal scope before passing the union as an exclusion set. This is a concrete data-isolation control, not a 36-case evaluation set. It omits the 400 historical runs and shared catalogue/customer/policy/lane/service context, and cannot detect semantically duplicated sources with new IDs; those require additional review.
+
+The measured registry has 49 inventory, 12 inbound, 14 production-capacity and 10 digital-capacity row IDs. The versioned `implementation/phase1c_development_source_exclusions.json` is compared with the PostgreSQL regeneration on every workflow run. It is a source-identity baseline only; historical and semantic overlap review remains separate.
