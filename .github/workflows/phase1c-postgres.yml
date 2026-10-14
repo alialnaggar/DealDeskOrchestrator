@@ -172,7 +172,7 @@ jobs:
           python validate_phase1c_scenario_matrix.py
       - name: Check separate provisional evaluation authoring examples
         run: |
-          python -m unittest -v test_validate_phase1c_evaluation_draft
+          python -m unittest -v test_validate_phase1c_evaluation_draft test_phase1c_evaluation_input_sources
           python validate_phase1c_evaluation_draft.py
       - name: Preflight connected pilot rows and SQL constraints
         run: |

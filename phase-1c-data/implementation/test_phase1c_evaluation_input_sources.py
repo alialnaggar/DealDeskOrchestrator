@@ -1,0 +1,46 @@
+"""Source-only evaluation preparation rejects reuse across dated operational modes."""
+
+import unittest
+
+from phase1c_candidate import INPUT_TABLES, reader_input_digest
+from phase1c_evaluation_input import prepare_review_input, verify_review_input
+
+
+class EvaluationSourceIsolationTests(unittest.TestCase):
+    def bundle(self, table, column, source_id):
+        bundle = {key: [] for key in INPUT_TABLES}
+        bundle["deal"] = {"deal_id": "EVAL-SOURCE-DEAL-1"}
+        bundle["run"] = {
+            "run_id": "EVAL-SOURCE-RUN-1", "deal_id": "EVAL-SOURCE-DEAL-1",
+            "as_of_at": "2026-09-01T12:00:00Z",
+            "catalog_version_used": "CATALOGUE_2026_V1",
+            "applied_policy_set_code": "BASELINE_2026",
+            "data_snapshot_ref": "EVAL-SOURCE-SNAPSHOT-1",
+            "config_hash": "source-isolation-test",
+        }
+        bundle[table] = [{column: source_id}]
+        return bundle
+
+    def test_all_dated_operational_source_ids_are_checked(self):
+        for table, column in (
+            ("inventory", "inventory_id"),
+            ("inbound_supply", "supply_id"),
+            ("production_capacity", "capacity_id"),
+            ("digital_capacity", "digital_capacity_id"),
+        ):
+            with self.subTest(table=table):
+                bundle = self.bundle(table, column, "DEV-SOURCE-1")
+                with self.assertRaisesRegex(ValueError, "reuses development"):
+                    prepare_review_input(bundle, case_id="EVAL-PREP-SOURCE-1",
+                                         excluded_source_ids=("DEV-SOURCE-1",))
+                packet = prepare_review_input(bundle, case_id="EVAL-PREP-SOURCE-1",
+                                              excluded_source_ids=("OTHER-SOURCE",))
+                self.assertTrue(verify_review_input(
+                    packet, expected_case_id="EVAL-PREP-SOURCE-1",
+                    expected_source_digest=reader_input_digest(bundle)))
+                self.assertNotIn("facts", packet["payload"])
+                self.assertNotIn("candidate_trace", packet["payload"])
+
+
+if __name__ == "__main__":
+    unittest.main()

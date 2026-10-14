@@ -229,3 +229,12 @@ The 22 no-attribution cases are exactly the repeated STOCK-ALLOCATED (6), STOCK-
 The 100-case review packet has 101 lines, 55 customers, 20 source deal templates and 47 distinct source IDs cited by Availability findings. Nineteen IDs occur in one case; 67 cases reuse at least one cited ID. The 22 cases with no cited shipping-option ID are negative stock or supply scenarios with raw evidence to inspect. Eleven service lines have five eligible regions and zero committed slots. These are development observations, not independently reviewed outcomes.
 
 The `DIGITAL-PROVED` scenario had five needs_evidence outcomes because the generated read did not receive a controlled provider manifest. `implementation/phase1c_generated_provider_manifest.json` is now rendered reproducibly from the pilot proof and four dated generated capacity observations; its digest is in the generated-batch report. The rollback-only PostgreSQL test supplies it as separate evidence. Both push and PR workflows passed: all five matching cases have full-term verified proof and move from needs_evidence to approval_required; no-proof and partial-term cases remain unverified. The observed distribution is 23 approval_required, 12 blocked, 11 needs_commitment, 37 needs_evidence and 17 needs_revision. The manifest is synthetic and does not establish a real provider commitment. See the release review for the exact six field-mark and two calibration decisions proposed to Ali. The 100 cases remain a provisional rule-regression set; six field marks, two calibration reviews, 0/36 independently reviewed evaluation answers, and `ready_for_generation=false` remain open.
+
+
+### Evaluation preparation source isolation — 14 October 2026
+
+The input-only packet check now rejects caller-listed development stock, inbound,
+production-capacity and digital-capacity row IDs, as well as development deal
+IDs. CI tests each source mode. This is a guard for later 36-case authoring,
+not a completed held-out case or a reviewed answer; the caller must supply the
+full exclusion set and separately review source timing and similarity.

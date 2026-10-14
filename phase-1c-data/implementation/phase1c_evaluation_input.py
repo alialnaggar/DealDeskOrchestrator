@@ -14,14 +14,22 @@ def _canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
 
 
+OPERATIONAL_SOURCE_ID_COLUMNS = {
+    "inventory": "inventory_id",
+    "inbound_supply": "supply_id",
+    "production_capacity": "capacity_id",
+    "digital_capacity": "digital_capacity_id",
+}
+
+
 def prepare_review_input(bundle, *, case_id, excluded_deal_ids=(), excluded_source_ids=()):
     """Copy selected source rows only, and seal them for later reviewer comparison."""
     if not case_id.startswith("EVAL-PREP-"):
         raise ValueError("Evaluation preparation needs a distinct case ID")
     if bundle.get("candidate_trace") or bundle["deal"]["deal_id"] in excluded_deal_ids:
         raise ValueError("Candidate output or development submission cannot enter review input")
-    source_ids = ({x["inventory_id"] for x in bundle["inventory"]} |
-                  {x["supply_id"] for x in bundle["inbound_supply"]})
+    source_ids = {str(row[column]) for table, column in OPERATIONAL_SOURCE_ID_COLUMNS.items()
+                  for row in bundle[table]}
     if source_ids & set(excluded_source_ids):
         raise ValueError("Review case reuses development operational evidence")
     source = {key: bundle[key] for key in INPUT_TABLES}
