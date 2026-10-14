@@ -721,7 +721,7 @@ The 22 no-attribution cases align with four groups: STOCK-ALLOCATED 6, STOCK-STA
 
 ## 14 October 2026 — batched release-gate sequence
 
-1. Validate the reproducible provider manifest and all 100 generated reads in PostgreSQL. Reconcile the case packet's achieved outcomes after digital proof is supplied; keep the historical 400 and 36 pilot results unchanged.
+1. Completed in both push and PR PostgreSQL runs: reproducible provider manifest and 100 generated reads. Five DIGITAL-PROVED cases move from needs_evidence to approval_required; aggregate statuses are 23/12/11/37/17 for approval_required/blocked/needs_commitment/needs_evidence/needs_revision. Historical 400 and 36 pilot checks pass without changing their input fixtures.
 2. Review each case's raw versus cited source IDs, especially the 22 negative cases, reused sources, five digital proof cases and 11 service lines. Record field-owner evidence and sign-off for six open marks; do not treat a conditional service region as a booked appointment.
 3. Decide the two calibration reviews together: the 36/156 component/product mix, and whether fixed-p50 synthetic costs with their stated limitation are acceptable or a tested price/cost spread is needed. The release review presents the evidence and exact choices; no calibration is frozen here.
 4. Independently author and review the separate 36-case evaluation answers (currently 0/36), then rerun the deterministic and reproducibility gates before a data-release decision. The generated 100 are provisional regression cases and their observed decisions are not evaluation labels. `ready_for_generation=false`.
