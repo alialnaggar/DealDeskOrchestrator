@@ -22,7 +22,7 @@ SOURCE_FILES = ("phase1c_scenario_matrix.yaml", "phase1c_portfolio_draft.json",
                 "phase1c_build_cost_draft.json", "calibration_config.yaml",
                 "phase1c_data_contract.yaml", "phase1c_buildable_master.sql",
                 "phase1c_sellable_catalogue.sql", "render_phase1c_evaluation_cases.py",
-                "render_phase1c_sellable_catalogue.py", "phase1c_evaluation_business_contract.json")
+                "render_phase1c_sellable_catalogue.py", "phase1c_evaluation_business_contract.json", "phase1c_evaluation_input.py")
 CATALOG = "CATALOGUE_2026_V1"
 POLICY = "BASELINE_2026"
 PRODUCTS = {

@@ -79,7 +79,7 @@ class EvaluationAuthoringTests(unittest.TestCase):
     def test_contract_is_sealed_and_cannot_be_rebound(self):
         from copy import deepcopy
         from phase1c_candidate import INPUT_TABLES, reader_input_digest
-        from phase1c_evaluation_input import prepare_review_input, verify_review_input
+        from phase1c_evaluation_input import prepare_review_input, verify_review_input, review_source_digest
         bundle = {key: [] for key in INPUT_TABLES}
         bundle["deal"] = {"deal_id": "source-fixture"}
         bundle["run"] = dict(run_id="fixture-run", deal_id="source-fixture", as_of_at="2026-09-01T12:00:00+00:00",
@@ -91,15 +91,37 @@ class EvaluationAuthoringTests(unittest.TestCase):
         self.assertNotEqual(legacy["sha256"], packet["sha256"])
         self.assertEqual(packet["payload"]["source_rows"], legacy["payload"]["source_rows"])
         self.assertTrue(verify_review_input(packet, expected_case_id="EVAL-PREP-TEST",
-                        expected_source_digest=reader_input_digest(bundle), expected_business_contract=contract))
+                        expected_source_digest=review_source_digest(bundle, contract), expected_business_contract=contract))
         changed = deepcopy(packet)
         changed["payload"]["business_contract"]["snapshot_hours"] = 48
         changed["sha256"] = hashlib.sha256(json.dumps(changed["payload"],sort_keys=True,separators=(",", ":")).encode()).hexdigest()
         with self.assertRaisesRegex(ValueError, "contract differs"):
             verify_review_input(changed, expected_case_id="EVAL-PREP-TEST",
-                                expected_source_digest=reader_input_digest(bundle), expected_business_contract=contract)
+                                expected_source_digest=review_source_digest(bundle, contract), expected_business_contract=contract)
         with self.assertRaises(ValueError):
-            verify_review_input(packet, expected_case_id="EVAL-PREP-TEST", expected_source_digest=reader_input_digest(bundle))
+            verify_review_input(packet, expected_case_id="EVAL-PREP-TEST", expected_source_digest=review_source_digest(bundle, contract))
+
+    def test_v2_collection_order_does_not_change_facts_or_fingerprint(self):
+        from copy import deepcopy
+        from phase1c_candidate import INPUT_TABLES
+        from phase1c_evaluation_input import prepare_review_input
+        bundle = {key: [] for key in INPUT_TABLES}
+        bundle["deal"] = {"deal_id": "source-fixture"}
+        bundle["run"] = dict(run_id="fixture-run", deal_id="source-fixture", as_of_at="2026-09-01T12:00:00+00:00",
+                             catalog_version_used="fixture", applied_policy_set_code="fixture",
+                             data_snapshot_ref="fixture", config_hash="fixture")
+        bundle["bom_lines"] = [{"bom_line_id": "B", "standard_cost": "50"},
+                               {"bom_line_id": "A", "standard_cost": "180"}]
+        contract = {"contract_id": "fixture"}
+        first = prepare_review_input(bundle, case_id="EVAL-PREP-TEST", business_contract=contract)
+        reversed_bundle = deepcopy(bundle)
+        reversed_bundle["bom_lines"].reverse()
+        second = prepare_review_input(reversed_bundle, case_id="EVAL-PREP-TEST", business_contract=contract)
+        self.assertEqual(first, second)
+        self.assertEqual(sorted(first["payload"]["source_rows"]["bom_lines"], key=lambda r:r["bom_line_id"]),
+                         sorted(bundle["bom_lines"], key=lambda r:r["bom_line_id"]))
+        self.assertNotEqual(prepare_review_input(bundle, case_id="EVAL-PREP-TEST")["sha256"],
+                            prepare_review_input(reversed_bundle, case_id="EVAL-PREP-TEST")["sha256"])
 
     def test_reproducible_separate_36_source_cases(self):
         inputs, manifest = build_from_files()
@@ -152,7 +174,7 @@ class EvaluationDatabaseTests(unittest.TestCase):
     def _export(self, inputs, authoring, pinned_directory, business_contract, output_directory):
         from phase1c_reader import read_run, load_provider_evidence
         from phase1c_evaluation_input import (prepare_heldout_review_input,
-                                              operational_source_ids, verify_review_input)
+                                              operational_source_ids, verify_review_input, review_source_digest)
         from phase1c_candidate import reader_input_digest
         from validate_phase1c_generated_rows import load_rows, validate_rows
         import yaml
@@ -211,7 +233,7 @@ class EvaluationDatabaseTests(unittest.TestCase):
                                 historical_manifest=historical, business_contract=business_contract)
                         self.assertEqual(packet, repeated)
                         self.assertTrue(verify_review_input(packet, expected_case_id=case["case_id"],
-                                                           expected_source_digest=reader_input_digest(bundle),
+                                                           expected_source_digest=review_source_digest(bundle, business_contract),
                                                            expected_business_contract=business_contract))
                         self.assertFalse(keys_in(packet) & FORBIDDEN)
                         selected = operational_source_ids(bundle)

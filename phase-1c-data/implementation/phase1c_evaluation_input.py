@@ -99,6 +99,28 @@ def excluded_ids_from_manifest(manifest, *, expected_run_count, expected_deal_co
     return {value for values in payload["source_ids_by_table"].values() for value in values}
 
 
+def normalized_review_bundle(bundle, business_contract=None):
+    """V2 seals the same selected facts in a deterministic row order.
+
+    Legacy preparation is unchanged so retained v1 evidence pointers remain valid.
+    No rows or fields are added/removed; business decisions are not consulted.
+    """
+    if business_contract is None:
+        return bundle
+    result = dict(bundle)
+    for key in INPUT_TABLES:
+        value = bundle[key]
+        if isinstance(value, list):
+            result[key] = sorted(value, key=_canonical)
+        elif key == "rules":
+            result[key] = {name: sorted(rows, key=_canonical) for name, rows in value.items()}
+    return result
+
+
+def review_source_digest(bundle, business_contract=None):
+    return reader_input_digest(normalized_review_bundle(bundle, business_contract))
+
+
 def prepare_review_input(bundle, *, case_id, excluded_deal_ids=(), excluded_source_ids=(), business_contract=None):
     """Copy selected source rows only, and seal them for later reviewer comparison."""
     if not case_id.startswith("EVAL-PREP-"):
@@ -108,7 +130,8 @@ def prepare_review_input(bundle, *, case_id, excluded_deal_ids=(), excluded_sour
     source_ids = set().union(*operational_source_ids(bundle).values())
     if source_ids & set(excluded_source_ids):
         raise ValueError("Review case reuses development operational evidence")
-    source = {key: bundle[key] for key in INPUT_TABLES}
+    selected = normalized_review_bundle(bundle, business_contract)
+    source = {key: selected[key] for key in INPUT_TABLES}
     context = {key: bundle["run"][key] for key in
                ("run_id", "deal_id", "as_of_at", "catalog_version_used",
                 "applied_policy_set_code", "data_snapshot_ref", "config_hash")}
@@ -116,7 +139,7 @@ def prepare_review_input(bundle, *, case_id, excluded_deal_ids=(), excluded_sour
     # with the reader, and dates/decimals have a stable textual representation.
     payload = json.loads(_canonical({"case_id": case_id, "run_context": context,
                                      "source_rows": source,
-                                     "source_input_digest": reader_input_digest(bundle)}))
+                                     "source_input_digest": review_source_digest(bundle, business_contract)}))
     if business_contract is not None:
         payload["business_contract"] = json.loads(_canonical(business_contract))
     return {"payload": payload, "sha256": sha256(_canonical(payload).encode()).hexdigest()}
