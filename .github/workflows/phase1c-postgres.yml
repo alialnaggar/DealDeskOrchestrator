@@ -376,3 +376,15 @@ jobs:
           name: phase1c-v2-model-review-validation
           path: /tmp/phase1c_v2_model_review_validation.json
           if-no-files-found: error
+      - name: Reconstruct primary-author corrected draft without accepting answers
+        run: |
+          python phase1c_evaluation_review.py --review-file ../evaluation/reviews/model_review_v2_draft.json --packet-directory /tmp/phase1c_evaluation_packets --amendments ../evaluation/reviews/v2_author_amendments.json --write-amended-review /tmp/phase1c_v2_author_assisted_review.json > /tmp/phase1c_v2_author_assisted_validation.json
+          python -m json.tool /tmp/phase1c_v2_author_assisted_validation.json
+      - name: Preserve reviewer-only author-assisted draft and validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-v2-author-assisted-review
+          path: |
+            /tmp/phase1c_v2_author_assisted_review.json
+            /tmp/phase1c_v2_author_assisted_validation.json
+          if-no-files-found: error

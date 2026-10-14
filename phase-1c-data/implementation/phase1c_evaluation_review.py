@@ -196,6 +196,46 @@ def validate_review_workspace(workspace, index, *, packet_directory=None):
             "independently_reviewed_answers": 0}
 
 
+def apply_review_amendments(workspace, index, amendments, *, source_review_sha256):
+    """Produce an explicitly author-assisted draft; never accept an answer."""
+    from copy import deepcopy
+    required = {'schema_version', 'status', 'source_review_sha256', 'input_index_sha256', 'reviewer', 'cases'}
+    if (not isinstance(amendments, dict) or set(amendments) != required
+            or amendments['schema_version'] != 1
+            or amendments['status'] != 'author_assisted_amendments_not_accepted_answers'
+            or amendments['source_review_sha256'] != source_review_sha256
+            or amendments['input_index_sha256'] != digest(index)
+            or workspace.get('input_index_sha256') != digest(index)
+            or not isinstance(amendments['reviewer'], dict)
+            or amendments['reviewer'].get('method') != 'model_assisted'
+            or not isinstance(amendments['cases'], list) or not amendments['cases']):
+        raise ValueError('Amendment provenance, source binding or boundary differs')
+    result = deepcopy(workspace)
+    by_id = {case['case_id']: case for case in result['cases']}
+    seen = set()
+    for change in amendments['cases']:
+        mandatory = {'case_id', 'packet_sha256', 'provider_file_sha256'}
+        if (not isinstance(change, dict) or not mandatory <= set(change)
+                or set(change) - mandatory - {'findings', 'overall'}
+                or not set(change) & {'findings', 'overall'}):
+            raise ValueError('Unsupported amendment fields')
+        cid = change['case_id']
+        if cid not in by_id or cid in seen:
+            raise ValueError('Unknown or duplicate amended case')
+        seen.add(cid)
+        case = by_id[cid]
+        if case['review_status'] != 'draft_complete' or any(change[k] != case[k] for k in ('packet_sha256', 'provider_file_sha256')):
+            raise ValueError('Amendment source hashes or draft state differ')
+        findings = change.get('findings', {})
+        if not isinstance(findings, dict) or set(findings) - set(RESPONSIBILITIES):
+            raise ValueError('Unsupported amended responsibility')
+        case['findings'].update(deepcopy(findings))
+        if 'overall' in change:
+            case['overall'] = deepcopy(change['overall'])
+        case['reviewer'] = deepcopy(amendments['reviewer'])
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     action = parser.add_mutually_exclusive_group(required=True)
@@ -204,7 +244,11 @@ def main():
     action.add_argument("--review-file", type=Path)
     parser.add_argument("--packet-directory", type=Path)
     parser.add_argument("--index", type=Path, default=EVALUATION / "provisional_packet_index.json")
+    parser.add_argument("--amendments", type=Path)
+    parser.add_argument("--write-amended-review", type=Path)
     args = parser.parse_args()
+    if (args.amendments or args.write_amended_review) and not (args.review_file and args.amendments):
+        parser.error("Amendments require a source --review-file and --amendments")
     index = json.loads(args.index.read_text())
     template_path = EVALUATION / "provisional_review_template.json"
     expected = render(build_review_workspace(index))
@@ -213,7 +257,12 @@ def main():
     if args.check_template and template_path.read_text() != expected:
         raise SystemExit("Review template differs from pinned input index")
     workspace = json.loads(args.review_file.read_text() if args.review_file else expected)
+    if args.amendments:
+        workspace = apply_review_amendments(workspace, index, json.loads(args.amendments.read_text()),
+                    source_review_sha256=hashlib.sha256(args.review_file.read_bytes()).hexdigest())
     report = validate_review_workspace(workspace, index, packet_directory=args.packet_directory)
+    if args.write_amended_review and not report["errors"]:
+        args.write_amended_review.write_text(render(workspace))
     print(render(report), end="")
     raise SystemExit(bool(report["errors"]))
 

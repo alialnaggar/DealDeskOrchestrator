@@ -18,7 +18,7 @@ The approved G1 contract concerns the submitted quantity/date/region. No submitt
 | 031–032 Approval | Regional_Manager described as applicable while credit hard-blocked | Exact replacement: “Current executable approval route: none. Credit exposure exceeds the 15% hard cap; no ordinary sales or Finance-exception route may waive it. After an allowed corrected submission clears the hard block, perform a fresh assessment before deriving a route.” Retain the blocked gate and source-specific Credit/Policy findings. |
 | 033–034 Approval | Sales_Director described as applicable while margin hard-blocked | Exact replacement: “Current executable approval route: none. Category margin shortfall exceeds the two-point exception limit; ordinary discount escalation cannot waive that prohibition. After an allowed corrected submission clears the hard block, perform a fresh assessment before deriving a route.” Retain the blocked gate and source-specific Pricing/Policy findings. |
 
-These proposals replace the route-only reasoning and hard-block routing language, not the underlying source facts. They have not been applied to the original draft or counted as independently accepted answers. No comparison with the deterministic implementation is used as a correctness test. If a later author-assisted corrected draft is assembled, record this provenance and preserve the original.
+These proposals replace the route-only reasoning and hard-block routing language, not the underlying source facts. They have not been applied to the original draft or counted as independently accepted answers. No comparison with the deterministic implementation is used as a correctness test. A separate author-assisted review view is reconstructed from the small [`v2_author_amendments.json`](v2_author_amendments.json) file. Its six amended cases carry model_assisted primary-author provenance; the other30 retain original model provenance. The amendments bind the exact original review-file hash and current input-index/case hashes. Invalid references, altered sources and acceptance claims fail. CI preserves the derived review and its zero-acceptance validation as a reviewer-only artifact; the original is never overwritten.
 
 ## Evidence for the two competing-route cases
 
@@ -81,6 +81,16 @@ Source pointers: `/source_rows/supplier_offers/0`, `/source_rows/inbound_supply/
 | EVAL-PREP-036 | 7595.20 | 12.765957 | 12095.20 | approval_required | Source/rule findings and human actions |
 
 Cases031/032: EUR4,818.80/EUR8,495.20 exposure against EUR1,000, or381.88%/749.52% excess. The15% exception ceiling would be EUR1,150; ordinary routing does not bypass it. Cases033/034: unit price EUR1,672.96 minus cost EUR1,656.40 equals EUR16.56 profit, or0.989862% margin; shortfall below the8% floor is7.010138 points, beyond the two-point exception. Discount escalation remains a separate finding, not authority to waive the margin prohibition.
+
+## Reconstruct the separate author-assisted review view
+
+From the implementation directory, after obtaining the pinned source packets:
+
+```sh
+python phase1c_evaluation_review.py --review-file ../evaluation/reviews/model_review_v2_draft.json --packet-directory /tmp/phase1c_evaluation_packets --amendments ../evaluation/reviews/v2_author_amendments.json --write-amended-review /tmp/phase1c_v2_author_assisted_review.json
+```
+
+This generates an unaccepted draft for review, not an independently verified answer file. The proposed six corrections above are applied only in this derived view; the source packets and original review remain intact.
 
 ## Human verification and acceptance still required
 

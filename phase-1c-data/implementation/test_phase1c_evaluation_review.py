@@ -12,7 +12,7 @@ import unittest
 
 from phase1c_evaluation_review import (build_review_workspace, digest, render,
                                       resolve_pointer, validate_review_workspace,
-                                      RESPONSIBILITIES, EVALUATION)
+                                      RESPONSIBILITIES, EVALUATION, apply_review_amendments)
 
 
 class ReviewWorkspaceTests(unittest.TestCase):
@@ -145,6 +145,51 @@ class ReviewWorkspaceTests(unittest.TestCase):
         self.packet["sha256"] = digest(self.packet["payload"])
         (self.folder / "EVAL-PREP-TEST.json").write_text(render(self.packet))
         self.assertTrue(self.check(draft)["errors"])
+
+    def amendments(self):
+        draft = self.draft()
+        finding = deepcopy(draft["cases"][0]["findings"]["Approval"])
+        finding["rationale"] = "Author-assisted fixture correction; not an accepted business answer."
+        return {"schema_version":1,"status":"author_assisted_amendments_not_accepted_answers",
+                "source_review_sha256":"original-bytes-sha","input_index_sha256":digest(self.index),
+                "reviewer":dict(draft["cases"][0]["reviewer"],method="model_assisted"),
+                "cases":[{"case_id":"EVAL-PREP-TEST","packet_sha256":draft["cases"][0]["packet_sha256"],
+                          "provider_file_sha256":draft["cases"][0]["provider_file_sha256"],
+                          "findings":{"Approval":finding}}]}
+
+    def amend(self, changes):
+        return apply_review_amendments(self.draft(),self.index,changes,source_review_sha256="original-bytes-sha")
+
+    def test_author_assisted_view_preserves_original_and_zero_acceptance(self):
+        original = self.draft()
+        before = deepcopy(original)
+        derived = apply_review_amendments(original,self.index,self.amendments(),source_review_sha256="original-bytes-sha")
+        self.assertEqual(original,before)
+        self.assertEqual(derived["cases"][0]["reviewer"]["method"],"model_assisted")
+        self.assertEqual(self.check(derived)["errors"],[])
+        self.assertEqual(derived["independently_reviewed_answers"],0)
+        self.assertFalse(derived["answer_key_agent_visible"])
+
+    def test_amendments_fail_changed_provenance_or_case_source(self):
+        for key in ("source_review_sha256","input_index_sha256"):
+            change=self.amendments();change[key]="different"
+            with self.assertRaises(ValueError): self.amend(change)
+        for key in ("packet_sha256","provider_file_sha256","case_id"):
+            change=self.amendments();change["cases"][0][key]="different"
+            with self.assertRaises(ValueError): self.amend(change)
+        change=self.amendments();change["cases"]*=2
+        with self.assertRaises(ValueError): self.amend(change)
+
+    def test_amendments_cannot_accept_answers_or_hide_invalid_findings(self):
+        for field in ("independently_reviewed_answers","answer_key_agent_visible"):
+            change=self.amendments();change[field]=36
+            with self.assertRaises(ValueError): self.amend(change)
+        change=self.amendments();change["cases"][0]["review_status"]="accepted"
+        with self.assertRaises(ValueError): self.amend(change)
+        change=self.amendments();change["reviewer"]["method"]="human"
+        with self.assertRaises(ValueError): self.amend(change)
+        change=self.amendments();change["cases"][0]["findings"]["Approval"]["evidence_refs"]=[{"document":"packet","pointer":"/business_contract/invented"}]
+        self.assertTrue(self.check(self.amend(change))["errors"])
 
     def test_json_pointer_escapes_and_array_indices(self):
         self.assertEqual(resolve_pointer({"a/b~c": [7]}, "/a~1b~0c/0"), 7)
