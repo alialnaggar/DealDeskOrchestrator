@@ -1,6 +1,7 @@
 """Reproduce and read the provisional 100-deal generated-test batch."""
 
 from collections import Counter, defaultdict
+from datetime import timedelta
 import hashlib
 import json
 import os
@@ -256,9 +257,13 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                         rows = [row for row in bundle["inventory"]
                                 if row["inventory_id"] == expected]
                         self.assertEqual(len(rows), 1)
-                        self.assertEqual((bundle["run"]["as_of_at"].hour,
-                                          bundle["run"]["as_of_at"].minute),
-                                         (12, 10 * variant))
+                        if archetype == "STOCK-ALLOCATED" or variant == 0:
+                            self.assertEqual((bundle["run"]["as_of_at"].hour,
+                                              bundle["run"]["as_of_at"].minute),
+                                             (12, 10 * variant))
+                        else:
+                            self.assertEqual(bundle["run"]["as_of_at"].date().isoformat(),
+                                             (rows[0]["snapshot_at"] + timedelta(days=2)).date().isoformat())
                         if variant:
                             self.assertEqual(rows[0]["quantity_on_hand"], variant + 1)
                             if archetype == "STOCK-ALLOCATED":
@@ -266,8 +271,9 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                                 self.assertIn(expected, sources_for_case)
                             else:
                                 self.assertEqual(rows[0]["quantity_allocated"], 0)
-                                self.assertLess(rows[0]["snapshot_at"],
-                                                bundle["run"]["as_of_at"])
+                                self.assertGreaterEqual(
+                                    (bundle["run"]["as_of_at"] - rows[0]["snapshot_at"]).total_seconds(),
+                                    48 * 3600)
                         if variant == 0:
                             negative_fulfillment_baselines[archetype] = fulfillment_for_case
                         else:

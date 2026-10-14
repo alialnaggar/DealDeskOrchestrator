@@ -161,9 +161,11 @@ def build(matrix, source_hashes, customer_sql):
                 "'CONFLICT-STOCK-06-SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-002';\n")
         if archetype == "STOCK-STALE" and variant:
             stale_stock_variants += 1
-            stock_as_of = datetime(2026, 9, 1, 12, tzinfo=timezone.utc) + timedelta(minutes=10 * variant)
-            # Each snapshot is distinct and remains older than the freshness limit.
-            observed_at = datetime(2026, 8, 30, 9, tzinfo=timezone.utc) + timedelta(minutes=variant)
+            # Space snapshots beyond the original 12:00 pilot cutoff, and
+            # each later run beyond its own freshness window but before the
+            # next variant's observation.
+            observed_at = datetime(2026, 9, 1, 12, 5, tzinfo=timezone.utc) + timedelta(days=3 * (variant - 1))
+            stock_as_of = observed_at + timedelta(days=2, minutes=5)
             out.append(
                 "INSERT INTO inventory (inventory_id,product_id,location_id,"
                 "quantity_on_hand,quantity_allocated,snapshot_at) "
