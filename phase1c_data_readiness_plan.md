@@ -740,3 +740,6 @@ The 154-run/152-deal registry is now pinned under `phase-1c-data/implementation/
 
 
 The exclusion registry now includes run and deal identities, and the held-out preparation entry point requires it. The database example passes this identity/source check, but it is still a rollback-only illustration. Next author 36 distinct frozen inputs with new dated evidence, inspect historical and semantic overlap, then obtain independent findings before any scoring; current independently reviewed count remains 0/36.
+
+
+The mandatory registry exposed irrelevant global production-capacity rows in the separate stocked-only example. The reader now loads capacity only for make-to-order submissions, and the PostgreSQL regressions preserved historical, pilot and 100-case observations. The pinned registry remained identical. Continue with distinct dated source construction and independent review for the actual 36 cases; the repaired example is still not counted.

@@ -256,3 +256,11 @@ The pinned registry also includes 154 run IDs and 152 deal IDs. The held-out
 input-preparation path requires the verified registry and rejects reused run,
 deal and selected operational source IDs. The existing separate PostgreSQL
 example exercises the path but is not one of the 36 evaluation cases.
+
+
+The reader now loads production capacity only when a deal contains a
+make-to-order line. The pinned registry caught irrelevant global capacity in
+the separate stocked-only preparation example; after this scope correction,
+that example passes the registry check. PostgreSQL regressions preserve the
+100-case observed distribution and the registry's contents. No evaluation
+answer has been independently reviewed.

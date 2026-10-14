@@ -63,3 +63,6 @@ The measured registry has 49 inventory, 12 inbound, 14 production-capacity and 1
 
 
 The registry also pins 154 run and 152 deal identities. Future held-out packet authoring uses `prepare_heldout_review_input`, which requires the verified pinned manifest and rejects overlap in run, deal and the four selected operational source-ID classes before sealing an input-only packet. A separate rollback-only database fixture exercises this path but is not counted as an evaluation case; shared and historical source review and independent answers remain open.
+
+
+The reader selects workshop production-capacity rows only for submissions with a make-to-order line. A stocked-only evaluation-preparation example had previously carried irrelevant global capacity IDs from development; the pinned-ID gate exposed this. The scoped reader passed current and historical PostgreSQL regressions, retained the same 154-run exclusion registry and generated outcome distribution, and let the separate input-only example clear the ID gate. This does not establish semantic independence or a reviewed answer.
