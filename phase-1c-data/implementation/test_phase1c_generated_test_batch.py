@@ -268,7 +268,9 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                             self.assertEqual(rows[0]["quantity_on_hand"], variant + 1)
                             if archetype == "STOCK-ALLOCATED":
                                 self.assertEqual(rows[0]["quantity_allocated"], variant + 1)
-                                self.assertIn(expected, sources_for_case)
+                                # Zero free stock is visible to the reader, but
+                                # contributes no binding Availability source.
+                                self.assertNotIn(expected, sources_for_case)
                             else:
                                 self.assertEqual(rows[0]["quantity_allocated"], 0)
                                 self.assertGreaterEqual(
