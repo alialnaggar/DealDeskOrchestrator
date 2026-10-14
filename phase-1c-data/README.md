@@ -1,6 +1,6 @@
 # Phase 1C — synthetic data and implementation
 
-**Status: provisional, 11 October 2026.** This directory is the project copy of
+**Status: provisional, 14 October 2026.** This directory is the project copy of
 `alialnaggar/dealdeskdata` branch `phase1c-reader-draft` at commit
 `8bb6117ba24a4e8e0b7d20a70aca670f0edbb08a`. The implementation files
 retain their original relative paths. The migration passed the private PostgreSQL workflow; edit this repository
@@ -8,7 +8,7 @@ for all new Phase 1C work. The old repository is a historical portfolio copy.
 
 ## How to navigate these files — 12 October 2026
 
-The implementation folder has 175 tracked files. These are grouped by job, not 175 independent features:
+The implementation folder contains many tracked files. They are grouped by job, not independent features:
 
 | Start here | What it does | Keep for release? |
 | --- | --- | --- |
@@ -17,20 +17,20 @@ The implementation folder has 175 tracked files. These are grouped by job, not 1
 | `render_*.py`, `phase1c_*source*.json`, `phase1c_*inputs*.sql`, portfolio/customer files | Generate and hold provisional synthetic masters, deals and dated evidence; the numbered files are manageable shards of one dataset | Yes until a reproducible release package replaces drafts |
 | `validate_*.py`, `audit_*.py`, `test_*.py`, `phase1c_*fixtures.sql` | Check row relationships, distribution, evidence and regressions | Yes as quality gates; fixtures are development cases, not evaluation labels |
 | `phase1c_candidate*.py`, `phase1c_partial_discovery.py`, `phase1c_evaluation_input.py`, `../evaluation/` | Bounded option and evaluation preparation experiments | Keep separately identifiable; these are not final generated data or six live agents |
-| `phase1c_release_review.md`, `phase1c_data_readiness_plan.md`, `../calibration-decision-sheet.md` | Current evidence, work order and decisions awaiting review | Yes as provenance; their dated sections are a history, not separate current plans |
+| `../design/synthetic-data-methodology.md`, `phase1c_release_review.md`, `../../phase1c_data_readiness_plan.md`, `../calibration-decision-sheet.md` | As-built generation method, evidence, work order and decisions awaiting review | Yes as provenance; their dated sections are a history, not separate current plans |
 
-**Current finish line for finalized Phase 1C data:** the 80 customer masters and
-400 historical submissions exist as provisional synthetic inputs, and a
-36-deal pilot passes. Next (1) resolve six field marks and two calibration
-reviews with evidence or explicit bounded synthetic assumptions; (2) freeze
-the config, source manifest and tolerances after pilot diagnostics; (3)
-generate and validate the unfinished 100 test deals and a separate 36-case
-evaluation input set with independently reviewed answers; (4) rebuild from
-the pinned seed into clean PostgreSQL twice, compare checksums and pass all
-integrity, chronology, source and distribution checks before tagging a
-dataset release. The 400 diagnostic decisions are not labels. No evaluation
-case has an independently reviewed answer (0/36). The generation readiness
-flag is false.
+**Current finish line for finalized Phase 1C data:** the 80 customer masters, 400
+historical submissions, 36-deal development pilot and 100 provisional generated
+regression submissions exist. The latter reuse development source states, and
+their observed decisions are not answer keys. Next (1) review the per-case
+sources and resolve six field marks and two calibration reviews; (2) decide a
+bounded configuration/source freeze from the evidence; (3) prepare a separate
+36-case evaluation with independently reviewed answers (currently 0/36);
+(4) rebuild from the pinned seed into clean PostgreSQL twice and compare
+checksums, chronology, integrity and decisions before tagging a dataset
+release. The generation readiness flag remains false. The
+[as-built methodology](design/synthetic-data-methodology.md) records the
+process and limitations for later thesis writing.
 
 Candidate discovery and evaluation packet preparation are useful for the
 later system, but should not displace the data gates above. Keep Phase 1A
