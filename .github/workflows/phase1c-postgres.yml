@@ -5,12 +5,14 @@ on:
     paths:
       - 'phase-1c-data/implementation/**'
       - 'phase-1c-data/design/**'
+      - 'phase-1c-data/evaluation/**'
       - 'phase-1c-data/README.md'
       - '.github/workflows/phase1c-postgres.yml'
   pull_request:
     paths:
       - 'phase-1c-data/implementation/**'
       - 'phase-1c-data/design/**'
+      - 'phase-1c-data/evaluation/**'
       - 'phase-1c-data/README.md'
       - '.github/workflows/phase1c-postgres.yml'
   workflow_dispatch:
@@ -295,4 +297,16 @@ jobs:
         run: python -m unittest -v test_phase1c_deal_decision
       - name: Recheck a proposed partial delivery against PostgreSQL sources
         run: python -m unittest -v test_phase1c_candidate_reader
-
+      - name: Author separate provisional evaluation input packets
+        run: |
+          python render_phase1c_evaluation_cases.py --check
+          createdb deal_desk_evaluation_inputs
+          psql -X -v ON_ERROR_STOP=1 -d deal_desk_evaluation_inputs -f schema.sql
+          psql -X -v ON_ERROR_STOP=1 -d deal_desk_evaluation_inputs -f /tmp/phase1c_compiled_rules.sql
+          EVALUATION_DATABASE_URL=postgresql://postgres:phase1c_ci_only@localhost:5432/deal_desk_evaluation_inputs PHASE1C_EVALUATION_PACKETS=/tmp/phase1c_evaluation_packets python -m unittest -v test_phase1c_evaluation_cases
+      - name: Preserve provisional evaluation inputs without answers
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-provisional-evaluation-inputs
+          path: /tmp/phase1c_evaluation_packets
+          if-no-files-found: error

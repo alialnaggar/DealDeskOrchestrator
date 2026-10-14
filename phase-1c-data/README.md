@@ -6,6 +6,14 @@
 retain their original relative paths. The migration passed the private PostgreSQL workflow; edit this repository
 for all new Phase 1C work. The old repository is a historical portfolio copy.
 
+## Provisional 36-case input authoring — 14 October 2026
+
+The repository now contains reproducible source definitions for **36 provisional evaluation inputs**, two per planned archetype. [Source definitions](evaluation/provisional_cases.json) contain submitted rows and separately supplied synthetic provider records. The [authoring manifest](evaluation/provisional_authoring_manifest.json) maps the scenario intent and records source hashes and pending reviews; it is reviewer material and must stay outside the system under test. There are **0 independently reviewed expected answers** and no released evaluation results.
+
+`implementation/render_phase1c_evaluation_cases.py` constructs new customers, submissions, inventory, offers, PO/receipts, workshop observations, digital pools/proofs, service rules and lanes without copying development or historical deal rows. The five selected sellable SKUs, V1 catalogue/BOM assumptions, canonical location/region codes and compiled baseline policy are shared context. The author knows the development archetypes; distinct IDs and isolated loading do not establish statistical or semantic independence.
+
+CI uses a separate disposable database and loads each case alone with the shared masters. It validates typed rows, reads the case twice, compares source-only packets, checks both pinned exclusion registries and rejects cross-case operational ID reuse. It exports input packets and provider records separately from authoring metadata. It does not assemble, score or publish expected deal decisions. A separate reviewer must inspect complete facts and record answers outside these inputs before baseline or agent evaluation. Calibration, six field marks, two calibration reviews and `ready_for_generation=false` remain open.
+
 ## How to navigate these files — 12 October 2026
 
 The implementation folder contains many tracked files. They are grouped by job, not independent features:

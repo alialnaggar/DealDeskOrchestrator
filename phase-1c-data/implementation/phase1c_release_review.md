@@ -1,5 +1,10 @@
 # Phase 1C release review — provisional decisions
 
+## Current authoring checkpoint — 14 October 2026
+
+Thirty-six separate provisional evaluation source cases are authored, with two variants per matrix archetype. They are built from new operational rows in isolated per-case database transactions and shared catalogue/BOM/policy context. CI validates rows, source exclusion, source-only packet replay and provider-channel separation; it does not create expected decisions or score the baseline. The authoring manifest is reviewer-only, and all case reviews and independent answers remain pending (0/36). Five selected sellable SKUs and known development archetypes limit breadth; ID separation does not establish semantic independence. Review source dates, source-owner provenance and meaningful scenario realization before freezing or reviewing answers. No calibration choice, field mark or generation flag is closed by authoring these inputs.
+
+
 **10 October 2026.** This is the compact review sheet for the generation freeze. The 36-deal development pilot passes PostgreSQL, and 80 customer masters and 400 historical inputs/runs have been generated. Historical labels, completed specialist executions, and the final independent evaluation release remain open. `ready_for_generation` remains false.
 
 [PostgreSQL Actions run 37821625969](https://github.com/alialnaggar/dealdeskdata/actions/runs/37821625969) passed the typed-row, manifest, provider-reader, and full decision workflow after aligning the reader with the new evidence record shape. The local suite has 165 tests, with 35 database cases exercised in CI rather than locally.

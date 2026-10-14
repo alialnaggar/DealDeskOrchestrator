@@ -1,0 +1,284 @@
+{
+  "authored_input_cases": 36,
+  "cases": [
+    {
+      "archetype_id": "STOCK-READY",
+      "case_id": "EVAL-PREP-001",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "STOCK-READY",
+      "case_id": "EVAL-PREP-002",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "STOCK-ALLOCATED",
+      "case_id": "EVAL-PREP-003",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "STOCK-ALLOCATED",
+      "case_id": "EVAL-PREP-004",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "STOCK-STALE",
+      "case_id": "EVAL-PREP-005",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "STOCK-STALE",
+      "case_id": "EVAL-PREP-006",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "SUPPLY-CONFIRMED",
+      "case_id": "EVAL-PREP-007",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "SUPPLY-CONFIRMED",
+      "case_id": "EVAL-PREP-008",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "SUPPLY-OFFER-ONLY",
+      "case_id": "EVAL-PREP-009",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "SUPPLY-OFFER-ONLY",
+      "case_id": "EVAL-PREP-010",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "SUPPLY-CANCELLED",
+      "case_id": "EVAL-PREP-011",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "SUPPLY-CANCELLED",
+      "case_id": "EVAL-PREP-012",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "BUILD-READY",
+      "case_id": "EVAL-PREP-013",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "BUILD-READY",
+      "case_id": "EVAL-PREP-014",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "BUILD-SUBSTITUTE",
+      "case_id": "EVAL-PREP-015",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "BUILD-SUBSTITUTE",
+      "case_id": "EVAL-PREP-016",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "BUILD-CAPACITY-STALE",
+      "case_id": "EVAL-PREP-017",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "BUILD-CAPACITY-STALE",
+      "case_id": "EVAL-PREP-018",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "BUILD-HORIZON",
+      "case_id": "EVAL-PREP-019",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "BUILD-HORIZON",
+      "case_id": "EVAL-PREP-020",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "DIGITAL-PROVED",
+      "case_id": "EVAL-PREP-021",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "DIGITAL-PROVED",
+      "case_id": "EVAL-PREP-022",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "DIGITAL-NO-PROOF",
+      "case_id": "EVAL-PREP-023",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "DIGITAL-NO-PROOF",
+      "case_id": "EVAL-PREP-024",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "DIGITAL-EXPIRED",
+      "case_id": "EVAL-PREP-025",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "DIGITAL-EXPIRED",
+      "case_id": "EVAL-PREP-026",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "SERVICE-COVERED",
+      "case_id": "EVAL-PREP-027",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "SERVICE-COVERED",
+      "case_id": "EVAL-PREP-028",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "SERVICE-OUTSIDE",
+      "case_id": "EVAL-PREP-029",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "SERVICE-OUTSIDE",
+      "case_id": "EVAL-PREP-030",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "CREDIT-LIMIT",
+      "case_id": "EVAL-PREP-031",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "CREDIT-LIMIT",
+      "case_id": "EVAL-PREP-032",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "PRICE-FLOOR",
+      "case_id": "EVAL-PREP-033",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "PRICE-FLOOR",
+      "case_id": "EVAL-PREP-034",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    },
+    {
+      "archetype_id": "POLICY-CLAUSE",
+      "case_id": "EVAL-PREP-035",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 1
+    },
+    {
+      "archetype_id": "POLICY-CLAUSE",
+      "case_id": "EVAL-PREP-036",
+      "independent_answer_review": "pending",
+      "source_review": "pending",
+      "variant": 2
+    }
+  ],
+  "independently_reviewed_answers": 0,
+  "inputs_sha256": "7dff0db52b976d377d346c2bb56de22bf38b8161458729397e718572576222d6",
+  "limitations": [
+    "case author knows development archetypes",
+    "only five selected sellable SKUs",
+    "synthetic proof is not external verification",
+    "no statistical independence claim"
+  ],
+  "schema_version": 1,
+  "shared_context": [
+    "V1 fictional catalogue",
+    "BOMs and production requirements",
+    "compiled baseline policy",
+    "canonical location and region codes"
+  ],
+  "source_sha256": {
+    "calibration_config.yaml": "dda3df36a6bdbf802cc135e7ed54b966f9b573d6c1efd97e3d4ea31716e039b2",
+    "phase1c_build_cost_draft.json": "a0ec9bffac77612641aa0f47b71bc52761f307080470e9250ec0b9448a4d0186",
+    "phase1c_buildable_master.sql": "e9520cb46312d70d45821dde0e094aebc9da7e7b041a1cadcb443c1fda2513c9",
+    "phase1c_data_contract.yaml": "fb455d53631466ca2145f80bec5d9038eb5523a87f12fa84146ee884ede56b60",
+    "phase1c_portfolio_draft.json": "5f556c2b511099e8f8743b4a8ad9405c889d6e92f0b4364bc8aee94506925405",
+    "phase1c_scenario_matrix.yaml": "8402c4c31ef3a77d5e3b9dcb27eeac42a3dddfe398a3fd5d924e3d3b0913cf99",
+    "phase1c_sellable_catalogue.sql": "adf25015e67f99e594492e634f9c8cd558eec7b259c076cad13cb4625917c540",
+    "render_phase1c_evaluation_cases.py": "779af079f48d0e15dd3dc4abd30bc450879cafc0f2752ecbbc3e9f1375e77951",
+    "render_phase1c_sellable_catalogue.py": "ae3fb44c68be0205ac6990a334187ef2dc1c1de8c50dcab396080412ede622fb"
+  },
+  "status": "provisional_author_inputs_not_reviewed_answers"
+}
