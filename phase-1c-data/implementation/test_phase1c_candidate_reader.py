@@ -259,6 +259,7 @@ class CandidateReaderTests(unittest.TestCase):
             '{"deal_id":"D-eval-prep-1"}','EVAL-PREP-CONFIG','queued','2026-09-01 12:00+00')""",
             (review_run,))
         bundle = read_run(self.conn, review_run, commercial_rule_mode="compiled")
+        self.assertEqual(bundle["production_capacity"], [])
         packet = prepare_review_input(bundle, case_id="EVAL-PREP-1",
             excluded_deal_ids=("D-candidate-shortage", "D-stock_then_confirmed_receipt"),
             excluded_source_ids=("INV-stock_then_confirmed_receipt-P",

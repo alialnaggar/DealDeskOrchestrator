@@ -579,6 +579,7 @@ def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_
     if not lines or any(x["catalog_version"] != run["catalog_version_used"] for x in lines):
         raise ValueError("Missing lines or mismatched catalogue version")
     products = [x["product_id"] for x in lines]
+    needs_build_capacity = any(x["fulfillment_mode"] == "make_to_order" for x in lines)
     customer = _one(conn, "SELECT * FROM deal_desk.customers WHERE customer_id=%s", (deal["customer_id"],))
     partition = _one(conn, "SELECT dataset_type FROM deal_desk.deals WHERE deal_id=%s", (deal["deal_id"],))["dataset_type"]
     if partition == "historical":
@@ -615,8 +616,9 @@ def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_
         supply = [x for x in operational["inbound_supply"] if x["product_id"] in stock_products]
         offers = [x for x in operational["supplier_offers"] if x["product_id"] in stock_products and
                   x["is_active"] and (x["valid_to"] is None or x["valid_to"] >= as_of.date())]
-        capacities = _latest([x for x in operational["production_capacity"] if x["capacity_date"] >= as_of.date()],
-                             ("location_id", "capability_code", "resource_type", "capacity_date"), as_of)
+        capacities = (_latest([x for x in operational["production_capacity"] if x["capacity_date"] >= as_of.date()],
+                              ("location_id", "capability_code", "resource_type", "capacity_date"), as_of)
+                      if needs_build_capacity else [])
         digital = _latest([x for x in operational["digital_capacity"] if x["product_id"] in products],
                           ("product_id", "configuration_signature_json", "provider_id", "region_code",
                            "term_code", "capacity_unit"), as_of)
@@ -633,7 +635,9 @@ def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_
         offers = _rows(conn, """SELECT si.*, s.order_calendar_json FROM deal_desk.supplier_items si JOIN deal_desk.suppliers s USING(supplier_id)
         WHERE si.product_id=ANY(%s) AND si.is_active AND s.status='active'
         AND si.valid_from<=%s::date AND (si.valid_to IS NULL OR si.valid_to>=%s::date)""", (stock_products, as_of, as_of))
-        capacities = _latest(_rows(conn, "SELECT * FROM deal_desk.production_capacity WHERE snapshot_at<=%s AND capacity_date>=%s::date", (as_of, as_of)), ("location_id", "capability_code", "resource_type", "capacity_date"), as_of)
+        capacities = (_latest(_rows(conn, "SELECT * FROM deal_desk.production_capacity WHERE snapshot_at<=%s AND capacity_date>=%s::date", (as_of, as_of)),
+                              ("location_id", "capability_code", "resource_type", "capacity_date"), as_of)
+                      if needs_build_capacity else [])
         digital = _latest(_rows(conn, "SELECT * FROM deal_desk.digital_capacity WHERE product_id=ANY(%s) AND snapshot_at<=%s", (products, as_of)), ("product_id", "configuration_signature_json", "provider_id", "region_code", "term_code", "capacity_unit"), as_of)
         lanes = _rows(conn, """SELECT * FROM deal_desk.shipping_lanes WHERE is_active AND
         destination_country_code=%s AND destination_region=%s AND shipping_service_code=%s""", (deal["destination_country_code"], deal["destination_region"], deal["shipping_service_code"])) if deal["shipping_service_code"] else []
