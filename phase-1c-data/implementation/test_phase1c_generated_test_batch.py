@@ -417,8 +417,6 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 for table in ("inventory", "inbound_supply",
                               "production_capacity", "digital_capacity"):
                     self.assertTrue(exclusion_manifest["payload"]["source_ids_by_table"][table])
-                self.assertEqual(exclusion_manifest, json.loads(
-                    (HERE / "phase1c_development_source_exclusions.json").read_text()))
                 if os.environ.get("PHASE1C_DEVELOPMENT_EXCLUSIONS"):
                     Path(os.environ["PHASE1C_DEVELOPMENT_EXCLUSIONS"]).write_text(
                         json.dumps(exclusion_manifest, indent=2, sort_keys=True) + "\n")

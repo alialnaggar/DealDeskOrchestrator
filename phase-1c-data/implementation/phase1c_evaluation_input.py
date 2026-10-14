@@ -49,6 +49,8 @@ def build_development_exclusion_manifest(bundles):
         "status": "development_reader_selected_sources_not_evaluation_answers",
         "run_count": len(runs),
         "deal_count": len(deals),
+        "run_ids": sorted(runs),
+        "deal_ids": sorted(deals),
         "source_ids_by_table": {table: sorted(values) for table, values in ids.items()},
     }
     return {"payload": payload, "sha256": sha256(_canonical(payload).encode()).hexdigest()}
@@ -59,7 +61,8 @@ def excluded_ids_from_manifest(manifest, *, expected_run_count, expected_deal_co
     payload = manifest.get("payload")
     if (not isinstance(payload, dict)
             or set(payload) != {"schema_version", "status", "run_count",
-                                "deal_count", "source_ids_by_table"}
+                                "deal_count", "run_ids", "deal_ids",
+                                "source_ids_by_table"}
             or payload["schema_version"] != 1
             or payload["status"] != "development_reader_selected_sources_not_evaluation_answers"
             or payload["run_count"] != expected_run_count
@@ -67,6 +70,14 @@ def excluded_ids_from_manifest(manifest, *, expected_run_count, expected_deal_co
             or not 0 < payload["deal_count"] <= expected_run_count
             or (expected_deal_count is not None and
                 payload["deal_count"] != expected_deal_count)
+            or not isinstance(payload["run_ids"], list)
+            or any(not isinstance(value, str) or not value for value in payload["run_ids"])
+            or payload["run_ids"] != sorted(set(payload["run_ids"]))
+            or len(payload["run_ids"]) != expected_run_count
+            or not isinstance(payload["deal_ids"], list)
+            or any(not isinstance(value, str) or not value for value in payload["deal_ids"])
+            or payload["deal_ids"] != sorted(set(payload["deal_ids"]))
+            or len(payload["deal_ids"]) != payload["deal_count"]
             or not isinstance(payload["source_ids_by_table"], dict)
             or set(payload["source_ids_by_table"]) != set(OPERATIONAL_SOURCE_ID_COLUMNS)
             or manifest.get("sha256") != sha256(_canonical(payload).encode()).hexdigest()):
@@ -98,6 +109,18 @@ def prepare_review_input(bundle, *, case_id, excluded_deal_ids=(), excluded_sour
                                      "source_rows": source,
                                      "source_input_digest": reader_input_digest(bundle)}))
     return {"payload": payload, "sha256": sha256(_canonical(payload).encode()).hexdigest()}
+
+
+def prepare_heldout_review_input(bundle, *, case_id, development_manifest):
+    """Require the pinned development registry for a future held-out input."""
+    excluded_sources = excluded_ids_from_manifest(
+        development_manifest, expected_run_count=154, expected_deal_count=152)
+    payload = development_manifest["payload"]
+    if str(bundle["run"]["run_id"]) in payload["run_ids"]:
+        raise ValueError("Review run reuses a development run")
+    return prepare_review_input(
+        bundle, case_id=case_id, excluded_deal_ids=payload["deal_ids"],
+        excluded_source_ids=excluded_sources)
 
 
 def verify_review_input(packet, *, expected_case_id, expected_source_digest):

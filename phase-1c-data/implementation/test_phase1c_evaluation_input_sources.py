@@ -60,6 +60,10 @@ class EvaluationSourceIsolationTests(unittest.TestCase):
         excluded = excluded_ids_from_manifest(manifest, expected_run_count=4)
         self.assertEqual(excluded, {f"DEV-SOURCE-{n}" for n in range(1, 5)})
         self.assertEqual(manifest["payload"]["run_count"], 4)
+        self.assertEqual(manifest["payload"]["run_ids"],
+                         [f"DEV-RUN-{n}" for n in range(1, 5)])
+        self.assertEqual(manifest["payload"]["deal_ids"],
+                         [f"DEV-DEAL-{n}" for n in range(1, 5)])
         self.assertNotIn("answers", manifest["payload"])
         for bundle in fixtures:
             with self.assertRaisesRegex(ValueError, "reuses development"):
@@ -77,6 +81,8 @@ class EvaluationSourceIsolationTests(unittest.TestCase):
         alternative_run["run"]["run_id"] = "DEV-RUN-5"
         alternative_run["deal"]["deal_id"] = "DEV-DEAL-1"
         second = build_development_exclusion_manifest(fixtures + [alternative_run])
+        self.assertEqual(second["payload"]["deal_ids"],
+                         [f"DEV-DEAL-{n}" for n in range(1, 5)])
         self.assertEqual((second["payload"]["run_count"], second["payload"]["deal_count"]),
                          (5, 4))
         self.assertEqual(excluded_ids_from_manifest(
