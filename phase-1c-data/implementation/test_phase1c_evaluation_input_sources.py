@@ -1,9 +1,11 @@
 """Source-only evaluation preparation rejects reuse across dated operational modes."""
 
+from copy import deepcopy
 import unittest
 
 from phase1c_candidate import INPUT_TABLES, reader_input_digest
-from phase1c_evaluation_input import prepare_review_input, verify_review_input
+from phase1c_evaluation_input import (prepare_review_input, verify_review_input,
+    build_development_exclusion_manifest, excluded_ids_from_manifest)
 
 
 class EvaluationSourceIsolationTests(unittest.TestCase):
@@ -40,6 +42,37 @@ class EvaluationSourceIsolationTests(unittest.TestCase):
                     expected_source_digest=reader_input_digest(bundle)))
                 self.assertNotIn("facts", packet["payload"])
                 self.assertNotIn("candidate_trace", packet["payload"])
+
+
+    def test_sealed_registry_collects_all_development_source_types(self):
+        fixtures = []
+        for index, (table, column) in enumerate((
+            ("inventory", "inventory_id"),
+            ("inbound_supply", "supply_id"),
+            ("production_capacity", "capacity_id"),
+            ("digital_capacity", "digital_capacity_id"),
+        ), 1):
+            bundle = self.bundle(table, column, f"DEV-SOURCE-{index}")
+            bundle["run"]["run_id"] = f"DEV-RUN-{index}"
+            bundle["deal"]["deal_id"] = f"DEV-DEAL-{index}"
+            fixtures.append(bundle)
+        manifest = build_development_exclusion_manifest(fixtures)
+        excluded = excluded_ids_from_manifest(manifest, expected_run_count=4)
+        self.assertEqual(excluded, {f"DEV-SOURCE-{n}" for n in range(1, 5)})
+        self.assertEqual(manifest["payload"]["run_count"], 4)
+        self.assertNotIn("answers", manifest["payload"])
+        for bundle in fixtures:
+            with self.assertRaisesRegex(ValueError, "reuses development"):
+                prepare_review_input(bundle, case_id="EVAL-PREP-SOURCE-1",
+                                     excluded_source_ids=excluded)
+        tampered = deepcopy(manifest)
+        tampered["payload"]["source_ids_by_table"]["inventory"].append("OTHER")
+        with self.assertRaisesRegex(ValueError, "seal differs"):
+            excluded_ids_from_manifest(tampered, expected_run_count=4)
+        with self.assertRaisesRegex(ValueError, "seal differs"):
+            excluded_ids_from_manifest(manifest, expected_run_count=3)
+        with self.assertRaisesRegex(ValueError, "Duplicate development"):
+            build_development_exclusion_manifest(fixtures + fixtures[:1])
 
 
 if __name__ == "__main__":

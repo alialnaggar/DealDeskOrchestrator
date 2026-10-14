@@ -730,3 +730,8 @@ The 22 no-attribution cases align with four groups: STOCK-ALLOCATED 6, STOCK-STA
 ## 14 October 2026 — evaluation source isolation progress
 
 The input-only evaluation preparation now rejects caller-listed development inventory, inbound, production-capacity and digital-capacity row IDs, alongside development deal IDs. A source-only test covers all four modes and is added to PostgreSQL CI. This closes one **preparation check**, not a field mark or the evaluation gate: assemble a complete development-ID exclusion set, author 36 distinct frozen database-backed cases, check temporal/source provenance and semantic overlap, and obtain independent expected findings before running/scoring agents. The existing rollback-only example is not counted; 0/36 answers are reviewed. The generated 100 remain provisional regression data; six marks, two calibration reviews and `ready_for_generation=false` remain open.
+
+
+## 14 October 2026 — next evaluation authoring input
+
+Use the `phase1c-development-source-exclusions` CI artifact from the selected release commit to reject raw operational row-ID overlap with the 138 development runs. Validate its seal and scope first. This is narrower than true independence: separately check historical source reuse, shared context, new-ID copies, dates and answer leakage before freezing any of the planned 36 evaluation inputs. No evaluation answer or release flag is created by the registry.

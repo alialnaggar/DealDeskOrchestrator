@@ -13,6 +13,8 @@ import yaml
 from render_phase1c_generated_test_batch import (SOURCE_FILES, build,
     eligible_customers, render_digital_manifest)
 from validate_phase1c_scenario_matrix import generated_case_plan
+from phase1c_evaluation_input import (build_development_exclusion_manifest,
+    excluded_ids_from_manifest)
 
 try:
     import psycopg
@@ -144,10 +146,14 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 supply_variant = 0
                 digital_variant = 0
                 case_observations = []
+                development_bundles = []
+                generated_run_ids = set()
                 for index, slot in enumerate(generated_case_plan(matrix), 1):
                     run_id = f"00000000-0000-4000-8000-{310000 + index:012d}"
                     bundle = read_run(conn, run_id, commercial_rule_mode="compiled",
                                       digital_evidence_resolver=provider_resolver)
+                    development_bundles.append(bundle)
+                    generated_run_ids.add(str(bundle["run"]["run_id"]))
                     self.assertEqual(bundle["deal"]["deal_id"], slot["case_id"])
                     self.assertEqual(bundle["run"]["catalog_version_used"], slot["catalog_version"])
                     decision = assemble_deal_decision(bundle)
@@ -390,6 +396,33 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                                 <= set(availability_sources))
                 self.assertTrue({f"GEN-BUILD-STOCK-{i:03d}" for i in range(1, 6)}
                                 <= set(availability_sources))
+                registered_run_ids = [str(row[0]) for row in conn.execute(
+                    "SELECT r.run_id FROM deal_runs r JOIN deals d ON d.deal_id=r.deal_id "
+                    "WHERE d.dataset_type='generated_test' ORDER BY r.run_id").fetchall()]
+                self.assertEqual(len(registered_run_ids), 138)
+                self.assertEqual(len(generated_run_ids), 100)
+                self.assertTrue(generated_run_ids <= set(registered_run_ids))
+                for run_id in registered_run_ids:
+                    if run_id not in generated_run_ids:
+                        development_bundles.append(read_run(
+                            conn, run_id, commercial_rule_mode="compiled",
+                            digital_evidence_resolver=provider_resolver))
+                exclusion_manifest = build_development_exclusion_manifest(development_bundles)
+                excluded_ids = excluded_ids_from_manifest(exclusion_manifest,
+                                                           expected_run_count=138)
+                self.assertEqual(exclusion_manifest["payload"]["run_count"], 138)
+                self.assertEqual(exclusion_manifest["payload"]["deal_count"], 138)
+                self.assertTrue(set(availability_sources) & excluded_ids)
+                for table in ("inventory", "inbound_supply",
+                              "production_capacity", "digital_capacity"):
+                    self.assertTrue(exclusion_manifest["payload"]["source_ids_by_table"][table])
+                if os.environ.get("PHASE1C_DEVELOPMENT_EXCLUSIONS"):
+                    Path(os.environ["PHASE1C_DEVELOPMENT_EXCLUSIONS"]).write_text(
+                        json.dumps(exclusion_manifest, indent=2, sort_keys=True) + "\n")
+                    print("Development exclusion source counts: " + json.dumps({
+                        table: len(ids) for table, ids in
+                        exclusion_manifest["payload"]["source_ids_by_table"].items()},
+                        sort_keys=True))
                 if os.environ.get("PHASE1C_CASE_REVIEW"):
                     Path(os.environ["PHASE1C_CASE_REVIEW"]).write_text(
                         json.dumps(case_review, indent=2, sort_keys=True) + "\n")

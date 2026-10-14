@@ -238,3 +238,13 @@ production-capacity and digital-capacity row IDs, as well as development deal
 IDs. CI tests each source mode. This is a guard for later 36-case authoring,
 not a completed held-out case or a reviewed answer; the caller must supply the
 full exclusion set and separately review source timing and similarity.
+
+
+### Development source registry for evaluation separation — 14 October 2026
+
+The rollback-only generated-batch check now creates a sealed CI registry of
+reader-selected stock, inbound, production and digital row IDs across the
+expected 138 development runs. Evaluation preparation can reject overlap
+against this concrete set. It contains no answers and does not establish
+independent 36-case inputs; historical and shared-context overlap still need
+review. See [evaluation/README.md](evaluation/README.md).
