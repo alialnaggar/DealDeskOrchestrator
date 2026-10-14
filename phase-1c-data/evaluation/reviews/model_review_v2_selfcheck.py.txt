@@ -1,0 +1,36 @@
+"""Source-only reviewer self-check; arithmetic/narrative helper, not an oracle or system implementation."""
+import sys
+sys.dont_write_bytecode = True
+import json,hashlib,importlib.util,shutil
+from pathlib import Path
+from datetime import datetime,timezone
+I=Path('/tmp/dealdesk_v2_review_inputs');O=Path('/tmp/dealdesk_v2_review_output')
+prior=O/'model_review_v2_draft_first_assembly.json'
+if prior.exists():raise SystemExit('Refusing to overwrite retained first assembly')
+shutil.copyfile(O/'model_review_v2_draft.json',prior);shutil.copyfile(O/'assemble_drafts.py',O/'assemble_drafts_first_assembly.py')
+a=json.loads(prior.read_text());changes=[]
+for n in [19,20]:
+ c=a['cases'][n-1]
+ extra=(" Source-only schedule check of the earlier offer: Sep 1 order with 1/3/5 working-day lead gives compute receipt Sep 2/4/8. At latest Sep 8 receipt, separate-day assembly Sep 8 and test Sep 9 each need 1.5 hours, within the supplied 7-hour slots; one-workday transit gives Sep 10 conditionally. Thus an earlier replacement commitment may preserve the requested date, rather than making it impossible. The draft needs_revision label describes the currently confirmed October route, retaining this needs_commitment alternative; a revised sourcing proposal should be evaluated separately." if n==19 else " Source-only schedule check of the earlier offer: Sep 1 order with 2/4/6 working-day lead gives compute receipt Sep 3/7/9. Modal Sep 7 receipt permits separate-day assembly Sep 7 and test Sep 8, 2.5 hours each within 8-hour supplied slots, plus two transit workdays for conditional Sep 10 arrival. Latest Sep 9 receipt needs test Sep 10 under that conservative schedule, but no Sep 10 capacity is supplied; same-day operations or refreshed slots must be explicitly confirmed. An earlier committed replacement route may preserve the requested Sep 11 date. The draft needs_revision label describes the currently confirmed October route, retaining an alternative commitment/evidence path rather than declaring every route impossible.")
+ c['findings']['Availability']['rationale']+=extra;c['overall']['rationale']+=extra
+ c['overall']['unresolved_questions'].append('If earlier replacement sourcing is committed, should that revised route supersede the current late confirmed route for gate assignment?')
+ changes.append({'case_id':c['case_id'],'fields':['findings.Availability.rationale','overall.rationale','overall.unresolved_questions'],'correction':'Added exact earlier-offer receipt/operation/transit dates; clarified revision gate attaches to currently confirmed route and retained alternative ambiguity. Case 020 latest separate-day test lacks supplied Sep 10 capacity. No gate was changed.'})
+for n in [33,34]:
+ c=a['cases'][n-1];old='The per-line hard margin/discount rule prohibits this submitted price; ordinary discount escalation cannot waive it.';new='PO-BASE-MARGIN-SHORTFALL applies because 8%−(16.56/1672.96×100)% = 7.010138 percentage points exceeds the two-point exception ceiling. The 17.180198% discount triggers the >10% Sales Director flag, but is below the >20% VP flag and >35% hard discount cap; the block is specifically the margin shortfall. Ordinary discount escalation cannot waive it.'
+ c['findings']['Pricing']['rationale']=c['findings']['Pricing']['rationale'].replace(old,new)
+ changes.append({'case_id':c['case_id'],'fields':['findings.Pricing.rationale'],'correction':'Replaced generic hard margin/discount wording with the actual margin-shortfall prohibition; explicitly distinguished discount escalation from hard cap. No calculation or gate changed.'})
+for n in [31,32]:
+ c=a['cases'][n-1];exposure='4818.80' if n==31 else '8495.20';excess='3818.80' if n==31 else '7495.20';over='381.88' if n==31 else '749.52'
+ c['findings']['Credit']['rationale']+=f' Exact excess arithmetic: (EUR {exposure}−EUR 1000.00)/EUR 1000.00×100 = {over}%, with EUR {excess} excess; the permitted 15% exposure ceiling is only EUR 1150.00.'
+ changes.append({'case_id':c['case_id'],'fields':['findings.Credit.rationale'],'correction':'Added exact excess arithmetic and EUR1150 exposure exception ceiling; no finding or gate changed.'})
+for c in a['cases']:c['reviewer']['reviewed_at']=datetime.now(timezone.utc).isoformat()
+(O/'model_review_v2_draft.json').write_text(json.dumps(a,indent=2,sort_keys=True)+'\n');(O/'selfcheck_corrections.json').write_text(json.dumps(changes,indent=2)+'\n')
+spec=importlib.util.spec_from_file_location('allowed_review_format',I/'review_format.py');fmt=importlib.util.module_from_spec(spec);spec.loader.exec_module(fmt)
+index=json.loads((I/'packet_index.json').read_text());report=fmt.validate_review_workspace(a,index,packet_directory=I)
+report.update({'checked_at':datetime.now(timezone.utc).isoformat(),'finding_count':sum(len(c['findings']) for c in a['cases']),'validation_scope':'Schema, provenance fields, source hashes and resolvable pointers; not substantive correctness or review acceptance','draft_sha256':hashlib.sha256((O/'model_review_v2_draft.json').read_bytes()).hexdigest(),'retained_first_assembly_sha256':hashlib.sha256(prior.read_bytes()).hexdigest(),'amendments':changes})
+(O/'validation_report.json').write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')
+h=json.loads((O/'source_hash_verification.json').read_text());rows=[]
+for r in index['cases']:
+ cid=r['case_id'];packet=json.loads((I/(cid+'.json')).read_text());ph=fmt.digest(packet['payload']);vh=hashlib.sha256((I/(cid+'-provider.json')).read_bytes()).hexdigest();rows.append({'case_id':cid,'packet_computed':ph,'packet_expected':r['packet_sha256'],'packet_pass':ph==r['packet_sha256']==packet['sha256'],'provider_computed':vh,'provider_expected':r['provider_file_sha256'],'provider_pass':vh==r['provider_file_sha256']})
+h.update(final=rows,final_checked_at=datetime.now(timezone.utc).isoformat(),all_pass=all(x['packet_pass'] and x['provider_pass'] for x in rows),input_index_canonical_sha256=fmt.digest(index),input_index_exact_byte_sha256=hashlib.sha256((I/'packet_index.json').read_bytes()).hexdigest())
+(O/'source_hash_verification.json').write_text(json.dumps(h,indent=2,sort_keys=True)+'\n');print({k:report[k] for k in ['errors','complete_draft_cases','finding_count','independently_reviewed_answers']});print('Repeated 36 payload / 36 provider hashes:',h['all_pass'])

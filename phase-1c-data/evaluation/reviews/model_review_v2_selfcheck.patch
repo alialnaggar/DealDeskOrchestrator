@@ -1,0 +1,408 @@
+--- model_review_v2_draft_first_assembly.json
++++ model_review_v2_draft.json
+@@ -181,7 +181,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.728836+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756872+00:00"
+       }
+     },
+     {
+@@ -364,7 +364,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.729084+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756885+00:00"
+       }
+     },
+     {
+@@ -549,7 +549,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.729288+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756887+00:00"
+       }
+     },
+     {
+@@ -734,7 +734,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.729523+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756889+00:00"
+       }
+     },
+     {
+@@ -919,7 +919,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.729813+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756890+00:00"
+       }
+     },
+     {
+@@ -1104,7 +1104,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.730032+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756891+00:00"
+       }
+     },
+     {
+@@ -1279,7 +1279,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.730226+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756892+00:00"
+       }
+     },
+     {
+@@ -1454,7 +1454,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.730664+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756893+00:00"
+       }
+     },
+     {
+@@ -1631,7 +1631,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.730982+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756894+00:00"
+       }
+     },
+     {
+@@ -1808,7 +1808,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.731187+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756895+00:00"
+       }
+     },
+     {
+@@ -1985,7 +1985,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.731485+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756896+00:00"
+       }
+     },
+     {
+@@ -2162,7 +2162,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.731716+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756898+00:00"
+       }
+     },
+     {
+@@ -2363,7 +2363,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.732344+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756899+00:00"
+       }
+     },
+     {
+@@ -2564,7 +2564,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.732680+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756900+00:00"
+       }
+     },
+     {
+@@ -2765,7 +2765,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.733180+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756901+00:00"
+       }
+     },
+     {
+@@ -2966,7 +2966,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.733631+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756902+00:00"
+       }
+     },
+     {
+@@ -3167,7 +3167,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.733886+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756903+00:00"
+       }
+     },
+     {
+@@ -3368,7 +3368,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.734125+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756904+00:00"
+       }
+     },
+     {
+@@ -3444,7 +3444,7 @@
+             }
+           ],
+           "finding": "issue_identified",
+-          "rationale": "BOM demand for 2 outputs is 2 compute, 4.04 storage (2 per output \u00d71.01 scrap), 2 chassis and 2 from one NETWORK_OPTION substitute. Each operation needs 2\u00d70.500 + ceil(2/4)\u00d70.500 = 1.5 hours: assembly sequence 1, test sequence 2. Compute stock is zero. Confirmed matching PO EVAL36-019-PO supplies 5.000 unallocated compute units only on 2026-10-01, later than requested 2026-09-10; it cannot support the submitted date. Other components are adequate. Current production snapshots show 7.000 hours per weekday operation only Sep 2\u20139 and zero Sep 5\u20136: there is no operation capacity after the October receipt, so a finished-product October completion/arrival cannot be asserted. The active matching EUR 240.00 offer has 1/3/5 working-day leads and constitutes a possible earlier uncommitted procurement route, distinct from the late confirmed PO. Commit that alternative and a feasible operation/dispatch schedule if retaining the request; otherwise revise date and obtain post-receipt capacity evidence. No capacity after the supplied horizon may be invented."
++          "rationale": "BOM demand for 2 outputs is 2 compute, 4.04 storage (2 per output \u00d71.01 scrap), 2 chassis and 2 from one NETWORK_OPTION substitute. Each operation needs 2\u00d70.500 + ceil(2/4)\u00d70.500 = 1.5 hours: assembly sequence 1, test sequence 2. Compute stock is zero. Confirmed matching PO EVAL36-019-PO supplies 5.000 unallocated compute units only on 2026-10-01, later than requested 2026-09-10; it cannot support the submitted date. Other components are adequate. Current production snapshots show 7.000 hours per weekday operation only Sep 2\u20139 and zero Sep 5\u20136: there is no operation capacity after the October receipt, so a finished-product October completion/arrival cannot be asserted. The active matching EUR 240.00 offer has 1/3/5 working-day leads and constitutes a possible earlier uncommitted procurement route, distinct from the late confirmed PO. Commit that alternative and a feasible operation/dispatch schedule if retaining the request; otherwise revise date and obtain post-receipt capacity evidence. No capacity after the supplied horizon may be invented. Source-only schedule check of the earlier offer: Sep 1 order with 1/3/5 working-day lead gives compute receipt Sep 2/4/8. At latest Sep 8 receipt, separate-day assembly Sep 8 and test Sep 9 each need 1.5 hours, within the supplied 7-hour slots; one-workday transit gives Sep 10 conditionally. Thus an earlier replacement commitment may preserve the requested date, rather than making it impossible. The draft needs_revision label describes the currently confirmed October route, retaining this needs_commitment alternative; a revised sourcing proposal should be evaluated separately."
+         },
+         "Configuration": {
+           "evidence_refs": [
+@@ -3559,10 +3559,11 @@
+           "Workshop must provide dated assembly/test capacity after the October receipt if the late confirmed route is pursued.",
+           "Submit the supported or revised proposal to Sales_Director for human review; this model draft grants no approval."
+         ],
+-        "rationale": "Draft EVAL-PREP-019: needs_revision follows declared precedence among needs_revision, needs_evidence, needs_commitment, approval_required. BOM demand for 2 outputs is 2 compute, 4.04 storage (2 per output \u00d71.01 scrap), 2 chassis and 2 from one NETWORK_OPTION substitute. Each operation needs 2\u00d70.500 + ceil(2/4)\u00d70.500 = 1.5 hours: assembly sequence 1, test sequence 2. Compute stock is zero. Confirmed matching PO EVAL36-019-PO supplies 5.000 unallocated compute units only on 2026-10-01, later than requested 2026-09-10; it cannot support the submitted date. Other components are adequate. Current production snapshots show 7.000 hours per weekday operation only Sep 2\u20139 and zero Sep 5\u20136: there is no operation capacity after the October receipt, so a finished-product October completion/arrival cannot be asserted. The active matching EUR 240.00 offer has 1/3/5 working-day leads and constitutes a possible earlier uncommitted procurement route, distinct from the late confirmed PO. Commit that alternative and a feasible operation/dispatch schedule if retaining the request; otherwise revise date and obtain post-receipt capacity evidence. No capacity after the supplied horizon may be invented. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
++        "rationale": "Draft EVAL-PREP-019: needs_revision follows declared precedence among needs_revision, needs_evidence, needs_commitment, approval_required. BOM demand for 2 outputs is 2 compute, 4.04 storage (2 per output \u00d71.01 scrap), 2 chassis and 2 from one NETWORK_OPTION substitute. Each operation needs 2\u00d70.500 + ceil(2/4)\u00d70.500 = 1.5 hours: assembly sequence 1, test sequence 2. Compute stock is zero. Confirmed matching PO EVAL36-019-PO supplies 5.000 unallocated compute units only on 2026-10-01, later than requested 2026-09-10; it cannot support the submitted date. Other components are adequate. Current production snapshots show 7.000 hours per weekday operation only Sep 2\u20139 and zero Sep 5\u20136: there is no operation capacity after the October receipt, so a finished-product October completion/arrival cannot be asserted. The active matching EUR 240.00 offer has 1/3/5 working-day leads and constitutes a possible earlier uncommitted procurement route, distinct from the late confirmed PO. Commit that alternative and a feasible operation/dispatch schedule if retaining the request; otherwise revise date and obtain post-receipt capacity evidence. No capacity after the supplied horizon may be invented. All six responsibility findings remain part of this model draft; independent acceptance is outstanding. Source-only schedule check of the earlier offer: Sep 1 order with 1/3/5 working-day lead gives compute receipt Sep 2/4/8. At latest Sep 8 receipt, separate-day assembly Sep 8 and test Sep 9 each need 1.5 hours, within the supplied 7-hour slots; one-workday transit gives Sep 10 conditionally. Thus an earlier replacement commitment may preserve the requested date, rather than making it impossible. The draft needs_revision label describes the currently confirmed October route, retaining this needs_commitment alternative; a revised sourcing proposal should be evaluated separately.",
+         "unresolved_questions": [
+           "Can a new earlier procurement commitment support the existing requested date?",
+-          "What dated post-receipt production capacity and customer-accepted delivery date exist for the October route?"
++          "What dated post-receipt production capacity and customer-accepted delivery date exist for the October route?",
++          "If earlier replacement sourcing is committed, should that revised route supersede the current late confirmed route for gate assignment?"
+         ]
+       },
+       "packet_sha256": "5549aa868e8a561b376e19e05e7ac29482e5e69194f884cb1011bbde8fe96632",
+@@ -3572,7 +3573,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.734399+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756905+00:00"
+       }
+     },
+     {
+@@ -3648,7 +3649,7 @@
+             }
+           ],
+           "finding": "issue_identified",
+-          "rationale": "BOM demand for 4 outputs is 4 compute, 8.08 storage (2 per output \u00d71.01 scrap), 4 chassis and 4 from one NETWORK_OPTION substitute. Each operation needs 4\u00d70.500 + ceil(4/4)\u00d70.500 = 2.5 hours: assembly sequence 1, test sequence 2. Compute stock is zero. Confirmed matching PO EVAL36-020-PO supplies 7.000 unallocated compute units only on 2026-10-02, later than requested 2026-09-11; it cannot support the submitted date. Other components are adequate. Current production snapshots show 8.000 hours per weekday operation only Sep 2\u20139 and zero Sep 5\u20136: there is no operation capacity after the October receipt, so a finished-product October completion/arrival cannot be asserted. The active matching EUR 240.00 offer has 2/4/6 working-day leads and constitutes a possible earlier uncommitted procurement route, distinct from the late confirmed PO. Commit that alternative and a feasible operation/dispatch schedule if retaining the request; otherwise revise date and obtain post-receipt capacity evidence. No capacity after the supplied horizon may be invented."
++          "rationale": "BOM demand for 4 outputs is 4 compute, 8.08 storage (2 per output \u00d71.01 scrap), 4 chassis and 4 from one NETWORK_OPTION substitute. Each operation needs 4\u00d70.500 + ceil(4/4)\u00d70.500 = 2.5 hours: assembly sequence 1, test sequence 2. Compute stock is zero. Confirmed matching PO EVAL36-020-PO supplies 7.000 unallocated compute units only on 2026-10-02, later than requested 2026-09-11; it cannot support the submitted date. Other components are adequate. Current production snapshots show 8.000 hours per weekday operation only Sep 2\u20139 and zero Sep 5\u20136: there is no operation capacity after the October receipt, so a finished-product October completion/arrival cannot be asserted. The active matching EUR 240.00 offer has 2/4/6 working-day leads and constitutes a possible earlier uncommitted procurement route, distinct from the late confirmed PO. Commit that alternative and a feasible operation/dispatch schedule if retaining the request; otherwise revise date and obtain post-receipt capacity evidence. No capacity after the supplied horizon may be invented. Source-only schedule check of the earlier offer: Sep 1 order with 2/4/6 working-day lead gives compute receipt Sep 3/7/9. Modal Sep 7 receipt permits separate-day assembly Sep 7 and test Sep 8, 2.5 hours each within 8-hour supplied slots, plus two transit workdays for conditional Sep 10 arrival. Latest Sep 9 receipt needs test Sep 10 under that conservative schedule, but no Sep 10 capacity is supplied; same-day operations or refreshed slots must be explicitly confirmed. An earlier committed replacement route may preserve the requested Sep 11 date. The draft needs_revision label describes the currently confirmed October route, retaining an alternative commitment/evidence path rather than declaring every route impossible."
+         },
+         "Configuration": {
+           "evidence_refs": [
+@@ -3763,10 +3764,11 @@
+           "Workshop must provide dated assembly/test capacity after the October receipt if the late confirmed route is pursued.",
+           "Submit the supported or revised proposal to Sales_Director for human review; this model draft grants no approval."
+         ],
+-        "rationale": "Draft EVAL-PREP-020: needs_revision follows declared precedence among needs_revision, needs_evidence, needs_commitment, approval_required. BOM demand for 4 outputs is 4 compute, 8.08 storage (2 per output \u00d71.01 scrap), 4 chassis and 4 from one NETWORK_OPTION substitute. Each operation needs 4\u00d70.500 + ceil(4/4)\u00d70.500 = 2.5 hours: assembly sequence 1, test sequence 2. Compute stock is zero. Confirmed matching PO EVAL36-020-PO supplies 7.000 unallocated compute units only on 2026-10-02, later than requested 2026-09-11; it cannot support the submitted date. Other components are adequate. Current production snapshots show 8.000 hours per weekday operation only Sep 2\u20139 and zero Sep 5\u20136: there is no operation capacity after the October receipt, so a finished-product October completion/arrival cannot be asserted. The active matching EUR 240.00 offer has 2/4/6 working-day leads and constitutes a possible earlier uncommitted procurement route, distinct from the late confirmed PO. Commit that alternative and a feasible operation/dispatch schedule if retaining the request; otherwise revise date and obtain post-receipt capacity evidence. No capacity after the supplied horizon may be invented. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
++        "rationale": "Draft EVAL-PREP-020: needs_revision follows declared precedence among needs_revision, needs_evidence, needs_commitment, approval_required. BOM demand for 4 outputs is 4 compute, 8.08 storage (2 per output \u00d71.01 scrap), 4 chassis and 4 from one NETWORK_OPTION substitute. Each operation needs 4\u00d70.500 + ceil(4/4)\u00d70.500 = 2.5 hours: assembly sequence 1, test sequence 2. Compute stock is zero. Confirmed matching PO EVAL36-020-PO supplies 7.000 unallocated compute units only on 2026-10-02, later than requested 2026-09-11; it cannot support the submitted date. Other components are adequate. Current production snapshots show 8.000 hours per weekday operation only Sep 2\u20139 and zero Sep 5\u20136: there is no operation capacity after the October receipt, so a finished-product October completion/arrival cannot be asserted. The active matching EUR 240.00 offer has 2/4/6 working-day leads and constitutes a possible earlier uncommitted procurement route, distinct from the late confirmed PO. Commit that alternative and a feasible operation/dispatch schedule if retaining the request; otherwise revise date and obtain post-receipt capacity evidence. No capacity after the supplied horizon may be invented. All six responsibility findings remain part of this model draft; independent acceptance is outstanding. Source-only schedule check of the earlier offer: Sep 1 order with 2/4/6 working-day lead gives compute receipt Sep 3/7/9. Modal Sep 7 receipt permits separate-day assembly Sep 7 and test Sep 8, 2.5 hours each within 8-hour supplied slots, plus two transit workdays for conditional Sep 10 arrival. Latest Sep 9 receipt needs test Sep 10 under that conservative schedule, but no Sep 10 capacity is supplied; same-day operations or refreshed slots must be explicitly confirmed. An earlier committed replacement route may preserve the requested Sep 11 date. The draft needs_revision label describes the currently confirmed October route, retaining an alternative commitment/evidence path rather than declaring every route impossible.",
+         "unresolved_questions": [
+           "Can a new earlier procurement commitment support the existing requested date?",
+-          "What dated post-receipt production capacity and customer-accepted delivery date exist for the October route?"
++          "What dated post-receipt production capacity and customer-accepted delivery date exist for the October route?",
++          "If earlier replacement sourcing is committed, should that revised route supersede the current late confirmed route for gate assignment?"
+         ]
+       },
+       "packet_sha256": "6edee7da614ce168e3422a3f1d013da26769f97e8378cacb107f0a55b036957b",
+@@ -3776,7 +3778,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.734759+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756906+00:00"
+       }
+     },
+     {
+@@ -3955,7 +3957,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.734997+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756907+00:00"
+       }
+     },
+     {
+@@ -4134,7 +4136,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.735208+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756908+00:00"
+       }
+     },
+     {
+@@ -4315,7 +4317,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.735602+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756909+00:00"
+       }
+     },
+     {
+@@ -4496,7 +4498,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.735809+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756910+00:00"
+       }
+     },
+     {
+@@ -4677,7 +4679,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.736536+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756911+00:00"
+       }
+     },
+     {
+@@ -4858,7 +4860,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.736775+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756912+00:00"
+       }
+     },
+     {
+@@ -5035,7 +5037,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.736968+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756913+00:00"
+       }
+     },
+     {
+@@ -5212,7 +5214,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.737156+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756914+00:00"
+       }
+     },
+     {
+@@ -5394,7 +5396,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.737332+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756915+00:00"
+       }
+     },
+     {
+@@ -5576,7 +5578,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.737553+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756916+00:00"
+       }
+     },
+     {
+@@ -5692,7 +5694,7 @@
+             }
+           ],
+           "finding": "issue_identified",
+-          "rationale": "Customer EVAL36-031-CUSTOMER and credit record identity match and both statuses are Active. Receivables and payments are empty complete snapshot collections: AR and overdue AR are EUR 0.00, with no inferred favorable payment history. Exposure = EUR 0.00 AR + EUR 900.00 unbilled commitments + EUR 3918.80 entire submitted quote = EUR 4818.80 against EUR 1000.00 limit; over-limit percentage 381.880000%. Commitment observation is 1.416667 hours old, within the inclusive 24-hour bound. Requested payment terms 30 days are allowed and below the >45-day escalation threshold. Exposure exceeds the 15% hard exception cap, so Finance approval alone cannot release this submission."
++          "rationale": "Customer EVAL36-031-CUSTOMER and credit record identity match and both statuses are Active. Receivables and payments are empty complete snapshot collections: AR and overdue AR are EUR 0.00, with no inferred favorable payment history. Exposure = EUR 0.00 AR + EUR 900.00 unbilled commitments + EUR 3918.80 entire submitted quote = EUR 4818.80 against EUR 1000.00 limit; over-limit percentage 381.880000%. Commitment observation is 1.416667 hours old, within the inclusive 24-hour bound. Requested payment terms 30 days are allowed and below the >45-day escalation threshold. Exposure exceeds the 15% hard exception cap, so Finance approval alone cannot release this submission. Exact excess arithmetic: (EUR 4818.80\u2212EUR 1000.00)/EUR 1000.00\u00d7100 = 381.88%, with EUR 3818.80 excess; the permitted 15% exposure ceiling is only EUR 1150.00."
+         },
+         "Policy": {
+           "evidence_refs": [
+@@ -5760,7 +5762,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.737750+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756917+00:00"
+       }
+     },
+     {
+@@ -5876,7 +5878,7 @@
+             }
+           ],
+           "finding": "issue_identified",
+-          "rationale": "Customer EVAL36-032-CUSTOMER and credit record identity match and both statuses are Active. Receivables and payments are empty complete snapshot collections: AR and overdue AR are EUR 0.00, with no inferred favorable payment history. Exposure = EUR 0.00 AR + EUR 900.00 unbilled commitments + EUR 7595.20 entire submitted quote = EUR 8495.20 against EUR 1000.00 limit; over-limit percentage 749.520000%. Commitment observation is 1.583333 hours old, within the inclusive 24-hour bound. Requested payment terms 30 days are allowed and below the >45-day escalation threshold. Exposure exceeds the 15% hard exception cap, so Finance approval alone cannot release this submission."
++          "rationale": "Customer EVAL36-032-CUSTOMER and credit record identity match and both statuses are Active. Receivables and payments are empty complete snapshot collections: AR and overdue AR are EUR 0.00, with no inferred favorable payment history. Exposure = EUR 0.00 AR + EUR 900.00 unbilled commitments + EUR 7595.20 entire submitted quote = EUR 8495.20 against EUR 1000.00 limit; over-limit percentage 749.520000%. Commitment observation is 1.583333 hours old, within the inclusive 24-hour bound. Requested payment terms 30 days are allowed and below the >45-day escalation threshold. Exposure exceeds the 15% hard exception cap, so Finance approval alone cannot release this submission. Exact excess arithmetic: (EUR 8495.20\u2212EUR 1000.00)/EUR 1000.00\u00d7100 = 749.52%, with EUR 7495.20 excess; the permitted 15% exposure ceiling is only EUR 1150.00."
+         },
+         "Policy": {
+           "evidence_refs": [
+@@ -5944,7 +5946,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.738230+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756918+00:00"
+       }
+     },
+     {
+@@ -6108,7 +6110,7 @@
+             }
+           ],
+           "finding": "issue_identified",
+-          "rationale": "2 \u00d7 EUR 1672.96 = EUR 3345.92 revenue; list total EUR 4040.00, catalogue cost 2 \u00d7 EUR 1656.40 = EUR 3312.80, gross profit EUR 33.12. Discount = (2020.00\u22121672.96)/2020.00\u00d7100 = 17.180198%; margin = (1672.96\u22121656.40)/1672.96\u00d7100 = 0.989862%. Single-line list-weighted discount and revenue-weighted margin equal these values. Category floor is 8% and shortfall is 7.010138 points. The per-line hard margin/discount rule prohibits this submitted price; ordinary discount escalation cannot waive it."
++          "rationale": "2 \u00d7 EUR 1672.96 = EUR 3345.92 revenue; list total EUR 4040.00, catalogue cost 2 \u00d7 EUR 1656.40 = EUR 3312.80, gross profit EUR 33.12. Discount = (2020.00\u22121672.96)/2020.00\u00d7100 = 17.180198%; margin = (1672.96\u22121656.40)/1672.96\u00d7100 = 0.989862%. Single-line list-weighted discount and revenue-weighted margin equal these values. Category floor is 8% and shortfall is 7.010138 points. PO-BASE-MARGIN-SHORTFALL applies because 8%\u2212(16.56/1672.96\u00d7100)% = 7.010138 percentage points exceeds the two-point exception ceiling. The 17.180198% discount triggers the >10% Sales Director flag, but is below the >20% VP flag and >35% hard discount cap; the block is specifically the margin shortfall. Ordinary discount escalation cannot waive it."
+         }
+       },
+       "overall": {
+@@ -6128,7 +6130,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.738514+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756918+00:00"
+       }
+     },
+     {
+@@ -6292,7 +6294,7 @@
+             }
+           ],
+           "finding": "issue_identified",
+-          "rationale": "4 \u00d7 EUR 1672.96 = EUR 6691.84 revenue; list total EUR 8080.00, catalogue cost 4 \u00d7 EUR 1656.40 = EUR 6625.60, gross profit EUR 66.24. Discount = (2020.00\u22121672.96)/2020.00\u00d7100 = 17.180198%; margin = (1672.96\u22121656.40)/1672.96\u00d7100 = 0.989862%. Single-line list-weighted discount and revenue-weighted margin equal these values. Category floor is 8% and shortfall is 7.010138 points. The per-line hard margin/discount rule prohibits this submitted price; ordinary discount escalation cannot waive it."
++          "rationale": "4 \u00d7 EUR 1672.96 = EUR 6691.84 revenue; list total EUR 8080.00, catalogue cost 4 \u00d7 EUR 1656.40 = EUR 6625.60, gross profit EUR 66.24. Discount = (2020.00\u22121672.96)/2020.00\u00d7100 = 17.180198%; margin = (1672.96\u22121656.40)/1672.96\u00d7100 = 0.989862%. Single-line list-weighted discount and revenue-weighted margin equal these values. Category floor is 8% and shortfall is 7.010138 points. PO-BASE-MARGIN-SHORTFALL applies because 8%\u2212(16.56/1672.96\u00d7100)% = 7.010138 percentage points exceeds the two-point exception ceiling. The 17.180198% discount triggers the >10% Sales Director flag, but is below the >20% VP flag and >35% hard discount cap; the block is specifically the margin shortfall. Ordinary discount escalation cannot waive it."
+         }
+       },
+       "overall": {
+@@ -6312,7 +6314,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.738716+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756919+00:00"
+       }
+     },
+     {
+@@ -6496,7 +6498,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.738990+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756920+00:00"
+       }
+     },
+     {
+@@ -6680,7 +6682,7 @@
+         "identity": "OpenAI Codex model reviewer agent /root/v2_source_reviewer; inherited same-session model configuration; precise model family not independently verified",
+         "independence_statement": "Source-only model reasoning under an instruction visibility boundary; no primary outcomes, expected answers, authoring maps or implementation consulted. This is not human verification, OS-enforced isolation, cross-model independence or an accepted independent answer.",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T19:30:28.739205+00:00"
++        "reviewed_at": "2026-10-14T19:31:40.756921+00:00"
+       }
+     }
+   ],

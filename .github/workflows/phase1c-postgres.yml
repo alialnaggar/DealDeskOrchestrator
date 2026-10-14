@@ -360,3 +360,19 @@ jobs:
           name: phase1c-provisional-evaluation-inputs-v1
           path: /tmp/phase1c_evaluation_packets_v1
           if-no-files-found: error
+      - name: Validate renewed v2 model drafts without accepting answers
+        run: |
+          python phase1c_evaluation_review.py --review-file ../evaluation/reviews/model_review_v2_draft.json --packet-directory /tmp/phase1c_evaluation_packets > /tmp/phase1c_v2_model_review_validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/phase1c_v2_model_review_validation.json').read_text())
+          assert report == {'errors': [], 'pending_cases': 0, 'complete_draft_cases': 36, 'independently_reviewed_answers': 0}
+          print(json.dumps(report, sort_keys=True))
+          PY
+      - name: Preserve v2 model review counts without answer release
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-v2-model-review-validation
+          path: /tmp/phase1c_v2_model_review_validation.json
+          if-no-files-found: error
