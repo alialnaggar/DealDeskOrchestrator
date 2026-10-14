@@ -734,4 +734,4 @@ The input-only evaluation preparation now rejects caller-listed development inve
 
 ## 14 October 2026 — next evaluation authoring input
 
-Use the `phase1c-development-source-exclusions` CI artifact from the selected release commit to reject raw operational row-ID overlap with the 138 development runs. Validate its seal and scope first. This is narrower than true independence: separately check historical source reuse, shared context, new-ID copies, dates and answer leakage before freezing any of the planned 36 evaluation inputs. No evaluation answer or release flag is created by the registry.
+Use the `phase1c-development-source-exclusions` CI artifact from the selected release commit to reject raw operational row-ID overlap with the 154 development runs. Validate its seal and scope first. This is narrower than true independence: separately check historical source reuse, shared context, new-ID copies, dates and answer leakage before freezing any of the planned 36 evaluation inputs. No evaluation answer or release flag is created by the registry.

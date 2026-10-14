@@ -244,7 +244,7 @@ full exclusion set and separately review source timing and similarity.
 
 The rollback-only generated-batch check now creates a sealed CI registry of
 reader-selected stock, inbound, production and digital row IDs across the
-expected 138 development runs. Evaluation preparation can reject overlap
+154 runs on 152 development deals. Evaluation preparation can reject overlap
 against this concrete set. It contains no answers and does not establish
 independent 36-case inputs; historical and shared-context overlap still need
 review. See [evaluation/README.md](evaluation/README.md).

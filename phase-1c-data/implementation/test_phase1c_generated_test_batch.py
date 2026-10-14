@@ -399,7 +399,7 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 registered_run_ids = [str(row[0]) for row in conn.execute(
                     "SELECT r.run_id FROM deal_runs r JOIN deals d ON d.deal_id=r.deal_id "
                     "WHERE d.dataset_type='generated_test' ORDER BY r.run_id").fetchall()]
-                self.assertEqual(len(registered_run_ids), 138)
+                self.assertEqual(len(registered_run_ids), 154)
                 self.assertEqual(len(generated_run_ids), 100)
                 self.assertTrue(generated_run_ids <= set(registered_run_ids))
                 for run_id in registered_run_ids:
@@ -409,9 +409,10 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                             digital_evidence_resolver=provider_resolver))
                 exclusion_manifest = build_development_exclusion_manifest(development_bundles)
                 excluded_ids = excluded_ids_from_manifest(exclusion_manifest,
-                                                           expected_run_count=138)
-                self.assertEqual(exclusion_manifest["payload"]["run_count"], 138)
-                self.assertEqual(exclusion_manifest["payload"]["deal_count"], 138)
+                                                           expected_run_count=154,
+                                                           expected_deal_count=152)
+                self.assertEqual(exclusion_manifest["payload"]["run_count"], 154)
+                self.assertEqual(exclusion_manifest["payload"]["deal_count"], 152)
                 self.assertTrue(set(availability_sources) & excluded_ids)
                 for table in ("inventory", "inbound_supply",
                               "production_capacity", "digital_capacity"):

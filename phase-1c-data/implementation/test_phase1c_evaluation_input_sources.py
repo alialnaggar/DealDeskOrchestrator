@@ -73,6 +73,14 @@ class EvaluationSourceIsolationTests(unittest.TestCase):
             excluded_ids_from_manifest(manifest, expected_run_count=3)
         with self.assertRaisesRegex(ValueError, "Duplicate development"):
             build_development_exclusion_manifest(fixtures + fixtures[:1])
+        alternative_run = self.bundle("inventory", "inventory_id", "DEV-SOURCE-1")
+        alternative_run["run"]["run_id"] = "DEV-RUN-5"
+        alternative_run["deal"]["deal_id"] = "DEV-DEAL-1"
+        second = build_development_exclusion_manifest(fixtures + [alternative_run])
+        self.assertEqual((second["payload"]["run_count"], second["payload"]["deal_count"]),
+                         (5, 4))
+        self.assertEqual(excluded_ids_from_manifest(
+            second, expected_run_count=5, expected_deal_count=4), excluded)
 
 
 if __name__ == "__main__":

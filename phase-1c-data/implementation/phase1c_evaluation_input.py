@@ -36,8 +36,8 @@ def build_development_exclusion_manifest(bundles):
     for bundle in bundles:
         run_id = str(bundle["run"]["run_id"])
         deal_id = str(bundle["deal"]["deal_id"])
-        if run_id in runs or deal_id in deals:
-            raise ValueError("Duplicate development run or deal in exclusion manifest")
+        if run_id in runs:
+            raise ValueError("Duplicate development run in exclusion manifest")
         runs.add(run_id)
         deals.add(deal_id)
         for table, selected in operational_source_ids(bundle).items():
@@ -54,7 +54,7 @@ def build_development_exclusion_manifest(bundles):
     return {"payload": payload, "sha256": sha256(_canonical(payload).encode()).hexdigest()}
 
 
-def excluded_ids_from_manifest(manifest, *, expected_run_count):
+def excluded_ids_from_manifest(manifest, *, expected_run_count, expected_deal_count=None):
     """Verify a pinned development registry before passing IDs to preparation."""
     payload = manifest.get("payload")
     if (not isinstance(payload, dict)
@@ -63,7 +63,10 @@ def excluded_ids_from_manifest(manifest, *, expected_run_count):
             or payload["schema_version"] != 1
             or payload["status"] != "development_reader_selected_sources_not_evaluation_answers"
             or payload["run_count"] != expected_run_count
-            or payload["deal_count"] != expected_run_count
+            or not isinstance(payload["deal_count"], int)
+            or not 0 < payload["deal_count"] <= expected_run_count
+            or (expected_deal_count is not None and
+                payload["deal_count"] != expected_deal_count)
             or not isinstance(payload["source_ids_by_table"], dict)
             or set(payload["source_ids_by_table"]) != set(OPERATIONAL_SOURCE_ID_COLUMNS)
             or manifest.get("sha256") != sha256(_canonical(payload).encode()).hexdigest()):
