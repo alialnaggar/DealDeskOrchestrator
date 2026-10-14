@@ -14,7 +14,8 @@ from phase1c_candidate_trace import (build_trace_record, export_trace_once,
                                      verify_exported_trace, replay_exported_trace)
 from phase1c_candidate_batch import compare_candidate_set
 from phase1c_partial_discovery import discover_partial_delivery, discover_and_recheck
-from phase1c_evaluation_input import prepare_review_input, verify_review_input
+from phase1c_evaluation_input import (prepare_review_input, verify_review_input,
+    prepare_heldout_review_input)
 from score_phase1c_reader_trial import score
 
 try:
@@ -262,6 +263,12 @@ class CandidateReaderTests(unittest.TestCase):
             excluded_deal_ids=("D-candidate-shortage", "D-stock_then_confirmed_receipt"),
             excluded_source_ids=("INV-stock_then_confirmed_receipt-P",
                                  "IN-stock_then_confirmed_receipt"))
+        pinned_registry = json.loads(
+            (Path(__file__).resolve().parent /
+             "phase1c_development_source_exclusions.json").read_text())
+        heldout_preparation = prepare_heldout_review_input(
+            bundle, case_id="EVAL-PREP-1", development_manifest=pinned_registry)
+        self.assertEqual(heldout_preparation, packet)
         self.assertTrue(verify_review_input(packet, expected_case_id="EVAL-PREP-1",
                                             expected_source_digest=reader_input_digest(bundle)))
         self.assertNotIn("facts", packet["payload"])

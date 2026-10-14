@@ -1,11 +1,14 @@
 """Source-only evaluation preparation rejects reuse across dated operational modes."""
 
 from copy import deepcopy
+import json
+from pathlib import Path
 import unittest
 
 from phase1c_candidate import INPUT_TABLES, reader_input_digest
 from phase1c_evaluation_input import (prepare_review_input, verify_review_input,
-    build_development_exclusion_manifest, excluded_ids_from_manifest)
+    build_development_exclusion_manifest, excluded_ids_from_manifest,
+    prepare_heldout_review_input)
 
 
 class EvaluationSourceIsolationTests(unittest.TestCase):
@@ -87,6 +90,37 @@ class EvaluationSourceIsolationTests(unittest.TestCase):
                          (5, 4))
         self.assertEqual(excluded_ids_from_manifest(
             second, expected_run_count=5, expected_deal_count=4), excluded)
+
+
+    def test_pinned_registry_is_required_and_rejects_identity_or_source_reuse(self):
+        manifest = json.loads((Path(__file__).resolve().parent /
+                               "phase1c_development_source_exclusions.json").read_text())
+        excluded_ids_from_manifest(
+            manifest, expected_run_count=154, expected_deal_count=152)
+        bundle = self.bundle("inventory", "inventory_id", "EVAL-NEW-INVENTORY")
+        prepared = prepare_heldout_review_input(
+            bundle, case_id="EVAL-PREP-NEW", development_manifest=manifest)
+        self.assertTrue(verify_review_input(
+            prepared, expected_case_id="EVAL-PREP-NEW",
+            expected_source_digest=reader_input_digest(bundle)))
+        with self.assertRaisesRegex(ValueError, "development"):
+            prepare_heldout_review_input(
+                bundle, case_id="EVAL-PREP-NEW", development_manifest=None)
+        reused = deepcopy(bundle)
+        reused["inventory"][0]["inventory_id"] = manifest["payload"]["source_ids_by_table"]["inventory"][0]
+        with self.assertRaisesRegex(ValueError, "reuses development"):
+            prepare_heldout_review_input(
+                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest)
+        reused = deepcopy(bundle)
+        reused["deal"]["deal_id"] = manifest["payload"]["deal_ids"][0]
+        with self.assertRaisesRegex(ValueError, "development submission"):
+            prepare_heldout_review_input(
+                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest)
+        reused = deepcopy(bundle)
+        reused["run"]["run_id"] = manifest["payload"]["run_ids"][0]
+        with self.assertRaisesRegex(ValueError, "development run"):
+            prepare_heldout_review_input(
+                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest)
 
 
 if __name__ == "__main__":

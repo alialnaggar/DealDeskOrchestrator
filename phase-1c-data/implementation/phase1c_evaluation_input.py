@@ -113,6 +113,8 @@ def prepare_review_input(bundle, *, case_id, excluded_deal_ids=(), excluded_sour
 
 def prepare_heldout_review_input(bundle, *, case_id, development_manifest):
     """Require the pinned development registry for a future held-out input."""
+    if not isinstance(development_manifest, dict):
+        raise ValueError("Held-out preparation requires a development exclusion manifest")
     excluded_sources = excluded_ids_from_manifest(
         development_manifest, expected_run_count=154, expected_deal_count=152)
     payload = development_manifest["payload"]

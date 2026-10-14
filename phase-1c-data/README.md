@@ -250,3 +250,9 @@ independent 36-case inputs; historical and shared-context overlap still need
 review. See [evaluation/README.md](evaluation/README.md).
 
 The measured pinned registry is [`implementation/phase1c_development_source_exclusions.json`](implementation/phase1c_development_source_exclusions.json) (49 stock, 12 inbound, 14 production and 10 digital selected IDs). CI regenerates and compares it; reviewer decisions and independent evaluation answers remain open.
+
+
+The pinned registry also includes 154 run IDs and 152 deal IDs. The held-out
+input-preparation path requires the verified registry and rejects reused run,
+deal and selected operational source IDs. The existing separate PostgreSQL
+example exercises the path but is not one of the 36 evaluation cases.
