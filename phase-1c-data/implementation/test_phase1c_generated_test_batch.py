@@ -57,6 +57,8 @@ class GeneratedBatchRenderTests(unittest.TestCase):
         self.assertEqual((report["eligible_customer_count"], report["customer_reassignment_count"]),
                          (37, 63))
         self.assertEqual(report["dated_stock_variant_count"], 5)
+        self.assertEqual(report["dated_allocated_stock_variant_count"], 5)
+        self.assertEqual(report["dated_stale_stock_variant_count"], 4)
         self.assertEqual(report["dated_component_stock_variant_count"], 5)
         self.assertEqual(report["dated_confirmed_supply_variant_count"], 5)
         self.assertEqual(report["dated_digital_variant_count"], 4)
@@ -142,6 +144,9 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                     HERE / "phase1c_generated_provider_manifest.json")
                 eligible = set(eligible_customers((HERE / "phase1c_customer_master.sql").read_text()))
                 stocked_variant = 0
+                allocated_variant = 0
+                stale_variant = 0
+                negative_fulfillment_baselines = {}
                 build_variant = 0
                 supply_variant = 0
                 digital_variant = 0
@@ -240,6 +245,38 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                                           bundle["run"]["as_of_at"].minute),
                                          (12, 10 * stocked_variant))
                         stocked_variant += 1
+                    if archetype in ("STOCK-ALLOCATED", "STOCK-STALE"):
+                        variant = (allocated_variant if archetype == "STOCK-ALLOCATED"
+                                   else stale_variant)
+                        expected = (f"CONFLICT-STOCK-0{'6' if archetype == 'STOCK-ALLOCATED' else '7'}-"
+                                    f"SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-00"
+                                    f"{'2' if archetype == 'STOCK-ALLOCATED' else '3'}"
+                                    if variant == 0 else
+                                    f"GEN-{'ALLOCATED' if archetype == 'STOCK-ALLOCATED' else 'STALE'}-STOCK-{variant:03d}")
+                        rows = [row for row in bundle["inventory"]
+                                if row["inventory_id"] == expected]
+                        self.assertEqual(len(rows), 1)
+                        self.assertEqual((bundle["run"]["as_of_at"].hour,
+                                          bundle["run"]["as_of_at"].minute),
+                                         (12, 10 * variant))
+                        if variant:
+                            self.assertEqual(rows[0]["quantity_on_hand"], variant + 1)
+                            if archetype == "STOCK-ALLOCATED":
+                                self.assertEqual(rows[0]["quantity_allocated"], variant + 1)
+                                self.assertIn(expected, sources_for_case)
+                            else:
+                                self.assertEqual(rows[0]["quantity_allocated"], 0)
+                                self.assertLess(rows[0]["snapshot_at"],
+                                                bundle["run"]["as_of_at"])
+                        if variant == 0:
+                            negative_fulfillment_baselines[archetype] = fulfillment_for_case
+                        else:
+                            self.assertEqual(fulfillment_for_case,
+                                             negative_fulfillment_baselines[archetype])
+                        if archetype == "STOCK-ALLOCATED":
+                            allocated_variant += 1
+                        else:
+                            stale_variant += 1
                     if slot["archetype_id"] == "BUILD-READY":
                         sources = {source for finding in decision["specialists"]["availability"]
                                    for source in finding["source_ids"]}
@@ -385,6 +422,8 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 self.assertGreaterEqual(len(statuses), 2)
                 self.assertGreaterEqual(len(customers), 50)
                 self.assertEqual(stocked_variant, 6)
+                self.assertEqual(allocated_variant, 6)
+                self.assertEqual(stale_variant, 5)
                 self.assertEqual(build_variant, 6)
                 self.assertEqual(set(by_archetype_status),
                                  {case["id"] for case in matrix["archetypes"]} |
@@ -446,4 +485,5 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 

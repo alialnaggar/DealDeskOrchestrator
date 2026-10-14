@@ -268,3 +268,7 @@ answer has been independently reviewed.
 ## Historical source exclusion export — 14 October 2026
 
 The first PostgreSQL export passed and is now pinned as `implementation/phase1c_historical_source_exclusions.json` (400 runs/deals; 844 inventory, 1,372 inbound, 24,294 production-capacity and 1,870 digital-capacity selected IDs). The audit checks a fresh 400-run render against this file. Held-out input preparation now requires and verifies both the historical and 154-run development registries; reuse of a run, deal or selected operational source ID is rejected. The distinct rollback-only preparation fixture remains a development example, and context/semantic overlap still needs review. No independent evaluation answer is complete.
+
+## Dated negative-stock coverage — 14 October 2026
+
+The reproducible 100-case generator now writes five new allocated-stock and four new stale-stock observations for the repeated `STOCK-ALLOCATED` and `STOCK-STALE` variants. Each allocated observation has all on-hand units already allocated; each stale observation remains older than the freshness limit. The first reference variant and earlier pilot/stress cutoffs retain their sources. The PostgreSQL check reads every generated run, checks the selected IDs and full deterministic fulfillment outcomes, and compares the sealed development registry, now listing 58 inventory IDs instead of 49. These are synthetic development cases that still share catalogue, policy and other operational context. No independent evaluation answer or release claim follows.

@@ -1,8 +1,10 @@
 {
   "customer_reassignment_count": 63,
+  "dated_allocated_stock_variant_count": 5,
   "dated_component_stock_variant_count": 5,
   "dated_confirmed_supply_variant_count": 5,
   "dated_digital_variant_count": 4,
+  "dated_stale_stock_variant_count": 4,
   "dated_stock_variant_count": 5,
   "eligible_customer_count": 37,
   "generated_deals": 100,
@@ -19,7 +21,7 @@
     "phase1c_vertical_provider_manifest.json": "e539d02bbcf97292616c46b60ac788078c3d982208dcd7eae9f2626cfc2e94be"
   },
   "source_template_count": 20,
-  "sql_sha256": "8d5356b412b8fe6d2a8bb93b353cd9c4286339ef27c80c07735f05356191974b",
+  "sql_sha256": "15b09b2133fd13c82463e31b2f8fcc0aff85dd38758d8e392003a836fd4068e6",
   "status": "provisional_source_reuse",
   "v1_deals": 98,
   "v2_dependency_deals": 2

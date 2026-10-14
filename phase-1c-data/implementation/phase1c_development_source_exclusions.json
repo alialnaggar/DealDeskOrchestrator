@@ -359,11 +359,20 @@
         "CONFLICT-STOCK-18-COMP-STORAGE-003",
         "DEP-V2-STOCK-1",
         "DEP-V2-STOCK-2",
+        "GEN-ALLOCATED-STOCK-001",
+        "GEN-ALLOCATED-STOCK-002",
+        "GEN-ALLOCATED-STOCK-003",
+        "GEN-ALLOCATED-STOCK-004",
+        "GEN-ALLOCATED-STOCK-005",
         "GEN-BUILD-STOCK-001",
         "GEN-BUILD-STOCK-002",
         "GEN-BUILD-STOCK-003",
         "GEN-BUILD-STOCK-004",
         "GEN-BUILD-STOCK-005",
+        "GEN-STALE-STOCK-001",
+        "GEN-STALE-STOCK-002",
+        "GEN-STALE-STOCK-003",
+        "GEN-STALE-STOCK-004",
         "GEN-STOCK-001",
         "GEN-STOCK-002",
         "GEN-STOCK-003",
@@ -410,5 +419,5 @@
     },
     "status": "development_reader_selected_sources_not_evaluation_answers"
   },
-  "sha256": "016ab43cbef24885b18f181ae098edce15c2cd5c70a8ab0547153590905d1218"
+  "sha256": "c20080c654d020dc5f8642d038825a9d1db19430bb536cccee9043f12cbe8985"
 }

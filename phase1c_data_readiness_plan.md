@@ -747,3 +747,7 @@ The mandatory registry exposed irrelevant global production-capacity rows in the
 ## Historical evaluation-source boundary — 14 October 2026
 
 The 400-run export is now pinned in the repository and checked against a fresh audit render. The held-out packet path requires both historical and development registries and rejects matching run, deal and operational source IDs. The next evaluation gate is to author distinct complete cases and examine shared/contextual or near-duplicate facts before independent reviewers write answers. The 36 planned cases still have 0 reviewed answers; no field or calibration review was closed.
+
+## Negative-stock source variation — 14 October 2026
+
+The 100-case provisional generator now includes five separate allocated observations with zero free stock and four separate stale observations with no freshness claim, alongside its existing positive stock/build/receipt/digital variants. CI regenerates the SQL, reads the variants, and checks the full deterministic decisions and pinned development source registry (58 inventory IDs). This improves dated source variation within the development batch; it does not establish an independent operating distribution or close the separate 36-case authoring and review gate. Six field marks, two calibration reviews and `ready_for_generation=false` remain.

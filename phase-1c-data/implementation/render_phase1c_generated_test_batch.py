@@ -44,6 +44,8 @@ SOURCE_FILES = ("phase1c_scenario_matrix.yaml", "phase1c_vertical_pilot.sql",
                 "phase1c_conflict_provider_manifest.json")
 STOCK_QUANTITIES = (3, 4, 2, 5, 3)
 BUILD_STOCK_QUANTITIES = (2, 3, 2, 4, 2)
+ALLOCATED_STOCK_QUANTITIES = (2, 3, 4, 5, 6)
+STALE_STOCK_QUANTITIES = (2, 3, 4, 5, 6)
 
 
 def eligible_customers(customer_sql):
@@ -106,6 +108,8 @@ def build(matrix, source_hashes, customer_sql):
     customers = eligible_customers(customer_sql)
     reassigned = 0
     stock_variants = 0
+    allocated_stock_variants = 0
+    stale_stock_variants = 0
     component_stock_variants = 0
     confirmed_supply_variants = 0
     dated_digital_variants = 0
@@ -143,6 +147,31 @@ def build(matrix, source_hashes, customer_sql):
                 f"{STOCK_QUANTITIES[variant - 1]},quantity_allocated,"
                 f"{quote(observed_at.isoformat())}::timestamptz "
                 "FROM inventory WHERE inventory_id='PILOT-STOCK-005';\n")
+        if archetype == "STOCK-ALLOCATED" and variant:
+            allocated_stock_variants += 1
+            stock_as_of = datetime(2026, 9, 1, 12, tzinfo=timezone.utc) + timedelta(minutes=10 * variant)
+            observed_at = stock_as_of - timedelta(minutes=5)
+            quantity = ALLOCATED_STOCK_QUANTITIES[variant - 1]
+            out.append(
+                "INSERT INTO inventory (inventory_id,product_id,location_id,"
+                "quantity_on_hand,quantity_allocated,snapshot_at) "
+                f"SELECT {quote(f'GEN-ALLOCATED-STOCK-{variant:03d}')},product_id,location_id,"
+                f"{quantity},{quantity},{quote(observed_at.isoformat())}::timestamptz "
+                "FROM inventory WHERE inventory_id="
+                "'CONFLICT-STOCK-06-SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-002';\n")
+        if archetype == "STOCK-STALE" and variant:
+            stale_stock_variants += 1
+            stock_as_of = datetime(2026, 9, 1, 12, tzinfo=timezone.utc) + timedelta(minutes=10 * variant)
+            # Each snapshot is distinct and remains older than the freshness limit.
+            observed_at = datetime(2026, 8, 30, 9, tzinfo=timezone.utc) + timedelta(minutes=variant)
+            out.append(
+                "INSERT INTO inventory (inventory_id,product_id,location_id,"
+                "quantity_on_hand,quantity_allocated,snapshot_at) "
+                f"SELECT {quote(f'GEN-STALE-STOCK-{variant:03d}')},product_id,location_id,"
+                f"{STALE_STOCK_QUANTITIES[variant - 1]},0,"
+                f"{quote(observed_at.isoformat())}::timestamptz "
+                "FROM inventory WHERE inventory_id="
+                "'CONFLICT-STOCK-07-SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-003';\n")
         if archetype == "BUILD-READY" and variant:
             # The BOM's compute component is independently observed before
             # the existing 13:00 stress-pilot snapshot for this same SKU.
@@ -249,6 +278,8 @@ def build(matrix, source_hashes, customer_sql):
         "eligible_customer_count": len(customers),
         "customer_reassignment_count": reassigned,
         "dated_stock_variant_count": stock_variants,
+        "dated_allocated_stock_variant_count": allocated_stock_variants,
+        "dated_stale_stock_variant_count": stale_stock_variants,
         "dated_component_stock_variant_count": component_stock_variants,
         "dated_confirmed_supply_variant_count": confirmed_supply_variants,
         "dated_digital_variant_count": dated_digital_variants,
