@@ -615,3 +615,11 @@ Author source inspection found that `EVAL-PREP-029` and `EVAL-PREP-030` had only
 
 The regenerated source-definition SHA-256 is `5b3168a6871ebb2cfdcaa0c594c9ff6e34ab300708661146c22a994f85a09977`. All 36 packet hashes and blank review bindings are regenerated because the generator-source fingerprint is part of each run's context; the substantive region condition changes are confined to those two cases. The earlier `7dff...` definition/index is superseded. CI must reproduce the current packet index from a fresh database. No historical/pilot/generated-regression input, schema, calibration value or reviewed answer changed (0/36).
 
+
+## Model review draft checkpoint — 14 October 2026
+
+All 36 pinned provisional inputs now have separately reasoned model drafts covering the six responsibilities (216 findings). See the [review protocol, source pins, saved outputs and unresolved observations](../evaluation/reviews/model_review_record.md). The fresh-context reviewer was instructed to use source/provider facts only, without authoring intent or system outcomes. This was an instruction boundary with the inherited model configuration, not verified cross-model independence or expert review. The saved first pass and disclosed self-check corrections support later methodology reporting.
+
+Structural validation checks the 72 source/provider hashes, completeness and evidence pointers; it cannot certify answer correctness. The model missed the age of capacity observations in 017–018. Freshness thresholds, cost-source precedence, gate/routing meanings and service-rule scope require substantive adjudication. Inputs and draft findings are preserved rather than silently aligned with system outcomes. CI validates the saved drafts against freshly exported facts, separately from the blank template and source-only artifact.
+
+**36 model drafts; 0/36 accepted independent answers.** The blank reviewer template remains empty; these answer drafts must remain outside future system inputs/tools. No baseline scoring, schema change or calibration freeze is authorized by this checkpoint. Six field marks, two calibration reviews and `ready_for_generation=false` remain. The next gate is substantive verification and explicit decisions on the recorded ambiguities, followed by versioned re-review if facts/contracts change.

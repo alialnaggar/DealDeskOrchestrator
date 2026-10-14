@@ -321,3 +321,22 @@ jobs:
           name: phase1c-review-workspace-validation
           path: /tmp/phase1c_review_workspace_validation.json
           if-no-files-found: error
+      - name: Validate separate model review drafts against pinned facts
+        run: |
+          python phase1c_evaluation_review.py --review-file ../evaluation/reviews/model_review_draft.json --packet-directory /tmp/phase1c_evaluation_packets > /tmp/phase1c_model_review_validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/phase1c_model_review_validation.json').read_text())
+          assert report['errors'] == []
+          assert report['complete_draft_cases'] == 36
+          assert report['pending_cases'] == 0
+          assert report['independently_reviewed_answers'] == 0
+          print(json.dumps(report, sort_keys=True))
+          PY
+      - name: Preserve model-draft validation without accepting answers
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-model-review-validation
+          path: /tmp/phase1c_model_review_validation.json
+          if-no-files-found: error

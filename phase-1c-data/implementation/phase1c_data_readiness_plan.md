@@ -699,3 +699,78 @@ Five repeated BUILD-READY submissions now read distinct dated compute-component 
 ## Review achieved archetype distributions — 13 October 2026
 
 The PostgreSQL diagnostic now reports grouped observed statuses, fulfillment line statuses, customer variety and Availability finding source variety for all 100 cases. Every repeated V1 archetype (18 groups with five or six deals) currently has one final status within its group. This is not an oracle or a target demanding multiple statuses per archetype. The six SUPPLY-CONFIRMED cases still cite one distinct Availability source ID, showing a concrete next source-diversity gap; digital and service groups likewise retain one attributed source ID each. The measure covers IDs in Availability findings, not all raw source rows. Prioritize independent dated supplier/receipt, digital and service evidence, then review individual findings and the achieved distribution before any release decision. The separate 36-case evaluation and reviews remain open; `ready_for_generation=false`.
+
+## Dated confirmed supplier receipt variation — 13 October 2026
+
+Five generated SUPPLY-CONFIRMED variants now add separate synthetic confirmed PO/receipt rows, with confirmation times after the 14:00 stress-pilot read and generated cutoffs at 14:10–14:50. Their requested quantities make each successively visible receipt relevant to a full shipping option. The passing rollback-only PostgreSQL batch checked reader visibility for the original pilot, stress pilot and five generated variants, the selected receipt IDs in full deterministic Availability findings, row validation and reproducible SQL. The diagnostic shows six distinct attributed supplier source IDs within the group (previously one), 43 across the batch (previously 38), 55 customers and unchanged aggregate statuses. These confirmation references are synthetic development evidence awaiting independent supplier/source review. Continue with digital/service evidence variation and case-level findings; do not interpret the provisional 100 cases as a release set or the observed decisions as labels. The six field marks, two calibration reviews, separate 36-case evaluation answers (0 independently reviewed) and `ready_for_generation=false` remain open.
+
+## Dated digital capacity observations — 13 October 2026
+
+Four repeated DIGITAL-PROVED cases now read distinct synthetic capacity snapshots after the existing pilot and stress cutoffs. The rollback-only PostgreSQL test checks source selection, Availability attribution, full decisions and lack of verified provider proof. The passing diagnostic shows five distinct digital Availability source IDs (previously one), 47 for the provisional batch (previously 43), 55 customers and unchanged aggregate statuses; all five digital cases still need evidence. The new reference strings are not trusted full-term commitments. Service coverage has only a shared regional eligibility rule and no committed appointment slot, so its separate evidence question remains open. Review individual generated findings and source quality, complete six field marks and two calibration reviews, then build and independently answer the 36-case held-out evaluation (currently 0/36) before changing `ready_for_generation=false`.
+
+## Review individual generated cases — 13 October 2026
+
+The PostgreSQL job now preserves `phase1c-generated-case-review`: 100 distinct case observations with dated run context, reader-visible raw IDs and separately attributed Availability IDs, observed deterministic findings, compatibility results and source reuse. This supports field review of reused, missing or unverified evidence, especially shared service coverage and supplier/provider references. A raw row is not automatically binding, and an observed decision is not a reviewed answer. Every record remains marked pending. The passing CI check does not complete the field or calibration reviews or create any of the 36 held-out evaluation answers. Use the case packet to review source quality and individual findings before freezing the 100-case distribution; the six field marks, two calibration reviews, 0/36 answers and `ready_for_generation=false` stay open.
+
+## Triage the measured case review queue — 13 October 2026
+
+The passing case packet counts 22 of 100 cases without an Availability finding source ID. Inspect those cases' raw reader-visible evidence and finding reasons before deciding whether they need a new source row or correctly have no attributable binding source. The most reused attributed ID, `BOM-001`, occurs in 11 cases. Service evidence is a separate decision: five lines have eligible regional coverage, six are ineligible and none has a committed slot. Keep eligible cases conditional with needs_commitment; obtain a reviewed appointment source and exact impact proposal before any schema/reader extension. This does not change the schema, close a field mark, freeze calibration or create an independent answer. Six field marks, two calibration reviews, 0/36 reviewed evaluation answers and `ready_for_generation=false` remain.
+
+The 22 no-attribution cases align with four groups: STOCK-ALLOCATED 6, STOCK-STALE 5, SUPPLY-CANCELLED 5 and SUPPLY-OFFER-ONLY 6. The Availability IDs currently name shipping-option sources, so an input with raw but unusable stock, cancelled receipt or offer-only evidence may correctly have none. Review the negative reason and raw row provenance before treating zero as a missing source or adding synthetic positive supply.
+
+
+## 14 October 2026 — batched release-gate sequence
+
+1. Completed in both push and PR PostgreSQL runs: reproducible provider manifest and 100 generated reads. Five DIGITAL-PROVED cases move from needs_evidence to approval_required; aggregate statuses are 23/12/11/37/17 for approval_required/blocked/needs_commitment/needs_evidence/needs_revision. Historical 400 and 36 pilot checks pass without changing their input fixtures.
+2. Review each case's raw versus cited source IDs, especially the 22 negative cases, reused sources, five digital proof cases and 11 service lines. Record field-owner evidence and sign-off for six open marks; do not treat a conditional service region as a booked appointment.
+3. Decide the two calibration reviews together: the 36/156 component/product mix, and whether fixed-p50 synthetic costs with their stated limitation are acceptable or a tested price/cost spread is needed. The release review presents the evidence and exact choices; no calibration is frozen here.
+4. Independently author and review the separate 36-case evaluation answers (currently 0/36), then rerun the deterministic and reproducibility gates before a data-release decision. The generated 100 are provisional regression cases and their observed decisions are not evaluation labels. `ready_for_generation=false`.
+
+
+## 14 October 2026 — evaluation source isolation progress
+
+The input-only evaluation preparation now rejects caller-listed development inventory, inbound, production-capacity and digital-capacity row IDs, alongside development deal IDs. A source-only test covers all four modes and is added to PostgreSQL CI. This closes one **preparation check**, not a field mark or the evaluation gate: assemble a complete development-ID exclusion set, author 36 distinct frozen database-backed cases, check temporal/source provenance and semantic overlap, and obtain independent expected findings before running/scoring agents. The existing rollback-only example is not counted; 0/36 answers are reviewed. The generated 100 remain provisional regression data; six marks, two calibration reviews and `ready_for_generation=false` remain open.
+
+
+## 14 October 2026 — next evaluation authoring input
+
+Use the `phase1c-development-source-exclusions` CI artifact from the selected release commit to reject raw operational row-ID overlap with the 154 development runs. Validate its seal and scope first. This is narrower than true independence: separately check historical source reuse, shared context, new-ID copies, dates and answer leakage before freezing any of the planned 36 evaluation inputs. No evaluation answer or release flag is created by the registry.
+
+The 154-run/152-deal registry is now pinned under `phase-1c-data/implementation/phase1c_development_source_exclusions.json` and regenerated in CI; measured counts are inventory 49, inbound 12, production 14 and digital 10. Use its verified union and a separate development deal-ID exclusion set for the 36 input cases, then inspect historical and semantic reuse. Neither artifact nor ID uniqueness supplies a reviewed expected answer.
+
+
+The exclusion registry now includes run and deal identities, and the held-out preparation entry point requires it. The database example passes this identity/source check, but it is still a rollback-only illustration. Next author 36 distinct frozen inputs with new dated evidence, inspect historical and semantic overlap, then obtain independent findings before any scoring; current independently reviewed count remains 0/36.
+
+
+The mandatory registry exposed irrelevant global production-capacity rows in the separate stocked-only example. The reader now loads capacity only for make-to-order submissions, and the PostgreSQL regressions preserved historical, pilot and 100-case observations. The pinned registry remained identical. Continue with distinct dated source construction and independent review for the actual 36 cases; the repaired example is still not counted.
+
+## Historical evaluation-source boundary — 14 October 2026
+
+The 400-run export is now pinned in the repository and checked against a fresh audit render. The held-out packet path requires both historical and development registries and rejects matching run, deal and operational source IDs. The next evaluation gate is to author distinct complete cases and examine shared/contextual or near-duplicate facts before independent reviewers write answers. The 36 planned cases still have 0 reviewed answers; no field or calibration review was closed.
+
+## Negative-stock source variation — 14 October 2026
+
+The 100-case provisional generator now includes five separate allocated observations with zero free stock and four separate stale observations with no freshness claim, alongside its existing positive stock/build/receipt/digital variants. CI regenerates the SQL, reads the variants, and checks the full deterministic decisions and pinned development source registry (58 inventory IDs). This improves dated source variation within the development batch; it does not establish an independent operating distribution or close the separate 36-case authoring and review gate. Six field marks, two calibration reviews and `ready_for_generation=false` remain.
+
+## Separate 36-case authoring checkpoint — 14 October 2026
+
+The planned 18 archetypes now have two provisional source-only cases each. The new renderer constructs operational and submission records without cloning pilot or historical deals. A dedicated PostgreSQL database imports one case at a time with shared catalogue/BOM/policy context, validates typed rows, checks both exclusion registries and reproducibly exports source-only packets plus separate provider proof. No deterministic answer key is assembled. The first PostgreSQL preparation passed and its 36 payload/provider hashes are now pinned for exact fresh-database replay. Next review all 36 cases for semantic similarity and actual source-condition coverage, obtain independently written findings, and isolate those answers from the future agent harness. Five shared sellable SKUs remain a breadth limitation. The authored-input count is 36; independently reviewed answers remain 0/36. Six field marks, two calibration reviews and `ready_for_generation=false` remain open.
+
+## Reviewer drafting boundary — 14 October 2026
+
+The 36 pinned inputs now have one blank reviewer workspace and executable checks for hash binding, source-reference resolution, six-responsibility completeness and reviewer provenance. The checker accepts pending or structurally complete drafts only, with independent acceptance still separate (0/36). Reviewers should write from the facts before consulting archetype intent or observed diagnostics. This prepares review without inventing answers or closing any field/calibration/readiness gate.
+
+## Service-region source correction — 14 October 2026
+
+Author source inspection found that `EVAL-PREP-029` and `EVAL-PREP-030` had only an eligible DE-NW rule while submitting DE-BY. The reader's exact-region lookup therefore had no matching record: missing coverage is unknown, not an explicit denial. The source definitions now state `country_code=DE`, `region=DE-BY`, `eligible=false` for those two cases. A source-condition test requires an explicit matching rule for all four service cases. This repairs authoring intent before independent answer review; it is not a reviewed answer key.
+
+The regenerated source-definition SHA-256 is `5b3168a6871ebb2cfdcaa0c594c9ff6e34ab300708661146c22a994f85a09977`. All 36 packet hashes and blank review bindings are regenerated because the generator-source fingerprint is part of each run's context; the substantive region condition changes are confined to those two cases. The earlier `7dff...` definition/index is superseded. CI must reproduce the current packet index from a fresh database. No historical/pilot/generated-regression input, schema, calibration value or reviewed answer changed (0/36).
+
+
+## Model review draft checkpoint — 14 October 2026
+
+All 36 pinned provisional inputs now have separately reasoned model drafts covering the six responsibilities (216 findings). See the [review protocol, source pins, saved outputs and unresolved observations](../evaluation/reviews/model_review_record.md). The fresh-context reviewer was instructed to use source/provider facts only, without authoring intent or system outcomes. This was an instruction boundary with the inherited model configuration, not verified cross-model independence or expert review. The saved first pass and disclosed self-check corrections support later methodology reporting.
+
+Structural validation checks the 72 source/provider hashes, completeness and evidence pointers; it cannot certify answer correctness. The model missed the age of capacity observations in 017–018. Freshness thresholds, cost-source precedence, gate/routing meanings and service-rule scope require substantive adjudication. Inputs and draft findings are preserved rather than silently aligned with system outcomes. CI validates the saved drafts against freshly exported facts, separately from the blank template and source-only artifact.
+
+**36 model drafts; 0/36 accepted independent answers.** The blank reviewer template remains empty; these answer drafts must remain outside future system inputs/tools. No baseline scoring, schema change or calibration freeze is authorized by this checkpoint. Six field marks, two calibration reviews and `ready_for_generation=false` remain. The next gate is substantive verification and explicit decisions on the recorded ambiguities, followed by versioned re-review if facts/contracts change.

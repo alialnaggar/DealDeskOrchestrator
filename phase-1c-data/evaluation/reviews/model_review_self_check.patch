@@ -1,0 +1,110 @@
+--- first_assembled_source_pass.json
++++ model_review_draft.json
+@@ -3182,7 +3182,7 @@
+         },
+         "Pricing": {
+           "finding": "no_issue_identified",
+-          "rationale": "Revenue = 2 \u00d7 EUR 1,018.50 = EUR 2,037.00; list total EUR 2,100.00; cost = 2 \u00d7 EUR 715.00 = EUR 1,430.00. Discount = (list\u2212quote)/list = 3.000000%; gross margin = (quote\u2212standard cost)/quote = 29.798724%. One line means these also are the list-weighted deal discount and revenue-weighted deal margin. Category floor 8% is tested per line. Margin clears its floor; discount is within the 35% hard cap and does not trigger >10% or >20% sales-discount escalation. Supplier offer unit_cost EUR 47.50 materially differs from catalogue standard_cost EUR 2,386.20; use the explicitly supplied standard cost for this draft rather than silently replacing it. Procurement/Pricing should reconcile which cost basis is authoritative. Selected BOM material cost is 240 + 2\u00d71.01\u00d760 + 50 + 180 = EUR 591.20 per output, distinct from finished standard_cost EUR 715.00. Both substitute network rows cost EUR 50; count only one. cost_parameters=null supplies no labour/overhead rates to reconcile the EUR 123.80 difference. The explicit finished standard cost supports the above margin; no invented rate is used.",
++          "rationale": "Revenue = 2 \u00d7 EUR 1,018.50 = EUR 2,037.00; list total EUR 2,100.00; cost = 2 \u00d7 EUR 715.00 = EUR 1,430.00. Discount = (list\u2212quote)/list = 3.000000%; gross margin = (quote\u2212standard cost)/quote = 29.798724%. One line means these also are the list-weighted deal discount and revenue-weighted deal margin. Category floor 8% is tested per line. Margin clears its floor; discount is within the 35% hard cap and does not trigger >10% or >20% sales-discount escalation. Component supplier offer for COMP-NETWORK_AND_POWER-002 is EUR 47.50 versus that component's BOM standard cost EUR 50.00; it is not a finished-workstation cost. Retain the explicitly supplied finished standard_cost EUR 715.00 for quoted margin unless Pricing substantiates an authorized revised cost basis. Selected BOM material cost is 240 + 2\u00d71.01\u00d760 + 50 + 180 = EUR 591.20 per output, distinct from finished standard_cost EUR 715.00. Both substitute network rows cost EUR 50; count only one. cost_parameters=null supplies no labour/overhead rates to reconcile the EUR 123.80 difference. The explicit finished standard cost supports the above margin; no invented rate is used.",
+           "evidence_refs": [
+             {
+               "document": "packet",
+@@ -3226,7 +3226,7 @@
+           "Deal Desk must route to Regional_Manager for recorded human review after required corrections/evidence; do not auto-approve, reserve supply/capacity, or promise delivery."
+         ],
+         "unresolved_questions": [
+-          "Why does the finished-product supplier offer quote EUR 47.50 while the submitted line standard_cost is EUR 2,386.20? The raw rules do not specify cost-source precedence.",
++          "Confirm cost-source precedence for component COMP-NETWORK_AND_POWER-002: offer EUR 47.50 versus BOM standard cost EUR 50.00; finished standard cost is separately EUR 715.00.",
+           "Confirm finished standard_cost EUR 715.00 is the intended loaded cost; BOM materials total EUR 591.20 and no labour/overhead cost parameters are supplied.",
+           "Raw BOM data does not define discrete-unit scrap rounding or intraday operation scheduling; neither changes the identified feasibility/shortage here. Confirm the operational convention."
+         ],
+@@ -3238,7 +3238,7 @@
+       "reviewer": {
+         "identity": "blind_case_reviewer",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T16:08:23.869636+00:00",
++        "reviewed_at": "2026-10-14T16:09:22.943366+00:00",
+         "independence_statement": "Fresh-context source-only model pass under an instruction-based visibility boundary, not an OS sandbox. No human acceptance. Same platform/model-family independence is not established; this MODEL DRAFT is not an independent gold standard."
+       }
+     },
+@@ -3433,7 +3433,7 @@
+         },
+         "Pricing": {
+           "finding": "no_issue_identified",
+-          "rationale": "Revenue = 4 \u00d7 EUR 987.00 = EUR 3,948.00; list total EUR 4,200.00; cost = 4 \u00d7 EUR 715.00 = EUR 2,860.00. Discount = (list\u2212quote)/list = 6.000000%; gross margin = (quote\u2212standard cost)/quote = 27.558257%. One line means these also are the list-weighted deal discount and revenue-weighted deal margin. Category floor 8% is tested per line. Margin clears its floor; discount is within the 35% hard cap and does not trigger >10% or >20% sales-discount escalation. Supplier offer unit_cost EUR 47.50 materially differs from catalogue standard_cost EUR 2,386.20; use the explicitly supplied standard cost for this draft rather than silently replacing it. Procurement/Pricing should reconcile which cost basis is authoritative. Selected BOM material cost is 240 + 2\u00d71.01\u00d760 + 50 + 180 = EUR 591.20 per output, distinct from finished standard_cost EUR 715.00. Both substitute network rows cost EUR 50; count only one. cost_parameters=null supplies no labour/overhead rates to reconcile the EUR 123.80 difference. The explicit finished standard cost supports the above margin; no invented rate is used.",
++          "rationale": "Revenue = 4 \u00d7 EUR 987.00 = EUR 3,948.00; list total EUR 4,200.00; cost = 4 \u00d7 EUR 715.00 = EUR 2,860.00. Discount = (list\u2212quote)/list = 6.000000%; gross margin = (quote\u2212standard cost)/quote = 27.558257%. One line means these also are the list-weighted deal discount and revenue-weighted deal margin. Category floor 8% is tested per line. Margin clears its floor; discount is within the 35% hard cap and does not trigger >10% or >20% sales-discount escalation. Component supplier offer for COMP-NETWORK_AND_POWER-002 is EUR 47.50 versus that component's BOM standard cost EUR 50.00; it is not a finished-workstation cost. Retain the explicitly supplied finished standard_cost EUR 715.00 for quoted margin unless Pricing substantiates an authorized revised cost basis. Selected BOM material cost is 240 + 2\u00d71.01\u00d760 + 50 + 180 = EUR 591.20 per output, distinct from finished standard_cost EUR 715.00. Both substitute network rows cost EUR 50; count only one. cost_parameters=null supplies no labour/overhead rates to reconcile the EUR 123.80 difference. The explicit finished standard cost supports the above margin; no invented rate is used.",
+           "evidence_refs": [
+             {
+               "document": "packet",
+@@ -3477,7 +3477,7 @@
+           "Deal Desk must route to Regional_Manager for recorded human review after required corrections/evidence; do not auto-approve, reserve supply/capacity, or promise delivery."
+         ],
+         "unresolved_questions": [
+-          "Why does the finished-product supplier offer quote EUR 47.50 while the submitted line standard_cost is EUR 2,386.20? The raw rules do not specify cost-source precedence.",
++          "Confirm cost-source precedence for component COMP-NETWORK_AND_POWER-002: offer EUR 47.50 versus BOM standard cost EUR 50.00; finished standard cost is separately EUR 715.00.",
+           "Confirm finished standard_cost EUR 715.00 is the intended loaded cost; BOM materials total EUR 591.20 and no labour/overhead cost parameters are supplied.",
+           "Raw BOM data does not define discrete-unit scrap rounding or intraday operation scheduling; neither changes the identified feasibility/shortage here. Confirm the operational convention."
+         ],
+@@ -3489,7 +3489,7 @@
+       "reviewer": {
+         "identity": "blind_case_reviewer",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T16:08:23.871288+00:00",
++        "reviewed_at": "2026-10-14T16:09:22.945315+00:00",
+         "independence_statement": "Fresh-context source-only model pass under an instruction-based visibility boundary, not an OS sandbox. No human acceptance. Same platform/model-family independence is not established; this MODEL DRAFT is not an independent gold standard."
+       }
+     },
+@@ -4176,7 +4176,7 @@
+         },
+         "Pricing": {
+           "finding": "no_issue_identified",
+-          "rationale": "Revenue = 2 \u00d7 EUR 1,018.50 = EUR 2,037.00; list total EUR 2,100.00; cost = 2 \u00d7 EUR 715.00 = EUR 1,430.00. Discount = (list\u2212quote)/list = 3.000000%; gross margin = (quote\u2212standard cost)/quote = 29.798724%. One line means these also are the list-weighted deal discount and revenue-weighted deal margin. Category floor 8% is tested per line. Margin clears its floor; discount is within the 35% hard cap and does not trigger >10% or >20% sales-discount escalation. Supplier offer unit_cost EUR 47.50 materially differs from catalogue standard_cost EUR 2,386.20; use the explicitly supplied standard cost for this draft rather than silently replacing it. Procurement/Pricing should reconcile which cost basis is authoritative. Selected BOM material cost is 240 + 2\u00d71.01\u00d760 + 50 + 180 = EUR 591.20 per output, distinct from finished standard_cost EUR 715.00. Both substitute network rows cost EUR 50; count only one. cost_parameters=null supplies no labour/overhead rates to reconcile the EUR 123.80 difference. The explicit finished standard cost supports the above margin; no invented rate is used.",
++          "rationale": "Revenue = 2 \u00d7 EUR 1,018.50 = EUR 2,037.00; list total EUR 2,100.00; cost = 2 \u00d7 EUR 715.00 = EUR 1,430.00. Discount = (list\u2212quote)/list = 3.000000%; gross margin = (quote\u2212standard cost)/quote = 29.798724%. One line means these also are the list-weighted deal discount and revenue-weighted deal margin. Category floor 8% is tested per line. Margin clears its floor; discount is within the 35% hard cap and does not trigger >10% or >20% sales-discount escalation. Component supplier offer for COMP-COMPUTE-001 is EUR 47.50 versus that component's BOM standard cost EUR 240.00; it is not a finished-workstation cost. Retain the explicitly supplied finished standard_cost EUR 715.00 for quoted margin unless Pricing substantiates an authorized revised cost basis. Selected BOM material cost is 240 + 2\u00d71.01\u00d760 + 50 + 180 = EUR 591.20 per output, distinct from finished standard_cost EUR 715.00. Both substitute network rows cost EUR 50; count only one. cost_parameters=null supplies no labour/overhead rates to reconcile the EUR 123.80 difference. The explicit finished standard cost supports the above margin; no invented rate is used.",
+           "evidence_refs": [
+             {
+               "document": "packet",
+@@ -4220,7 +4220,7 @@
+           "Deal Desk must route to Regional_Manager for recorded human review after required corrections/evidence; do not auto-approve, reserve supply/capacity, or promise delivery."
+         ],
+         "unresolved_questions": [
+-          "Why does the finished-product supplier offer quote EUR 47.50 while the submitted line standard_cost is EUR 2,386.20? The raw rules do not specify cost-source precedence.",
++          "Confirm cost-source precedence for component COMP-COMPUTE-001: offer EUR 47.50 versus BOM standard cost EUR 240.00; finished standard cost is separately EUR 715.00.",
+           "Confirm finished standard_cost EUR 715.00 is the intended loaded cost; BOM materials total EUR 591.20 and no labour/overhead cost parameters are supplied.",
+           "What assembly/test capacity and dispatch timing are available after the October compute receipt? None is supplied; the revised completion date remains unknown.",
+           "Raw BOM data does not define discrete-unit scrap rounding or intraday operation scheduling; neither changes the identified feasibility/shortage here. Confirm the operational convention.",
+@@ -4234,7 +4234,7 @@
+       "reviewer": {
+         "identity": "blind_case_reviewer",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T16:08:23.873104+00:00",
++        "reviewed_at": "2026-10-14T16:09:22.945550+00:00",
+         "independence_statement": "Fresh-context source-only model pass under an instruction-based visibility boundary, not an OS sandbox. No human acceptance. Same platform/model-family independence is not established; this MODEL DRAFT is not an independent gold standard."
+       }
+     },
+@@ -4429,7 +4429,7 @@
+         },
+         "Pricing": {
+           "finding": "no_issue_identified",
+-          "rationale": "Revenue = 4 \u00d7 EUR 987.00 = EUR 3,948.00; list total EUR 4,200.00; cost = 4 \u00d7 EUR 715.00 = EUR 2,860.00. Discount = (list\u2212quote)/list = 6.000000%; gross margin = (quote\u2212standard cost)/quote = 27.558257%. One line means these also are the list-weighted deal discount and revenue-weighted deal margin. Category floor 8% is tested per line. Margin clears its floor; discount is within the 35% hard cap and does not trigger >10% or >20% sales-discount escalation. Supplier offer unit_cost EUR 47.50 materially differs from catalogue standard_cost EUR 2,386.20; use the explicitly supplied standard cost for this draft rather than silently replacing it. Procurement/Pricing should reconcile which cost basis is authoritative. Selected BOM material cost is 240 + 2\u00d71.01\u00d760 + 50 + 180 = EUR 591.20 per output, distinct from finished standard_cost EUR 715.00. Both substitute network rows cost EUR 50; count only one. cost_parameters=null supplies no labour/overhead rates to reconcile the EUR 123.80 difference. The explicit finished standard cost supports the above margin; no invented rate is used.",
++          "rationale": "Revenue = 4 \u00d7 EUR 987.00 = EUR 3,948.00; list total EUR 4,200.00; cost = 4 \u00d7 EUR 715.00 = EUR 2,860.00. Discount = (list\u2212quote)/list = 6.000000%; gross margin = (quote\u2212standard cost)/quote = 27.558257%. One line means these also are the list-weighted deal discount and revenue-weighted deal margin. Category floor 8% is tested per line. Margin clears its floor; discount is within the 35% hard cap and does not trigger >10% or >20% sales-discount escalation. Component supplier offer for COMP-COMPUTE-001 is EUR 47.50 versus that component's BOM standard cost EUR 240.00; it is not a finished-workstation cost. Retain the explicitly supplied finished standard_cost EUR 715.00 for quoted margin unless Pricing substantiates an authorized revised cost basis. Selected BOM material cost is 240 + 2\u00d71.01\u00d760 + 50 + 180 = EUR 591.20 per output, distinct from finished standard_cost EUR 715.00. Both substitute network rows cost EUR 50; count only one. cost_parameters=null supplies no labour/overhead rates to reconcile the EUR 123.80 difference. The explicit finished standard cost supports the above margin; no invented rate is used.",
+           "evidence_refs": [
+             {
+               "document": "packet",
+@@ -4473,7 +4473,7 @@
+           "Deal Desk must route to Regional_Manager for recorded human review after required corrections/evidence; do not auto-approve, reserve supply/capacity, or promise delivery."
+         ],
+         "unresolved_questions": [
+-          "Why does the finished-product supplier offer quote EUR 47.50 while the submitted line standard_cost is EUR 2,386.20? The raw rules do not specify cost-source precedence.",
++          "Confirm cost-source precedence for component COMP-COMPUTE-001: offer EUR 47.50 versus BOM standard cost EUR 240.00; finished standard cost is separately EUR 715.00.",
+           "Confirm finished standard_cost EUR 715.00 is the intended loaded cost; BOM materials total EUR 591.20 and no labour/overhead cost parameters are supplied.",
+           "What assembly/test capacity and dispatch timing are available after the October compute receipt? None is supplied; the revised completion date remains unknown.",
+           "Raw BOM data does not define discrete-unit scrap rounding or intraday operation scheduling; neither changes the identified feasibility/shortage here. Confirm the operational convention.",
+@@ -4487,7 +4487,7 @@
+       "reviewer": {
+         "identity": "blind_case_reviewer",
+         "method": "model",
+-        "reviewed_at": "2026-10-14T16:08:23.873963+00:00",
++        "reviewed_at": "2026-10-14T16:09:22.948892+00:00",
+         "independence_statement": "Fresh-context source-only model pass under an instruction-based visibility boundary, not an OS sandbox. No human acceptance. Same platform/model-family independence is not established; this MODEL DRAFT is not an independent gold standard."
+       }
+     },
