@@ -242,10 +242,11 @@ class EvaluationDatabaseTests(unittest.TestCase):
         if business_contract is not None:
             packet_index.update(evaluation_input_version=2, business_contract_sha256=hashlib.sha256(
                 json.dumps(business_contract, sort_keys=True, separators=(",", ":")).encode()).hexdigest())
-        self.assertEqual(packet_index, json.loads(
-            (pinned_directory / "provisional_packet_index.json").read_text()))
         if output:
             (output / "packet_index.json").write_text(render(packet_index))
+        self.maxDiff = None
+        self.assertEqual(packet_index, json.loads(
+            (pinned_directory / "provisional_packet_index.json").read_text()))
         print("Evaluation input preparation: 36 reproducible packets; 0 independently reviewed answers")
 
 

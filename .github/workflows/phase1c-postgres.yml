@@ -305,6 +305,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -d deal_desk_evaluation_inputs -f /tmp/phase1c_compiled_rules.sql
           EVALUATION_DATABASE_URL=postgresql://postgres:phase1c_ci_only@localhost:5432/deal_desk_evaluation_inputs PHASE1C_EVALUATION_PACKETS=/tmp/phase1c_evaluation_packets PHASE1C_EVALUATION_PACKETS_V1=/tmp/phase1c_evaluation_packets_v1 python -m unittest -v test_phase1c_evaluation_cases
       - name: Preserve provisional evaluation inputs without answers
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: phase1c-provisional-evaluation-inputs
