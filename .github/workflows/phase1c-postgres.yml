@@ -340,3 +340,16 @@ jobs:
           name: phase1c-model-review-validation
           path: /tmp/phase1c_model_review_validation.json
           if-no-files-found: error
+      - name: Audit evaluation contract facts without assigning answers
+        run: |
+          python -m unittest -v test_phase1c_evaluation_contract
+          python audit_phase1c_evaluation_contract.py --packet-directory /tmp/phase1c_evaluation_packets --index ../evaluation/provisional_packet_index.json > /tmp/phase1c_evaluation_contract_audit.json
+          python audit_phase1c_evaluation_contract.py --packet-directory /tmp/phase1c_evaluation_packets --index ../evaluation/provisional_packet_index.json > /tmp/phase1c_evaluation_contract_audit_replay.json
+          cmp /tmp/phase1c_evaluation_contract_audit.json /tmp/phase1c_evaluation_contract_audit_replay.json
+          sha256sum /tmp/phase1c_evaluation_contract_audit.json
+      - name: Preserve source facts for evaluation contract decisions
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-evaluation-contract-audit
+          path: /tmp/phase1c_evaluation_contract_audit.json
+          if-no-files-found: error
