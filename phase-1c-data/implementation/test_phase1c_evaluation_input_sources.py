@@ -112,32 +112,61 @@ class EvaluationSourceIsolationTests(unittest.TestCase):
     def test_pinned_registry_is_required_and_rejects_identity_or_source_reuse(self):
         manifest = json.loads((Path(__file__).resolve().parent /
                                "phase1c_development_source_exclusions.json").read_text())
+        historical = json.loads((Path(__file__).resolve().parent /
+                                 "phase1c_historical_source_exclusions.json").read_text())
         excluded_ids_from_manifest(
             manifest, expected_run_count=154, expected_deal_count=152)
         bundle = self.bundle("inventory", "inventory_id", "EVAL-NEW-INVENTORY")
         prepared = prepare_heldout_review_input(
-            bundle, case_id="EVAL-PREP-NEW", development_manifest=manifest)
+            bundle, case_id="EVAL-PREP-NEW", development_manifest=manifest,
+            historical_manifest=historical)
         self.assertTrue(verify_review_input(
             prepared, expected_case_id="EVAL-PREP-NEW",
             expected_source_digest=reader_input_digest(bundle)))
         with self.assertRaisesRegex(ValueError, "development"):
             prepare_heldout_review_input(
-                bundle, case_id="EVAL-PREP-NEW", development_manifest=None)
+                bundle, case_id="EVAL-PREP-NEW", development_manifest=None,
+                historical_manifest=historical)
+        with self.assertRaisesRegex(ValueError, "historical"):
+            prepare_heldout_review_input(
+                bundle, case_id="EVAL-PREP-NEW", development_manifest=manifest,
+                historical_manifest=None)
         reused = deepcopy(bundle)
         reused["inventory"][0]["inventory_id"] = manifest["payload"]["source_ids_by_table"]["inventory"][0]
         with self.assertRaisesRegex(ValueError, "reuses development"):
             prepare_heldout_review_input(
-                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest)
+                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest,
+                historical_manifest=historical)
         reused = deepcopy(bundle)
         reused["deal"]["deal_id"] = manifest["payload"]["deal_ids"][0]
         with self.assertRaisesRegex(ValueError, "development submission"):
             prepare_heldout_review_input(
-                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest)
+                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest,
+                historical_manifest=historical)
         reused = deepcopy(bundle)
         reused["run"]["run_id"] = manifest["payload"]["run_ids"][0]
         with self.assertRaisesRegex(ValueError, "development run"):
             prepare_heldout_review_input(
-                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest)
+                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest,
+                historical_manifest=historical)
+        reused = deepcopy(bundle)
+        reused["inventory"][0]["inventory_id"] = historical["payload"]["source_ids_by_table"]["inventory"][0]
+        with self.assertRaisesRegex(ValueError, "reuses development operational evidence"):
+            prepare_heldout_review_input(
+                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest,
+                historical_manifest=historical)
+        reused = deepcopy(bundle)
+        reused["deal"]["deal_id"] = historical["payload"]["deal_ids"][0]
+        with self.assertRaisesRegex(ValueError, "development submission"):
+            prepare_heldout_review_input(
+                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest,
+                historical_manifest=historical)
+        reused = deepcopy(bundle)
+        reused["run"]["run_id"] = historical["payload"]["run_ids"][0]
+        with self.assertRaisesRegex(ValueError, "historical run"):
+            prepare_heldout_review_input(
+                reused, case_id="EVAL-PREP-NEW", development_manifest=manifest,
+                historical_manifest=historical)
 
 
 if __name__ == "__main__":

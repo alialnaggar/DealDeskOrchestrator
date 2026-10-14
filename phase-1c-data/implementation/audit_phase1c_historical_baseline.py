@@ -172,6 +172,9 @@ def run(database_url, *, exclusion_output=None):
         excluded_ids_from_manifest(
             manifest, expected_run_count=400, expected_deal_count=400,
             expected_status="historical_reader_selected_sources_not_evaluation_answers")
+        pinned = json.loads((HERE / "phase1c_historical_source_exclusions.json").read_text())
+        if manifest != pinned:
+            raise ValueError("Historical source exclusion registry differs from pinned reader output")
         Path(exclusion_output).write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     result = summarize(decisions)
     result["make_to_order_diagnostics"] = dict(sorted(mto.items()))

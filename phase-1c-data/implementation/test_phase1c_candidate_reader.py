@@ -267,8 +267,12 @@ class CandidateReaderTests(unittest.TestCase):
         pinned_registry = json.loads(
             (Path(__file__).resolve().parent /
              "phase1c_development_source_exclusions.json").read_text())
+        historical_registry = json.loads(
+            (Path(__file__).resolve().parent /
+             "phase1c_historical_source_exclusions.json").read_text())
         heldout_preparation = prepare_heldout_review_input(
-            bundle, case_id="EVAL-PREP-1", development_manifest=pinned_registry)
+            bundle, case_id="EVAL-PREP-1", development_manifest=pinned_registry,
+            historical_manifest=historical_registry)
         self.assertEqual(heldout_preparation, packet)
         self.assertTrue(verify_review_input(packet, expected_case_id="EVAL-PREP-1",
                                             expected_source_digest=reader_input_digest(bundle)))

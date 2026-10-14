@@ -120,18 +120,27 @@ def prepare_review_input(bundle, *, case_id, excluded_deal_ids=(), excluded_sour
     return {"payload": payload, "sha256": sha256(_canonical(payload).encode()).hexdigest()}
 
 
-def prepare_heldout_review_input(bundle, *, case_id, development_manifest):
-    """Require the pinned development registry for a future held-out input."""
-    if not isinstance(development_manifest, dict):
-        raise ValueError("Held-out preparation requires a development exclusion manifest")
+def prepare_heldout_review_input(bundle, *, case_id, development_manifest,
+                                 historical_manifest):
+    """Require both pinned source registries for a future held-out input."""
+    if not isinstance(development_manifest, dict) or not isinstance(historical_manifest, dict):
+        raise ValueError("Held-out preparation requires development and historical exclusion manifests")
     excluded_sources = excluded_ids_from_manifest(
         development_manifest, expected_run_count=154, expected_deal_count=152)
     payload = development_manifest["payload"]
-    if str(bundle["run"]["run_id"]) in payload["run_ids"]:
+    historical_sources = excluded_ids_from_manifest(
+        historical_manifest, expected_run_count=400, expected_deal_count=400,
+        expected_status="historical_reader_selected_sources_not_evaluation_answers")
+    historical = historical_manifest["payload"]
+    run_id = str(bundle["run"]["run_id"])
+    if run_id in payload["run_ids"]:
         raise ValueError("Review run reuses a development run")
+    if run_id in historical["run_ids"]:
+        raise ValueError("Review run reuses a historical run")
     return prepare_review_input(
-        bundle, case_id=case_id, excluded_deal_ids=payload["deal_ids"],
-        excluded_source_ids=excluded_sources)
+        bundle, case_id=case_id,
+        excluded_deal_ids=set(payload["deal_ids"]) | set(historical["deal_ids"]),
+        excluded_source_ids=excluded_sources | historical_sources)
 
 
 def verify_review_input(packet, *, expected_case_id, expected_source_digest):
