@@ -29,6 +29,29 @@ For independent review:
 
 These cases assume their supplied source set is complete within the fictional snapshot. Empty receivable and payment sets represent a declared no-invoice/no-payment-history context, not proof that a real company's financial source is complete. All ordinary credit profiles are fresh; credit-limit cases have separate headroom conditions. Only five sellable SKUs and two quantity/quote patterns are represented. Shared catalogue, BOM, policy and canonical location context and implementation-informed authoring remain explicit limitations.
 
+## Blank review workspace — 14 October 2026
+
+[`provisional_review_template.json`](provisional_review_template.json) has one empty form per pinned case. It contains no archetype labels or prefilled findings. Each form binds the input/provider hashes and asks for reviewer provenance, findings and rationale for all six responsibilities, source references, an overall proposed gate status, human actions and unresolved questions.
+
+Copy the template to a **reviewer-only working file**, outside the system input folder. Leave `review_status=pending` until a full draft is written; then use `draft_complete`. Record identity, method (`human`, `model` or `model_assisted`), a timezone-aware date and an honest independence statement. First write findings from the source packets without consulting the authoring intent or deterministic diagnostics. Compare scenario intent afterwards to review coverage.
+
+References identify an exact location in a pinned source document, for example:
+
+```json
+{"document":"packet","pointer":"/source_rows/inventory/0/quantity_on_hand"}
+```
+
+Use `document=provider` for the separately supplied provider file, with a pointer under `/records`. A reference to an empty collection can support a stated absence; the reviewer must explain its meaning and the fictional completeness assumption. A resolving pointer proves that the cited fact exists, not that the conclusion follows from it.
+
+From `implementation/`:
+
+```bash
+python phase1c_evaluation_review.py --check-template
+python phase1c_evaluation_review.py --review-file /path/to/reviewer-work.json --packet-directory /path/to/downloaded-packets
+```
+
+The checker binds the workspace to the tracked index, requires all six findings and human actions for complete drafts, checks packet/provider hashes, and resolves references. It rejects invented references, changed sources, missing provenance, an `approved` system outcome and attempts to claim accepted/independently reviewed answers. **A complete draft still reports 0 independently reviewed answers.** Substantive correctness, reviewer independence and final acceptance require a separate recorded review; this tool cannot certify them. No baseline or agent score is run here.
+
 ## Earlier development examples and checkpoints
 
 

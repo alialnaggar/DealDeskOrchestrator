@@ -310,3 +310,14 @@ jobs:
           name: phase1c-provisional-evaluation-inputs
           path: /tmp/phase1c_evaluation_packets
           if-no-files-found: error
+      - name: Check reviewer-only draft workspace boundary
+        run: |
+          python -m unittest -v test_phase1c_evaluation_review
+          python phase1c_evaluation_review.py --check-template > /tmp/phase1c_review_workspace_validation.json
+          python -m json.tool /tmp/phase1c_review_workspace_validation.json
+      - name: Preserve review workspace counts without answers
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-review-workspace-validation
+          path: /tmp/phase1c_review_workspace_validation.json
+          if-no-files-found: error

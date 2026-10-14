@@ -282,3 +282,7 @@ The first PostgreSQL export passed and is now pinned as `implementation/phase1c_
 ## Dated negative-stock coverage — 14 October 2026
 
 The reproducible 100-case generator now writes five new allocated-stock and four new stale-stock observations for the repeated `STOCK-ALLOCATED` and `STOCK-STALE` variants. Each allocated observation has all on-hand units already allocated; each stale observation remains older than the freshness limit. The first reference variant and earlier pilot/stress cutoffs retain their sources. The PostgreSQL check reads every generated run, checks the selected IDs and full deterministic fulfillment outcomes, and compares the sealed development registry, now listing 58 inventory IDs instead of 49. These are synthetic development cases that still share catalogue, policy and other operational context. No independent evaluation answer or release claim follows.
+
+## Review workspace for the 36 inputs — 14 October 2026
+
+A single blank reviewer template now binds all 36 pinned input/provider hashes and provides space for the six responsibility findings, source references, rationale and human actions. The review checker rejects changed sources, invented references and incomplete drafts. Its complete-draft count is separate from independent answer acceptance: the reviewed count remains 0/36. See the evaluation README for the reviewer-only workflow. No expected finding is prefilled and no release/calibration gate is closed.
