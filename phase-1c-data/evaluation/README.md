@@ -8,6 +8,27 @@ The repository now contains reproducible source definitions for **36 provisional
 
 CI uses a separate disposable database and loads each case alone with the shared masters. It validates typed rows, reads the case twice, compares source-only packets, checks both pinned exclusion registries and rejects cross-case operational ID reuse. It exports input packets and provider records separately from authoring metadata. It does not assemble, score or publish expected deal decisions. A separate reviewer must inspect complete facts and record answers outside these inputs before baseline or agent evaluation. Calibration, six field marks, two calibration reviews and `ready_for_generation=false` remain open.
 
+## Pinned packet index and review procedure — 14 October 2026
+
+The first [PostgreSQL authoring run](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/38586442975) produced 36 replay-equal input packets and separate provider files. Its [pinned index](provisional_packet_index.json) stores each payload hash and provider-file hash and the source-definition SHA-256 `7dff0db52b976d377d346c2bb56de22bf38b8161458729397e718572576222d6`. A fresh CI database must reproduce the index exactly. This pins input content; it does not freeze calibration or certify answers.
+
+| File or artifact | Role |
+| --- | --- |
+| `provisional_cases.json` | Reproducible submitted rows and case-owned operational/provider source definitions |
+| `provisional_authoring_manifest.json` | Reviewer-only intent, shared context, source hashes and pending reviews |
+| `provisional_packet_index.json` | Expected source/provider hashes for the 36 prepared packets |
+| CI artifact `phase1c-provisional-evaluation-inputs` | 36 source-only reader packets, 36 provider files and the packet index; no archetype map, findings or scores |
+
+For independent review:
+
+1. Rebuild from the tracked definitions or obtain the named artifact from the producing run. Compare its index with the tracked index before reviewing the corresponding case/provider files.
+2. Inspect the submission and complete selected facts, dates, units, costs, credit context, policy rules and evidence records. The authoring map states intent; it is not an expected answer and may be wrong.
+3. Record a reviewer identity, date, relationship to the case author, and findings for configuration, pricing, fulfillment, credit, policy and routing. Cite exact source IDs and rule references, explain uncertainty and unmet customer constraints, and state what still needs human review. Correct or reject a case if its full facts fail its stated purpose.
+4. Store findings separately from the source inputs. Keep that file outside the future system's prompt, tools and outputs. Another authoring run or diagnostic result cannot be presented as an independent review.
+5. Review all 36 cases and resolve disagreements before running and scoring the rule-only baseline and agents on the same pinned inputs. Count reviewed answers only after recorded review; the present count is **0/36**.
+
+These cases assume their supplied source set is complete within the fictional snapshot. Empty receivable and payment sets represent a declared no-invoice/no-payment-history context, not proof that a real company's financial source is complete. All ordinary credit profiles are fresh; credit-limit cases have separate headroom conditions. Only five sellable SKUs and two quantity/quote patterns are represented. Shared catalogue, BOM, policy and canonical location context and implementation-informed authoring remain explicit limitations.
+
 ## Earlier development examples and checkpoints
 
 

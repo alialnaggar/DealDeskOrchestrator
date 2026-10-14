@@ -14,6 +14,8 @@ The repository now contains reproducible source definitions for **36 provisional
 
 CI uses a separate disposable database and loads each case alone with the shared masters. It validates typed rows, reads the case twice, compares source-only packets, checks both pinned exclusion registries and rejects cross-case operational ID reuse. It exports input packets and provider records separately from authoring metadata. It does not assemble, score or publish expected deal decisions. A separate reviewer must inspect complete facts and record answers outside these inputs before baseline or agent evaluation. Calibration, six field marks, two calibration reviews and `ready_for_generation=false` remain open.
 
+The first dedicated PostgreSQL run passed all 36 source cases, and `evaluation/provisional_packet_index.json` now pins the exported payload and provider hashes. CI compares a fresh database export with that index exactly. This advances input preparation, not independent answer review: 0/36 answers remain reviewed, and calibration/readiness gates remain open.
+
 ## How to navigate these files — 12 October 2026
 
 The implementation folder contains many tracked files. They are grouped by job, not independent features:

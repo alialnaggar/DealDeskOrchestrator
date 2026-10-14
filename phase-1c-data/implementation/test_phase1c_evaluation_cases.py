@@ -19,7 +19,8 @@ except ImportError:
     psycopg = None
 
 FORBIDDEN = {"expected_decision", "expected_findings", "target_bucket", "historical_decision",
-             "decision_reason", "approved_by_roles_json", "archetype_id", "score", "candidate_trace"}
+             "decision_reason", "approved_by_roles_json", "archetype_id", "score", "candidate_trace",
+             "facts", "specialists", "observed_decision_status"}
 TABLE_ORDER = ("customers", "customer_credit_profiles", "suppliers", "supplier_items",
                "purchase_orders", "inbound_supply", "inventory", "production_capacity",
                "digital_capacity", "shipping_lanes", "compatibility_rules", "deals", "deal_lines", "deal_runs")
@@ -47,6 +48,13 @@ class EvaluationAuthoringTests(unittest.TestCase):
         for name, value in (("provisional_cases.json", inputs), ("provisional_authoring_manifest.json", manifest)):
             self.assertEqual((OUTPUT_DIR / name).read_text(), render(value))
         self.assertEqual(hashlib.sha256(render(inputs).encode()).hexdigest(), manifest["inputs_sha256"])
+        pinned = json.loads((OUTPUT_DIR / "provisional_packet_index.json").read_text())
+        self.assertEqual(pinned["input_case_count"], 36)
+        self.assertEqual(pinned["independently_reviewed_answers"], 0)
+        self.assertEqual(pinned["source_definition_sha256"], manifest["inputs_sha256"])
+        self.assertEqual([row["case_id"] for row in pinned["cases"]],
+                         [row["case_id"] for row in inputs["cases"]])
+        self.assertFalse(keys_in(pinned) & FORBIDDEN)
         identities = set()
         for case in inputs["cases"]:
             self.assertEqual(set(case["tables"]) - set(TABLE_ORDER), set())
@@ -154,6 +162,8 @@ class EvaluationDatabaseTests(unittest.TestCase):
         packet_index = {"schema_version": 1, "input_case_count": 36, "independently_reviewed_answers": 0,
                         "source_definition_sha256": authoring["inputs_sha256"],
                         "cases": index}
+        self.assertEqual(packet_index, json.loads(
+            (OUTPUT_DIR / "provisional_packet_index.json").read_text()))
         if output:
             (output / "packet_index.json").write_text(render(packet_index))
         print("Evaluation input preparation: 36 reproducible packets; 0 independently reviewed answers")
