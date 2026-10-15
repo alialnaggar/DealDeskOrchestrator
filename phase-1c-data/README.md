@@ -337,3 +337,7 @@ CI also reconstructs a separate author-assisted review view from the small, hash
 ## Case 020 review checkpoint — 15 October 2026
 
 The [case-level route brief](evaluation/reviews/case_020_route_adjudication.md) sets out the verified 11 September request, late confirmed receipt, conditional modal schedule and missing maximum-lead test evidence, with explicit gate alternatives. It prepares a substantive decision without treating the primary-author amendment as an independent oracle. Original and amended drafts, both input versions, and the historical/100-case development cohorts remain separate. Accepted evaluation answers are **0/36**; six field marks, two calibration reviews and `ready_for_generation=false` remain open.
+
+## Current status in one page — 15 October 2026
+
+Start with the [current-status summary](current-status.md) for tested cohorts, the 36-case review boundary, six field marks, two calibration choices and the agent-runtime starting point. The detailed chronology remains in the release review and readiness plan. No answer was accepted or release gate closed by this summary.
