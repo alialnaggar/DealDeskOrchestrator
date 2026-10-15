@@ -78,6 +78,11 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -v phase1c_keep_transaction=1 \
             -f phase1c_buildable_master.sql -f phase1c_sellable_catalogue.sql \
             -c ROLLBACK
+      - name: Preserve V1 product attribute audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-product-attributes-audit
+          path: /tmp/phase1c_product_attributes_audit.json
       - name: Load five connected provisional deal paths
         run: |
           python -m unittest -v test_phase1c_vertical_pilot.VerticalPilotRenderTests
