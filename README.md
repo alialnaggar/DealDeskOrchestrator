@@ -166,3 +166,7 @@ CI also reconstructs a separate author-assisted review view from the small, hash
 ## Case 020 evaluation review — 15 October 2026
 
 The [source-bound adjudication brief](phase-1c-data/evaluation/reviews/case_020_route_adjudication.md) lays out the conditional timely modal route, missing maximum-lead test evidence and precise gate alternatives. The case still needs substantive review; the author-assisted proposal is not an accepted oracle. Draft PR #1 keeps 0/36 accepted answers, six field marks, two calibration reviews and `ready_for_generation=false`.
+
+## Phase 1C current status — 15 October 2026
+
+The [one-page current status](phase-1c-data/current-status.md) separates tested development data, 36 provisional evaluation inputs, unaccepted model drafts, six field marks and two calibration reviews. It also states the next runtime implementation path. PR #1 remains draft; accepted answers remain 0/36 and `ready_for_generation=false`.
