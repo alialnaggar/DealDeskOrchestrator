@@ -170,3 +170,7 @@ The [source-bound adjudication brief](phase-1c-data/evaluation/reviews/case_020_
 ## Phase 1C current status — 15 October 2026
 
 The [one-page current status](phase-1c-data/current-status.md) separates tested development data, 36 provisional evaluation inputs, unaccepted model drafts, six field marks and two calibration reviews. It also states the next runtime implementation path. PR #1 remains draft; accepted answers remain 0/36 and `ready_for_generation=false`.
+
+## Data completion plan — 15 October 2026
+
+The [Phase 1C completion plan](phase-1c-data/implementation/phase1c_data_completion_plan.md) is the ordered route from the current provisional cohorts to a reviewed data release. Agent runtime work can begin using development data while expected evaluation answers remain unaccepted; PR #1 stays draft.
