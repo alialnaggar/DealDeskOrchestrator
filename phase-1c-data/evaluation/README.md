@@ -201,3 +201,7 @@ A [short source-bound review](reviews/case_020_route_adjudication.md) now isolat
 ## Source-audit offer validity guard — 15 October 2026
 
 The source-only schedule helper now refuses to illustrate a delivery path from an inactive offer or one outside its declared order-date validity. Its focused unit test exercises both cases. All ten current evaluation offers are active and valid on their hypothetical order dates; the complete 36-case audit reproduced the prior SHA-256 `87f71a574805e0f8ef97c5323d58eb6ec569a67dd6650063d6dd6e6387ee24d3` with 72 hashes verified and 0 accepted answers. This guard does not settle lead-time uncertainty, certify receipt-day assembly/dispatch, or accept case 020.
+
+## Separate provider timestamp evidence — 15 October 2026
+
+The source-only contract audit reports verification age for the four separate provider proofs in cases 021/022/025/026 and an empty record set for 023/024. These ages are inside the approved seven-day window, but the report does not certify identity, quantity, binding dates or full-term coverage. It reads no draft answers or decision engine. The prior audit is reproducible after dropping the new age fields; all 36 inputs and both draft views remain unchanged. See the [verification sheet](reviews/v2_verification_sheet.md). Accepted answers remain 0/36.
