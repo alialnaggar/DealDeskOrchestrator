@@ -197,3 +197,7 @@ The author-assisted v2 view now also removes contradictory overall actions in ha
 ## Case 020 route adjudication brief — 15 October 2026
 
 A [short source-bound review](reviews/case_020_route_adjudication.md) now isolates the remaining modal-versus-maximum-lead choice, missing Sep 10 test evidence, and effects on the proposed whole-deal gate. The original model and author-assisted views remain distinct and unaccepted. The checks verify artifact hashes and arithmetic only; substantive case acceptance is pending (0/36). No evaluation inputs, 100-case development data, calibration or generation-readiness flag changed.
+
+## Source-audit offer validity guard — 15 October 2026
+
+The source-only schedule helper now refuses to illustrate a delivery path from an inactive offer or one outside its declared order-date validity. Its focused unit test exercises both cases. All ten current evaluation offers are active and valid on their hypothetical order dates; the complete 36-case audit reproduced the prior SHA-256 `87f71a574805e0f8ef97c5323d58eb6ec569a67dd6650063d6dd6e6387ee24d3` with 72 hashes verified and 0 accepted answers. This guard does not settle lead-time uncertainty, certify receipt-day assembly/dispatch, or accept case 020.
