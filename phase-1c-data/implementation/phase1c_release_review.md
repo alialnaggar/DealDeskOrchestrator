@@ -669,3 +669,7 @@ The [exact review](../evaluation/reviews/case_020_route_adjudication.md) records
 ## Provider verification-age audit — 15 October 2026
 
 The source-only audit now includes `/records/i/verified_at` ages for the four sealed provider records. Seven local tests pass; the fresh 36-case report has digest `a2fc5d3956cf436144c28068e35c4367166a19e8ae37279251e1908ca13ab2d6`, and removing the new fields yields the previous exact digest. All four timestamps are within the approved seven-day window, but term/identity/commitment and case-level findings remain for substantive verification. No packet, original or amended draft, catalogue, calibration, schema or readiness value changed. 0/36 accepted; six field marks, two calibration reviews and `ready_for_generation=false` remain.
+
+## Digital provider fact comparison — 15 October 2026
+
+The sealed source audit now measures declared identity/configuration, region, concurrent capacity and F1 full-term coverage for the six digital cases. Four records exist: 021/022 cover the 12-month anniversary, while 025/026 stop on 31 December 2026; 023/024 have none. Eight local tests pass, and removing only the new comparison fields recreates the previous report digest. The new report digest is `2dfd676b5749941514798b6bd197df1c3515c2de3e855e7e3e1db119c5576c3d`. This is a fact audit, not accepted labels or a provider commitment. Original and author-assisted drafts remain separate; 0/36 accepted, six field marks and two calibration reviews open, `ready_for_generation=false`.
