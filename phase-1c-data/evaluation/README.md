@@ -193,3 +193,7 @@ Case 019 has a timely maximum-lead procurement/production illustration; case 020
 CI also reconstructs a separate author-assisted review view from the small, hash-bound `v2_author_amendments.json`: six amended cases explicitly carry primary-author/model-assisted provenance, while30 retain their original model provenance. The original draft is never overwritten. Source/draft tampering, invented references and acceptance/visibility claims fail validation. The derived draft is a separate reviewer-only artifact and still certifies zero independently accepted answers.
 
 The author-assisted v2 view now also removes contradictory overall actions in hard-blocked cases 031–034; the original model draft is preserved and answers remain unaccepted. See `reviews/v2_verification_sheet.md`.
+
+## Case 020 route adjudication brief — 15 October 2026
+
+A [short source-bound review](reviews/case_020_route_adjudication.md) now isolates the remaining modal-versus-maximum-lead choice, missing Sep 10 test evidence, and effects on the proposed whole-deal gate. The original model and author-assisted views remain distinct and unaccepted. The checks verify artifact hashes and arithmetic only; substantive case acceptance is pending (0/36). No evaluation inputs, 100-case development data, calibration or generation-readiness flag changed.
