@@ -6,7 +6,7 @@ import hashlib
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
-from audit_phase1c_evaluation_contract import age_observation, audit_case, audit_inputs, digest, quote_credit_arithmetic, advance_workdays, offer_operation_projections, provider_verification_observations
+from audit_phase1c_evaluation_contract import age_observation, audit_case, audit_inputs, digest, quote_credit_arithmetic, advance_workdays, offer_operation_projections, provider_verification_observations, calendar_month_anniversary, provider_source_comparisons
 
 
 class ContractAuditTests(unittest.TestCase):
@@ -67,6 +67,37 @@ class ContractAuditTests(unittest.TestCase):
         self.assertTrue(report[2]['future_dated'])
         self.assertEqual(report[0]['pointer'], '/records/0/verified_at')
         self.assertEqual(provider_verification_observations([], now, 7), [])
+
+    def test_provider_source_fields_and_calendar_month_coverage(self):
+        self.assertEqual(calendar_month_anniversary(date(2027,1,31), 1), date(2027,2,28))
+        payload = {'run_context': {'as_of_at': '2026-09-01T12:00:00+00:00'},
+                   'source_rows': {
+                       'deal': {'destination_country_code':'DE', 'terms_json':{'contract_months':12}},
+                       'lines':[{'fulfillment_mode':'digital_activation','product_id':'cloud',
+                                 'configuration_json':{'edition':'business','units_per_period':2},
+                                 'requested_activation_date':'2026-09-03'}],
+                       'digital_capacity':[{'evidence_ref':'proof','product_id':'cloud',
+                                            'provider_id':'provider','region_code':'DE','term_code':'12m',
+                                            'configuration_signature_json':{'edition':'business'},
+                                            'capacity_total':'3.000','quantity_allocated':'1.000'}]}}
+        record = {'evidence_ref':'proof','product_id':'cloud','provider_id':'provider',
+                  'region_code':'DE','term_code':'12m',
+                  'configuration_signature_json':{'edition':'business'},
+                  'capacity_total':3,'quantity_allocated':1,
+                  'covers_from':'2026-09-03','covers_until':'2027-09-03',
+                  'valid_until':'2027-09-10T00:00:00+00:00','commitment_status':'binding'}
+        result = provider_source_comparisons(payload, [record])[0]
+        self.assertEqual(result['anniversary_end_date'], '2027-09-03')
+        self.assertTrue(result['declared_dates_cover_full_term'])
+        self.assertTrue(result['declared_capacity_covers_concurrent_units'])
+        self.assertTrue(result['matching_pool_checks'][0]['same_product_provider_region_term_and_configuration'])
+        record['covers_until'] = '2026-12-31'
+        record['region_code'] = 'FR'
+        result = provider_source_comparisons(payload, [record])[0]
+        self.assertFalse(result['declared_dates_cover_full_term'])
+        self.assertFalse(result['same_region'])
+        self.assertFalse(result['matching_pool_checks'][0]['same_product_provider_region_term_and_configuration'])
+        self.assertEqual(provider_source_comparisons(payload, []), [])
 
     def test_missing_separate_day_operation_does_not_invent_arrival(self):
         payload = {'run_context':{'as_of_at':'2026-09-01T12:00:00+00:00'},'source_rows':{
