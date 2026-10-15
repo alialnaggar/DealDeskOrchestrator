@@ -64,6 +64,7 @@ class ContractAuditTests(unittest.TestCase):
             'bom':[{'bom_id':'B','finished_product_id':'finished','configuration_signature_json':{},'status':'active','output_quantity':'1'}],
             'bom_lines':[{'bom_id':'B','component_product_id':'component'}],
             'supplier_offers':[{'product_id':'component','lead_days_min':4,'lead_days_mode':4,'lead_days_max':4,
+                'is_active':True,'valid_from':'2026-08-01','valid_to':'2026-09-30',
                 'order_calendar_json':{'time_zone':'Europe/Amsterdam','working_weekdays':[1,2,3,4,5],'holiday_dates':[]}}],
             'shipping_lanes':[{'is_active':True,'destination_country_code':'DE','destination_region':'NW','shipping_service_code':'standard','origin_location_id':'W','dispatch_weekdays_json':[1,2,3,4,5],'transit_workdays':1}],
             'requirements':[{'bom_id':'B','status':'active','operation_seq':n,'capability_code':code,'resource_type':code,'batch_size':4,'hours_per_unit':'0.5','setup_hours':'0.5'} for n,code in [(1,'assembly'),(2,'test')]],
@@ -74,6 +75,12 @@ class ContractAuditTests(unittest.TestCase):
         payload['source_rows']['production_capacity'].append(slot)
         result=offer_operation_projections(payload, Decimal(24))
         self.assertTrue(all(r['indicative_arrival']=='2026-09-09' for r in result))
+        offer=payload['source_rows']['supplier_offers'][0]
+        offer['is_active']=False
+        self.assertNotIn('indicative_arrival', offer_operation_projections(payload, Decimal(24))[0])
+        offer['is_active']=True
+        offer['valid_to']='2026-08-31'
+        self.assertNotIn('indicative_arrival', offer_operation_projections(payload, Decimal(24))[0])
 
     def test_index_completeness_and_tampered_source(self):
         with TemporaryDirectory() as tmp:
