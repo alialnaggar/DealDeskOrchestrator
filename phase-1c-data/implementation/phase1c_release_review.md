@@ -677,3 +677,7 @@ The sealed source audit now measures declared identity/configuration, region, co
 ## Scheduled-service regional source audit — 15 October 2026
 
 The source-only audit now checks exact country/region, active rule, source product and catalogue version for scheduled-service lines. It reports explicit eligible records for 027/028 and explicit ineligible records for 029/030, while distinguishing regional eligibility from a booked appointment. Nine local tests pass and removing the new fields reproduces the previous report digest. New report digest: `4c8f2e5bdbff985025e0b7898593f229975c76a1cf926952844c24e77d1abd25`. No answer was accepted or scored; six field marks and two calibration reviews remain open, `ready_for_generation=false`.
+
+## Substantive-review handoff — 15 October 2026
+
+The [review queue](../evaluation/reviews/v2_review_handoff.md) covers all 36 pinned cases in 18 pairs and points reviewers to source-only packets before any model/author-assisted comparison. It also isolates case 020's unresolved gate choice and the separate hard-block routing checks. This is a handoff, not an answer acceptance or release gate; 0/36 accepted, six field marks and two calibration reviews open, `ready_for_generation=false`.
