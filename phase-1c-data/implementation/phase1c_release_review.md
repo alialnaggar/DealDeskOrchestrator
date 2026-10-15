@@ -665,3 +665,7 @@ The [exact review](../evaluation/reviews/case_020_route_adjudication.md) records
 ## Source-only offer schedule guard — 15 October 2026
 
 `audit_phase1c_evaluation_contract.py` now withholds illustrative schedules for inactive or expired supplier offers. Six local audit tests pass, including the new invalid-offer checks; re-auditing the pinned 36 packets yielded the exact previous report digest `87f71a57...`. All current ten offers remain valid on the hypothetical order day, so no existing schedule, packet, draft or answer changed. The case 020 gate is still awaiting substantive adjudication; 0/36 accepted, six field marks and two calibration reviews open, `ready_for_generation=false`.
+
+## Provider verification-age audit — 15 October 2026
+
+The source-only audit now includes `/records/i/verified_at` ages for the four sealed provider records. Seven local tests pass; the fresh 36-case report has digest `a2fc5d3956cf436144c28068e35c4367166a19e8ae37279251e1908ca13ab2d6`, and removing the new fields yields the previous exact digest. All four timestamps are within the approved seven-day window, but term/identity/commitment and case-level findings remain for substantive verification. No packet, original or amended draft, catalogue, calibration, schema or readiness value changed. 0/36 accepted; six field marks, two calibration reviews and `ready_for_generation=false` remain.
