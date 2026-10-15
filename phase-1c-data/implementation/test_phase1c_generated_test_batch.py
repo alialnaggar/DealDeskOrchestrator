@@ -204,6 +204,8 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                         "reader_visible_raw_source_ids": {
                             "inventory": sorted(row["inventory_id"] for row in bundle["inventory"]),
                             "inbound_supply": sorted(row["supply_id"] for row in bundle["inbound_supply"]),
+                            "supplier_offers": sorted(row["supplier_item_id"]
+                                                      for row in bundle["supplier_offers"]),
                             "digital_capacity": sorted(row["digital_capacity_id"]
                                                        for row in bundle["digital_capacity"]),
                         },
@@ -295,6 +297,9 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                                           bundle["run"]["as_of_at"].minute),
                                          (12, 10 * build_variant))
                         build_variant += 1
+                    if archetype == "SUPPLY-OFFER-ONLY":
+                        self.assertFalse(sources_for_case)
+                        self.assertTrue(case_observations[-1]["reader_visible_raw_source_ids"]["supplier_offers"])
                     if archetype == "SUPPLY-CONFIRMED":
                         expected = ("PILOT-INBOUND-001" if supply_variant == 0
                                     else f"GEN-INBOUND-{supply_variant:03d}")
