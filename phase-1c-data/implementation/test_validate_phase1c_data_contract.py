@@ -13,6 +13,26 @@ CONTRACT = yaml.safe_load(
 
 
 class DataContractTests(unittest.TestCase):
+    def test_compatibility_predicate_paths_and_expected_shapes(self):
+        valid = [
+            ("attribute_constraint", {"attribute": "configuration.selected_options", "operator": "exists", "expected": True}),
+            ("attribute_constraint", {"attribute": "edition", "operator": "in", "expected": ["pro"]}),
+            ("required_deal_field", {"field": "requirements_json.requested_outcomes"}),
+        ]
+        for kind, condition in valid:
+            with self.subTest(kind=kind, condition=condition):
+                self.assertEqual(validate_payload("compatibility_condition", condition, CONTRACT, mode=kind), [])
+        invalid = [
+            ("attribute_constraint", {"attribute": "", "operator": "equals", "expected": "pro"}),
+            ("attribute_constraint", {"attribute": "edition..tier", "operator": "equals", "expected": "pro"}),
+            ("attribute_constraint", {"attribute": "edition", "operator": "exists", "expected": "yes"}),
+            ("attribute_constraint", {"attribute": "edition", "operator": "in", "expected": []}),
+            ("required_deal_field", {"field": "requirements_json..foo"}),
+            ("required_deal_field", {"field": 42}),
+        ]
+        for kind, condition in invalid:
+            with self.subTest(kind=kind, condition=condition):
+                self.assertTrue(validate_payload("compatibility_condition", condition, CONTRACT, mode=kind))
     def test_current_contract_is_structurally_ready_but_dataset_is_not_frozen(self):
         result = validate_contract(CONTRACT)
         self.assertEqual(result["errors"], [])
