@@ -810,3 +810,7 @@ CI also reconstructs a separate author-assisted review view from the small, hash
 ## Case 020 adjudication checkpoint — 15 October 2026
 
 The [source-bound decision brief](../evaluation/reviews/case_020_route_adjudication.md) identifies the unresolved whole-deal gate choice: a timely but uncommitted modal route versus a maximum-lead route without a Sep 10 test observation. Packet/provider hashes and audit projections were checked against the latest passing PR artifact; this is not a verified answer. Obtain substantive review of the proposed gate and all six case findings before any case acceptance or baseline/agent scoring. Other 35 answers remain pending too. The provisional 100-case set, six field marks, two calibration reviews and `ready_for_generation=false` remain unchanged.
+
+## Evaluation schedule fact guard — 15 October 2026
+
+The source-only evaluation audit rejects delivery projections from inactive or expired offers. Local unit tests pass and the pinned 36-case audit is byte-identical to its previous report. This narrows a future false-projection risk but does not resolve case 020's modal-versus-maximum-lead gate or independently verify any answer. Keep source packets, original model and author-assisted draft separate; 0/36 accepted, six field marks and two calibration reviews open, `ready_for_generation=false`.
