@@ -5,7 +5,7 @@ the integration test uses a disposable transaction and never commits its rows.
 """
 
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 
@@ -94,6 +94,7 @@ def execute_development_run(conn, run_id, contract):
     The frozen run must already exist. This function owns no commit and provides
     no retry or booking side effect. A second execution fails before writing.
     """
+    started_at = datetime.now(timezone.utc)
     with conn.cursor() as cur:
         cur.execute("SELECT run_id, run_status FROM deal_desk.deal_runs WHERE run_id = %s FOR UPDATE", (run_id,))
         row = cur.fetchone()
@@ -120,15 +121,17 @@ def execute_development_run(conn, run_id, contract):
     report = validate_execution_rows(rows, contract, known_evidence=_known_evidence(bundle, decision))
     if report["errors"]:
         raise ValueError("Invalid runtime output: " + "; ".join(report["errors"]))
+    completed_at = datetime.now(timezone.utc)
     with conn.cursor() as cur:
         cur.execute("UPDATE deal_desk.deal_runs SET run_status = 'running' WHERE run_id = %s", (run_id,))
         for item in rows:
             cur.execute("""INSERT INTO deal_desk.agent_execution_log
                 (run_id, deal_id, agent_name, attempt_number, started_at, completed_at,
-                 status, latency_ms, input_snapshot_json, output_json,
+                 status, input_snapshot_json, output_json,
                  applied_policy_set_code, catalog_version_used)
-                VALUES (%s,%s,%s,1,clock_timestamp(),clock_timestamp(),'Success',0,%s,%s,%s,%s)""",
-                (run_id, run["deal_id"], item["agent_name"], Jsonb(snapshot), Jsonb(_json(item["output_json"])),
+                VALUES (%s,%s,%s,1,%s,%s,'Success',%s,%s,%s,%s)""",
+                (run_id, run["deal_id"], item["agent_name"], started_at, completed_at,
+                 Jsonb(snapshot), Jsonb(_json(item["output_json"])),
                  run["applied_policy_set_code"], run["catalog_version_used"]))
         cur.execute("UPDATE deal_desk.deal_runs SET run_status = 'completed', completed_at = clock_timestamp() WHERE run_id = %s", (run_id,))
     return {"run_id": str(run_id), "decision_status": decision["status"], "rows": len(rows),
