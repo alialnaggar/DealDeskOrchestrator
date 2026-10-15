@@ -1,6 +1,6 @@
 # Phase 1C catalogue calibration review card — 15 October 2026
 
-**Decision requested:** settle the two open V1 catalogue calibration reviews for the bounded fictional Option A selected by Ali on 12 October. This card is a proposal, not an approval or a calibration freeze. The approved F1, C1/C2, G1, S1 and R1 evaluation conventions are unaffected.
+**Decision recorded 15 October 2026:** Ali explicitly accepted both recommended V1 choices after reviewing this card: retain the bounded fictional 36/156 mix and retain fixed category-p50 synthetic costs for the 102 generated sellable products in the first release. This is a scope and algorithm choice, not a release flag or acceptance of evaluation answers. The approved F1, C1/C2, G1, S1 and R1 evaluation conventions are unaffected.
 
 ## Source pins and tested facts
 
@@ -37,9 +37,9 @@ For example, using **each packet's actual quoted unit price** and only replacing
 
 ## Recorded choice and follow-through
 
-| Review | Proposed choice | Status |
+| Review | Selected choice | Decision status |
 | --- | --- | --- |
-| V1 mix | Retain bounded fictional 36 components / 156 products | **Awaiting Ali's explicit decision** |
-| Generated cost distribution | Retain fixed-p50 first-release simplification | **Awaiting Ali's explicit decision** |
+| V1 mix | Retain bounded fictional 36 components / 156 products | **Approved by Ali, 15 October 2026** |
+| Generated cost distribution | Retain fixed-p50 first-release simplification | **Approved by Ali, 15 October 2026** |
 
-After a choice, record its rationale in the calibration configuration and decision sheet; then review the five source-data field marks against that choice. If either alternative changes shared facts, version and replay the affected inputs before case-answer review. The six field marks, two calibration reviews, **0/36 accepted answers**, `ready_for_generation=false` and draft PR status remain unchanged at this proposal stage. The case-020 route decision is separate and still open.
+The selected scope uses the already generated V1 values: no product, price, cost, threshold, source packet or config-hash input was changed by this decision. Record and test the five source-data field dispositions against this scope before closing the two calibration evidence reviews. If shared facts are changed later, version and replay affected inputs. The six field marks and two evidence reviews remain open pending their final audit; **0/36 accepted answers**, `ready_for_generation=false` and draft PR status remain. Case 020's route decision is separate and still open.
