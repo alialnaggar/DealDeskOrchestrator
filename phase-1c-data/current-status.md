@@ -25,3 +25,7 @@ This page is a short navigation point for the active [draft PR #1](https://githu
 The structured data, reader and provisional development cases are sufficient to **start implementing specialist runtime contracts and orchestration**. Work against the 14 reference and 100 provisional development cases for engineering checks, with their status clearly marked diagnostic. Start with one bounded end-to-end submission that records six typed responsibility outputs and a shared immutable run/source identity, followed by a trace of reruns and human actions. The full six-agent behavior and useful alternatives remain target functionality. Keep evaluation packets, model drafts and any accepted reviewer-only answers out of agent-visible inputs. Accuracy comparisons wait for accepted case findings.
 
 In parallel, finish the six field reviews and two calibration decisions before a data-release decision. The approved v2 business conventions are already applied and do not need to be approved again. PR #1 stays draft.
+
+## Completion sequence
+
+The [ordered data completion plan](implementation/phase1c_data_completion_plan.md) defines eight steps and their pass criteria, including which calibration/field/runtime work can proceed in parallel. The release flag remains false until its final audit; this page remains the short status snapshot.
