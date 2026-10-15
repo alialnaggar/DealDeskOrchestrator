@@ -51,6 +51,13 @@ class ProductAttributesAuditTests(unittest.TestCase):
         draft["products"][1]["product_id"] = draft["products"][0]["product_id"]
         self.assertTrue(any("distinct product IDs" in e for e in audit(draft, self.contract, self.fit)["errors"]))
 
+    def test_non_object_buildable_attributes_rejected(self):
+        draft = deepcopy(self.portfolio)
+        row = next(r for r in draft["products"] if r["fulfillment_mode"] == "make_to_order")
+        row["attributes_json"] = None
+        self.assertTrue(any("product attributes must be an object" in e
+                            for e in audit(draft, self.contract, self.fit)["errors"]))
+
 
 if __name__ == "__main__":
     unittest.main()
