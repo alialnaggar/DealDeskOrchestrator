@@ -661,3 +661,7 @@ The author-assisted v2 view now also removes contradictory overall actions in ha
 ## Case 020 source-bound decision brief — 15 October 2026
 
 The [exact review](../evaluation/reviews/case_020_route_adjudication.md) records the verified case-020 source hashes, three conditional lead projections and the still-missing maximum-lead test slot. It proposes how to adjudicate the modal route under G1 while preserving alternatives and consequences for substantive review. This is primary-author analysis, not an independent oracle or accepted finding. PR #1 remains draft; 0/36 evaluation answers accepted, six field marks and two calibration reviews open, `ready_for_generation=false`.
+
+## Source-only offer schedule guard — 15 October 2026
+
+`audit_phase1c_evaluation_contract.py` now withholds illustrative schedules for inactive or expired supplier offers. Six local audit tests pass, including the new invalid-offer checks; re-auditing the pinned 36 packets yielded the exact previous report digest `87f71a57...`. All current ten offers remain valid on the hypothetical order day, so no existing schedule, packet, draft or answer changed. The case 020 gate is still awaiting substantive adjudication; 0/36 accepted, six field marks and two calibration reviews open, `ready_for_generation=false`.
