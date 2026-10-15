@@ -41,10 +41,18 @@ def audit(portfolio, contract, fit_draft):
         if row["is_sellable"] != (mode != "component"):
             errors.append(f"{pid}: sellability differs from component scope")
         attrs = row["attributes_json"]
-        if mode != "component" and attrs.get("category") is None:
+        if mode != "component" and isinstance(attrs, dict) and attrs.get("category") is None:
             errors.append(f"{pid}: sellable category missing")
         errors.extend(f"{pid}: {error}" for error in
                       validate_payload("product_attributes", attrs, contract, mode=mode))
+    if errors:
+        return {
+            "basis": "declared_synthetic_attributes_not_manufacturer_certification",
+            "product_rows": len(rows), "mode_counts": dict(sorted(counts.items())),
+            "checked_component_specs": 0, "checked_boms": 0,
+            "checked_alternatives": 0, "errors": errors,
+            "ready_for_generation": False,
+        }
     fit = validate_fit(portfolio, fit_draft)
     errors.extend(f"synthetic fit: {error}" for error in fit["errors"])
     if fit.get("checked_component_specs") != 36 or fit.get("checked_boms") != 24 or fit.get("checked_alternatives") != 25:
