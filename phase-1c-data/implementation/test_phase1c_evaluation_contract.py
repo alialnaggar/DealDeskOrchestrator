@@ -6,7 +6,7 @@ import hashlib
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
-from audit_phase1c_evaluation_contract import age_observation, audit_case, audit_inputs, digest, quote_credit_arithmetic, advance_workdays, offer_operation_projections
+from audit_phase1c_evaluation_contract import age_observation, audit_case, audit_inputs, digest, quote_credit_arithmetic, advance_workdays, offer_operation_projections, provider_verification_observations
 
 
 class ContractAuditTests(unittest.TestCase):
@@ -56,6 +56,17 @@ class ContractAuditTests(unittest.TestCase):
         self.assertEqual(advance_workdays(date(2026,9,4),1,[1,2,3,4,5],['2026-09-07']),date(2026,9,8))
         with self.assertRaises(ValueError):
             advance_workdays(date(2026,9,4),1,[])
+
+    def test_provider_verification_window_reports_age_without_assigning_gate(self):
+        now = '2026-09-08T12:00:00+00:00'
+        records = [{'verified_at':'2026-09-01T12:00:00+00:00'},
+                   {'verified_at':'2026-09-01T11:59:59+00:00'},
+                   {'verified_at':'2026-09-08T13:00:00+00:00'}]
+        report = provider_verification_observations(records, now, 7)
+        self.assertEqual([r['within_comparison_window'] for r in report], [True, False, False])
+        self.assertTrue(report[2]['future_dated'])
+        self.assertEqual(report[0]['pointer'], '/records/0/verified_at')
+        self.assertEqual(provider_verification_observations([], now, 7), [])
 
     def test_missing_separate_day_operation_does_not_invent_arrival(self):
         payload = {'run_context':{'as_of_at':'2026-09-01T12:00:00+00:00'},'source_rows':{
@@ -108,3 +119,4 @@ class ContractAuditTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
