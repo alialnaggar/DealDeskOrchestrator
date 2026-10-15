@@ -72,6 +72,8 @@ jobs:
       - name: Check all 156 provisional catalogue products
         run: |
           python -m unittest -v test_render_phase1c_sellable_catalogue
+          python -m unittest -v test_audit_phase1c_product_attributes
+          python audit_phase1c_product_attributes.py > /tmp/phase1c_product_attributes_audit.json
           python render_phase1c_sellable_catalogue.py --check
           psql -X -v ON_ERROR_STOP=1 -v phase1c_keep_transaction=1 \
             -f phase1c_buildable_master.sql -f phase1c_sellable_catalogue.sql \
