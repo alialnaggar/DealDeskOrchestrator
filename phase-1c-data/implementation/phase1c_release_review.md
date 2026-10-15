@@ -673,3 +673,7 @@ The source-only audit now includes `/records/i/verified_at` ages for the four se
 ## Digital provider fact comparison — 15 October 2026
 
 The sealed source audit now measures declared identity/configuration, region, concurrent capacity and F1 full-term coverage for the six digital cases. Four records exist: 021/022 cover the 12-month anniversary, while 025/026 stop on 31 December 2026; 023/024 have none. Eight local tests pass, and removing only the new comparison fields recreates the previous report digest. The new report digest is `2dfd676b5749941514798b6bd197df1c3515c2de3e855e7e3e1db119c5576c3d`. This is a fact audit, not accepted labels or a provider commitment. Original and author-assisted drafts remain separate; 0/36 accepted, six field marks and two calibration reviews open, `ready_for_generation=false`.
+
+## Scheduled-service regional source audit — 15 October 2026
+
+The source-only audit now checks exact country/region, active rule, source product and catalogue version for scheduled-service lines. It reports explicit eligible records for 027/028 and explicit ineligible records for 029/030, while distinguishing regional eligibility from a booked appointment. Nine local tests pass and removing the new fields reproduces the previous report digest. New report digest: `4c8f2e5bdbff985025e0b7898593f229975c76a1cf926952844c24e77d1abd25`. No answer was accepted or scored; six field marks and two calibration reviews remain open, `ready_for_generation=false`.
