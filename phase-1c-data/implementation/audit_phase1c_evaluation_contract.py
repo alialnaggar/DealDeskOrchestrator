@@ -93,6 +93,31 @@ def provider_source_comparisons(payload, records):
     return comparisons
 
 
+def service_region_comparisons(payload):
+    """Expose exact regional rule matches; regional coverage is not a booked slot."""
+    rows = payload['source_rows']
+    result = []
+    for i, line in enumerate(rows['lines']):
+        if line['fulfillment_mode'] != 'scheduled_service':
+            continue
+        deal = rows['deal']
+        matches = [{'pointer': f'/source_rows/compatibility/{j}',
+                    'eligible': rule['condition_json']['eligible']}
+                   for j, rule in enumerate(rows['compatibility'])
+                   if rule['is_active'] and rule['rule_type'] == 'installation_eligibility'
+                   and rule['source_product_id'] == line['product_id']
+                   and rule['catalog_version'] == line['catalog_version']
+                   and rule['condition_json']['country_code'] == deal['destination_country_code']
+                   and rule['condition_json']['region'] == deal['destination_region']]
+        result.append({'line_pointer': f'/source_rows/lines/{i}',
+                       'requested_country': deal['destination_country_code'],
+                       'requested_region': deal['destination_region'],
+                       'installation_requested': line['installation_requested'],
+                       'exact_active_rule_matches': matches,
+                       'qualification': 'Regional eligibility only; no appointment or service commitment established.'})
+    return result
+
+
 def quote_credit_arithmetic(rows):
     """Full submitted commercial quantity, never concurrent digital demand."""
     lines, revenue, profit, listed = [], Decimal(0), Decimal(0), Decimal(0)
@@ -262,6 +287,7 @@ def audit_case(payload, comparison_hours, provider_records=()):
                 provider_records, as_of,
                 contract['evidence_age']['provider_verification_max_elapsed_days'] if contract else 7),
             'provider_source_comparisons': provider_source_comparisons(payload, provider_records),
+            'service_region_comparisons': service_region_comparisons(payload),
             'cost_parameters_present': rows['cost_parameters'] is not None,
             'lines': lines, 'service_rules': service_rules,
             'quote_credit_arithmetic': quote_credit_arithmetic(rows),
