@@ -1,5 +1,6 @@
 """Report source facts for contract adjudication; never derive evaluation labels."""
 import argparse
+import calendar
 from datetime import datetime, date, timedelta
 from decimal import Decimal, ROUND_CEILING
 import hashlib
@@ -33,6 +34,63 @@ def provider_verification_observations(records, as_of, max_days):
     return [{'pointer': f'/records/{i}/verified_at', 'document': 'provider',
              **age_observation(row['verified_at'], as_of, Decimal(max_days) * 24)}
             for i, row in enumerate(records)]
+
+
+def calendar_month_anniversary(start, months):
+    if type(months) is not int or months <= 0:
+        raise ValueError('Positive integer contract months required')
+    year, month = divmod(start.year * 12 + start.month - 1 + months, 12)
+    month += 1
+    return date(year, month, min(start.day, calendar.monthrange(year, month)[1]))
+
+
+def provider_source_comparisons(payload, records):
+    """Compare declared source fields; do not infer an evaluation finding or gate."""
+    rows = payload['source_rows']
+    digital = [(i, line) for i, line in enumerate(rows['lines'])
+               if line['fulfillment_mode'] == 'digital_activation']
+    if not digital:
+        return []
+    if len(digital) != 1:
+        return [{'qualification': 'Multiple digital lines require separate review.'}]
+    line_index, line = digital[0]
+    start = date.fromisoformat(line['requested_activation_date'])
+    end = calendar_month_anniversary(start, rows['deal']['terms_json']['contract_months'])
+    units = Decimal(line['configuration_json']['units_per_period'])
+    as_of = stamp(payload['run_context']['as_of_at'])
+    comparisons = []
+    for i, record in enumerate(records):
+        matching_pools = [(j, pool) for j, pool in enumerate(rows['digital_capacity'])
+                          if pool['evidence_ref'] == record['evidence_ref']]
+        pool_checks = []
+        for j, pool in matching_pools:
+            pool_checks.append({
+                'pointer': f'/source_rows/digital_capacity/{j}',
+                'same_product_provider_region_term_and_configuration': (
+                    all(pool[key] == record[key] for key in
+                        ('product_id', 'provider_id', 'region_code', 'term_code', 'configuration_signature_json'))),
+                'same_declared_capacity_and_allocation': (
+                    Decimal(pool['capacity_total']) == Decimal(record['capacity_total'])
+                    and Decimal(pool['quantity_allocated']) == Decimal(record['quantity_allocated']))})
+        comparisons.append({
+            'pointer': f'/records/{i}', 'line_pointer': f'/source_rows/lines/{line_index}',
+            'required_concurrent_units': str(units),
+            'anniversary_end_date': end.isoformat(),
+            'matching_pool_checks': pool_checks,
+            'same_product': record['product_id'] == line['product_id'],
+            'same_configuration': record['configuration_signature_json'] == {
+                key: value for key, value in line['configuration_json'].items()
+                if key != 'units_per_period'},
+            'same_region': record['region_code'] == rows['deal']['destination_country_code'],
+            'declared_capacity_covers_concurrent_units': (
+                Decimal(record['capacity_total']) - Decimal(record['quantity_allocated']) >= units),
+            'declared_dates_cover_full_term': (
+                date.fromisoformat(record['covers_from']) <= start
+                and date.fromisoformat(record['covers_until']) >= end),
+            'valid_at_run': stamp(record['valid_until']) >= as_of,
+            'binding_declared': record['commitment_status'] == 'binding',
+            'qualification': 'Source-field comparison only; no commitment, answer or gate certified.'})
+    return comparisons
 
 
 def quote_credit_arithmetic(rows):
@@ -203,6 +261,7 @@ def audit_case(payload, comparison_hours, provider_records=()):
             'provider_verification_observations': provider_verification_observations(
                 provider_records, as_of,
                 contract['evidence_age']['provider_verification_max_elapsed_days'] if contract else 7),
+            'provider_source_comparisons': provider_source_comparisons(payload, provider_records),
             'cost_parameters_present': rows['cost_parameters'] is not None,
             'lines': lines, 'service_rules': service_rules,
             'quote_credit_arithmetic': quote_credit_arithmetic(rows),
