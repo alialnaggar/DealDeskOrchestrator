@@ -822,3 +822,7 @@ The separate provider files are now audited for `verified_at` age after their ex
 ## Digital proof coverage checkpoint — 15 October 2026
 
 The source-only audit now reports provider identity/configuration, concurrent capacity and approved calendar-month term coverage without assigning answers. It exposes two full-term declarations (021/022), two short proof periods (025/026) and two absent proofs (023/024). Substantive verification still must check all six responsibilities and human actions; no answer or readiness gate is closed. Eight local tests pass; six field marks, two calibration reviews and `ready_for_generation=false` remain.
+
+## Service-region fact checkpoint — 15 October 2026
+
+Exact active regional-rule matching is now reported for the four evaluation service cases. The two DE-NW records are eligible and the two DE-BY records explicitly ineligible. This does not establish appointment availability or decide the whole-deal gate; substantive review of all six findings is still required. Nine local tests pass; 0/36 accepted, six field marks and two calibration reviews open, `ready_for_generation=false`.
