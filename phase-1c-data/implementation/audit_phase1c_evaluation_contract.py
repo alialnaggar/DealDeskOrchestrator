@@ -103,6 +103,11 @@ def offer_operation_projections(payload, comparison_hours):
             continue
         cal = offer['order_calendar_json']
         order_day = stamp(as_of).astimezone(ZoneInfo(cal['time_zone'])).date()
+        if not offer['is_active'] or not (date.fromisoformat(offer['valid_from']) <= order_day <= date.fromisoformat(offer['valid_to'])):
+            projections.append({'offer_pointer': f'/source_rows/supplier_offers/{i}',
+                                'hypothetical_order_date': order_day.isoformat(),
+                                'qualification': 'Inactive or out-of-validity offer cannot support a conditional schedule.'})
+            continue
         lanes = [(j, lane) for j, lane in enumerate(rows['shipping_lanes']) if lane['is_active']
                  and lane['destination_country_code'] == rows['deal']['destination_country_code']
                  and lane['destination_region'] == rows['deal']['destination_region']
