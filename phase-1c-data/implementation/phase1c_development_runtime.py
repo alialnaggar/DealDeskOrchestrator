@@ -29,14 +29,22 @@ def _unsupported(value):
     raise TypeError(f"Non-JSON runtime value: {type(value).__name__}")
 
 
-def _known_evidence(bundle, decision):
+def _known_evidence(bundle):
+    """IDs exposed by selected reader source rows, independent of output claims."""
     ids = {str(bundle["deal"]["deal_id"]), str(bundle["customer"]["customer_id"])}
     ids.update(str(line["deal_line_id"]) for line in bundle["lines"])
     ids.update(str(row["bom_id"]) for row in bundle["bom"])
     ids.update(str(row["compatibility_rule_id"]) for row in bundle["compatibility"])
-    ids.update(str(hit["rule_id"]) for hit in decision["commercial_rule_hits"])
-    for finding in decision["specialists"]["availability"]:
-        ids.update(map(str, finding["source_ids"]))
+    for table, key in (("inventory", "inventory_id"), ("inbound_supply", "supply_id"),
+                       ("production_capacity", "capacity_id"),
+                       ("digital_capacity", "digital_capacity_id")):
+        ids.update(str(row[key]) for row in bundle[table])
+    ids.update(str(row["purchase_order_id"]) for row in bundle["inbound_supply"]
+               if row.get("purchase_order_id"))
+    for table, key in (("pricing_rules", "pricing_rule_id"),
+                       ("policy_rules", "policy_rule_id"),
+                       ("approval_rules", "approval_rule_id")):
+        ids.update(str(row[key]) for row in bundle["rules"][table])
     return ids
 
 
@@ -118,7 +126,7 @@ def execute_development_run(conn, run_id, contract):
     rows = [{"run_id": str(run_id), "agent_name": name, "attempt_number": 1,
              "status": "Success", "input_snapshot_json": snapshot, "output_json": outputs[name]}
             for name in (*AGENTS, "Orchestrator")]
-    report = validate_execution_rows(rows, contract, known_evidence=_known_evidence(bundle, decision))
+    report = validate_execution_rows(rows, contract, known_evidence=_known_evidence(bundle))
     if report["errors"]:
         raise ValueError("Invalid runtime output: " + "; ".join(report["errors"]))
     completed_at = datetime.now(timezone.utc)
