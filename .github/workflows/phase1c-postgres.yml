@@ -311,6 +311,14 @@ jobs:
         run: python -m unittest -v test_phase1c_policy_decision
       - name: Test deal decision gates against 14 reference runs
         run: python -m unittest -v test_phase1c_deal_decision
+      - name: Persist and validate one deterministic development execution
+        run: PHASE1C_RUNTIME_REPORT=/tmp/phase1c_development_runtime.json python -m unittest -v test_phase1c_development_runtime
+      - name: Preserve development execution proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-development-runtime
+          path: /tmp/phase1c_development_runtime.json
+          if-no-files-found: error
       - name: Recheck a proposed partial delivery against PostgreSQL sources
         run: python -m unittest -v test_phase1c_candidate_reader
       - name: Author separate provisional evaluation input packets
