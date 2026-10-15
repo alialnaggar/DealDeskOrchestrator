@@ -19,10 +19,10 @@ Every pair below contains two distinct quantities under the same source-conditio
 | 003–004 | Allocated stock versus free quantity; whether the submitted quantity/date has any other support. |
 | 005–006 | Inventory observations 49/61 hours old against the approved 24-hour window; distinguish unknown current stock from proven shortage. |
 | 007–008 | Confirmed same-product inbound receipt, unallocated quantity, requested date and lane; avoid treating expected receipt as delivery already completed. |
-| 009–010 | Cancelled receipt and active offer; distinguish a binding supply row from an uncommitted procurement alternative. |
-| 011–012 | Offer-only supply and its declared lead/calendar; inspect exact quantity, validity and missing purchase commitment. |
+| 009–010 | Offer-only supply with no inbound receipt; distinguish an uncommitted procurement alternative from binding supply. |
+| 011–012 | Cancelled inbound receipt alongside an active offer; do not count the cancelled receipt as binding supply. Inspect lead/calendar and missing new commitment. |
 | 013–014 | Component quantities, BOM fit, separate assembly/test operations, capacity hours and dispatch assumptions. |
-| 015–016 | Missing component versus the active same-product offer; check component cost identity and operation sequence. |
+| 015–016 | Confirmed component receipt alongside an active same-product offer; check component cost identity, dated receipt and operation sequence. |
 | 017–018 | Production observations 51/52 hours old; request current capacity evidence rather than borrowing stale hours. |
 | 019–020 | Competing October confirmed receipt and earlier uncommitted offer. Review the [route decision brief](case_020_route_adjudication.md): 019 has a timely illustrated maximum-lead schedule; 020 has a timely modal schedule but no later test observation for its maximum lead. The whole-deal gate and route-dependent roles need explicit adjudication. |
 | 021–022 | Digital provider identity/configuration, concurrent units versus full billed quantity, fresh verification and coverage through the 12-month anniversary. |
