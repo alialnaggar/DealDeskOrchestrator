@@ -2,6 +2,7 @@
 
 import json
 import os
+from copy import deepcopy
 from pathlib import Path
 from uuid import UUID
 import unittest
@@ -54,8 +55,13 @@ class DevelopmentRuntimeTests(unittest.TestCase):
         bundle = read_run(self.conn, TEST_RUN, commercial_rule_mode="compiled")
         decision = assemble_deal_decision(bundle)
         report = validate_execution_rows(stored, CONTRACT,
-                                         known_evidence=_known_evidence(bundle, decision))
+                                         known_evidence=_known_evidence(bundle))
         self.assertEqual(report["errors"], [])
+        invented = deepcopy(stored)
+        invented[2]["output_json"]["findings"][0]["evidence_refs"].append("INVENTED-SUPPLY-ID")
+        self.assertTrue(any("unknown evidence INVENTED-SUPPLY-ID" in error for error in
+                            validate_execution_rows(invented, CONTRACT,
+                                                    known_evidence=_known_evidence(bundle))["errors"]))
         self.assertEqual({x["input_snapshot_json"]["config_hash"] for x in stored},
                          {bundle["run"]["config_hash"]})
         self.assertTrue(all(x["deal_id"] == bundle["deal"]["deal_id"] and
