@@ -341,3 +341,7 @@ The [case-level route brief](evaluation/reviews/case_020_route_adjudication.md) 
 ## Current status in one page — 15 October 2026
 
 Start with the [current-status summary](current-status.md) for tested cohorts, the 36-case review boundary, six field marks, two calibration choices and the agent-runtime starting point. The detailed chronology remains in the release review and readiness plan. No answer was accepted or release gate closed by this summary.
+
+## Path from provisional data to release — 15 October 2026
+
+The [eight-step completion plan](implementation/phase1c_data_completion_plan.md) gives the order, dependencies and definition of done for calibration, six field marks, 100 development regressions, 36 evaluation answers, actual runtime outputs and final CI. It does not accept any pending answer or calibration decision.
