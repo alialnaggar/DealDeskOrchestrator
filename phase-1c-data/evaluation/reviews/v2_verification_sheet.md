@@ -105,3 +105,7 @@ A cross-case wording check found that the first author-assisted amendment change
 ## Case 020 exact decision brief — 15 October 2026
 
 The [source-bound route adjudication](case_020_route_adjudication.md) compares the confirmed October receipt with the minimum, modal and maximum offer schedules, lists the missing Sep 10 test and dispatch evidence, and states the precise gate alternatives and consequences. Packet/provider hashes and the source-audit projections were rechecked against the passing PR workflow artifact. This is a primary-author decision brief, not a new reviewer, accepted answer or change to the original/assisted drafts. Case 020 remains unresolved; accepted answers remain **0/36**.
+
+## Provider verification-age source audit — 15 October 2026
+
+The source-only audit now reports the separate provider records' `verified_at` ages under approved F1's inclusive seven-day window. Four records appear in cases 021, 022, 025 and 026, each verified about 1.42–1.58 hours before its run; 023/024 have no provider record. This is **only verification age**, not a finding that identity, capacity, binding status, dates or full contract term pass. The new report SHA-256 is `a2fc5d3956cf436144c28068e35c4367166a19e8ae37279251e1908ca13ab2d6`. Removing only the newly reported provider-age fields reproduces the previous report digest `87f71a57...`, confirming that other audited facts stayed unchanged. Seven local tests pass. All source packets and model/author-assisted drafts remain unchanged; 0/36 answers accepted.
