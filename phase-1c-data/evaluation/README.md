@@ -209,3 +209,7 @@ The source-only contract audit reports verification age for the four separate pr
 ## Digital provider field comparison — 15 October 2026
 
 The audit now reports the sealed provider record's declared product, configuration, region, capacity and calendar-month term alignment with the digital source packet. It finds full declared term coverage for 021/022, shortened coverage for 025/026, and absent proof for 023/024. This is source-only evidence for substantive review; it does not assign gates or accept model findings. The new report digest and replay boundary are in the [verification sheet](reviews/v2_verification_sheet.md). Inputs and both draft views are unchanged; accepted answers remain 0/36.
+
+## Exact service-region source facts — 15 October 2026
+
+The source-only audit now exposes exact active regional eligibility for scheduled service: 027/028 explicitly eligible in DE-NW, 029/030 explicitly ineligible in DE-BY. It does not infer an appointment, customer acceptance or a gate. The [verification sheet](reviews/v2_verification_sheet.md) records the new audit digest and replay check. Inputs and original/author-assisted drafts remain separate and unchanged; accepted answers remain 0/36.
