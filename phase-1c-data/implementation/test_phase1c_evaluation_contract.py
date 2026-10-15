@@ -6,7 +6,7 @@ import hashlib
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
-from audit_phase1c_evaluation_contract import age_observation, audit_case, audit_inputs, digest, quote_credit_arithmetic, advance_workdays, offer_operation_projections, provider_verification_observations, calendar_month_anniversary, provider_source_comparisons
+from audit_phase1c_evaluation_contract import age_observation, audit_case, audit_inputs, digest, quote_credit_arithmetic, advance_workdays, offer_operation_projections, provider_verification_observations, calendar_month_anniversary, provider_source_comparisons, service_region_comparisons
 
 
 class ContractAuditTests(unittest.TestCase):
@@ -98,6 +98,23 @@ class ContractAuditTests(unittest.TestCase):
         self.assertFalse(result['same_region'])
         self.assertFalse(result['matching_pool_checks'][0]['same_product_provider_region_term_and_configuration'])
         self.assertEqual(provider_source_comparisons(payload, []), [])
+
+    def test_service_region_requires_exact_active_match_even_without_installation_request(self):
+        payload = {'source_rows': {
+            'deal': {'destination_country_code':'DE','destination_region':'DE-BY'},
+            'lines':[{'product_id':'service','catalog_version':'V1',
+                      'fulfillment_mode':'scheduled_service','installation_requested':False}],
+            'compatibility':[
+                {'is_active':True,'rule_type':'installation_eligibility','source_product_id':'service',
+                 'catalog_version':'V1','condition_json':{'country_code':'DE','region':'DE-NW','eligible':True}},
+                {'is_active':True,'rule_type':'installation_eligibility','source_product_id':'service',
+                 'catalog_version':'V1','condition_json':{'country_code':'DE','region':'DE-BY','eligible':False}}]}}
+        result = service_region_comparisons(payload)[0]
+        self.assertFalse(result['installation_requested'])
+        self.assertEqual(result['exact_active_rule_matches'],
+                         [{'pointer':'/source_rows/compatibility/1','eligible':False}])
+        payload['source_rows']['compatibility'][1]['is_active'] = False
+        self.assertEqual(service_region_comparisons(payload)[0]['exact_active_rule_matches'], [])
 
     def test_missing_separate_day_operation_does_not_invent_arrival(self):
         payload = {'run_context':{'as_of_at':'2026-09-01T12:00:00+00:00'},'source_rows':{
