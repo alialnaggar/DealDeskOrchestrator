@@ -1,5 +1,9 @@
 # Phase 1C release review — provisional decisions
 
+## Runtime output checkpoint — 15 October 2026
+
+[Full PostgreSQL run 38684358451](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/38684358451) passed a new rollback-only development execution test. It persisted six deterministic responsibility summaries and one Orchestrator envelope from the actual reader and compiled-policy decision, then checked typed outputs, run/config identity, duplicate execution rejection and an invalid-contract preflight. The [runtime output review](phase1c_runtime_output_review.md) names the artifact and remaining gaps. This is not six AI specialist runs, durable attempt handling, human approval or an evaluation score. `agent_execution_log.output_json` stays open, as do the other five field marks, two calibration evidence reviews, 0/36 answer acceptance and `ready_for_generation=false`.
+
 ## Current authoring checkpoint — 14 October 2026
 
 Thirty-six separate provisional evaluation source cases are authored, with two variants per matrix archetype. They are built from new operational rows in isolated per-case database transactions and shared catalogue/BOM/policy context. CI validates rows, source exclusion, source-only packet replay and provider-channel separation; it does not create expected decisions or score the baseline. The authoring manifest is reviewer-only, and all case reviews and independent answers remain pending (0/36). Five selected sellable SKUs and known development archetypes limit breadth; ID separation does not establish semantic independence. Review source dates, source-owner provenance and meaningful scenario realization before freezing or reviewing answers. No calibration choice, field mark or generation flag is closed by authoring these inputs.
