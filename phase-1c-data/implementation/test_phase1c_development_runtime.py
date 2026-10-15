@@ -26,6 +26,7 @@ class DevelopmentRuntimeTests(unittest.TestCase):
         import psycopg
         from psycopg.rows import dict_row
         self.conn = psycopg.connect(os.environ["DATABASE_URL"], row_factory=dict_row)
+        self.conn.execute("SET search_path TO deal_desk, public")
         self.conn.execute("""INSERT INTO deal_desk.deal_runs
             (run_id, deal_id, original_policy_set_code, applied_policy_set_code,
              catalog_version_used, as_of_at, data_snapshot_ref, input_snapshot_json,
