@@ -826,3 +826,7 @@ The source-only audit now reports provider identity/configuration, concurrent ca
 ## Service-region fact checkpoint — 15 October 2026
 
 Exact active regional-rule matching is now reported for the four evaluation service cases. The two DE-NW records are eligible and the two DE-BY records explicitly ineligible. This does not establish appointment availability or decide the whole-deal gate; substantive review of all six findings is still required. Nine local tests pass; 0/36 accepted, six field marks and two calibration reviews open, `ready_for_generation=false`.
+
+## Case-level review queue — 15 October 2026
+
+The [v2 handoff](../evaluation/reviews/v2_review_handoff.md) organizes the 36 pending inputs into 18 source-fact pairs and specifies how to compare a fresh source review with the preserved model and author-assisted drafts. It records no accepted answer or baseline score. Case 020 and every six-responsibility finding remain for substantive adjudication; the six field marks, two calibration reviews and `ready_for_generation=false` remain open.
