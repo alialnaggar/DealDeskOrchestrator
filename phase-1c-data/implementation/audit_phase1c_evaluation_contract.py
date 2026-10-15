@@ -28,6 +28,13 @@ def age_observation(value, as_of, comparison_hours):
             'within_comparison_window': 0 <= age <= comparison_hours}
 
 
+def provider_verification_observations(records, as_of, max_days):
+    """Report verification age only; identity, term and binding need separate review."""
+    return [{'pointer': f'/records/{i}/verified_at', 'document': 'provider',
+             **age_observation(row['verified_at'], as_of, Decimal(max_days) * 24)}
+            for i, row in enumerate(records)]
+
+
 def quote_credit_arithmetic(rows):
     """Full submitted commercial quantity, never concurrent digital demand."""
     lines, revenue, profit, listed = [], Decimal(0), Decimal(0), Decimal(0)
@@ -151,7 +158,7 @@ def offer_operation_projections(payload, comparison_hours):
     return projections
 
 
-def audit_case(payload, comparison_hours):
+def audit_case(payload, comparison_hours, provider_records=()):
     contract = payload.get('business_contract')
     if contract is not None and Decimal(contract['evidence_age']['snapshot_max_elapsed_hours']) != comparison_hours:
         raise ValueError('Comparison window differs from the declared business contract')
@@ -193,6 +200,9 @@ def audit_case(payload, comparison_hours):
              for i, row in enumerate(rows['lines'])]
     return {'case_id': payload['case_id'], 'as_of_at': as_of,
             'observations': observations, 'offers': offers,
+            'provider_verification_observations': provider_verification_observations(
+                provider_records, as_of,
+                contract['evidence_age']['provider_verification_max_elapsed_days'] if contract else 7),
             'cost_parameters_present': rows['cost_parameters'] is not None,
             'lines': lines, 'service_rules': service_rules,
             'quote_credit_arithmetic': quote_credit_arithmetic(rows),
@@ -218,7 +228,8 @@ def audit_inputs(index, directory, comparison_hours=Decimal(24)):
             raise ValueError(f'{cid}: payload identity differs')
         if 'business_contract_sha256' in index and digest(packet['payload'].get('business_contract')) != index['business_contract_sha256']:
             raise ValueError(f'{cid}: declared business contract hash differs')
-        cases.append(audit_case(packet['payload'], comparison_hours))
+        provider_records = json.loads(provider)['records']
+        cases.append(audit_case(packet['payload'], comparison_hours, provider_records))
     outside = sorted({case['case_id'] for case in cases
                       if any(not item['within_comparison_window'] for item in case['observations'])})
     divergent = sorted({case['case_id'] for case in cases for offer in case['offers']
@@ -247,3 +258,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
