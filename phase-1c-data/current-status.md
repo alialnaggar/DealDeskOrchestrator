@@ -1,6 +1,6 @@
 # Phase 1C current status — 15 October 2026
 
-This page is a short navigation point for the active [draft PR #1](https://github.com/alialnaggar/DealDeskOrchestrator/pull/1). It summarizes evidence as of branch head `cfe8f224985137c4b0ae82ed564863e5b3cae08c`; later commits should update the pin. The [release review](implementation/phase1c_release_review.md), [readiness plan](implementation/phase1c_data_readiness_plan.md), [calibration sheet](calibration-decision-sheet.md) and [evaluation handoff](evaluation/reviews/v2_review_handoff.md) hold the details.
+This page is a short navigation point for the active [draft PR #1](https://github.com/alialnaggar/DealDeskOrchestrator/pull/1). It summarizes evidence from the last fully verified checkpoint `cfe8f224985137c4b0ae82ed564863e5b3cae08c`; subsequent documentation commits do not change the underlying source cohorts. The [release review](implementation/phase1c_release_review.md), [readiness plan](implementation/phase1c_data_readiness_plan.md), [calibration sheet](calibration-decision-sheet.md) and [evaluation handoff](evaluation/reviews/v2_review_handoff.md) hold the details.
 
 ## What exists
 
