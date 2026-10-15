@@ -205,3 +205,7 @@ The source-only schedule helper now refuses to illustrate a delivery path from a
 ## Separate provider timestamp evidence — 15 October 2026
 
 The source-only contract audit reports verification age for the four separate provider proofs in cases 021/022/025/026 and an empty record set for 023/024. These ages are inside the approved seven-day window, but the report does not certify identity, quantity, binding dates or full-term coverage. It reads no draft answers or decision engine. The prior audit is reproducible after dropping the new age fields; all 36 inputs and both draft views remain unchanged. See the [verification sheet](reviews/v2_verification_sheet.md). Accepted answers remain 0/36.
+
+## Digital provider field comparison — 15 October 2026
+
+The audit now reports the sealed provider record's declared product, configuration, region, capacity and calendar-month term alignment with the digital source packet. It finds full declared term coverage for 021/022, shortened coverage for 025/026, and absent proof for 023/024. This is source-only evidence for substantive review; it does not assign gates or accept model findings. The new report digest and replay boundary are in the [verification sheet](reviews/v2_verification_sheet.md). Inputs and both draft views are unchanged; accepted answers remain 0/36.
