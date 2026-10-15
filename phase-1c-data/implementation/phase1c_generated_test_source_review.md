@@ -27,9 +27,9 @@ An empty `availability_finding_source_ids` list does **not** mean the reader saw
 | `STOCK-ALLOCATED` | 6 | An inventory observation in every case, including five dated generated variants | Fully allocated stock contributes no free supply. |
 | `STOCK-STALE` | 5 | An inventory observation in every case, including four dated generated variants | The observation is too old to establish current stock. |
 | `SUPPLY-CANCELLED` | 5 | A cancelled inbound record in every case, with the same `CONFLICT-INBOUND-09` reused | Cancelled receipt is not binding supply. |
-| `SUPPLY-OFFER-ONLY` | 6 | Supplier offers are reader-visible; the report previously omitted their IDs from its raw-source section | An offer is an uncommitted procurement possibility, not a confirmed receipt. |
+| `SUPPLY-OFFER-ONLY` | 6 | All six select the same reader-visible `CONFLICT-OFFER-08`; the report previously omitted supplier offer IDs from its raw-source section | An offer is an uncommitted procurement possibility, not a confirmed receipt. |
 
-The per-case artifact now lists `supplier_offers` IDs in `reader_visible_raw_source_ids`, and the database test checks that all six offer-only variants show an offer while their Availability finding source set remains empty. The test validates diagnostic visibility and the source boundary; it does not accept a deal decision.
+The per-case artifact now lists `supplier_offers` IDs in `reader_visible_raw_source_ids`; [CI run 38682916817](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/38682916817) checks that all six offer-only variants show an offer while their Availability finding source set remains empty. The report shows the same offer reused six times, a concrete breadth limit. The test validates diagnostic visibility and the source boundary; it does not accept a deal decision.
 
 ## Disposition and next review
 
