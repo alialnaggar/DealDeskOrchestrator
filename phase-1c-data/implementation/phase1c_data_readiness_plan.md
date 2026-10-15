@@ -814,3 +814,7 @@ The [source-bound decision brief](../evaluation/reviews/case_020_route_adjudicat
 ## Evaluation schedule fact guard — 15 October 2026
 
 The source-only evaluation audit rejects delivery projections from inactive or expired offers. Local unit tests pass and the pinned 36-case audit is byte-identical to its previous report. This narrows a future false-projection risk but does not resolve case 020's modal-versus-maximum-lead gate or independently verify any answer. Keep source packets, original model and author-assisted draft separate; 0/36 accepted, six field marks and two calibration reviews open, `ready_for_generation=false`.
+
+## Provider-age fact checkpoint — 15 October 2026
+
+The separate provider files are now audited for `verified_at` age after their exact-byte hash check. Four proof timestamps are within the approved seven-day window; two digital cases have no proof. This reports one source property and does not settle binding, quantity or full-term coverage, nor accept any answer. Seven local tests pass and the previous source-audit output is unchanged except for these added age fields. Continue case-level substantive review; 0/36 accepted, six field marks and two calibration reviews open, `ready_for_generation=false`.
