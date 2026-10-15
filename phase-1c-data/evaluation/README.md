@@ -213,3 +213,7 @@ The audit now reports the sealed provider record's declared product, configurati
 ## Exact service-region source facts — 15 October 2026
 
 The source-only audit now exposes exact active regional eligibility for scheduled service: 027/028 explicitly eligible in DE-NW, 029/030 explicitly ineligible in DE-BY. It does not infer an appointment, customer acceptance or a gate. The [verification sheet](reviews/v2_verification_sheet.md) records the new audit digest and replay check. Inputs and original/author-assisted drafts remain separate and unchanged; accepted answers remain 0/36.
+
+## Substantive-review handoff — 15 October 2026
+
+The [v2 review handoff](reviews/v2_review_handoff.md) gives a pinned 18-pair queue covering all 36 cases, with source-fact prompts, reviewer order, provenance requirements and the still-open case 020 decision. It deliberately contains no accepted gates or agent-visible answer file. The model and primary-author views remain separately identified; 0/36 accepted answers, six field marks, two calibration reviews and `ready_for_generation=false`.
