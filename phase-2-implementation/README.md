@@ -70,4 +70,10 @@ Before changing, replacing, removing or materially expanding an agreed technolog
 
 ## Immediate next action
 
-**Workshop 2:** specify the LangGraph run/state transitions and the mechanism that keeps Phase 1C evidence consistent across graph nodes and candidate reruns. Explain snapshot alternatives and their tradeoffs before deciding. Then pin specialist/tool and candidate contracts against the actual Phase 1C interfaces. Follow the [roadmap](planning/implementation-roadmap.md); do not begin agent coding from this planning README alone.
+**Workshop 3:** verify the actual Phase 1C reader, rule and candidate interfaces, then define specialist tool and candidate contracts. Do not begin agent coding from this planning README alone. Follow the [roadmap](planning/implementation-roadmap.md); do not begin agent coding from this planning README alone.
+
+## Workshop 2 result — LangGraph implementation design direction
+
+[Workshop 2 technical specification](architecture/workshop-2-langgraph-state-evidence-and-transitions.md) and the [decision log](planning/decision-log.md) record W2.1–W2.4: typed authoritative assessment state with isolated specialist contracts; version-pinned evidence and controlled discovery; PostgreSQL-backed LangGraph checkpoints; and rule-controlled transitions with post-specialist validation, bounded candidate loops and safe human handoff. These directions are approved, but exact state/tool signatures, snapshot replay, checkpointer setup and Phase 1C compatibility remain open. No agent code or database setup has been performed.
+
+**Next:** Workshop 3 should verify real Phase 1C interfaces before specifying specialist tools and candidate contracts. Workshop 2's proposed test matrix is not evidence that those tests exist or pass.
