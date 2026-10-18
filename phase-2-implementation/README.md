@@ -1,6 +1,6 @@
 # Phase 2 — Planning and implementation operating plan
 
-**Status:** Agreed planning approach, not the completed technical blueprint. **Branch:** `phase2-agent-implementation`. **Source of truth:** this GitHub repository. Do not treat proposed file names, technology decisions or milestones as already implemented.
+**Status:** Agreed planning approach with Workshop 1 directions D1–D3 provisionally approved on 18 October 2026; not the completed technical blueprint. **Branch:** `phase2-agent-implementation`. **Source of truth:** this GitHub repository. Do not treat proposed file names, technology decisions or milestones as already implemented.
 
 ## Purpose
 Build a comprehensive **Deal Desk Orchestrator — Phase 2 Master Implementation Blueprint**, potentially 50–80 pages if warranted by substance, before broad agent implementation. It must explain *what to build, why, interfaces, invariants, tests, acceptance criteria and forbidden behavior*. Do not generate a long one-shot document filled with assumptions. Develop sections iteratively from verified repository sources and user-approved decisions; keep it change-controlled, not frozen. Begin narrow implementation when interfaces and first milestone are sufficiently specified, rather than waiting for every document or Phase 1C dataset to finish.
@@ -19,7 +19,7 @@ Do not confuse GitHub (versioned storage/review) with the interface used to inst
 ## Master blueprint content
 **Part I — Foundations and boundaries:** thesis objectives/RQs, relevant Phase 1A findings, approved Phase 1B decisions, actual Phase 1C readiness, functional/nonfunctional requirements, scope, assumptions, success criteria.
 
-**Part II — Technical architecture:** Python backend and project layout, component interfaces, LangGraph suitability decision, shared orchestration state, dependency and rerun logic, model/provider abstraction, PostgreSQL reader integration, Next.js UI, deployment boundaries.
+**Part II — Technical architecture:** Python backend and project layout, component interfaces, LangGraph implementation design (framework selected in D3), shared orchestration state, dependency and rerun logic, model/provider abstraction, PostgreSQL reader integration, Next.js UI, deployment boundaries.
 
 **Part III — Six specialist specifications:** Configuration Validator; Pricing & Margin; Availability/Production/Fulfillment; Credit & Risk; Policy & Compliance; Approval Routing. For each: responsibilities, required inputs and typed outputs, evidence and tool access, deterministic versus LLM responsibilities, dependencies, proposals and prohibitions, failures, examples and tests. Include orchestrator specification separately.
 
@@ -33,12 +33,12 @@ Include diagrams, state transitions, example deal traces, sample typed/JSON cont
 
 ## Document organization (proposal, subject to repository audit)
 - `phase-2-implementation/master-implementation-blueprint.md` — authoritative comprehensive plan
-- `phase-2-implementation/architecture/` — focused technical design, orchestration and contracts
+- `phase-2-implementation/architecture/` — focused technical design, orchestration and contracts; [Workshop 1 baseline](architecture/workshop-1-architecture-baseline.md)
 - `phase-2-implementation/specifications/` — six agent specifications
-- `phase-2-implementation/planning/implementation-roadmap.md`
+- [implementation roadmap](planning/implementation-roadmap.md)
 - `phase-2-implementation/planning/task-backlog.md`
 - `phase-2-implementation/planning/progress-tracker.md`
-- `phase-2-implementation/planning/decision-log.md`
+- [decision log](planning/decision-log.md)
 - `phase-2-implementation/evaluation/evaluation-plan.md`
 
 Create only needed files after auditing existing locations. Define precedence: approved Phase 1B domain design and Phase 1C data/rules remain authoritative for their scopes; Phase 2 blueprint governs implementation choices consistent with them; task specs must not silently override higher-level decisions. Record proposed changes and seek review for material conflicts.
@@ -62,5 +62,12 @@ For each milestone: implement only approved scope; run relevant tests; summarize
 ## Learning, progress and change control
 Maintain roadmap (order/dependencies), progress tracker (status with commit/test evidence), decision log (options/rationale/approval/status) and a concise teaching explanation for each milestone. Explain with one example deal: business problem, evidence, AI action, fixed-rule verification, tests and remaining work. Keep the user able to defend the implementation independently. When implementation contradicts the blueprint, document the conflict, decide explicitly and version the blueprint rather than silently deviating.
 
+## Workshop 1 result and technology governance
+
+The [decision log](planning/decision-log.md) records D1 (bounded Fulfillment AI proposal), D2 (versioned specialist contracts and restricted tools), D3 (LangGraph Orchestrator, Configuration-first execution, frozen run and candidate isolation) as **provisionally approved**. [Workshop 1 architecture](architecture/workshop-1-architecture-baseline.md) separates the complete target design from the narrow first milestone. LangGraph is the selected orchestration framework from M1; ordinary Python owns fixed business logic. Sequential eligible nodes come first; checkpointing, persistence, concurrency and exact graph details remain open. Do not substitute a custom Python state machine for LangGraph.
+
+Before changing, replacing, removing or materially expanding an agreed technology, framework, library, database, model provider, development tool or infrastructure component, present the current agreement, proposal, need, alternatives, architecture/implementation/cost/learning implications and recommendation; obtain Ali's explicit approval. Normal details within approved tools need no repeated approval unless they materially alter architecture or create meaningful cost/security implications. LangGraph does not itself authorize other infrastructure or paid APIs. Record approved changes in the decision log.
+
 ## Immediate next action
-**Stage 1: full Phase 2 readiness audit.** Verify current GitHub branch and existing code; read authoritative Phase 1B and latest Phase 1C contracts; identify ready/provisional interfaces, reusable implementation, open questions, first end-to-end slice, and VM readiness checks. Present the audit and decision list **before** drafting the full blueprint or making broad implementation changes.
+
+**Workshop 2:** specify the LangGraph run/state transitions and the mechanism that keeps Phase 1C evidence consistent across graph nodes and candidate reruns. Explain snapshot alternatives and their tradeoffs before deciding. Then pin specialist/tool and candidate contracts against the actual Phase 1C interfaces. Follow the [roadmap](planning/implementation-roadmap.md); do not begin agent coding from this planning README alone.
