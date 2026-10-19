@@ -35,7 +35,7 @@ Record each later milestone with commit/PR, fixture, test and CI evidence, known
 
 **Limitations:** Actual pinned binding fixture is ten units, while the 20-unit 12+8 conditional example remains illustrative and unverified. No LangGraph node/checkpoint storage, Fulfillment tool, access ledger, model, full candidate rerun or VM setup exists yet. Candidate correlation's accepted-path integration and the three sealed-pool tool coverage tests remain next gates. The current Phase 1C role list may be unavailable under a blocked route, and conditional candidate verification remains Phase 1C-owned.
 
-**M1.1 authorized and in progress:** Sequential original-only LangGraph,
+**M1.1 implemented and tested:** Sequential original-only LangGraph,
 versioned state holding the M1.0 sealed bundle, Configuration-first result,
 six fixed responsibility mappings and explicit prerequisites. Use a separate
 disposable PostgreSQL checkpoint database in CI; prove resumption from a
@@ -43,9 +43,10 @@ node boundary and measure actual storage. The pinned Phase 1C aggregate
 decision is assembled once, not six new rule engines. Model, candidate,
 frontend, VM and Phase 1C changes remain outside this milestone.
 
-The initial [M1.1 PostgreSQL CI
-run](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39255258148)
-passed 15 tests and proved a cross-process node-boundary resume. The backend
-README records measured checkpoint fields and shared table sizes. A follow-up
-CI run validates the explicit technical-failure stop path and pinned
-Python 3.12 workflow before M1.1 is marked complete.
+The [M1.1 PostgreSQL CI
+run](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39255592023)
+passed 16 tests and proved a cross-process node-boundary resume, safe
+technical-failure stop and pinned Python 3.12 environment. The backend
+README records measured checkpoint fields and shared table sizes.
+Conditional mixed-supply candidates, exact blocked-route approval roles
+and rule-by-rule Policy prerequisites remain Phase 1C integration gates.

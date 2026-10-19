@@ -87,10 +87,10 @@ neither defines Pydantic specialist schemas nor calls a hosted service.
 CI uses a second disposable PostgreSQL database, `deal_desk_m1_checkpoint`,
 for checkpoints. A test pauses after Configuration in a separate process,
 opens a new saver and graph, and resumes at Pricing without rerunning
-Configuration. The first passing [M1.1 CI run
-39255258148](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39255258148)
-ran 15 tests, including all eight M1.0 tests. For its completed restart
-thread, `pg_column_size` reported 8,659 bytes for the latest checkpoint
+Configuration. The final code [M1.1 CI run
+39255592023](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39255592023)
+passed 16 tests, including all eight M1.0 tests. For its completed restart
+thread, `pg_column_size` reported 8,614 bytes for the latest checkpoint
 JSONB field and 65 bytes for its metadata. The shared tables' total
 relation-plus-index sizes, after several test threads and multiple
 checkpoints, were 344,064 bytes (`checkpoints`), 98,304 bytes
