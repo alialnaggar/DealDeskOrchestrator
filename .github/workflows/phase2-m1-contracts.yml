@@ -58,6 +58,9 @@ jobs:
           python -m pip install 'psycopg[binary]>=3.2,<4' 'PyYAML>=6,<7'
       - name: Apply pinned Phase 1C schema in disposable test database
         run: psql -X -v ON_ERROR_STOP=1 -f phase1c-pinned/phase-1c-data/implementation/schema.sql
+      - name: Load actual pinned Phase 1C reference rows
+        working-directory: phase1c-pinned/phase-1c-data/implementation
+        run: python -c 'from test_phase1c_reader import load_fixture_rows; load_fixture_rows()'
       - name: Load the pinned compiled commercial rules
         working-directory: phase1c-pinned/phase-1c-data/implementation
         run: |
