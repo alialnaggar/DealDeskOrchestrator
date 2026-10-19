@@ -62,7 +62,7 @@ It did not change Phase 1C source code.
   checkpoint state. No LangGraph nodes, tool adapters, access ledger, model
   calls, checkpoint write/read or restart test exist in M1.0.
 - Tool source-pool coverage for all three approved Fulfillment operations is
-  an M1.1 gate. An absent record in this bounded pool must later be reported
+  a subsequent Fulfillment milestone gate. An absent record in this bounded pool must later be reported
   as a discovery limitation, not as proof that no relevant supply exists.
 - Full candidate rerun and human comparison remain later milestone work.
 

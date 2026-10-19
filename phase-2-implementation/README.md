@@ -1,6 +1,6 @@
 # Phase 2 — Planning and implementation operating plan
 
-**Status:** Agreed planning approach with Workshop 1 directions D1–D3 provisionally approved on 18 October 2026; not the completed technical blueprint. **Branch:** `phase2-agent-implementation`. **Source of truth:** this GitHub repository. Do not treat proposed file names, technology decisions or milestones as already implemented.
+**Status:** Workshops 1–3 and M1 integration decisions approved at their recorded levels; M1.0 and original-only M1.1 implemented. The full technical blueprint and AI specialists remain unfinished. **Branch:** `phase2-agent-implementation`. **Source of truth:** this GitHub repository. Distinguish completed milestones from proposed later work.
 
 ## Purpose
 Build a comprehensive **Deal Desk Orchestrator — Phase 2 Master Implementation Blueprint**, potentially 50–80 pages if warranted by substance, before broad agent implementation. It must explain *what to build, why, interfaces, invariants, tests, acceptance criteria and forbidden behavior*. Do not generate a long one-shot document filled with assumptions. Develop sections iteratively from verified repository sources and user-approved decisions; keep it change-controlled, not frozen. Begin narrow implementation when interfaces and first milestone are sufficiently specified, rather than waiting for every document or Phase 1C dataset to finish.
@@ -74,10 +74,23 @@ Before changing, replacing, removing or materially expanding an agreed technolog
 
 ## Workshop 2 result — LangGraph implementation design direction
 
-[Workshop 2 technical specification](architecture/workshop-2-langgraph-state-evidence-and-transitions.md) and the [decision log](planning/decision-log.md) record W2.1–W2.4: typed authoritative assessment state with isolated specialist contracts; version-pinned evidence and controlled discovery; PostgreSQL-backed LangGraph checkpoints; and rule-controlled transitions with post-specialist validation, bounded candidate loops and safe human handoff. These directions are approved, but exact state/tool signatures, snapshot replay, checkpointer setup and Phase 1C compatibility remain open. No agent code or database setup has been performed.
+[Workshop 2 technical specification](architecture/workshop-2-langgraph-state-evidence-and-transitions.md) and the [decision log](planning/decision-log.md) record W2.1–W2.4: typed authoritative assessment state with isolated specialist contracts; version-pinned evidence and controlled discovery; PostgreSQL-backed LangGraph checkpoints; and rule-controlled transitions with post-specialist validation, bounded candidate loops and safe human handoff. M1.0 now seals a pinned reader bundle and M1.1 checkpoints the original assessment in a disposable PostgreSQL database. Candidate transitions, tool signatures and conditional Phase 1C verification remain open.
 
-**Next:** Workshop 3 should verify real Phase 1C interfaces before specifying specialist tools and candidate contracts. Workshop 2's proposed test matrix is not evidence that those tests exist or pass.
+Workshop 3 subsequently inspected the pinned Phase 1C interfaces and recorded its specialist contracts. Consult the actual M1 tests for implemented coverage.
 
 ## Workshop 3 and focused M1 review
 
-W3.1–W3.8 are approved directions in the [decision log](planning/decision-log.md); Workshop 3 is closed at that level. The broad Workshop 4 is replaced by the focused [M1 contract and integration specification](architecture/m1-contract-and-integration-spec.md). Ali approved two pinned checkouts and a sealed, versioned reader bundle with checked candidate rereads on 19 October 2026. The exact Phase 1C pin, alternatives, compatibility gaps, acceptance tests and implementation sequence are recorded there. A conditional 12+8 candidate cannot be called verified under the pinned Phase 1C interface. No Phase 1C merge/edit, agent code, dependency installation, paid model or VM change has been authorized by these documentation decisions.
+W3.1–W3.8 are approved directions in the [decision log](planning/decision-log.md); Workshop 3 is closed at that level. The broad Workshop 4 is replaced by the focused [M1 contract and integration specification](architecture/m1-contract-and-integration-spec.md). Ali approved two pinned checkouts and a sealed, versioned reader bundle with checked candidate rereads on 19 October 2026. The exact Phase 1C pin, alternatives, compatibility gaps, acceptance tests and implementation sequence are recorded there. A conditional 12+8 candidate cannot be called verified under the pinned Phase 1C interface. Subsequent separate approvals authorized M1.0 and bounded M1.1 coding; no Phase 1C merge/edit, paid model or VM change was authorized.
+
+## Implemented M1 boundaries
+
+- [M1.0 and M1.1 backend evidence](backend/README.md): pinned read-only
+  reader, sealed bundle, sequential original-only LangGraph, six distinct
+  deterministic result mappings from **one** Phase 1C aggregate decision,
+  PostgreSQL checkpoint resume and CI tests.
+- [Roadmap](planning/implementation-roadmap.md): remaining fixed-interface
+  gaps and later separately approved Fulfillment investigation/candidate work.
+
+No Fulfillment AI, candidate loop, model call, frontend or VM deployment was
+implemented by these milestones. Configuration is the first graph specialist
+result; Phase 1C's aggregate function calculates the fixed domains together.
