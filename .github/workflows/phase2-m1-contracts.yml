@@ -58,5 +58,10 @@ jobs:
           python -m pip install 'psycopg[binary]>=3.2,<4' 'PyYAML>=6,<7'
       - name: Apply pinned Phase 1C schema in disposable test database
         run: psql -X -v ON_ERROR_STOP=1 -f phase1c-pinned/phase-1c-data/implementation/schema.sql
+      - name: Load the pinned compiled commercial rules
+        working-directory: phase1c-pinned/phase-1c-data/implementation
+        run: |
+          python compile_phase1c_policy.py --output /tmp/phase2_m1_compiled_rules.sql
+          psql -X -v ON_ERROR_STOP=1 -f /tmp/phase2_m1_compiled_rules.sql
       - name: Run offline and pinned PostgreSQL adapter tests
         run: python -m unittest discover -s phase-2-implementation/backend/tests -p 'test_*.py' -v
