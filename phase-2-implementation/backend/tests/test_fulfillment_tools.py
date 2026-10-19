@@ -1,7 +1,7 @@
 """M1.2 sealed-source projections, permission and checkpoint budget gates."""
 
 import copy
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
 import os
 from pathlib import Path
 from types import SimpleNamespace
@@ -65,7 +65,8 @@ def _offline():
                                    "product_id": "P1", "lead_days_mode": 8,
                                    "order_calendar_json": {}}],
               "shipping_lanes": [{"lane_id": "LANE1", "origin_location_id": "W1",
-                                  "destination_country_code": "EG", "destination_region": "Cairo"}],
+                                  "destination_country_code": "EG", "destination_region": "Cairo",
+                                  "cutoff_local_time": time(15, 0)}],
               "facts": {"lines": [{"line_id": "L1", "fulfillment_status": "conditional",
                                     "shipping_options": [{"stock_id": "S1", "supply_ids": [],
                                                           "quantity": 12, "location": "W1",

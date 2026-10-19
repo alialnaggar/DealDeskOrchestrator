@@ -4,7 +4,7 @@ No tool derives a new quantity, delivery date, binding classification or
 candidate result. The graph/checkpointer is the trusted call-budget ledger.
 """
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from uuid import UUID
 
@@ -20,7 +20,7 @@ def _json(value):
         return {str(key): _json(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
         return [_json(item) for item in value]
-    if isinstance(value, (date, datetime, UUID, Decimal)):
+    if isinstance(value, (date, datetime, time, UUID, Decimal)):
         return str(value)
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
