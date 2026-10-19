@@ -140,5 +140,18 @@ slices nor treats an indicative supplier offer as a commitment.
 Run the existing locked Python 3.12 test command and two-checkout CI workflow
 above. The M1.2 tests cover source identity, returned-ID citations, restart
 budgets, authorization, horizon, response truncation and the real Phase 1C
-binding/offer fixtures. CI results and any remaining integration issues must
-be recorded after a successful run.
+binding/offer fixtures. [Final implementation CI run
+39267937168](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39267937168)
+passed all 29 offline and PostgreSQL tests, preserving the 16 M1.0/M1.1
+tests. The real selected-stock/confirmed-inbound and separate conditional-offer
+fixtures exercised all three tools; a synthetic sealed-pool contract test
+exercised the unsupported mixed binding/offer path. PostgreSQL restart kept
+the returned-source citation ledger and all 12 consumed call reservations.
+
+**Limits:** There is no general Phase 1C mixed-supply path or conditional
+candidate verifier. The tools do not discover sources outside the reader's
+sealed selection, or confirm stock reservation, supplier commitment or human
+approval. Ledger reservation is sequential: parallel tool invocations require
+an atomic update design before concurrency is enabled. The run demonstrates
+checkpoint recovery between calls; a call interrupted after reservation is
+conservatively consumed, and no response from it becomes citable.

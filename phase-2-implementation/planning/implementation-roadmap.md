@@ -63,6 +63,14 @@ citations. The original graph and Phase 1C pin remain unchanged in function;
 no AI or candidate node is added. Record the final passing CI run and fixture
 coverage here before describing M1.2 as complete.
 
+**M1.2 verified:** [GitHub Actions run
+39267937168](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39267937168)
+passed 29 tests, including all 16 existing tests, actual pinned Phase 1C
+stock/inbound and offer tool projections, source-detail access, authorization,
+line-scoped citations, budget retention and PostgreSQL checkpoint restart.
+The mixed 12+8 delivery path is still unsupported by the pinned fixed
+interface and is not a verified candidate.
+
 **Next proposed bounded gate:** offline mock Fulfillment contribution over these
 three tools, with typed proposal/finding/abstention and explicit eligibility;
 keep candidate verification separate and conditional 12+8 unverified until
