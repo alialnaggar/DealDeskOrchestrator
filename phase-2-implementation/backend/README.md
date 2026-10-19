@@ -104,3 +104,41 @@ Known fixed-interface limits remain: blocked cases do not expose the full
 set of otherwise required approval roles, and Phase 1C does not provide
 rule-level Policy prerequisite evaluation. M1.1 has no AI investigation,
 alternative candidates, live models, UI or VM deployment.
+
+## M1.2 bounded Fulfillment investigation (original-only)
+
+`fulfillment_tools.py` exposes `inspect_line_supply`,
+`inspect_fulfillment_paths` and `inspect_evidence_record` over M1.0's sealed
+reader bundle. It performs no business SQL or writes. `tool_permissions.py`
+has six versioned specialist allowlists; only Fulfillment's three operations
+are enabled. Its trusted scope pins run/deal/customer/line/source/subject and
+the original context. The response contains a separate execution result,
+evidence/capability status, source records actually returned, and explicit
+gaps. A 30-day forward horizon after the requested date does not discard
+older stock snapshots or inbound provenance needed to assess freshness.
+
+`tool_ledger.py` reserves each attempt in the existing LangGraph PostgreSQL
+checkpoint *before* execution and appends a completion event. Twelve calls
+per original investigation include denied attempts; each response exposes at
+most 25 source records. Replay of a completed call ID returns its checkpointed
+response without consuming another call. An interrupted reservation consumes
+its call but supplies no citable evidence. Reusing a call ID with different
+arguments fails closed. Only IDs actually returned by completed, authorized
+calls within the pinned context can be cited or inspected in detail. The
+investigation adapter currently attaches to a completed original graph; it
+does not insert an AI node or candidate transition. It permits one sequential
+caller; parallel callers require a separate atomic reservation design.
+
+The actual pinned binding reference requests ten units and has eight fresh
+stock plus a confirmed inbound receipt; the separate offer reference is
+conditional. A mixed binding-plus-offer path is an explicit unsupported
+Phase 1C capability, even where existing shipping options are visible. A
+missing source is bounded absence from the sealed reader pool, never proof
+that no supply exists elsewhere. M1.2 neither verifies candidate delivery
+slices nor treats an indicative supplier offer as a commitment.
+
+Run the existing locked Python 3.12 test command and two-checkout CI workflow
+above. The M1.2 tests cover source identity, returned-ID citations, restart
+budgets, authorization, horizon, response truncation and the real Phase 1C
+binding/offer fixtures. CI results and any remaining integration issues must
+be recorded after a successful run.

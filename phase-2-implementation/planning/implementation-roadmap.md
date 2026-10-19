@@ -50,3 +50,20 @@ technical-failure stop and pinned Python 3.12 environment. The backend
 README records measured checkpoint fields and shared table sizes.
 Conditional mixed-supply candidates, exact blocked-route approval roles
 and rule-by-rule Policy prerequisites remain Phase 1C integration gates.
+
+## M1.2 implementation checkpoint
+
+The bounded, read-only Fulfillment investigation adapter adds three approved
+operations over the existing sealed Phase 1C pool, a default-deny six-role
+permission registry and an append-only, PostgreSQL-checkpointed access ledger.
+The 25-record response, 12-call investigation and 30-day forward horizon are
+engineering limits, not business rules. Historical selected provenance remains
+visible. A resumed investigation retains spent calls and returned-source
+citations. The original graph and Phase 1C pin remain unchanged in function;
+no AI or candidate node is added. Record the final passing CI run and fixture
+coverage here before describing M1.2 as complete.
+
+**Next proposed bounded gate:** offline mock Fulfillment contribution over these
+three tools, with typed proposal/finding/abstention and explicit eligibility;
+keep candidate verification separate and conditional 12+8 unverified until
+the Phase 1C fixed interface supports it. Request separate approval first.

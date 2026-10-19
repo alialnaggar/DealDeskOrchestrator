@@ -17,7 +17,7 @@ def initial_state(assessment_id: str, run_id: UUID) -> AssessmentStateV1:
     return {"state_version": STATE_VERSION, "assessment_id": assessment_id,
             "phase1c_run_id": str(run_id), "subject_kind": "original",
             "specialist_results": {}, "trace": [], "stop_reason": None,
-            "review_status": "pending"}
+            "review_status": "pending", "tool_access_ledger": []}
 
 
 def _decision(state: AssessmentStateV1) -> dict:

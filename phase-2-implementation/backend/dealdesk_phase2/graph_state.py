@@ -40,6 +40,8 @@ class AssessmentStateV1(TypedDict, total=False):
     trace: list[str]
     stop_reason: str | None
     review_status: str
+    # M1.2 additive field; older M1.1 checkpoints treat absence as no calls.
+    tool_access_ledger: list[dict]
 
 
 def context_to_record(context: RunContextV1) -> dict:

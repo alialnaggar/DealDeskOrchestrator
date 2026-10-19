@@ -1,4 +1,4 @@
-name: Phase 2 M1 pinned reader and original LangGraph checks
+name: Phase 2 M1 pinned reader, graph and bounded tool checks
 
 on:
   push:
@@ -74,5 +74,5 @@ jobs:
         run: |
           python compile_phase1c_policy.py --output /tmp/phase2_m1_compiled_rules.sql
           psql -X -v ON_ERROR_STOP=1 -f /tmp/phase2_m1_compiled_rules.sql
-      - name: Run pinned reader, graph and PostgreSQL restart tests
+      - name: Run pinned reader, graph, bounded tool and PostgreSQL restart tests
         run: python -m unittest discover -s phase-2-implementation/backend/tests -p 'test_*.py' -v
