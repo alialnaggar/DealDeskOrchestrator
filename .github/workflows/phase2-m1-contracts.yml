@@ -1,0 +1,62 @@
+name: Phase 2 M1.0 pinned reader and replay checks
+
+on:
+  push:
+    branches: [phase2-agent-implementation]
+    paths:
+      - 'phase-2-implementation/backend/**'
+      - '.github/workflows/phase2-m1-contracts.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reader-replay:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: phase2_ci_only
+          POSTGRES_DB: deal_desk_m1_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d deal_desk_m1_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: phase2_ci_only
+      PGDATABASE: deal_desk_m1_test
+      DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m1_test
+      DEALDESK_PHASE1C_CHECKOUT: ${{ github.workspace }}/phase1c-pinned
+      PYTHONPATH: phase-2-implementation/backend
+    steps:
+      - name: Check out Phase 2
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Check out exact Phase 1C draft source separately
+        uses: actions/checkout@v6
+        with:
+          repository: alialnaggar/DealDeskOrchestrator
+          ref: 90c0bc8e285ee69262c7db826b786096a77ad004
+          path: phase1c-pinned
+          persist-credentials: false
+      - name: Verify Phase 1C source identity
+        run: test "$(git -C phase1c-pinned rev-parse HEAD)" = '90c0bc8e285ee69262c7db826b786096a77ad004'
+      - name: Install existing Phase 1C test dependencies and PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          python -m pip install 'psycopg[binary]>=3.2,<4' 'PyYAML>=6,<7'
+      - name: Apply pinned Phase 1C schema in disposable test database
+        run: psql -X -v ON_ERROR_STOP=1 -f phase1c-pinned/phase-1c-data/implementation/schema.sql
+      - name: Run offline and pinned PostgreSQL adapter tests
+        run: python -m unittest discover -s phase-2-implementation/backend/tests -p 'test_*.py' -v
