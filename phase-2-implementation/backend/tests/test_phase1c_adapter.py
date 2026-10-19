@@ -47,7 +47,11 @@ class Phase1CAdapterTests(unittest.TestCase):
         self.assertEqual(line["fulfillment_status"], "confirmed_by_date")
         self.assertEqual(self.adapter.fixed_original_decision(pinned)["run_id"], RUN_STOCK)
         self.assertGreater(pinned.size_bytes, 0)
-        print(f"M1.0 sealed binding fixture: {pinned.size_bytes} UTF-8 bytes")
+        with self.connect() as conn:
+            jsonb_bytes = conn.execute("SELECT pg_column_size(%s::jsonb)",
+                                       (pinned.serialized,)).fetchone()[0]
+        print(f"M1.0 sealed binding fixture: {pinned.size_bytes} UTF-8 bytes; "
+              f"{jsonb_bytes} PostgreSQL jsonb expression bytes (not checkpoint storage)")
         with self.connect() as conn:
             after = conn.execute("SELECT run_status FROM deal_desk.deal_runs WHERE run_id=%s",
                                  (RUN_STOCK,)).fetchone()
@@ -61,6 +65,25 @@ class Phase1CAdapterTests(unittest.TestCase):
         self.assertEqual(bundle["facts"]["lines"][0]["fulfillment_status"], "conditional")
         self.assertTrue(bundle["supplier_offers"])
         print(f"M1.0 sealed conditional fixture: {pinned.size_bytes} UTF-8 bytes")
+
+    def test_changed_selected_source_stops_candidate_reread(self):
+        pinned = self.adapter.read_original(self.connect, RUN_STOCK, "A-STOCK")
+        candidate_identity = SimpleNamespace(parent_run_id=RUN_STOCK,
+                                             parent_deal_id=pinned.context.original_deal_id)
+        source_id = "INV-stock_then_confirmed_receipt-P"
+        with self.connect() as conn:
+            original_quantity = conn.execute(
+                "SELECT quantity_on_hand FROM deal_desk.inventory WHERE inventory_id=%s",
+                (source_id,)).fetchone()[0]
+            conn.execute("UPDATE deal_desk.inventory SET quantity_on_hand=%s WHERE inventory_id=%s",
+                         (original_quantity + 1, source_id))
+        try:
+            with self.assertRaisesRegex(EvidenceMismatch, "selected evidence changed"):
+                self.adapter.verify_candidate(self.connect, pinned, candidate_identity)
+        finally:
+            with self.connect() as conn:
+                conn.execute("UPDATE deal_desk.inventory SET quantity_on_hand=%s WHERE inventory_id=%s",
+                             (original_quantity, source_id))
 
     def test_run_and_source_identity_fail_closed(self):
         pinned = self.adapter.read_original(self.connect, RUN_STOCK, "A-STOCK")
