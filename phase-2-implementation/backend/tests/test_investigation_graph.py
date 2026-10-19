@@ -282,7 +282,11 @@ class PinnedInvestigationTests(unittest.TestCase):
                 if not self.once:
                     self.once = True
                     raise KeyboardInterrupt("simulated process stop")
-                return _finding(["supplier_offer:OFFER-offer_without_supplier_commitment"])
+                return {"type": "contribution", "value": {
+                    "kind": "finding_without_proposal", "payload": {
+                        "line_id": line_id, "finding": "Supplier offer needs confirmation",
+                        "citations": ["supplier_offer:OFFER-offer_without_supplier_commitment"],
+                        "uncertainty_reasons": ["No binding receipt"]}}}
 
         model = Interrupted()
         with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:

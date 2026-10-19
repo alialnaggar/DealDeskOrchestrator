@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from typing import Literal, Protocol
+from typing import Literal, Protocol, TypedDict
 
 from .phase1c_adapter import EvidenceMismatch
 from .tool_ledger import was_returned
@@ -27,6 +27,49 @@ class FulfillmentInputV1:
     fixed_fulfillment_status: str
     permitted_tools: tuple[str, ...]
     remaining_calls: int
+
+
+class DeliverySliceClaimV1(TypedDict):
+    quantity: str
+    delivery_date: str
+    commitment_claim: Literal["conditional", "unknown"]
+
+
+class ProposalPayloadV1(TypedDict):
+    line_id: str
+    delivery_slices: list[DeliverySliceClaimV1]
+    citations: list[str]
+    tradeoffs: list[str]
+    assumptions: list[str]
+    unmet_requirements: list[str]
+    uncertainty_reasons: list[str]
+
+
+class FindingPayloadV1(TypedDict):
+    line_id: str
+    finding: str
+    citations: list[str]
+    uncertainty_reasons: list[str]
+
+
+class AbstentionPayloadV1(TypedDict):
+    reason: str
+    uncertainty_reasons: list[str]
+
+
+class FulfillmentAIResultV1(TypedDict):
+    version: Literal["1"]
+    producer_type: Literal["AI"]
+    specialist: Literal["fulfillment"]
+    assessment_id: str
+    phase1c_run_id: str
+    subject_id: str
+    bundle_sha256: str
+    source_input_digest: str
+    line_id: str
+    execution: Literal["completed", "error", "skipped"]
+    contribution: dict | None
+    error: str | None
 
 
 class InvestigationModel(Protocol):
@@ -158,7 +201,7 @@ def validate_contribution(raw: dict, input: FulfillmentInputV1,
 
 
 def runtime_envelope(input: FulfillmentInputV1, *, execution: Literal["completed", "error", "skipped"],
-                     contribution: dict | None = None, error: str | None = None) -> dict:
+                     contribution: dict | None = None, error: str | None = None) -> FulfillmentAIResultV1:
     if execution == "completed" and (contribution is None or error):
         raise ValueError("Completed AI call requires a valid contribution")
     if execution == "error" and (not error or contribution is not None):
