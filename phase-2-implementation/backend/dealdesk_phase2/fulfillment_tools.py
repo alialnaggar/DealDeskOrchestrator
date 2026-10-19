@@ -161,12 +161,14 @@ class FulfillmentTools:
             requested = pool["deal"]["requested_delivery_date"]
             end = horizon or requested + timedelta(days=FORWARD_DAYS)
             selected = []
+            outside_horizon = False
             for category in ("inventory", "inbound_supply", "supplier_offer"):
                 rows = pool[SOURCE_FIELDS[category][0]]
                 for row in rows:
                     if row["product_id"] != product:
                         continue
                     if category == "inbound_supply" and row["expected_date"] > end:
+                        outside_horizon = True
                         continue
                     selected.append(_record(category, row, PROJECTIONS[category]))
             locations = {r["fields"]["location_id"] for r in selected
@@ -181,7 +183,7 @@ class FulfillmentTools:
             stock = supply["stock"].get(product, [])
             binding = supply["binding_receipts"].get(product, [])
             offer_ids = {r["id"] for r in exposed if r["category"] == "supplier_offer"}
-            if more:
+            if more or outside_horizon:
                 status = "discovery_limit"
             elif (any(str(s["id"]) in {r["id"] for r in exposed if r["category"] == "inbound_supply"}
                       for s in binding)
@@ -203,8 +205,10 @@ class FulfillmentTools:
                                           "fixed_binding_receipts": _json([x for x in binding if str(x["id"]) in exposed_supply_ids]),
                                           "offer_is_commitment": False},
                                 gaps=["Results only cover Phase 1C's selected reader pool"]
-                                + (["Some selected records were withheld by response limit"] if more else []),
-                                more=more)
+                                + (["Some selected records were withheld by response limit"] if more else [])
+                                + (["Later inbound is outside the authorized forward horizon"]
+                                   if outside_horizon else []),
+                                more=more or outside_horizon)
 
         return self._invoke("inspect_line_supply", call_id, args, work)
 
@@ -221,6 +225,8 @@ class FulfillmentTools:
             end = horizon or requested + timedelta(days=FORWARD_DAYS)
             options = [x for x in fact.get("shipping_options", [])
                        if x.get("arrival") is not None and x["arrival"] <= end]
+            outside_horizon = any(x.get("arrival") is not None and x["arrival"] > end
+                                  for x in fact.get("shipping_options", []))
             offers = [x for x in pool["supplier_offers"] if x["product_id"] == line["product_id"]]
             # Do not synthesize any shipping or supplier dates. Phase 1C
             # derives offer estimates only when there are no binding options.
@@ -239,7 +245,7 @@ class FulfillmentTools:
                     raise EvidenceMismatch("Fixed path references unavailable selected source")
                 records.append(_record(category, row, PROJECTIONS[category]))
             self._check_sources(records)
-            more = (len(records) > MAX_RECORDS or len(options) > MAX_RECORDS
+            more = (outside_horizon or len(records) > MAX_RECORDS or len(options) > MAX_RECORDS
                     or len(estimates) > MAX_RECORDS)
             exposed = records[:MAX_RECORDS]
             permitted_refs = {f"{r['category']}:{r['id']}" for r in exposed}
@@ -264,7 +270,7 @@ class FulfillmentTools:
             if offers and not estimates:
                 gaps.append("No Phase 1C conditional estimate is available for these offers")
             if more:
-                gaps.append("Path/source response truncated; no completeness claim")
+                gaps.append("Path/source horizon or response bound prevents a completeness claim")
             return self._result("inspect_fulfillment_paths", evidence=status, records=exposed,
                                 findings={"line_id": line_id, "fixed_status": fact.get("fulfillment_status"),
                                           "requested_date": _json(requested),

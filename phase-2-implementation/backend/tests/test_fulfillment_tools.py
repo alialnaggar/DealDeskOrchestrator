@@ -243,6 +243,27 @@ class OfflineToolTests(unittest.TestCase):
         self.assertEqual(result["evidence"], "no_eligible_evidence")
         self.assertIn("selected reader pool", result["gaps"][0])
 
+    def test_later_selected_inbound_is_forward_horizon_limit(self):
+        graph, scope, pool = _offline()
+        pool["inventory"] = []
+        pool["supplier_offers"] = []
+        pool["inbound_supply"] = [{"supply_id": "LATE", "product_id": "P1",
+                                   "location_id": "W1", "expected_date": date(2026, 10, 10),
+                                   "quantity": 8, "quantity_allocated": 0}]
+        pool["facts"]["supply"]["stock"]["P1"] = []
+        pool["facts"]["lines"][0]["shipping_options"] = []
+        raw, digest, _ = seal(pool)
+        graph.state["sealed_bundle"] = raw
+        context = RunContextV1("offline", RUN, "D1", "D1", scope.context.as_of_at,
+                               "snap", "cat", "policy", "config", "0" * 64, digest)
+        graph.state["context"] = context_to_record(context)
+        from dataclasses import replace
+        result = FulfillmentTools(graph, {}, _FakeAdapter(), replace(scope, context=context)) \
+            .inspect_line_supply(call_id="late", line_id="L1")
+        self.assertEqual(result["evidence"], "discovery_limit")
+        self.assertEqual(result["records"], [])
+        self.assertTrue(result["more_in_sealed_pool"])
+
     def test_real_langgraph_checkpoint_update_preserves_budget(self):
         from dealdesk_phase2.graph_state import AssessmentStateV1
 
