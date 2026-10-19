@@ -27,9 +27,12 @@ class Phase1CAdapterTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.adapter = Phase1CAdapter(Path(PINNED_PATH))
-        from test_phase1c_reader import load_fixture_rows
-        load_fixture_rows()  # Actual 14-case Phase 1C reference rows; no answer keys.
         cls.connect = staticmethod(lambda: psycopg.connect(os.environ["DATABASE_URL"]))
+        with cls.connect() as conn:
+            exists = conn.execute("SELECT EXISTS(SELECT 1 FROM deal_desk.deals WHERE deal_id=%s)",
+                                  ("D-stock_then_confirmed_receipt",)).fetchone()[0]
+        if not exists:
+            raise RuntimeError("Load pinned Phase 1C reference rows before adapter tests")
 
     def test_pin_and_binding_reference_evidence_is_read_only(self):
         self.assertEqual(PHASE1C_COMMIT, self.adapter._context(
