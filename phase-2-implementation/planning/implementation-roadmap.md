@@ -75,3 +75,21 @@ interface and is not a verified candidate.
 three tools, with typed proposal/finding/abstention and explicit eligibility;
 keep candidate verification separate and conditional 12+8 unverified until
 the Phase 1C fixed interface supports it. Request separate approval first.
+
+## M1.3 implementation checkpoint
+
+Ali separately approved the typed Fulfillment input/output, conditional
+post-original LangGraph investigation, offline model double and pinned restart
+tests. The original six deterministic findings and PostgreSQL checkpoint stay
+authoritative. A private temporary investigation graph runs an eligibility
+gate and bounded tool/model turns; each tool call is recorded in M1.2's
+original checkpoint ledger. Valid model contributions, abstention and AI
+errors occupy a separate original-subject AI result slot. Proposals have no
+candidate ID and remain unverified. The pinned binding fixture skips AI; the
+offer-only fixture supports a cited finding, not a confirmed 12+8 delivery.
+Record the final M1.3 CI run here before calling it complete.
+
+**Next approval gate:** review live-model options, developer/provider cost,
+security and repeatability, then choose a provider before adding network
+calls. Candidate verification and any Phase 1C conditional verifier are
+separate later work; no live model, frontend or VM change is implied by M1.3.

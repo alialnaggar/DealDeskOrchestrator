@@ -155,3 +155,53 @@ approval. Ledger reservation is sequential: parallel tool invocations require
 an atomic update design before concurrency is enabled. The run demonstrates
 checkpoint recovery between calls; a call interrupted after reservation is
 conservatively consumed, and no response from it becomes citable.
+
+## M1.3 Fulfillment specialist interface and offline investigation
+
+`fulfillment_agent.py` defines a restricted, typed original-line input,
+untrusted tool requests, and three contribution forms: proposal, finding
+without proposal and abstention. `investigation_graph.py` contains a small
+conditional LangGraph: eligibility, offline model decision, one authorized
+tool call at a time, and output validation. It starts only after the original
+Configuration-first six-result graph completes. The original graph checkpoint
+remains the authoritative state; a short-lived private investigation graph
+controls the model/tool sequence. It uses M1.2's original PostgreSQL ledger
+for call reservations and returned-record citations, then stores the trusted
+AI envelope in a separate `ai_fulfillment_result` slot. It never overwrites
+the fixed Fulfillment result or creates a candidate.
+
+The narrow gate requires a valid Configuration finding, completed original
+fixed Fulfillment result, a requested date, exactly one supported finished
+physical line with a recoverable `late_alternative` or `conditional` shortage,
+and fixed requested-date quantity below requested quantity. A separate Credit
+or Policy blocker does not suppress this investigation; it remains in the
+original findings and routing disposition. Multiple eligible lines and other
+fulfillment modes are explicitly skipped pending broader contracts. Partial
+delivery permission is passed to the model; a split suggestion when permission
+is false fails the AI output guard, without treating the suggestion as a
+verified candidate.
+
+Runtime code assigns specialist/producer/run/subject/source identity. Model
+content can request only the three named M1.2 tools and may cite only source
+IDs actually returned to this line by completed authorized calls. A proposal
+has status `unverified`, even if its dates and quantities are syntactically
+valid. The model cannot mark a proposal slice confirmed; fixed Phase 1C
+verification, which M1.3 does not invoke, owns business validity and source
+commitments. AI abstention, a finding without a proposal, malformed output,
+unsupported citation, tool failure and budget exhaustion are separate states.
+An AI failure leaves the full fixed original assessment intact.
+
+The offline `OfflineModelDouble` is a deterministic script with no provider
+connection. If the process stops after a tool completes, rerunning the private
+graph reuses its stable call ID and saved M1.2 tool result; it does not spend
+another call or recalculate the six fixed domains. A reservation interrupted
+mid-call stays consumed and yields no citation. This restart design is tested
+against the disposable PostgreSQL checkpointer and pinned Phase 1C offer
+fixture. A later live provider needs separately approved integration and
+durable model-attempt records before non-deterministic replays are enabled.
+
+The actual pinned stock-plus-confirmed-receipt reference has no requested-date
+shortage and skips AI. The offer-only reference permits investigation but
+forbids partial delivery: the offline double reports a cited finding without
+proposing a split. The synthetic 20-unit 12+8 proposal test is explicitly
+unverified; the pinned Phase 1C interface cannot verify its mixed path.

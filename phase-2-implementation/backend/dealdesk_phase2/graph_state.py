@@ -1,4 +1,4 @@
-"""Versioned, original-only graph state. No candidate or model state in M1.1."""
+"""Versioned original state with isolated fixed and M1.3 AI results."""
 
 from datetime import datetime
 from typing import Literal, TypedDict
@@ -42,6 +42,9 @@ class AssessmentStateV1(TypedDict, total=False):
     review_status: str
     # M1.2 additive field; older M1.1 checkpoints treat absence as no calls.
     tool_access_ledger: list[dict]
+    # M1.3 additive result; the six fixed specialist slots remain authoritative.
+    ai_fulfillment_result: dict
+    investigation_status: str
 
 
 def context_to_record(context: RunContextV1) -> dict:
