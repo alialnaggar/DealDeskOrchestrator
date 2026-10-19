@@ -70,10 +70,14 @@ Before changing, replacing, removing or materially expanding an agreed technolog
 
 ## Immediate next action
 
-**Workshop 3:** verify the actual Phase 1C reader, rule and candidate interfaces, then define specialist tool and candidate contracts. Do not begin agent coding from this planning README alone. Follow the [roadmap](planning/implementation-roadmap.md); do not begin agent coding from this planning README alone.
+**M1 task approval:** Workshop 3 is closed at architectural-direction level. Review the [M1 contract and integration specification](architecture/m1-contract-and-integration-spec.md), which pins Phase 1C draft commit `90c0bc8e285ee69262c7db826b786096a77ad004`, the two-checkout integration and sealed reader replay. The first small coding task is pending Ali's separate approval. Follow the [roadmap](planning/implementation-roadmap.md); do not begin coding from this README alone.
 
 ## Workshop 2 result — LangGraph implementation design direction
 
 [Workshop 2 technical specification](architecture/workshop-2-langgraph-state-evidence-and-transitions.md) and the [decision log](planning/decision-log.md) record W2.1–W2.4: typed authoritative assessment state with isolated specialist contracts; version-pinned evidence and controlled discovery; PostgreSQL-backed LangGraph checkpoints; and rule-controlled transitions with post-specialist validation, bounded candidate loops and safe human handoff. These directions are approved, but exact state/tool signatures, snapshot replay, checkpointer setup and Phase 1C compatibility remain open. No agent code or database setup has been performed.
 
 **Next:** Workshop 3 should verify real Phase 1C interfaces before specifying specialist tools and candidate contracts. Workshop 2's proposed test matrix is not evidence that those tests exist or pass.
+
+## Workshop 3 and focused M1 review
+
+W3.1–W3.8 are approved directions in the [decision log](planning/decision-log.md); Workshop 3 is closed at that level. The broad Workshop 4 is replaced by the focused [M1 contract and integration specification](architecture/m1-contract-and-integration-spec.md). Ali approved two pinned checkouts and a sealed, versioned reader bundle with checked candidate rereads on 19 October 2026. The exact Phase 1C pin, alternatives, compatibility gaps, acceptance tests and implementation sequence are recorded there. A conditional 12+8 candidate cannot be called verified under the pinned Phase 1C interface. No Phase 1C merge/edit, agent code, dependency installation, paid model or VM change has been authorized by these documentation decisions.
