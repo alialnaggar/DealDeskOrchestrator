@@ -1,4 +1,4 @@
-name: Phase 2 M1.0 pinned reader and replay checks
+name: Phase 2 M1 pinned reader and original LangGraph checks
 
 on:
   push:
@@ -35,6 +35,7 @@ jobs:
       PGPASSWORD: phase2_ci_only
       PGDATABASE: deal_desk_m1_test
       DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m1_test
+      CHECKPOINT_DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m1_checkpoint
       DEALDESK_PHASE1C_CHECKOUT: ${{ github.workspace }}/phase1c-pinned
       PYTHONPATH: phase-2-implementation/backend
     steps:
@@ -51,11 +52,14 @@ jobs:
           persist-credentials: false
       - name: Verify Phase 1C source identity
         run: test "$(git -C phase1c-pinned rev-parse HEAD)" = '90c0bc8e285ee69262c7db826b786096a77ad004'
-      - name: Install existing Phase 1C test dependencies and PostgreSQL client
+      - name: Install locked Phase 2 and compatible Phase 1C dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
-          python -m pip install 'psycopg[binary]>=3.2,<4' 'PyYAML>=6,<7'
+          python -m pip install -r phase-2-implementation/backend/requirements-m1.1.lock
+          python -m pip check
+      - name: Create a separate disposable checkpoint database
+        run: createdb deal_desk_m1_checkpoint
       - name: Apply pinned Phase 1C schema in disposable test database
         run: psql -X -v ON_ERROR_STOP=1 -f phase1c-pinned/phase-1c-data/implementation/schema.sql
       - name: Load actual pinned Phase 1C reference rows
@@ -66,5 +70,5 @@ jobs:
         run: |
           python compile_phase1c_policy.py --output /tmp/phase2_m1_compiled_rules.sql
           psql -X -v ON_ERROR_STOP=1 -f /tmp/phase2_m1_compiled_rules.sql
-      - name: Run offline and pinned PostgreSQL adapter tests
+      - name: Run pinned reader, graph and PostgreSQL restart tests
         run: python -m unittest discover -s phase-2-implementation/backend/tests -p 'test_*.py' -v

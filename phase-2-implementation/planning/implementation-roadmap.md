@@ -1,6 +1,6 @@
 # Phase 2 implementation roadmap — planning baseline
 
-**Status:** Workshop 3 (W3.1–W3.8) closed at architectural-direction level; M1 integration and evidence decisions approved 19 October 2026. Exact Phase 1C mappings, acceptance gates and implementation authorization remain open. This roadmap is not evidence of coded agents. Follow the [decision log](decision-log.md), [Workshop 1 baseline](../architecture/workshop-1-architecture-baseline.md) and [M1 technical specification](../architecture/m1-contract-and-integration-spec.md).
+**Status:** Workshop 3 (W3.1–W3.8) closed at architectural-direction level; M1 integration and evidence decisions approved 19 October 2026. M1.0 is implemented; Ali authorized bounded M1.1 original-only LangGraph implementation on 19 October 2026. This roadmap is not evidence of coded AI agents. Follow the [decision log](decision-log.md), [Workshop 1 baseline](../architecture/workshop-1-architecture-baseline.md) and [M1 technical specification](../architecture/m1-contract-and-integration-spec.md).
 
 | Order | Milestone / planning work | Dependency and exit evidence |
 | --- | --- | --- |
@@ -10,7 +10,7 @@
 | 3 | Workshop 3: specialist/tool and candidate contracts | Closed at direction level (W3.1–W3.8). Six domain payloads, permission registry, Fulfillment investigation and fixed verification boundary approved; typed mappings remain subject to M1 tests. |
 | 4 | Focused M1 Contract and Integration Review | Two pinned checkouts and sealed reader bundle/checkpoint replay approved. [M1 spec](../architecture/m1-contract-and-integration-spec.md) pins Phase 1C at `90c0bc8e285ee69262c7db826b786096a77ad004`; exact adapter, replay, tool and candidate acceptance gates precede implementation. Broader model/evaluation operations can be settled when needed. |
 | 5 | Master blueprint sections and independent review | Link authoritative Phase 1B/1C rules, write detailed sections in stages, check contradictions and unresolved assumptions, then publish reviewed plan. A narrow milestone may begin when its own contracts/tests are approved; the entire long blueprint need not be finished first. |
-| 6 | M1: narrow LangGraph end-to-end assessment | First coding task, **pending Ali's approval**, is pinned dual-checkout adapter and canonical sealed-bundle/identity tests only. Later tasks add PostgreSQL-backed sequential LangGraph, fixed original assessment, bounded AI tools, binding-supported candidate full six-check rerun and human package. Mixed 12+8 conditional verification is a Phase 1C compatibility exit gate; until then it is an unverified planning idea. |
+| 6 | M1: narrow LangGraph end-to-end assessment | M1.0 pinned dual-checkout reader/replay is complete. M1.1 original-only LangGraph and PostgreSQL restart were separately authorized; six distinct results map one pinned Phase 1C fixed decision. Later separately approved tasks add bounded AI tools and fixed candidate checks. Mixed 12+8 conditional verification remains a Phase 1C compatibility gate. |
 | 7 | Incremental specialist capabilities | Add Configuration correction/substitution, Pricing proposals, Credit evidence analysis, Policy corrective options, Routing explanations and wider Fulfillment modes. Keep separate domains and fixed-rule authority. |
 | 8 | General candidate orchestration and evaluation | Prove safe selective reruns by fingerprints and dependencies, consider parallel nodes by measurement, finalize persistence/resumption if needed, and compare with rule-only baseline only after independent expected answers are accepted. |
 
@@ -35,4 +35,10 @@ Record each later milestone with commit/PR, fixture, test and CI evidence, known
 
 **Limitations:** Actual pinned binding fixture is ten units, while the 20-unit 12+8 conditional example remains illustrative and unverified. No LangGraph node/checkpoint storage, Fulfillment tool, access ledger, model, full candidate rerun or VM setup exists yet. Candidate correlation's accepted-path integration and the three sealed-pool tool coverage tests remain next gates. The current Phase 1C role list may be unavailable under a blocked route, and conditional candidate verification remains Phase 1C-owned.
 
-**Recommended M1.1 for separate approval:** Implement the small sequential LangGraph original-assessment path with PostgreSQL-backed checkpoints in an isolated thesis test database, typed state referencing the M1.0 sealed pool, Configuration-first fixed result mapping, per-specialist validation/independent-check behavior, and interruption/restart tests. Before coding, review exact LangGraph/checkpointer versions and database isolation/setup. Keep AI tools, candidate loop and live model for subsequent bounded tasks.
+**M1.1 authorized and in progress:** Sequential original-only LangGraph,
+versioned state holding the M1.0 sealed bundle, Configuration-first result,
+six fixed responsibility mappings and explicit prerequisites. Use a separate
+disposable PostgreSQL checkpoint database in CI; prove resumption from a
+node boundary and measure actual storage. The pinned Phase 1C aggregate
+decision is assembled once, not six new rule engines. Model, candidate,
+frontend, VM and Phase 1C changes remain outside this milestone.

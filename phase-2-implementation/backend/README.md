@@ -65,3 +65,33 @@ It did not change Phase 1C source code.
   an M1.1 gate. An absent record in this bounded pool must later be reported
   as a discovery limitation, not as proof that no relevant supply exists.
 - Full candidate rerun and human comparison remain later milestone work.
+
+## M1.1 original assessment graph
+
+M1.1 adds a sequential LangGraph graph in `dealdesk_phase2/orchestrator.py`.
+Configuration is the first specialist result. The pinned Phase 1C
+`assemble_deal_decision` runs **once** there; subsequent nodes map its
+existing domain findings into six distinct, versioned results. This does not
+claim six independently callable Phase 1C engines. Configuration prerequisites
+can skip dependent Pricing, Fulfillment and Credit mappings; independent
+Policy findings remain visible. A business blocker is not a technical failure.
+Approval Routing identifies human review requirements; it grants no approval.
+
+The graph state contains original submission identity, the M1.0 sealed bundle
+and source fingerprint, result slots, trace and review status. Each node
+revalidates pinned source identity. `requirements-m1.1.txt` lists approved
+direct pins and `requirements-m1.1.lock` captures the Python 3.12 resolution.
+LangGraph depends on Pydantic and LangSmith packages transitively; M1.1
+neither defines Pydantic specialist schemas nor calls a hosted service.
+
+CI uses a second disposable PostgreSQL database, `deal_desk_m1_checkpoint`,
+for checkpoints. A test pauses after Configuration in a separate process,
+opens a new saver and graph, and resumes at Pricing without rerunning
+Configuration. Actual storage measurements and CI evidence are recorded
+after a passing run. This tests recovery between nodes, not recovery
+midway through a node.
+
+Known fixed-interface limits remain: blocked cases do not expose the full
+set of otherwise required approval roles, and Phase 1C does not provide
+rule-level Policy prerequisite evaluation. M1.1 has no AI investigation,
+alternative candidates, live models, UI or VM deployment.

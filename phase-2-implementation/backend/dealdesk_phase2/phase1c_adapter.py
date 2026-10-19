@@ -96,10 +96,16 @@ class Phase1CAdapter:
                 return pinned
 
     def fixed_original_decision(self, pinned: PinnedBundleV1) -> dict:
-        bundle = pinned.decode()
-        if self.candidate.reader_input_digest(bundle) != pinned.context.source_input_digest:
-            raise EvidenceMismatch("Sealed source digest does not match reader inputs")
+        bundle = self.validate_pinned_context(pinned)
         return self.decision.assemble_deal_decision(bundle)
+
+    def validate_pinned_context(self, pinned: PinnedBundleV1) -> dict:
+        """Check the pinned reader identity without querying mutable business rows."""
+        bundle = pinned.decode()
+        context = self._context(bundle, pinned.context.assessment_id).context
+        if context != pinned.context:
+            raise EvidenceMismatch("Sealed reader source or run identity differs")
+        return bundle
 
     def verify_candidate(self, connection_factory: Callable, pinned: PinnedBundleV1,
                          proposed_candidate) -> tuple[dict, dict]:
