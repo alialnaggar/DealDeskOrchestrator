@@ -1,6 +1,6 @@
 # M1 contract and integration specification — review baseline
 
-**Status:** Approved architectural decisions for Phase 1C integration and M1 evidence replay by Ali, 19 October 2026. M1 implementation is **not authorized** by this document. Detailed contracts below are the approved review baseline; Phase 1C-dependent mappings and engineering defaults require the acceptance gates before promotion. This elaborates W1–W3 without replacing Phase 1B business rules or Phase 1C fixed-rule ownership.
+**Status:** Approved architectural decisions for Phase 1C integration and M1 evidence replay by Ali, 19 October 2026. M1.0 was separately authorized and implemented; later coding tasks require separate approval. Detailed contracts below are the approved review baseline; Phase 1C-dependent mappings and engineering defaults require the acceptance gates before promotion. This elaborates W1–W3 without replacing Phase 1B business rules or Phase 1C fixed-rule ownership.
 
 **Phase 2 branch:** `phase2-agent-implementation`. **Pinned Phase 1C draft source:** `phase1c-candidate-contract` commit `90c0bc8e285ee69262c7db826b786096a77ad004` (draft PR #1). Do not float the integration to a branch name in tests or CI. Changes to this pin require review and retesting. The draft PR remains separate and unmerged.
 
@@ -97,3 +97,7 @@ Failure classes: domain rule violation, unknown/missing/stale evidence, conditio
 6. Evaluate model choice, live access/cost, broader specialist AI, selective reruns and parallelism in later approved tasks. PostgreSQL checkpointing is selected from M1; no Redis, new database, external authorization service or paid model is implied.
 
 Each task records commit, test/CI evidence and limitations. Coding, dependency installation, infrastructure changes, Phase 1C edits and PR merge require their own authorization as applicable.
+
+## M1.0 implementation evidence — 19 October 2026
+
+The [M1.0 backend note](../backend/README.md) identifies implementation files, exact two-checkout setup, observed sealed-bundle sizes and limitations. [CI run 39244070977](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39244070977) passed eight tests with pinned Phase 1C and disposable PostgreSQL 18. Binding stock/confirmed-inbound and conditional supplier-offer reference fixtures remained distinct. A changed selected inventory row caused candidate reread rejection in a disposable test and was restored afterward. M1.0 prepares a sealed bundle but has **not** stored it through a LangGraph checkpointer, measured checkpoint overhead, tested resume, or implemented the three Fulfillment tools. Those gates remain open; the conditional 12+8 candidate cannot be promoted to verified.
