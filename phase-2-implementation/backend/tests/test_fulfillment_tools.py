@@ -141,6 +141,25 @@ class OfflineToolTests(unittest.TestCase):
         self.assertEqual(denied.inspect_line_supply(call_id="wrong-context", line_id="L1")
                          ["execution"], "authorization_denied")
 
+    def test_source_citation_does_not_transfer_between_lines(self):
+        from dataclasses import replace
+
+        graph, scope, pool = _offline()
+        pool["lines"].append(dict(pool["lines"][0], deal_line_id="L2"))
+        pool["facts"]["lines"].append(dict(pool["facts"]["lines"][0], line_id="L2"))
+        raw, digest, _ = seal(pool)
+        graph.state["sealed_bundle"] = raw
+        context = RunContextV1("offline", RUN, "D1", "D1", scope.context.as_of_at,
+                               "snap", "cat", "policy", "config", "0" * 64, digest)
+        graph.state["context"] = context_to_record(context)
+        scope = replace(scope, context=context, line_ids=frozenset(("L1", "L2")))
+        tools = FulfillmentTools(graph, {}, _FakeAdapter(), scope)
+        tools.inspect_line_supply(call_id="first-line", line_id="L1")
+        denied = tools.inspect_evidence_record(call_id="other-line", line_id="L2",
+                                               source_category="inventory", source_id="S1")
+        self.assertEqual(denied["execution"], "authorization_denied")
+        self.assertEqual(denied["returned_refs"], [])
+
     def test_interrupted_call_consumes_budget_without_citable_source(self):
         from dealdesk_phase2.tool_ledger import reserve
 
@@ -316,6 +335,13 @@ class PinnedPostgresToolTests(unittest.TestCase):
                     paths = tools.inspect_fulfillment_paths(call_id="paths", line_id=line)
                     self.assertEqual(supply["execution"], "completed")
                     self.assertEqual(paths["execution"], "completed")
+                    self.assertTrue(supply["records"])
+                    exposed = supply["records"][0]
+                    detail = tools.inspect_evidence_record(
+                        call_id="detail", line_id=line,
+                        source_category=exposed["category"], source_id=exposed["id"])
+                    self.assertEqual(detail["execution"], "completed")
+                    self.assertEqual(detail["records"][0]["id"], exposed["id"])
                     if label == "binding":
                         self.assertEqual(paths["findings"]["quantity_by_requested_date"], "10")
                         self.assertTrue(any(x["category"] == "inbound_supply"
