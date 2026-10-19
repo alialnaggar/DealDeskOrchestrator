@@ -42,8 +42,11 @@ class Phase1CAdapter:
         self.checkout = checkout.resolve(strict=True)
         if _git(self.checkout, "rev-parse", "HEAD") != PHASE1C_COMMIT:
             raise ValueError("Phase 1C checkout is not at the pinned commit")
-        if _git(self.checkout, "status", "--porcelain", "--", "phase-1c-data/implementation"):
-            raise ValueError("Pinned Phase 1C implementation has local changes")
+        # Fixture imports create untracked __pycache__ files. Refuse changes
+        # to tracked implementation files while allowing those generated caches.
+        if _git(self.checkout, "status", "--porcelain", "--untracked-files=no", "--",
+                "phase-1c-data/implementation"):
+            raise ValueError("Pinned Phase 1C tracked implementation has local changes")
         implementation = (self.checkout / "phase-1c-data" / "implementation").resolve(strict=True)
         if str(implementation) not in sys.path:
             sys.path.insert(0, str(implementation))
