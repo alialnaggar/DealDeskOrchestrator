@@ -41,28 +41,38 @@ def build_original_graph(adapter: Phase1CAdapter, connection_factory, checkpoint
         if (state.get("state_version") != STATE_VERSION or state.get("subject_kind") != "original"
                 or state.get("specialist_results") or state.get("sealed_bundle")):
             raise EvidenceMismatch("Invalid original assessment start")
-        pinned = adapter.read_original(connection_factory, UUID(state["phase1c_run_id"]),
-                                       state["assessment_id"])
+        try:
+            pinned = adapter.read_original(connection_factory, UUID(state["phase1c_run_id"]),
+                                           state["assessment_id"])
+        except Exception as exc:
+            return {"stop_reason": "evidence_read:" + type(exc).__name__,
+                    "review_status": "incomplete",
+                    "trace": ["evidence_read_failed:" + type(exc).__name__]}
         return {"context": context_to_record(pinned.context), "sealed_bundle": pinned.serialized,
                 "trace": ["evidence_pinned"]}
 
     def specialist(name):
         def run(state):
-            pinned = pinned_from_state(state)
-            adapter.validate_pinned_context(pinned)
-            updates = {}
-            if name == "configuration":
-                decision = adapter.fixed_original_decision(pinned)
-                raw, digest, _ = seal(decision)
-                updates = {"fixed_decision": raw, "fixed_decision_sha256": digest}
-            else:
-                decision = _decision(state)
-            prior = state["specialist_results"]
-            result = domain_result(name, pinned, decision, state["assessment_id"], prior)
-            validate_result(result, state, name)
-            updates["specialist_results"] = {**prior, name: result}
-            updates["trace"] = [*state["trace"], name + ":" + result["execution"]]
-            return updates
+            try:
+                pinned = pinned_from_state(state)
+                adapter.validate_pinned_context(pinned)
+                updates = {}
+                if name == "configuration":
+                    decision = adapter.fixed_original_decision(pinned)
+                    raw, digest, _ = seal(decision)
+                    updates = {"fixed_decision": raw, "fixed_decision_sha256": digest}
+                else:
+                    decision = _decision(state)
+                prior = state["specialist_results"]
+                result = domain_result(name, pinned, decision, state["assessment_id"], prior)
+                validate_result(result, state, name)
+                updates["specialist_results"] = {**prior, name: result}
+                updates["trace"] = [*state["trace"], name + ":" + result["execution"]]
+                return updates
+            except Exception as exc:
+                reason = name + ":" + type(exc).__name__
+                return {"stop_reason": reason, "review_status": "incomplete",
+                        "trace": [*state["trace"], reason]}
         return run
 
     def reconcile(state):
@@ -91,7 +101,11 @@ def build_original_graph(adapter: Phase1CAdapter, connection_factory, checkpoint
                 "trace": [*state["trace"], "approval_routing:" + result["execution"]]}
 
     def finish(state):
-        return {"trace": [*state["trace"], "review_prepared"]}
+        return {"trace": [*state["trace"],
+                          "assessment_stopped" if state.get("stop_reason") else "review_prepared"]}
+
+    def next_or_stop(state):
+        return "finish" if state.get("stop_reason") else "continue"
 
     builder.add_node("pin_evidence", pin_evidence)
     for name in SPECIALISTS[:-1]:
@@ -102,6 +116,9 @@ def build_original_graph(adapter: Phase1CAdapter, connection_factory, checkpoint
     builder.add_edge(START, "pin_evidence")
     names = ("pin_evidence", *SPECIALISTS[:-1], "reconcile", "approval_routing", "finish")
     for left, right in zip(names, names[1:]):
-        builder.add_edge(left, right)
+        if left == "finish":
+            continue
+        builder.add_conditional_edges(left, next_or_stop,
+                                      {"finish": "finish", "continue": right})
     builder.add_edge("finish", END)
     return builder.compile(checkpointer=checkpointer, interrupt_after=list(interrupt_after))

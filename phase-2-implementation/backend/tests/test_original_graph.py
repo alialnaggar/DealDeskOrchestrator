@@ -115,6 +115,16 @@ class OriginalGraphTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "digest mismatch"):
             pinned_from_state({**state, "sealed_bundle": state["sealed_bundle"] + " "})
 
+    def test_fixed_execution_failure_stops_without_business_finding(self):
+        class Broken(FixedAdapterDouble):
+            def fixed_original_decision(self, pinned):
+                raise TimeoutError("fixed tool unavailable")
+        state = self.run_graph(Broken())
+        self.assertEqual(state["review_status"], "incomplete")
+        self.assertEqual(state["stop_reason"], "configuration:TimeoutError")
+        self.assertEqual(state["specialist_results"], {})
+        self.assertNotIn("approval_routing:completed", state["trace"])
+
 
 if __name__ == "__main__":
     unittest.main()

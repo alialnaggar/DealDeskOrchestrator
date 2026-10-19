@@ -87,9 +87,18 @@ neither defines Pydantic specialist schemas nor calls a hosted service.
 CI uses a second disposable PostgreSQL database, `deal_desk_m1_checkpoint`,
 for checkpoints. A test pauses after Configuration in a separate process,
 opens a new saver and graph, and resumes at Pricing without rerunning
-Configuration. Actual storage measurements and CI evidence are recorded
-after a passing run. This tests recovery between nodes, not recovery
-midway through a node.
+Configuration. The first passing [M1.1 CI run
+39255258148](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39255258148)
+ran 15 tests, including all eight M1.0 tests. For its completed restart
+thread, `pg_column_size` reported 8,659 bytes for the latest checkpoint
+JSONB field and 65 bytes for its metadata. The shared tables' total
+relation-plus-index sizes, after several test threads and multiple
+checkpoints, were 344,064 bytes (`checkpoints`), 98,304 bytes
+(`checkpoint_blobs`) and 188,416 bytes (`checkpoint_writes`).
+These shared table sizes include PostgreSQL page/index overhead and are
+**not** bytes per assessment. The sealed binding bundle was 38,717 UTF-8
+bytes. This establishes recovery between nodes, not recovery midway through
+a node; neither latency nor VM performance has been benchmarked.
 
 Known fixed-interface limits remain: blocked cases do not expose the full
 set of otherwise required approval roles, and Phase 1C does not provide

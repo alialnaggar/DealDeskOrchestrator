@@ -20,7 +20,8 @@ def domain_result(name: str, pinned: PinnedBundleV1, decision: dict | None,
         finding = "infeasible" if invalid else "unknown" if uncertain else "confirmed"
     elif name in ("pricing", "fulfillment") and prior["configuration"]["finding"] != "confirmed":
         execution, prerequisite = "skipped", "configuration_not_valid"
-    elif name == "credit" and prior["pricing"]["execution"] != "completed":
+    elif name == "credit" and (prior["pricing"]["execution"] != "completed"
+                               or prior["pricing"]["finding"] == "unknown"):
         execution, prerequisite = "skipped", "verified_commercial_values_unavailable"
     elif name == "approval_routing":
         required = ("configuration", "pricing", "fulfillment", "credit", "policy")
@@ -54,7 +55,7 @@ def domain_result(name: str, pinned: PinnedBundleV1, decision: dict | None,
         # Fixed Phase 1C rule hits remain authoritative. Its aggregate interface
         # does not expose a per-rule prerequisite API.
         payload = {**payload, "per_rule_prerequisites_available": False}
-        finding = "infeasible" if payload["hard_blocks"] else "confirmed"
+        finding = "infeasible" if payload["hard_blocks"] else "evaluated_with_interface_limits"
     else:
         raise ValueError(f"Unknown specialist: {name}")
     return {"version": "1", "specialist": name, "producer_type": "deterministic",

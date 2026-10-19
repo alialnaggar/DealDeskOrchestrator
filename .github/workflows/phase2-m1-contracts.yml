@@ -43,6 +43,10 @@ jobs:
         uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - name: Select pinned Python runtime
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
       - name: Check out exact Phase 1C draft source separately
         uses: actions/checkout@v6
         with:

@@ -42,3 +42,10 @@ disposable PostgreSQL checkpoint database in CI; prove resumption from a
 node boundary and measure actual storage. The pinned Phase 1C aggregate
 decision is assembled once, not six new rule engines. Model, candidate,
 frontend, VM and Phase 1C changes remain outside this milestone.
+
+The initial [M1.1 PostgreSQL CI
+run](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39255258148)
+passed 15 tests and proved a cross-process node-boundary resume. The backend
+README records measured checkpoint fields and shared table sizes. A follow-up
+CI run validates the explicit technical-failure stop path and pinned
+Python 3.12 workflow before M1.1 is marked complete.
