@@ -53,7 +53,8 @@ def _request(provider, phase, method, url, key, body=None, *, max_attempts=1):
     for attempt in range(max_attempts):
         if attempt:
             sleep(4 * attempt)
-        request = Request(url, data=payload, headers={header: auth, "Content-Type": "application/json"}, method=method)
+        request = Request(url, data=payload, headers={header: auth, "Content-Type": "application/json",
+                          "User-Agent": "DealDeskOrchestrator-thesis-M1.4/1.0"}, method=method)
         start = monotonic()
         entry = {"provider": provider, "phase": phase, "attempt": attempt + 1,
                  "timestamp_utc": datetime.now(timezone.utc).isoformat()}
@@ -138,7 +139,7 @@ def main():
                   "generationConfig": {"temperature": 0, "maxOutputTokens": 128,
                       "responseMimeType": "application/json",
                       "responseSchema": {"type": "object", "properties": {"status": {"type": "string", "enum": ["ok"]}},
-                                         "required": ["status"], "additionalProperties": False}}}
+                                         "required": ["status"]}}}
     records += _request("gemini", "structured", "POST", endpoint, gemini_key, structured, max_attempts=2)
     sleep(15)
     tool = {"contents": [{"parts": [{"text": "Call inspect_line_supply for line_id smoke-line."}]}],

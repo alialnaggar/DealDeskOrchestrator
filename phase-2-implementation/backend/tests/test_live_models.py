@@ -71,6 +71,9 @@ class LiveModelTests(TestCase):
         self.assertEqual(state["ai_fulfillment_result"]["execution"], "completed")
         self.assertEqual(request.call_count, 3)
         self.assertEqual(sum(bool(x["counted"]) for x in state["tool_access_ledger"]), 1)
+        schema = request.call_args_list[-1].args[3]["generationConfig"]["responseSchema"]
+        self.assertNotIn("additionalProperties", json.dumps(schema))
+        self.assertEqual(set(schema["required"]), set(schema["properties"]))
 
     def test_unsupported_citation_and_fabricated_confirmation_are_rejected(self):
         ready = {"choices": [{"message": {"content": "READY"}}]}

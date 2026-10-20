@@ -95,6 +95,20 @@ def _canonical_final(raw):
             "payload": {field: raw[field] for field in fields}}}
 
 
+def _gemini_schema(value):
+    """Project the strict local schema onto generateContent's supported fields.
+
+    Its responseSchema rejects additionalProperties; _canonical_final and the
+    specialist contract still reject unexpected model fields after generation.
+    """
+    if isinstance(value, dict):
+        return {key: _gemini_schema(item) for key, item in value.items()
+                if key != "additionalProperties"}
+    if isinstance(value, list):
+        return [_gemini_schema(item) for item in value]
+    return value
+
+
 def _prompt(input, observations):
     safe = {key: value for key, value in asdict(input).items()
             if key not in ("assessment_id", "phase1c_run_id", "subject_id",
@@ -193,7 +207,7 @@ class LiveInvestigationModel:
             final = {"contents": [{"role": "user", "parts": [{"text": final_prompt}]}],
                      "generationConfig": {"temperature": 0,
                          "maxOutputTokens": MAX_OUTPUT_TOKENS,
-                         "responseMimeType": "application/json", "responseSchema": FINAL_SCHEMA}}
+                         "responseMimeType": "application/json", "responseSchema": _gemini_schema(FINAL_SCHEMA)}}
         return self._request(input, step, "final", final)
 
     def _parse(self, response: dict, phase: str):
