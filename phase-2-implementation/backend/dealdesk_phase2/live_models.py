@@ -17,7 +17,7 @@ from . import model_attempts
 
 GROQ_MODEL = "openai/gpt-oss-120b"
 GEMINI_MODEL = "gemini-3.8-flash"
-PROMPT_VERSION = "m14-fulfillment-v1"
+PROMPT_VERSION = "m15-fulfillment-v1"
 MAX_OUTPUT_TOKENS = 2048
 MAX_PROMPT_BYTES = 20000
 MAX_MODEL_TURNS = 6
@@ -117,6 +117,10 @@ def _prompt(input, observations):
     return (PROMPT_VERSION + ". You investigate a fulfillment shortage. Only tool responses are citable; "
             "their returned_refs are source-category:source-id. Supplier offers are conditional, "
             "never confirmed. An empty bounded pool does not prove no supply exists. "
+            "Scope every availability or absence statement to the returned records in this pinned "
+            "selected reader pool; never claim globally that no confirmed supply is available. "
+            "Do not speculate that inaccessible records exist inside the sealed pool. "
+            "If the selected evidence is insufficient, state the bounded gap or abstain. "
             "Never approve, reserve or promise. You may abstain or report a finding. "
             "First choose one authorized local tool when useful; if ready for final output, "
             "say READY. For a final proposal, use only conditional/unknown slices, and "
