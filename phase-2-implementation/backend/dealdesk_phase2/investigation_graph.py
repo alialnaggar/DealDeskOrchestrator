@@ -31,6 +31,7 @@ class PrivateInvestigationState(TypedDict, total=False):
     observations: list[dict]
     action: dict
     outcome: dict
+    claim_audit: list[dict]
 
 
 def _tool_call(tools: FulfillmentTools, name: str, call_id: str, args: dict) -> dict:
@@ -132,12 +133,27 @@ def build_investigation_graph(original_graph, config: dict, adapter: Phase1CAdap
         try:
             contribution = validate_contribution(state["action"]["value"], input,
                                                  original_graph, config)
+            audit = contribution.get("claim_audit", {})
             return {"outcome": runtime_envelope(input, execution="completed",
-                                                 contribution=contribution)}
+                                                 contribution=contribution),
+                    "claim_audit": [{"original_claim": item["original_claim"],
+                                     "reason": item["reason"],
+                                     "claim_index": item["claim_index"],
+                                     "assessment_id": input.assessment_id,
+                                     "bundle_sha256": input.bundle_sha256}
+                                    for item in audit.get("rejected_claims", [])]}
         except Exception as exc:
             reason = ("unsupported_citation" if isinstance(exc, EvidenceMismatch)
+                      and "not returned" in str(exc) else
+                      "identity_mismatch" if isinstance(exc, EvidenceMismatch)
                       else "malformed_contribution")
-            return {"outcome": runtime_envelope(input, execution="error", error=reason)}
+            # The source content is retained only in the checkpointed audit,
+            # never in the reviewer-facing business contribution.
+            return {"outcome": runtime_envelope(input, execution="error", error=reason),
+                    "claim_audit": [{"original_content": state["action"].get("value"),
+                                     "reason": reason, "detail": str(exc),
+                                     "assessment_id": input.assessment_id,
+                                     "bundle_sha256": input.bundle_sha256}]}
 
     def from_gate(state):
         return "decide" if state["status"] == "eligible" else "finalize"
@@ -185,14 +201,17 @@ def run_original_then_investigate(original_graph, config: dict, adapter: Phase1C
     if state.get("investigation_status") in ("completed", "skipped", "error"):
         return state
     private = build_investigation_graph(original_graph, config, adapter, model)
-    result = private.invoke({"status": "pending", "observations": []},
-                            {"recursion_limit": 2 * MAX_CALLS + 7})["outcome"]
+    private_result = private.invoke({"status": "pending", "observations": []},
+                                    {"recursion_limit": 2 * MAX_CALLS + 7})
+    result = private_result["outcome"]
     fresh = original_graph.get_state(config).values
     if (fresh.get("assessment_id") != assessment_id or
             fresh.get("context", {}).get("bundle_sha256") !=
             state.get("context", {}).get("bundle_sha256")):
         raise EvidenceMismatch("Original assessment changed during investigation")
     original_graph.update_state(config, {"ai_fulfillment_result": result,
+                                         "ai_claim_audit": [*fresh.get("ai_claim_audit", []),
+                                                            *private_result.get("claim_audit", [])],
                                          "investigation_status": result["execution"],
                                          "trace": [*fresh["trace"],
                                                    "fulfillment_ai:" + result["execution"]]},

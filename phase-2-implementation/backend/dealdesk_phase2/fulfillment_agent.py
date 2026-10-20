@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import Literal, Protocol, TypedDict
 
+from .claim_validation import FulfillmentClaimV2, assess_claims
 from .phase1c_adapter import EvidenceMismatch
 from .tool_ledger import was_returned
 
@@ -55,6 +56,12 @@ class FindingPayloadV1(TypedDict):
 class AbstentionPayloadV1(TypedDict):
     reason: str
     uncertainty_reasons: list[str]
+
+
+class TypedFulfillmentPayloadV2(TypedDict):
+    line_id: str
+    claims: list[FulfillmentClaimV2]
+    notes: dict
 
 
 class FulfillmentAIResultV1(TypedDict):
@@ -148,6 +155,25 @@ def restricted_input(context, pool: dict, selected: dict, remaining: int) -> Ful
 def validate_contribution(raw: dict, input: FulfillmentInputV1,
                           graph, config) -> dict:
     """Validate shape and seen citations, not business feasibility."""
+    if isinstance(raw, dict) and raw.get("schema_version") == "2":
+        if set(raw) != {"schema_version", "kind", "payload"}:
+            raise ValueError("Malformed v2 contribution envelope")
+        if raw["kind"] not in ("proposal", "finding_without_proposal", "abstention"):
+            raise ValueError("Unknown v2 contribution")
+        assessed = assess_claims(raw["payload"], input, graph, config)
+        # Even a useful idea is not a verified candidate. Reviewer-facing text
+        # comes solely from validated typed claims and Phase 1C fixed findings.
+        kind = ("abstention" if raw["kind"] == "abstention" or
+                assessed["disposition"] == "no_validated_claims"
+                else "finding_without_proposal")
+        return {"kind": kind, "payload": {
+                    "line_id": input.line_id,
+                    "validated_claims": assessed["accepted_claims"],
+                    "review_summary": assessed["review_summary"]},
+                "schema_version": "2", "model_contribution_kind": raw["kind"],
+                "verification": None, "validation_disposition": assessed["disposition"],
+                "claim_audit": {"rejected_claims": assessed["rejected_claims"],
+                                "raw_model_notes": assessed["raw_model_notes"]}}
     if not isinstance(raw, dict) or set(raw) != {"kind", "payload"}:
         raise ValueError("Malformed contribution envelope")
     kind, payload = raw["kind"], raw["payload"]
@@ -202,7 +228,8 @@ def validate_contribution(raw: dict, input: FulfillmentInputV1,
         if not was_returned(graph, config, input.assessment_id, input.bundle_sha256,
                             category, source_id, input.line_id):
             raise EvidenceMismatch("AI cited a source not returned by an authorized tool")
-    return {"kind": kind, "payload": payload, "verification": "unverified" if kind == "proposal" else None}
+    return {"kind": kind, "payload": payload, "verification": "unverified" if kind == "proposal" else None,
+            "review_summary_status": "withheld_legacy_unvalidated_prose"}
 
 
 def runtime_envelope(input: FulfillmentInputV1, *, execution: Literal["completed", "error", "skipped"],
