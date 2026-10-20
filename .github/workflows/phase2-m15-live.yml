@@ -1,0 +1,102 @@
+name: Phase 2 M1.5 opt-in Groq Fulfillment validation
+
+on:
+  # Phase 2 workflow is absent from default branch: run only by deliberately
+  # pushing the dedicated live branch at a reviewed Phase 2 commit.
+  push:
+    branches: [phase2-m15-live-run]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase2-m15-live
+  cancel-in-progress: false
+
+jobs:
+  groq-validation:
+    if: vars.M14_FREE_TIER_CONFIRMED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: phase2_ci_only
+          POSTGRES_DB: deal_desk_m1_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d deal_desk_m1_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: phase2_ci_only
+      PGDATABASE: deal_desk_m1_test
+      DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m1_test
+      CHECKPOINT_DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m1_checkpoint
+      DEALDESK_PHASE1C_CHECKOUT: ${{ github.workspace }}/phase1c-pinned
+      PYTHONPATH: phase-2-implementation/backend
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/checkout@v6
+        with:
+          repository: alialnaggar/DealDeskOrchestrator
+          ref: 90c0bc8e285ee69262c7db826b786096a77ad004
+          path: phase1c-pinned
+          persist-credentials: false
+      - name: Check source pin and Groq credential presence
+        run: |
+          test "$(git -C phase1c-pinned rev-parse HEAD)" = '90c0bc8e285ee69262c7db826b786096a77ad004'
+          test -n "${GROQ_API_KEY:-}"
+      - name: Install existing locked dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          python -m pip install -r phase-2-implementation/backend/requirements-m1.1.lock
+          python -m pip check
+      - name: Load pinned Phase 1C rows and rules in disposable databases
+        run: |
+          createdb deal_desk_m1_checkpoint
+          psql -X -v ON_ERROR_STOP=1 -f phase1c-pinned/phase-1c-data/implementation/schema.sql
+          (cd phase1c-pinned/phase-1c-data/implementation && python -c 'from test_phase1c_reader import load_fixture_rows; load_fixture_rows()')
+          (cd phase1c-pinned/phase-1c-data/implementation && python compile_phase1c_policy.py --output /tmp/m15_rules.sql)
+          psql -X -v ON_ERROR_STOP=1 -f /tmp/m15_rules.sql
+      - name: One binding control and one eligible Groq investigation
+        run: |
+          python -m dealdesk_phase2.benchmark_m14 --live --provider groq --offer-repeats 1 --binding-repeats 1 --output phase-2-implementation/backend/benchmarks/results/m15-groq.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          records = json.loads(Path('phase-2-implementation/backend/benchmarks/results/m15-groq.json').read_text())
+          if len(records) != 2:
+              raise SystemExit('Expected one fixed-only binding control and one offer investigation')
+          binding, offer = records
+          if binding['execution'] != 'skipped' or binding['model_requests'] != 0:
+              raise SystemExit('Binding control unexpectedly invoked AI')
+          if offer['execution'] != 'completed' or offer['fixed_review_status'] != 'needs_evidence':
+              raise SystemExit('Eligible investigation incomplete; inspect sanitized artifact')
+          if offer['tool_calls'] > 12 or any(event['record_count'] > 25 for event in offer['tool_events']):
+              raise SystemExit('Investigation exceeded approved tool limits')
+          if offer['citation_validation'] == 'rejected_or_unproven':
+              raise SystemExit('Citation validation failed')
+          print('M1.5 gated Groq validation complete; semantic review pending')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m15-groq-sanitized-results
+          path: phase-2-implementation/backend/benchmarks/results/m15-groq.json
+          if-no-files-found: ignore
+          retention-days: 7

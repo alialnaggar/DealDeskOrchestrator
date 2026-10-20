@@ -60,6 +60,12 @@ def _trial(provider, case, trial, saver, adapter, factory):
             "timestamp_utc": started.isoformat(),
             "elapsed_ms": round((datetime.now(timezone.utc) - started).total_seconds() * 1000),
             "execution": ai["execution"], "contribution_kind": contribution.get("kind"),
+            # Only the validated final contribution, never raw provider requests
+            # or credentials. Source-first reviewers need the actual claim text.
+            "validated_contribution_payload": contribution.get("payload"),
+            "semantic_review_status": ("pending_source_review" if contribution
+                                       and contribution.get("kind") != "abstention"
+                                       else "not_applicable"),
             "verification": contribution.get("verification"), "error": ai.get("error"),
             "citations": citations,
             "citation_validation": ("not_applicable" if not citations else

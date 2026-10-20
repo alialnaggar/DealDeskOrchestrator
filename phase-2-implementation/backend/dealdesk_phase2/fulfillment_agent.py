@@ -192,6 +192,11 @@ def validate_contribution(raw: dict, input: FulfillmentInputV1,
     if kind == "proposal" and (not citations or any(not isinstance(payload[k], list)
                                                        for k in ("tradeoffs", "assumptions", "unmet_requirements"))):
         raise ValueError("Proposal requires cited source and structured tradeoffs")
+    # A source-based finding without an exposed citation cannot be audited.
+    # No selected evidence belongs in an abstention with uncertainty reasons.
+    if kind == "finding_without_proposal" and (
+            not citations or not payload["finding"].strip()):
+        raise ValueError("Finding requires a returned source citation and nonblank text")
     for ref in citations:
         category, source_id = ref.split(":", 1)
         if not was_returned(graph, config, input.assessment_id, input.bundle_sha256,
