@@ -37,7 +37,8 @@ def _post(url: str, key: str, header: str, body: dict) -> dict:
     payload = _json(body).encode("utf-8")
     if len(payload) > MAX_PROMPT_BYTES:
         raise ProviderError("request_too_large")
-    request = Request(url, payload, {"Content-Type": "application/json", header: key}, method="POST")
+    request = Request(url, payload, {"Content-Type": "application/json", header: key,
+                                      "User-Agent": "DealDeskOrchestrator-thesis-M1.4/1.0"}, method="POST")
     try:
         with urlopen(request, timeout=30) as response:
             return json.load(response)

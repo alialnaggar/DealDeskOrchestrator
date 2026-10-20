@@ -9,7 +9,7 @@ from uuid import UUID
 
 from langgraph.checkpoint.memory import InMemorySaver
 
-from dealdesk_phase2.live_models import LiveInvestigationModel, ProviderError
+from dealdesk_phase2.live_models import LiveInvestigationModel, ProviderError, _post
 from dealdesk_phase2.investigation_graph import run_original_then_investigate
 from dealdesk_phase2.orchestrator import build_original_graph
 from dealdesk_phase2.phase1c_adapter import Phase1CAdapter
@@ -25,6 +25,20 @@ def final(line="L1", citations=("supplier_offer:O1",)):
 
 
 class LiveModelTests(TestCase):
+    def test_live_request_uses_descriptive_api_client_identity(self):
+        from io import BytesIO
+
+        class Response:
+            def __enter__(self): return BytesIO(b'{}')
+            def __exit__(self, *args): return False
+
+        with patch("dealdesk_phase2.live_models.urlopen", return_value=Response()) as request:
+            self.assertEqual(_post("https://api.groq.com/openai/v1/chat/completions",
+                                   "Bearer test-secret", "Authorization", {"model": "test"}), {})
+        sent = request.call_args.args[0]
+        self.assertEqual(sent.get_header("User-agent"), "DealDeskOrchestrator-thesis-M1.4/1.0")
+        self.assertEqual(sent.get_header("Authorization"), "Bearer test-secret")
+
     def setUp(self):
         self.adapter = InvestigationAdapter()
         self.saver = InMemorySaver()

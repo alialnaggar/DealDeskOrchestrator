@@ -225,3 +225,5 @@ it never reads credentials or makes live API calls. [Live smoke results](benchma
 failed eligible requests per provider: Groq HTTP 403 and Gemini HTTP 503.
 The original fixed results remain intact. No successful inference, paired
 benchmark or provider-quality conclusion has been measured.
+
+The [M1.4 connectivity diagnostic](benchmarks/m1.4-connectivity-diagnostic.md) verified Groq minimal access after a descriptive User-Agent change and identified a Gemini `responseSchema` field rejected by `generateContent`. The Gemini schema projection now omits `additionalProperties` while local validation remains strict. Live Gemini structured output and tool calling remain unverified because generation timed out or returned 503. No paired Fulfillment result or provider selection is claimed.

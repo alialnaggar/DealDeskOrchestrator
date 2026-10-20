@@ -111,3 +111,5 @@ The separate M1.4 workflow runs only from a deliberate
 `phase2-m14-live-run` branch push after the owner securely configures both
 GitHub Actions secrets and confirms free-tier status through the repository
 variable. It never runs from ordinary Phase 2 pushes.
+
+**M1.4 diagnostic follow-up:** [Connectivity evidence](../backend/benchmarks/m1.4-connectivity-diagnostic.md) identified Groq's default-client error 1010 and a working descriptive User-Agent. Gemini generated no successful response; separate structured and tool probes encountered an unsupported schema field, timeouts and HTTP 503. The schema projection was corrected locally and is covered by offline tests, but a live structured result has not been observed. No provider-quality ranking or permanent selection is justified.
