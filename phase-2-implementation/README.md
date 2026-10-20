@@ -71,6 +71,7 @@ Before changing, replacing, removing or materially expanding an agreed technolog
 ## Immediate next action
 
 **M1.3 completed:** The approved original-assessment workflow now conditionally runs a bounded, offline Fulfillment investigation after its fixed assessment. See the [backend implementation and limits](backend/README.md), [roadmap](planning/implementation-roadmap.md), and [M1.3 CI run](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39271579933). The Phase 1C pin remains `90c0bc8e285ee69262c7db826b786096a77ad004`. Review live-model provider options separately before approving network model calls; candidate verification is later work.
+**M1.4 underway:** Ali approved a bounded GroqCloud-versus-Gemini free-tier benchmark, not a permanent provider. Two opt-in standard-library adapters and offline tests are implemented. [M1.4 CI](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39475593959) passed 45 tests. Live comparison awaits secure keys, account-tier verification and reachable API hosts; see the [method and limitations](backend/benchmarks/m1.4-method.md). No live model result or candidate verification is claimed.
 
 ## Workshop 2 result — LangGraph implementation design direction
 

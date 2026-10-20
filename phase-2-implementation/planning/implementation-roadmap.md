@@ -93,3 +93,23 @@ offer-only fixture supports a cited finding, not a confirmed 12+8 delivery.
 security and repeatability, then choose a provider before adding network
 calls. Candidate verification and any Phase 1C conditional verifier are
 separate later work; no live model, frontend or VM change is implied by M1.3.
+
+## M1.4 bounded two-provider benchmark — 20 October 2026
+
+Ali approved comparing GroqCloud and Gemini free-tier APIs, without selecting
+a permanent provider or enabling paid billing. The [opt-in benchmark protocol](../backend/benchmarks/m1.4-method.md) records model IDs, caps, distinct actual
+pinned references versus repeated trials, critical failures, privacy and
+measurement limits. Standard-library adapters, checkpointed model-attempt
+reservations, fake-provider tests and the explicit runner are implemented in
+`backend`. [CI run 39475593959](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39475593959)
+passed **45 offline and PostgreSQL tests**, retaining all 38 M1.3 tests.
+
+**Live measurement pending:** Neither key has been supplied in this execution
+environment; direct DNS for both provider API hosts is unavailable here.
+No connection, smoke result, paid call, actual provider usage, accuracy or
+latency comparison is claimed. The pinned actual fixtures supply one eligible
+conditional-offer case and one binding-supply skip; ten repetitions of the
+offer case cannot substitute for independently reviewed diverse cases. Run
+the smoke and paired trials only with secure credentials, verified free-tier
+projects and reachable approved execution environment. Publish actual sanitized
+measurements and limitations before recommending a primary provider.

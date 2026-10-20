@@ -70,6 +70,8 @@ def main():
     args = parser.parse_args()
     if not args.live:
         parser.error("Live requests require --live; routine CI never invokes this module")
+    if "results" not in args.output.parts:
+        parser.error("Place local output inside an ignored results/ directory")
     if not (0 <= args.offer_repeats <= 10 and 0 <= args.binding_repeats <= 2):
         parser.error("Approved trial caps: up to ten offer and two binding repetitions")
     key = "GROQ_API_KEY" if args.provider == "groq" else "GEMINI_API_KEY"
@@ -94,9 +96,6 @@ def main():
                 sleep(20)
             if records and "http_429" in records[-1]["http_or_parse_errors"]:
                 break
-    # The output path must be under an ignored results/ directory by default.
-    if "results" not in args.output.parts:
-        parser.error("Place local output inside an ignored results/ directory")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(records, indent=2, sort_keys=True) + "\n")
 
