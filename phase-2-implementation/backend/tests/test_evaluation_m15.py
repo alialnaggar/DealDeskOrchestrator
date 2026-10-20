@@ -126,6 +126,24 @@ class SourceFirstSyntheticTests(unittest.TestCase):
                          "finding_without_proposal")
         self.assertEqual(state["review_status"], "needs_revision")
 
+    def test_m15_prompt_requires_selected_pool_scope_for_absence_claims(self):
+        from dealdesk_phase2.fulfillment_agent import restricted_input
+        from dealdesk_phase2.live_models import PROMPT_VERSION, _prompt
+
+        adapter = InvestigationAdapter()
+        pinned = adapter.read_original(None, RUN, "M15-prompt")
+        pool = adapter.validate_pinned_context(pinned)
+        selected = {"line": pool["lines"][0],
+                    "finding": {"requested_quantity": 20,
+                                "quantity_by_requested_date": 12,
+                                "status": "late_alternative"}}
+        input = restricted_input(pinned.context, pool, selected, 12)
+        prompt = _prompt(input, ())
+        self.assertEqual(PROMPT_VERSION, "m15-fulfillment-v1")
+        self.assertIn("selected reader pool", prompt)
+        self.assertIn("never claim globally", prompt)
+        self.assertIn("Do not speculate", prompt)
+
     def test_f06_uncited_or_blank_finding_is_rejected_with_fixed_fallback(self):
         for finding, citations in (("Eight units are confirmed", []),
                                    ("   ", ["supplier_offer:O1"])):
