@@ -64,13 +64,13 @@ Maintain roadmap (order/dependencies), progress tracker (status with commit/test
 
 ## Workshop 1 result and technology governance
 
-The [decision log](planning/decision-log.md) records D1 (bounded Fulfillment AI proposal), D2 (versioned specialist contracts and restricted tools), D3 (LangGraph Orchestrator, Configuration-first execution, frozen run and candidate isolation) as **provisionally approved**. [Workshop 1 architecture](architecture/workshop-1-architecture-baseline.md) separates the complete target design from the narrow first milestone. LangGraph is the selected orchestration framework from M1; ordinary Python owns fixed business logic. Sequential eligible nodes come first; checkpointing, persistence, concurrency and exact graph details remain open. Do not substitute a custom Python state machine for LangGraph.
+The [decision log](planning/decision-log.md) records D1 (bounded Fulfillment AI proposal), D2 (versioned specialist contracts and restricted tools), D3 (LangGraph Orchestrator, Configuration-first execution, frozen run and candidate isolation) as **provisionally approved**. [Workshop 1 architecture](architecture/workshop-1-architecture-baseline.md) separates the complete target design from the narrow first milestone. LangGraph is the selected orchestration framework from M1; ordinary Python owns fixed business logic. M1.1 implemented sequential original-assessment nodes and PostgreSQL checkpointing. Candidate transitions and concurrency remain later work. Do not substitute a custom Python state machine for LangGraph.
 
 Before changing, replacing, removing or materially expanding an agreed technology, framework, library, database, model provider, development tool or infrastructure component, present the current agreement, proposal, need, alternatives, architecture/implementation/cost/learning implications and recommendation; obtain Ali's explicit approval. Normal details within approved tools need no repeated approval unless they materially alter architecture or create meaningful cost/security implications. LangGraph does not itself authorize other infrastructure or paid APIs. Record approved changes in the decision log.
 
 ## Immediate next action
 
-**M1 task approval:** Workshop 3 is closed at architectural-direction level. Review the [M1 contract and integration specification](architecture/m1-contract-and-integration-spec.md), which pins Phase 1C draft commit `90c0bc8e285ee69262c7db826b786096a77ad004`, the two-checkout integration and sealed reader replay. The first small coding task is pending Ali's separate approval. Follow the [roadmap](planning/implementation-roadmap.md); do not begin coding from this README alone.
+**M1.3 completed:** The approved original-assessment workflow now conditionally runs a bounded, offline Fulfillment investigation after its fixed assessment. See the [backend implementation and limits](backend/README.md), [roadmap](planning/implementation-roadmap.md), and [M1.3 CI run](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39271579933). The Phase 1C pin remains `90c0bc8e285ee69262c7db826b786096a77ad004`. Review live-model provider options separately before approving network model calls; candidate verification is later work.
 
 ## Workshop 2 result — LangGraph implementation design direction
 
@@ -80,17 +80,20 @@ Workshop 3 subsequently inspected the pinned Phase 1C interfaces and recorded it
 
 ## Workshop 3 and focused M1 review
 
-W3.1–W3.8 are approved directions in the [decision log](planning/decision-log.md); Workshop 3 is closed at that level. The broad Workshop 4 is replaced by the focused [M1 contract and integration specification](architecture/m1-contract-and-integration-spec.md). Ali approved two pinned checkouts and a sealed, versioned reader bundle with checked candidate rereads on 19 October 2026. The exact Phase 1C pin, alternatives, compatibility gaps, acceptance tests and implementation sequence are recorded there. A conditional 12+8 candidate cannot be called verified under the pinned Phase 1C interface. Subsequent separate approvals authorized M1.0 and bounded M1.1 coding; no Phase 1C merge/edit, paid model or VM change was authorized.
+W3.1–W3.8 are approved directions in the [decision log](planning/decision-log.md); Workshop 3 is closed at that level. The broad Workshop 4 is replaced by the focused [M1 contract and integration specification](architecture/m1-contract-and-integration-spec.md). Ali approved two pinned checkouts and a sealed, versioned reader bundle with checked candidate rereads on 19 October 2026. The exact Phase 1C pin, alternatives, compatibility gaps, acceptance tests and implementation sequence are recorded there. A conditional 12+8 candidate cannot be called verified under the pinned Phase 1C interface. Subsequent separate approvals authorized bounded M1.0–M1.3 coding; no Phase 1C merge/edit, paid model or VM change was authorized.
 
 ## Implemented M1 boundaries
 
-- [M1.0 and M1.1 backend evidence](backend/README.md): pinned read-only
+- [M1.0–M1.3 backend evidence](backend/README.md): pinned read-only
   reader, sealed bundle, sequential original-only LangGraph, six distinct
   deterministic result mappings from **one** Phase 1C aggregate decision,
-  PostgreSQL checkpoint resume and CI tests.
+  PostgreSQL checkpoint resume, M1.2 bounded investigation tools and access
+  ledger, and M1.3 conditional offline Fulfillment interface with CI tests.
 - [Roadmap](planning/implementation-roadmap.md): remaining fixed-interface
   gaps and later separately approved Fulfillment investigation/candidate work.
 
-No Fulfillment AI, candidate loop, model call, frontend or VM deployment was
-implemented by these milestones. Configuration is the first graph specialist
-result; Phase 1C's aggregate function calculates the fixed domains together.
+M1.3 exercises a structured offline model double; it is not a live LLM.
+Its proposals stay unverified. No candidate verification/loop, live model
+call, frontend or VM deployment was implemented. Configuration is the first
+graph specialist result; Phase 1C's aggregate function calculates the fixed
+domains together.

@@ -87,7 +87,7 @@ original checkpoint ledger. Valid model contributions, abstention and AI
 errors occupy a separate original-subject AI result slot. Proposals have no
 candidate ID and remain unverified. The pinned binding fixture skips AI; the
 offer-only fixture supports a cited finding, not a confirmed 12+8 delivery.
-Record the final M1.3 CI run here before calling it complete.
+[CI run 39271579933](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39271579933) passed **38 tests** in the disposable PostgreSQL and exact two-checkout environment, preserving the prior 29. Tests cover typed proposal/finding/abstention, citation rejection, malformed output, model/tool failures, exhausted budget, independent Policy blocker, actual pinned binding/offer fixtures and restarted PostgreSQL checkpoint replay of a completed tool call without a second ledger charge. The first run exposed a test fixture's wrong pinned line ID; the follow-up commit corrected it and passed. The offline model double supplies scripted responses; no live LLM inference or candidate verification was measured.
 
 **Next approval gate:** review live-model options, developer/provider cost,
 security and repeatability, then choose a provider before adding network
