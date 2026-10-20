@@ -98,3 +98,5 @@ Its proposals stay unverified. No candidate verification/loop, live model
 call, frontend or VM deployment was implemented. Configuration is the first
 graph specialist result; Phase 1C's aggregate function calculates the fixed
 domains together.
+
+**M1.4 gated smoke:** [Actual measurements](backend/benchmarks/m1.4-gated-smoke-results.md) show one Groq Fulfillment finding with three authorized tool calls and an accepted offer citation. Gemini's capability gate did not pass; its Fulfillment case and all paired repetitions remained unrun. Groq may be used provisionally for bounded development, subject to Ali's decision; no permanent provider choice is recorded.

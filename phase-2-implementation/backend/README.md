@@ -227,3 +227,5 @@ The original fixed results remain intact. No successful inference, paired
 benchmark or provider-quality conclusion has been measured.
 
 The [M1.4 connectivity diagnostic](benchmarks/m1.4-connectivity-diagnostic.md) verified Groq minimal access after a descriptive User-Agent change and identified a Gemini `responseSchema` field rejected by `generateContent`. The Gemini schema projection now omits `additionalProperties` while local validation remains strict. Live Gemini structured output and tool calling remain unverified because generation timed out or returned 503. No paired Fulfillment result or provider selection is claimed.
+
+The [gated M1.4 smoke](benchmarks/m1.4-gated-smoke-results.md) exercised the actual pinned conditional-offer fixture. Groq completed one evidence-cited finding without a proposal; Gemini's structured and tool probes did not pass, so its eligible smoke was skipped. No candidate was generated or deterministically verified. The existing offline and PostgreSQL CI passed 49 tests.
