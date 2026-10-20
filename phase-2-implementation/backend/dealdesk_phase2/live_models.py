@@ -17,6 +17,7 @@ from . import model_attempts
 
 GROQ_MODEL = "openai/gpt-oss-120b"
 GEMINI_MODEL = "gemini-3.8-flash"
+PROMPT_VERSION = "m14-fulfillment-v1"
 MAX_OUTPUT_TOKENS = 2048
 MAX_PROMPT_BYTES = 20000
 MAX_MODEL_TURNS = 6
@@ -98,7 +99,7 @@ def _prompt(input, observations):
     safe = {key: value for key, value in asdict(input).items()
             if key not in ("assessment_id", "phase1c_run_id", "subject_id",
                            "bundle_sha256", "source_input_digest")}
-    return ("You investigate a fulfillment shortage. Only tool responses are citable; "
+    return (PROMPT_VERSION + ". You investigate a fulfillment shortage. Only tool responses are citable; "
             "their returned_refs are source-category:source-id. Supplier offers are conditional, "
             "never confirmed. An empty bounded pool does not prove no supply exists. "
             "Never approve, reserve or promise. You may abstain or report a finding. "
@@ -227,4 +228,5 @@ class LiveInvestigationModel:
         usage = response.get("usageMetadata") or {}
         return action, {"input_tokens": usage.get("promptTokenCount"),
                         "output_tokens": usage.get("candidatesTokenCount"),
+                        "thinking_tokens": usage.get("thoughtsTokenCount"),
                         "total_tokens": usage.get("totalTokenCount")}, response.get("modelVersion")

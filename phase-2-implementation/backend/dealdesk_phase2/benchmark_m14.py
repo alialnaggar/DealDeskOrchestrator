@@ -16,7 +16,7 @@ from uuid import UUID, uuid4
 import psycopg
 
 from .checkpoint import thesis_checkpointer
-from .live_models import GEMINI_MODEL, GROQ_MODEL, LiveInvestigationModel
+from .live_models import GEMINI_MODEL, GROQ_MODEL, PROMPT_VERSION, LiveInvestigationModel
 from .orchestrator import build_original_graph
 from .investigation_graph import run_original_then_investigate
 from .phase1c_adapter import Phase1CAdapter
@@ -45,6 +45,8 @@ def _trial(provider, case, trial, saver, adapter, factory):
             "source_fingerprint": state["context"]["source_input_digest"],
             "bundle_sha256": state["context"]["bundle_sha256"],
             "provider": provider, "requested_model": GROQ_MODEL if provider == "groq" else GEMINI_MODEL,
+            "prompt_version": PROMPT_VERSION, "temperature": 0,
+            "decision_output_cap": 1024, "final_output_cap": 2048,
             "response_models": list(dict.fromkeys(x.get("response_model") for x in model_records)),
             "timestamp_utc": started.isoformat(),
             "elapsed_ms": round((datetime.now(timezone.utc) - started).total_seconds() * 1000),
@@ -55,6 +57,7 @@ def _trial(provider, case, trial, saver, adapter, factory):
             "model_requests": len(model_records),
             "input_tokens": sum(x.get("usage", {}).get("input_tokens") or 0 for x in model_records),
             "output_tokens": sum(x.get("usage", {}).get("output_tokens") or 0 for x in model_records),
+            "thinking_tokens": sum(x.get("usage", {}).get("thinking_tokens") or 0 for x in model_records),
             "http_or_parse_errors": [x.get("error_code") for x in model_records
                                      if x["status"] == "error"],
             "fixed_review_status": state["review_status"]}
