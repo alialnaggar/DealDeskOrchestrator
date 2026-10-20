@@ -1,19 +1,10 @@
 name: Phase 2 M1.4 opt-in live provider comparison
 
 on:
-  workflow_dispatch:
-    inputs:
-      run_mode:
-        description: Connectivity smoke only or bounded paired trials
-        required: true
-        type: choice
-        options: [smoke, full]
-        default: smoke
-      confirm_free_tier:
-        description: I verified both API keys belong to free-tier projects without paid billing
-        required: true
-        type: boolean
-        default: false
+  # A dispatch-only workflow cannot run until its file exists on the default
+  # branch. This Phase 2-only trigger needs a deliberate benchmark branch push.
+  push:
+    branches: [phase2-m14-live-run]
 
 permissions:
   contents: read
@@ -24,7 +15,7 @@ concurrency:
 
 jobs:
   comparison:
-    if: inputs.confirm_free_tier == true
+    if: vars.M14_FREE_TIER_CONFIRMED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     services:
@@ -96,8 +87,7 @@ jobs:
               if len(records) != 2 or records[-1]['execution'] != 'completed':
                   raise SystemExit(f'{provider} smoke did not complete; inspect sanitized result')
           PY
-      - name: Paired repeated trials (only explicitly selected)
-        if: inputs.run_mode == 'full'
+      - name: Paired repeated trials after both smoke checks
         run: |
           python -m dealdesk_phase2.benchmark_m14 --live --provider groq --output phase-2-implementation/backend/benchmarks/results/groq.json
           python -m dealdesk_phase2.benchmark_m14 --live --provider gemini --output phase-2-implementation/backend/benchmarks/results/gemini.json

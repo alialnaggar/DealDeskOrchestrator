@@ -113,6 +113,7 @@ offer case cannot substitute for independently reviewed diverse cases. Run
 the smoke and paired trials only with secure credentials, verified free-tier
 projects and reachable approved execution environment. Publish actual sanitized
 measurements and limitations before recommending a primary provider.
-The separate M1.4 `workflow_dispatch` job is the opt-in reachable execution
-path once the owner securely configures the two GitHub Actions secrets; it
-never runs on a push.
+The separate M1.4 workflow runs only from a deliberate
+`phase2-m14-live-run` branch push after the owner securely configures both
+GitHub Actions secrets and confirms free-tier status through the repository
+variable. It never runs from ordinary Phase 2 pushes.
