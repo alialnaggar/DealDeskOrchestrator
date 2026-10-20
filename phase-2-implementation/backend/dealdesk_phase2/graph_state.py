@@ -45,6 +45,8 @@ class AssessmentStateV1(TypedDict, total=False):
     # M1.3 additive result; the six fixed specialist slots remain authoritative.
     ai_fulfillment_result: dict
     investigation_status: str
+    # M1.4: sequential, checkpointed reservations and sanitized outcomes.
+    model_attempt_ledger: list[dict]
 
 
 def context_to_record(context: RunContextV1) -> dict:

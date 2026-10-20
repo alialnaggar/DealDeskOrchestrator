@@ -1,0 +1,6 @@
+# Local credentials and opt-in benchmark outputs; never publish API secrets.
+.env
+.env.*
+*.secrets
+phase-2-implementation/backend/benchmarks/results/
+

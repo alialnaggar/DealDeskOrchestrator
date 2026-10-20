@@ -205,3 +205,22 @@ shortage and skips AI. The offer-only reference permits investigation but
 forbids partial delivery: the offline double reports a cited finding without
 proposing a split. The synthetic 20-unit 12+8 proposal test is explicitly
 unverified; the pinned Phase 1C interface cannot verify its mixed path.
+
+## M1.4 opt-in Groq/Gemini comparison
+
+`live_models.py` implements two narrowly scoped standard-library HTTP adapters
+behind the M1.3 `InvestigationModel` protocol. Groq uses
+`openai/gpt-oss-120b`; Gemini uses `gemini-3.8-flash`. Each requests at most
+one local tool at a time and uses a separate structured final request. Runtime
+validation, authorized M1.2 execution and original/fixed results remain
+unchanged. `model_attempts.py` records a sanitized reservation and completion
+in the existing PostgreSQL checkpoint. Completed requests replay without a
+second provider call; an interrupted reservation stops safely. No API key,
+raw provider response or raw request body is checkpointed.
+
+The [M1.4 benchmark protocol](benchmarks/m1.4-method.md) describes the
+two actual pinned cases, repeated-trial limitation, quotas, metrics, opt-in
+runner and critical failures. Routine CI uses patched HTTP responses only;
+it never reads credentials or makes live API calls. A live result cannot be
+claimed until secure account credentials, free-tier status, reachable provider
+hosts and isolated test databases have been checked and the smoke/trials run.
