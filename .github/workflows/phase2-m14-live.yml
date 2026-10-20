@@ -1,0 +1,110 @@
+name: Phase 2 M1.4 opt-in live provider comparison
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_mode:
+        description: Connectivity smoke only or bounded paired trials
+        required: true
+        type: choice
+        options: [smoke, full]
+        default: smoke
+      confirm_free_tier:
+        description: I verified both API keys belong to free-tier projects without paid billing
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase2-m14-live
+  cancel-in-progress: false
+
+jobs:
+  comparison:
+    if: inputs.confirm_free_tier == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: phase2_ci_only
+          POSTGRES_DB: deal_desk_m1_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d deal_desk_m1_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: phase2_ci_only
+      PGDATABASE: deal_desk_m1_test
+      DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m1_test
+      CHECKPOINT_DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m1_checkpoint
+      DEALDESK_PHASE1C_CHECKOUT: ${{ github.workspace }}/phase1c-pinned
+      PYTHONPATH: phase-2-implementation/backend
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/checkout@v6
+        with:
+          repository: alialnaggar/DealDeskOrchestrator
+          ref: 90c0bc8e285ee69262c7db826b786096a77ad004
+          path: phase1c-pinned
+          persist-credentials: false
+      - name: Verify pin and configured secrets without disclosing values
+        run: |
+          test "$(git -C phase1c-pinned rev-parse HEAD)" = '90c0bc8e285ee69262c7db826b786096a77ad004'
+          test -n "${GROQ_API_KEY:-}"
+          test -n "${GEMINI_API_KEY:-}"
+      - name: Install locked dependencies and PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          python -m pip install -r phase-2-implementation/backend/requirements-m1.1.lock
+          python -m pip check
+      - name: Load pinned fixtures in disposable databases
+        run: |
+          createdb deal_desk_m1_checkpoint
+          psql -X -v ON_ERROR_STOP=1 -f phase1c-pinned/phase-1c-data/implementation/schema.sql
+          (cd phase1c-pinned/phase-1c-data/implementation && python -c 'from test_phase1c_reader import load_fixture_rows; load_fixture_rows()')
+          (cd phase1c-pinned/phase-1c-data/implementation && python compile_phase1c_policy.py --output /tmp/m14_rules.sql)
+          psql -X -v ON_ERROR_STOP=1 -f /tmp/m14_rules.sql
+      - name: Smoke both providers separately
+        run: |
+          python -m dealdesk_phase2.benchmark_m14 --live --provider groq --offer-repeats 1 --binding-repeats 1 --output phase-2-implementation/backend/benchmarks/results/groq-smoke.json
+          python -m dealdesk_phase2.benchmark_m14 --live --provider gemini --offer-repeats 1 --binding-repeats 1 --output phase-2-implementation/backend/benchmarks/results/gemini-smoke.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for provider in ('groq', 'gemini'):
+              records = json.loads(Path(f'phase-2-implementation/backend/benchmarks/results/{provider}-smoke.json').read_text())
+              if len(records) != 2 or records[-1]['execution'] != 'completed':
+                  raise SystemExit(f'{provider} smoke did not complete; inspect sanitized result')
+          PY
+      - name: Paired repeated trials (only explicitly selected)
+        if: inputs.run_mode == 'full'
+        run: |
+          python -m dealdesk_phase2.benchmark_m14 --live --provider groq --output phase-2-implementation/backend/benchmarks/results/groq.json
+          python -m dealdesk_phase2.benchmark_m14 --live --provider gemini --output phase-2-implementation/backend/benchmarks/results/gemini.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m14-sanitized-results
+          path: phase-2-implementation/backend/benchmarks/results/*.json
+          if-no-files-found: ignore
+          retention-days: 7
