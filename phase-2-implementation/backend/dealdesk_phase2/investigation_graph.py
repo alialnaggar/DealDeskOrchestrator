@@ -133,7 +133,7 @@ def build_investigation_graph(original_graph, config: dict, adapter: Phase1CAdap
         try:
             contribution = validate_contribution(state["action"]["value"], input,
                                                  original_graph, config)
-            audit = contribution.get("claim_audit", {})
+            audit = contribution.pop("claim_audit", {})
             return {"outcome": runtime_envelope(input, execution="completed",
                                                  contribution=contribution),
                     "claim_audit": [{"original_claim": item["original_claim"],
@@ -141,7 +141,12 @@ def build_investigation_graph(original_graph, config: dict, adapter: Phase1CAdap
                                      "claim_index": item["claim_index"],
                                      "assessment_id": input.assessment_id,
                                      "bundle_sha256": input.bundle_sha256}
-                                    for item in audit.get("rejected_claims", [])]}
+                                    for item in audit.get("rejected_claims", [])]
+                                   + ([{"raw_model_notes": audit["raw_model_notes"],
+                                        "reason": "audit_only_model_notes",
+                                        "assessment_id": input.assessment_id,
+                                        "bundle_sha256": input.bundle_sha256}]
+                                      if audit.get("raw_model_notes") else [])}
         except Exception as exc:
             reason = ("unsupported_citation" if isinstance(exc, EvidenceMismatch)
                       and "not returned" in str(exc) else

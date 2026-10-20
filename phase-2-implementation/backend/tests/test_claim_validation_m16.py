@@ -73,7 +73,8 @@ class ClaimContractTests(unittest.TestCase):
                   field="quantity_on_hand", value="20"),
             claim("fixed_finding_reference", field="quantity_by_requested_date", value="20"),
             claim("fixed_finding_reference", field="quantity_by_requested_date", value="12")))
-        self.assertEqual([x["reason"] for x in state["ai_claim_audit"]],
+        self.assertEqual([x["reason"] for x in state["ai_claim_audit"]
+                          if x["reason"] != "audit_only_model_notes"],
                          ["source_value_mismatch", "fixed_finding_mismatch"])
         self.assertEqual(state["ai_fulfillment_result"]["contribution"]["payload"]
                          ["review_summary"], ["Phase 1C fixed quantity_by_requested_date: 12."])
@@ -109,10 +110,72 @@ class ClaimContractTests(unittest.TestCase):
             claim("evidence_gap", scope="global", gap_code="no_eligible_evidence_in_selected_pool"),
             claim("evidence_gap", scope="returned_records",
                   gap_code="no_eligible_evidence_in_selected_pool")))
-        self.assertEqual([x["reason"] for x in state["ai_claim_audit"]],
+        self.assertEqual([x["reason"] for x in state["ai_claim_audit"]
+                          if x["reason"] != "audit_only_model_notes"],
                          ["absence_scope_must_be_returned_records",
                           "selected_pool_absence_not_established"])
         self.assertEqual(state["ai_fulfillment_result"]["contribution"]["kind"], "abstention")
+
+
+    @unittest.skipUnless(bool(__import__("os").getenv("DATABASE_URL") and
+                               __import__("os").getenv("CHECKPOINT_DATABASE_URL") and
+                               __import__("os").getenv("DEALDESK_PHASE1C_CHECKOUT")),
+                         "Requires pinned Phase 1C PostgreSQL and checkpoint service")
+    def test_postgres_restart_keeps_rejection_and_does_not_repeat_tool(self):
+        import os
+        from pathlib import Path
+        from uuid import UUID
+        import psycopg
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        from dealdesk_phase2.phase1c_adapter import Phase1CAdapter
+
+        adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
+        run = UUID("00000000-0000-4000-8000-000000030001")
+        line = "L-offer_without_supplier_commitment-1"
+        ref = "supplier_offer:OFFER-offer_without_supplier_commitment"
+        dated = claim("candidate_idea", line_id=line, source_ref=ref,
+                      idea_code="ask_supplier_for_later_option",
+                      delivery_slices=[{"quantity": "20", "delivery_date": "2026-09-10",
+                                        "commitment_claim": "conditional"}])
+        assessment = "M16-postgres-audit"
+        config = {"configurable": {"thread_id": assessment}}
+
+        class Interrupted:
+            def __init__(self):
+                self.once = False
+
+            def next_action(self, input, observations):
+                if not observations:
+                    return {"type": "tool", "tool": "inspect_line_supply",
+                            "arguments": {"line_id": line}}
+                if not self.once:
+                    self.once = True
+                    raise KeyboardInterrupt("simulated restart")
+                return {"type": "contribution", "value": {
+                    "schema_version": "2", "kind": "proposal",
+                    "payload": {"line_id": line, "claims": [dated],
+                                "notes": {"finding": "Unsupported delivery on request date"}}}}
+
+        model = Interrupted()
+        with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(
+                adapter, lambda: psycopg.connect(os.environ["DATABASE_URL"]), saver)
+            with self.assertRaises(KeyboardInterrupt):
+                run_original_then_investigate(graph, config, adapter, model,
+                                              assessment_id=assessment, run_id=run)
+            before = graph.get_state(config).values
+            self.assertEqual(sum(e["counted"] for e in before["tool_access_ledger"]), 1)
+        with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(
+                adapter, lambda: psycopg.connect(os.environ["DATABASE_URL"]), saver)
+            state = run_original_then_investigate(graph, config, adapter, model,
+                                                  assessment_id=assessment, run_id=run)
+            self.assertEqual(state["ai_claim_audit"][0]["original_claim"], dated)
+            self.assertEqual(state["ai_claim_audit"][0]["reason"], "candidate_date_unverified")
+            self.assertEqual(sum(e["counted"] for e in state["tool_access_ledger"]), 1)
+            self.assertEqual(state["context"], before["context"])
+            self.assertEqual(state["ai_fulfillment_result"]["contribution"]
+                             ["validation_disposition"], "downgraded")
 
     def test_live_final_schema_maps_only_typed_claims_to_review_path(self):
         raw = {key: ([] if key in ("claims", "delivery_slices", "citations", "tradeoffs",

@@ -51,7 +51,7 @@ def _trial(provider, case, trial, saver, adapter, factory):
                  else [c["source_ref"] for c in payload.get("validated_claims", [])
                        if c.get("source_ref")])
     claim_audit = state.get("ai_claim_audit", [])
-    rejected = [x for x in claim_audit if x.get("reason")]
+    rejected = [x for x in claim_audit if x.get("reason") != "audit_only_model_notes"]
     reviewed = payload.get("review_summary", []) if contribution.get("schema_version") == "2" else []
     returned = {ref for event in tool_events for ref in event["returned_refs"]}
     return {"case_id": f"pinned-{case}-repeat-{trial:02}",
