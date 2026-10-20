@@ -1,0 +1,40 @@
+name: Phase 2 M1.4 opt-in provider connectivity diagnostic
+
+on:
+  push:
+    branches: [phase2-m14-diagnostic-run]
+
+permissions:
+  contents: read
+
+jobs:
+  provider-probes:
+    if: vars.M14_FREE_TIER_CONFIRMED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      PYTHONPATH: phase-2-implementation/backend
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Verify credentials are present without disclosing them
+        run: |
+          test -n "${GROQ_API_KEY:-}"
+          test -n "${GEMINI_API_KEY:-}"
+      - name: Run small independent provider probes
+        run: |
+          python -m dealdesk_phase2.provider_diagnostic --live \
+            --output phase-2-implementation/backend/benchmarks/results/provider-diagnostic.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m14-sanitized-provider-diagnostic
+          path: phase-2-implementation/backend/benchmarks/results/provider-diagnostic.json
+          if-no-files-found: ignore
+          retention-days: 7
