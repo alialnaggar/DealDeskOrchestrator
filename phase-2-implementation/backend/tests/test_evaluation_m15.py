@@ -160,7 +160,7 @@ class PinnedRealReferenceTests(unittest.TestCase):
                 self.assertEqual(str(pinned.context.phase1c_run_id), str(run))
                 self.assertEqual(pinned.context.original_deal_id, pool["deal"]["deal_id"])
                 self.assertEqual(len(pinned.context.bundle_sha256), 64)
-        self.assertIn("not independently accepted", ANSWER_SHEET.read_text().lower())
+        self.assertIn("not an independently accepted", ANSWER_SHEET.read_text().lower())
 
 
 if __name__ == "__main__":
