@@ -117,6 +117,9 @@ def _interpret(provider, phase, data):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--live", action="store_true", required=True)
+    parser.add_argument("--provider", choices=("all", "gemini"), default="all")
+    parser.add_argument("--require-success", action="store_true",
+                        help="Exit nonzero unless all selected capability probes succeed")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
     keys = {provider: os.environ.get(env) for provider, env in
@@ -125,15 +128,19 @@ def main():
         parser.error("Both provider secrets must be present")
     records = []
     groq_key, gemini_key = keys["groq"], keys["gemini"]
-    records += _request("groq", "metadata", "GET", GROQ_ROOT + "/models/" + GROQ_MODEL, groq_key)
-    records += _request("groq", "generation", "POST", GROQ_ROOT + "/chat/completions", groq_key,
-                        {"model": GROQ_MODEL, "messages": [{"role": "user", "content": "Reply OK."}],
-                         "temperature": 0, "max_completion_tokens": 32})
+    if args.provider == "all":
+        records += _request("groq", "metadata", "GET", GROQ_ROOT + "/models/" + GROQ_MODEL, groq_key)
+        records += _request("groq", "generation", "POST", GROQ_ROOT + "/chat/completions", groq_key,
+                            {"model": GROQ_MODEL, "messages": [{"role": "user", "content": "Reply OK."}],
+                             "temperature": 0, "max_completion_tokens": 32})
     records += _request("gemini", "metadata", "GET", GEMINI_ROOT + "/models/" + GEMINI_MODEL, gemini_key)
     endpoint = GEMINI_ROOT + "/models/" + GEMINI_MODEL + ":generateContent"
     base = {"contents": [{"parts": [{"text": "Reply OK."}]}],
             "generationConfig": {"temperature": 0, "maxOutputTokens": 128}}
     records += _request("gemini", "generation", "POST", endpoint, gemini_key, base, max_attempts=2)
+    if any(r["status"] == 429 for r in records):
+        _finish(records, args.output, args.require_success)
+        return
     sleep(15)
     structured = {"contents": [{"parts": [{"text": "Return a JSON object with status ok."}]}],
                   "generationConfig": {"temperature": 0, "maxOutputTokens": 128,
@@ -141,6 +148,9 @@ def main():
                       "responseSchema": {"type": "object", "properties": {"status": {"type": "string", "enum": ["ok"]}},
                                          "required": ["status"]}}}
     records += _request("gemini", "structured", "POST", endpoint, gemini_key, structured, max_attempts=2)
+    if any(r["status"] == 429 for r in records):
+        _finish(records, args.output, args.require_success)
+        return
     sleep(15)
     tool = {"contents": [{"parts": [{"text": "Call inspect_line_supply for line_id smoke-line."}]}],
             "tools": [{"functionDeclarations": [{"name": "inspect_line_supply", "description": "Read a test line",
@@ -149,11 +159,22 @@ def main():
             "generationConfig": {"temperature": 0, "maxOutputTokens": 128}}
     records += _request("gemini", "tool", "POST", endpoint, gemini_key, tool, max_attempts=2)
     # The tool declaration is only a connectivity probe. No local business tool is executed.
-    os.makedirs(os.path.dirname(args.output), exist_ok=True)
-    with open(args.output, "w", encoding="utf-8") as handle:
+    _finish(records, args.output, args.require_success)
+
+
+def _finish(records, output, require_success):
+    os.makedirs(os.path.dirname(output), exist_ok=True)
+    with open(output, "w", encoding="utf-8") as handle:
         json.dump(records, handle, indent=2)
     for entry in records:
         print(json.dumps(entry, sort_keys=True), flush=True)
+    if require_success:
+        expected = {"metadata": "model_present", "generation": "text_present",
+                    "structured": "valid_structured_json", "tool": "expected_tool_call"}
+        selected = {r["phase"]: r for r in records if r["provider"] == "gemini"}
+        if any(selected.get(phase, {}).get("result") != result or
+               selected[phase].get("status") != 200 for phase, result in expected.items()):
+            raise SystemExit("Gemini capability probes did not pass; eligible smoke gated")
 
 
 if __name__ == "__main__":

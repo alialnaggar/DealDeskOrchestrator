@@ -39,6 +39,15 @@ def _trial(provider, case, trial, saver, adapter, factory):
     contribution = ai.get("contribution") or {}
     model_records = [x for x in state.get("model_attempt_ledger", [])
                      if x["status"] in ("completed", "error")]
+    tool_events = [{"tool": x["tool"], "line_id": x["args"].get("line_id"),
+                    "execution": x["result"]["execution"],
+                    "evidence": x["result"]["evidence"],
+                    "record_count": len(x["result"]["records"]),
+                    "returned_refs": x["returned_refs"],
+                    "gaps": x["result"].get("gaps", [])}
+                   for x in state.get("tool_access_ledger", []) if x["status"] == "completed"]
+    citations = (contribution.get("payload") or {}).get("citations", [])
+    returned = {ref for event in tool_events for ref in event["returned_refs"]}
     return {"case_id": f"pinned-{case}-repeat-{trial:02}",
             "source_kind": "actual_pinned_reference_repeated_trial",
             "assessment_id": assessment, "phase1c_run_id": str(run),
@@ -52,9 +61,17 @@ def _trial(provider, case, trial, saver, adapter, factory):
             "elapsed_ms": round((datetime.now(timezone.utc) - started).total_seconds() * 1000),
             "execution": ai["execution"], "contribution_kind": contribution.get("kind"),
             "verification": contribution.get("verification"), "error": ai.get("error"),
-            "citations": (contribution.get("payload") or {}).get("citations", []),
+            "citations": citations,
+            "citation_validation": ("not_applicable" if not citations else
+                                    "returned_by_authorized_tool" if set(citations) <= returned
+                                    and ai["execution"] == "completed" else "rejected_or_unproven"),
+            "tool_events": tool_events,
             "tool_calls": sum(bool(x.get("counted")) for x in state.get("tool_access_ledger", [])),
             "model_requests": len(model_records),
+            "model_attempts": [{"status": x["status"], "latency_ms": x.get("latency_ms"),
+                                "error_code": x.get("error_code"),
+                                "response_model": x.get("response_model"), "usage": x.get("usage", {})}
+                               for x in model_records],
             "input_tokens": sum(x.get("usage", {}).get("input_tokens") or 0 for x in model_records),
             "output_tokens": sum(x.get("usage", {}).get("output_tokens") or 0 for x in model_records),
             "thinking_tokens": sum(x.get("usage", {}).get("thinking_tokens") or 0 for x in model_records),
