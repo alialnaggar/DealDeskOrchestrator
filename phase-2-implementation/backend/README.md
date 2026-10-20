@@ -221,6 +221,7 @@ raw provider response or raw request body is checkpointed.
 The [M1.4 benchmark protocol](benchmarks/m1.4-method.md) describes the
 two actual pinned cases, repeated-trial limitation, quotas, metrics, opt-in
 runner and critical failures. Routine CI uses patched HTTP responses only;
-it never reads credentials or makes live API calls. A live result cannot be
-claimed until secure account credentials, free-tier status, reachable provider
-hosts and isolated test databases have been checked and the smoke/trials run.
+it never reads credentials or makes live API calls. [Live smoke results](benchmarks/m1.4-live-smoke-results.md) now record two
+failed eligible requests per provider: Groq HTTP 403 and Gemini HTTP 503.
+The original fixed results remain intact. No successful inference, paired
+benchmark or provider-quality conclusion has been measured.

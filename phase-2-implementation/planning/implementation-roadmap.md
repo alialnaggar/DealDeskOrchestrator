@@ -104,15 +104,9 @@ reservations, fake-provider tests and the explicit runner are implemented in
 `backend`. [CI run 39475593959](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39475593959)
 passed **45 offline and PostgreSQL tests**, retaining all 38 M1.3 tests.
 
-**Live measurement pending:** Neither key has been supplied in this execution
-environment; direct DNS for both provider API hosts is unavailable here.
-No connection, smoke result, paid call, actual provider usage, accuracy or
-latency comparison is claimed. The pinned actual fixtures supply one eligible
+**Live smoke attempted:** [run 39479573713](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39479573713) and [diagnostic run 39480124609](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39480124609) verified nonempty secret variables and exact Phase 1C pin. The [sanitized results](../backend/benchmarks/m1.4-live-smoke-results.md) show Groq HTTP 403 for both the model list and eligible generation; Gemini model metadata HTTP 200 but eligible generation HTTP 503 twice. No eligible response or paired trial completed; no accuracy, tool-use, token or quality winner can be measured. The original fixed result survived each AI failure. The pinned actual fixtures supply one eligible
 conditional-offer case and one binding-supply skip; ten repetitions of the
-offer case cannot substitute for independently reviewed diverse cases. Run
-the smoke and paired trials only with secure credentials, verified free-tier
-projects and reachable approved execution environment. Publish actual sanitized
-measurements and limitations before recommending a primary provider.
+offer case cannot substitute for independently reviewed diverse cases. Repeat a minimal eligible smoke only after diagnosing access or service recovery; the paired trials remain gated on both successful outputs. No primary provider is selected.
 The separate M1.4 workflow runs only from a deliberate
 `phase2-m14-live-run` branch push after the owner securely configures both
 GitHub Actions secrets and confirms free-tier status through the repository

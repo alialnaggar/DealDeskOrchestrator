@@ -75,16 +75,55 @@ jobs:
           (cd phase1c-pinned/phase-1c-data/implementation && python -c 'from test_phase1c_reader import load_fixture_rows; load_fixture_rows()')
           (cd phase1c-pinned/phase-1c-data/implementation && python compile_phase1c_policy.py --output /tmp/m14_rules.sql)
           psql -X -v ON_ERROR_STOP=1 -f /tmp/m14_rules.sql
+      - name: Diagnose model access without printing credentials or raw error bodies
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import re
+          from urllib.error import HTTPError, URLError
+          from urllib.request import Request, urlopen
+
+          targets = (
+              ("groq", "https://api.groq.com/openai/v1/models",
+               "Authorization", "Bearer " + os.environ["GROQ_API_KEY"], "openai/gpt-oss-120b"),
+              ("gemini", "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash",
+               "x-goog-api-key", os.environ["GEMINI_API_KEY"], "models/gemini-3.8-flash"),
+          )
+          for provider, url, header, credential, model in targets:
+              request = Request(url, headers={header: credential})
+              try:
+                  with urlopen(request, timeout=15) as response:
+                      data = json.load(response)
+                  ids = {x.get("id") for x in data.get("data", [])} if provider == "groq" else {data.get("name")}
+                  print(f"{provider} model-access status=200 requested_model_present={model in ids}", flush=True)
+              except HTTPError as exc:
+                  try:
+                      error = json.loads(exc.read(4096)).get("error", {})
+                  except (ValueError, UnicodeDecodeError):
+                      error = {}
+                  if not isinstance(error, dict):
+                      error = {}
+                  safe = lambda value: value if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_-]{1,48}", value) else None
+                  message = str(error.get("message", "")).lower()
+                  hints = [word for word in ("location", "region", "organization", "project", "billing",
+                           "permission", "model", "quota", "key", "api", "blocked")
+                           if word in message]
+                  print(f"{provider} model-access status={exc.code} type={safe(error.get('type'))} "
+                        f"code={safe(error.get('code'))} hints={hints}", flush=True)
+              except (URLError, TimeoutError, OSError):
+                  print(f"{provider} model-access transport_failure", flush=True)
+          PY
       - name: Smoke both providers separately
         run: |
-          python -m dealdesk_phase2.benchmark_m14 --live --provider groq --offer-repeats 1 --binding-repeats 1 --output phase-2-implementation/backend/benchmarks/results/groq-smoke.json
-          python -m dealdesk_phase2.benchmark_m14 --live --provider gemini --offer-repeats 1 --binding-repeats 1 --output phase-2-implementation/backend/benchmarks/results/gemini-smoke.json
+          python -m dealdesk_phase2.benchmark_m14 --live --provider groq --offer-repeats 1 --binding-repeats 0 --output phase-2-implementation/backend/benchmarks/results/groq-smoke.json
+          python -m dealdesk_phase2.benchmark_m14 --live --provider gemini --offer-repeats 1 --binding-repeats 0 --output phase-2-implementation/backend/benchmarks/results/gemini-smoke.json
           python - <<'PY'
           import json
           from pathlib import Path
           for provider in ('groq', 'gemini'):
               records = json.loads(Path(f'phase-2-implementation/backend/benchmarks/results/{provider}-smoke.json').read_text())
-              if len(records) != 2 or records[-1]['execution'] != 'completed':
+              if len(records) != 1 or records[0]['execution'] != 'completed':
                   raise SystemExit(f'{provider} smoke did not complete; inspect sanitized result')
           PY
       - name: Paired repeated trials after both smoke checks
