@@ -172,7 +172,7 @@ class EvaluationDatabaseTests(unittest.TestCase):
                      archive, None, os.environ.get("PHASE1C_EVALUATION_PACKETS_V1"))
 
     def _export(self, inputs, authoring, pinned_directory, business_contract, output_directory):
-        from phase1c_reader import read_run, load_provider_evidence
+        from phase1c_reader import read_run, load_provider_evidence, _installation
         from phase1c_evaluation_input import (prepare_heldout_review_input,
                                               operational_source_ids, verify_review_input, review_source_digest)
         from phase1c_candidate import reader_input_digest
@@ -224,6 +224,40 @@ class EvaluationDatabaseTests(unittest.TestCase):
                             run_id = tables["deal_runs"][0]["run_id"]
                             bundle = read_run(conn, run_id, commercial_rule_mode="compiled",
                                               digital_evidence_resolver=resolver)
+                            if business_contract is not None:
+                                # Selected reader facts only: this is not a reviewer answer.
+                                expected_rules = tables.get("compatibility_rules", [])
+                                self.assertEqual(
+                                    {r["compatibility_rule_id"] for r in bundle["compatibility"]},
+                                    {r["compatibility_rule_id"] for r in expected_rules})
+                                self.assertEqual(bundle["run"]["catalog_version_used"],
+                                                 tables["deal_runs"][0]["catalog_version_used"])
+                                service_facts = [fact["service"] for fact in bundle["facts"]["lines"]
+                                                 if "service" in fact]
+                                if case["case_id"] in {f"EVAL-PREP-{n:03d}" for n in range(27, 31)}:
+                                    self.assertEqual(len(expected_rules), 1)
+                                    self.assertEqual(len(service_facts), 1)
+                                    rule = expected_rules[0]
+                                    self.assertEqual(rule["catalog_version"], "CATALOGUE_2026_V1")
+                                    self.assertEqual(rule["rule_type"], "installation_eligibility")
+                                    self.assertEqual(rule["source_product_id"], bundle["lines"][0]["product_id"])
+                                    self.assertEqual(rule["condition_json"]["country_code"],
+                                                     bundle["deal"]["destination_country_code"])
+                                    self.assertEqual(rule["condition_json"]["region"],
+                                                     bundle["deal"]["destination_region"])
+                                    self.assertEqual(service_facts[0]["coverage_rule_ids"],
+                                                     [rule["compatibility_rule_id"]])
+                                    self.assertEqual(service_facts[0]["coverage"],
+                                                     "eligible" if rule["condition_json"]["eligible"]
+                                                     else "ineligible")
+                                    self.assertFalse(service_facts[0]["slot_committed"])
+                                    self.assertEqual(_installation(bundle["lines"][0],
+                                                                    bundle["deal"], []),
+                                                     ("unknown", []))
+                                else:
+                                    self.assertEqual(expected_rules, [])
+                                    self.assertEqual(service_facts, [])
+                                self.assertEqual(bundle["facts"]["compatibility"], [])
                             packet = prepare_heldout_review_input(
                                 bundle, case_id=case["case_id"], development_manifest=development,
                                 historical_manifest=historical, business_contract=business_contract)
