@@ -99,6 +99,7 @@ class PinnedBindingCandidateTests(unittest.TestCase):
     def setUpClass(cls):
         cls.adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
         with cls.connect() as conn:
+            conn.execute("SET LOCAL search_path TO deal_desk, public")
             exists = conn.execute("SELECT EXISTS(SELECT 1 FROM deal_desk.deals WHERE deal_id=%s)",
                                   ("D-stock_then_confirmed_receipt",)).fetchone()[0]
             if not exists:

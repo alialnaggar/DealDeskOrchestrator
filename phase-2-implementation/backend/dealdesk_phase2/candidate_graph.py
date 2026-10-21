@@ -62,6 +62,8 @@ def _package(state, record=None):
         "run_id": state.get("phase1c_run_id"), "review_status": state.get("review_status"),
         "specialists": {k: {"execution": v["execution"], "finding": v["finding"]}
                         for k, v in state.get("specialist_results", {}).items()}}
+    original["fulfillment_finding"] = state.get("specialist_results", {}).get(
+        "fulfillment", {}).get("payload")
     ai = state.get("ai_fulfillment_result", {})
     item = None
     if record is not None:
@@ -74,6 +76,19 @@ def _package(state, record=None):
                                                 "customer_acceptance_of_revised_schedule"]
         item["specialists"] = {k: {"execution": v["execution"], "finding": v["finding"]}
                                for k, v in record.get("specialist_results", {}).items()}
+        item["fulfillment_finding"] = record.get("specialist_results", {}).get(
+            "fulfillment", {}).get("payload")
+        cited = {ref for sl in record["proposed_slices"] for ref in sl["source_refs"]}
+        sources = {}
+        for event in state.get("tool_access_ledger", []):
+            if event.get("status") != "completed" or event.get("tool") != "inspect_fulfillment_paths":
+                continue
+            for row in event.get("result", {}).get("records", []):
+                ref = row["category"] + ":" + str(row["id"])
+                if ref in cited and ref in event.get("returned_refs", []):
+                    sources[ref] = {"reference": ref, "fields": row["fields"],
+                                    "tool_evidence_status": event["result"].get("evidence")}
+        item["returned_source_provenance"] = [sources[ref] for ref in sorted(cited) if ref in sources]
         item["routing"] = {"eligible_for_ordinary_routing": bool(
             record.get("fixed_supply_status") == "supply_supported_unreserved"
             and record.get("fixed_business_status") == "approval_required"
@@ -125,7 +140,7 @@ def add_candidate_nodes(builder, adapter, connection_factory):
                 "fixed_business_status": decision["status"],
                 "candidate_input_digest": trace["candidate_input_digest"],
                 "fixed_decision": raw, "fixed_decision_sha256": digest}
-            return _update(state, record, "candidate_verified:" + record["fixed_supply_status"])
+            return _update(state, record, "candidate_fixed_checked:" + record["fixed_supply_status"])
         except Exception as exc:
             label = ("evidence_mismatch" if isinstance(exc, EvidenceMismatch) else
                      "fixed_rejected" if isinstance(exc, ValueError) else "technical_error")
