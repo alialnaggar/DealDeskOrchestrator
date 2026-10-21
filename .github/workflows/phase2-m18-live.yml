@@ -1,0 +1,89 @@
+name: Phase 2 M1.8 one opt-in Groq candidate trial
+
+on:
+  # This Phase 2 workflow is not on the default branch. A reviewed push to
+  # this dedicated branch runs exactly one selected trial, never routine CI.
+  push:
+    branches: [phase2-m18-live-run]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase2-m18-live
+  cancel-in-progress: false
+
+jobs:
+  one-trial:
+    if: vars.M14_FREE_TIER_CONFIRMED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: phase2_ci_only
+          POSTGRES_DB: deal_desk_m1_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d deal_desk_m1_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: phase2_ci_only
+      PGDATABASE: deal_desk_m1_test
+      DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m1_test
+      CHECKPOINT_DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m1_checkpoint
+      DEALDESK_PHASE1C_CHECKOUT: ${{ github.workspace }}/phase1c-pinned
+      PYTHONPATH: phase-2-implementation/backend:phase-2-implementation/backend/tests
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      M14_FREE_TIER_CONFIRMED: ${{ vars.M14_FREE_TIER_CONFIRMED }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/checkout@v6
+        with:
+          repository: alialnaggar/DealDeskOrchestrator
+          ref: 90c0bc8e285ee69262c7db826b786096a77ad004
+          path: phase1c-pinned
+          persist-credentials: false
+      - name: Confirm exact pin and secret presence without printing either key
+        run: |
+          test "$(git -C phase1c-pinned rev-parse HEAD)" = '90c0bc8e285ee69262c7db826b786096a77ad004'
+          test -n "${GROQ_API_KEY:-}"
+      - name: Install already locked dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          python -m pip install -r phase-2-implementation/backend/requirements-m1.1.lock
+          python -m pip check
+      - name: Load exact pinned business schema and rules in disposable databases
+        run: |
+          createdb deal_desk_m1_checkpoint
+          psql -X -v ON_ERROR_STOP=1 -f phase1c-pinned/phase-1c-data/implementation/schema.sql
+          (cd phase1c-pinned/phase-1c-data/implementation && python -c 'from test_phase1c_reader import load_fixture_rows; load_fixture_rows()')
+          (cd phase1c-pinned/phase-1c-data/implementation && python compile_phase1c_policy.py --output /tmp/m18_rules.sql)
+          psql -X -v ON_ERROR_STOP=1 -f /tmp/m18_rules.sql
+      - name: Run exactly one approved case and trial
+        run: |
+          python -m dealdesk_phase2.live_m18 --live \
+            --case-id "$(python -c 'import json; print(json.load(open("phase-2-implementation/backend/benchmarks/m18-live-selection.json"))["case_id"])')" \
+            --trial "$(python -c 'import json; print(json.load(open("phase-2-implementation/backend/benchmarks/m18-live-selection.json"))["trial"])')" \
+            --output phase-2-implementation/backend/benchmarks/results/m18-one-trial.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m18-one-trial-sanitized
+          path: phase-2-implementation/backend/benchmarks/results/m18-one-trial.json
+          if-no-files-found: ignore
+          retention-days: 7
