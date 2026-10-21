@@ -36,6 +36,8 @@ class PriceDistributionAuditTests(unittest.TestCase):
         self.assertEqual(report["component_costs_checked"], 36)
         self.assertEqual(report["generated_fixed_p50_costs_reconciled"], 102)
         self.assertEqual(report["outside_synthetic_p10_p90_anchor_span"], [])
+        self.assertEqual(report["category_default_unit_match_count"], 84)
+        self.assertEqual(len(report["category_default_unit_mismatches"]), 36)
         self.assertFalse(report["anchor_span_is_hard_price_limit"])
         self.assertFalse(report["ready_for_generation"])
 
@@ -60,6 +62,24 @@ class PriceDistributionAuditTests(unittest.TestCase):
         cloud = [r for r in report["price_groups"]
                  if r["category"] == "cloud_services_and_subscriptions"]
         self.assertGreater(len({row["unit_of_measure"] for row in cloud}), 1)
+        mismatches = report["category_default_unit_mismatches"]
+        self.assertEqual(sum(r["category"] == "cloud_services_and_subscriptions"
+                             for r in mismatches), 12)
+        self.assertEqual({r["category_default_unit"] for r in mismatches
+                          if r["category"] == "cloud_services_and_subscriptions"},
+                         {"service_month"})
+        self.assertEqual({r["product_unit"] for r in mismatches
+                          if r["category"] == "cloud_services_and_subscriptions"},
+                         {"instance_month", "protected_tb_month"})
+
+    def test_default_unit_change_moves_only_span_comparison_scope(self):
+        altered = deepcopy(self.config)
+        altered["product_catalogue"]["categories"]["enterprise_software_and_licensing"][
+            "default_unit_of_measure"] = "service_month"
+        report = audit(self.portfolio, self.costs, altered, self.contract)
+        self.assertEqual(report["category_default_unit_match_count"], 66)
+        self.assertEqual(len(report["category_default_unit_mismatches"]), 54)
+        self.assertEqual(report["sellable_count"], 120)
 
     def test_component_cost_coverage_and_positive_values(self):
         altered = deepcopy(self.costs)
@@ -83,4 +103,5 @@ class PriceDistributionAuditTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
