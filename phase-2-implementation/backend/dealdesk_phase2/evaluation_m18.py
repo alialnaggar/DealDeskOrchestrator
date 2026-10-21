@@ -141,7 +141,8 @@ def structural_flags(observation: dict) -> dict:
             "same_schedule_as_baseline": same_schedule,
             "distinct_value_not_established": True,
             "raw_rejection_count": len(observation["raw_rejected_claims"]),
-            "candidate_citations_returned": cited <= returned,
+            # No candidate citation is a non-observation, not perfect fidelity.
+            "candidate_citations_returned": (cited <= returned if candidates else None),
             "reviewer_candidate_count": len(review.get("candidates", [])),
             "requires_semantic_review": True}
 
