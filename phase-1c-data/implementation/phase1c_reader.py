@@ -485,6 +485,18 @@ def _supply_findings(bundle, as_of):
         record = {"bom_id": b["bom_id"], "product_id": product, "line_ids": sorted(plan["line_ids"]),
             "build_units": build,
             "component_demand": plan["components"], "component_stock_required": stock_required,
+            # An offer is a procurement possibility, never material on hand.
+            # Keep incomplete historical offers visible with no invented date.
+            "component_supplier_offers": [
+                {"component_product_id": offer["product_id"],
+                 "supplier_item_id": offer["supplier_item_id"],
+                 "selected_for_current_plan": offer["product_id"] in plan["components"],
+                 "estimate": estimate_supplier_offer(offer, as_of)}
+                for offer in sorted(bundle["supplier_offers"],
+                                    key=lambda row: row["supplier_item_id"])
+                if any(line["bom_id"] == b["bom_id"] and
+                       line["component_product_id"] == offer["product_id"]
+                       for line in bundle["bom_lines"])],
             "substitution_groups": plan["substitution_groups"],
             "required_hours": plan["hours"],
             "operation_days": [key[2] for key, _ in best[2]] if best else [],
@@ -712,4 +724,3 @@ def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_
             "persisted": False,
         }
     return bundle
-
