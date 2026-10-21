@@ -137,7 +137,7 @@ def install_disposable_cases(connection):
                  terms_json, deal_status, dataset_type)
                 VALUES (%s,%s,'M18-EVAL','M1.8 provisional case','2026-09-01 09:00+00',
                 'EUR','CATALOGUE_2026_V1','BASELINE_2026',%s,'DE','Berlin','standard',
-                %s,'Submitted','generated_test')""",
+                %s,'Draft','generated_test')""",
                 (ids["D"], ids["C"], case.requested_date,
                  json.dumps({"allow_partial_delivery": case.partial_allowed,
                      "contract_clause_codes": ["standard"], "payment_terms_days": 30})))
@@ -145,6 +145,8 @@ def install_disposable_cases(connection):
                 (deal_line_id,deal_id,line_number,product_id,quantity,quoted_unit_price,
                  configuration_json) VALUES (%s,%s,1,%s,%s,900,'{}')""",
                 (ids["L"], ids["D"], ids["P"], case.quantity))
+            connection.execute("UPDATE deal_desk.deals SET deal_status='Submitted' WHERE deal_id=%s",
+                               (ids["D"],))
             connection.execute("""INSERT INTO deal_desk.deal_runs
                 (run_id,deal_id,original_policy_set_code,applied_policy_set_code,
                  catalog_version_used,as_of_at,data_snapshot_ref,input_snapshot_json,

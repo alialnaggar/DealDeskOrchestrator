@@ -120,6 +120,14 @@ class PinnedEvaluationCases(unittest.TestCase):
                 baseline = pinned_baseline(self.adapter, self.connect, pinned)
                 self.assertEqual(baseline, pinned_baseline(self.adapter, self.connect, pinned))
                 self.assertEqual(baseline["source_input_digest"], pinned.context.source_input_digest)
+                print("M1.8 source/baseline", case.case_id,
+                      "bundle_sha256=" + pinned.context.bundle_sha256,
+                      "source_input_digest=" + pinned.context.source_input_digest,
+                      "discovered=" + str(baseline["discovered"]),
+                      "slices=" + str(baseline["candidate"]["slices"] if
+                                      baseline["candidate"] else []),
+                      "verification=" + str(baseline["verification"]),
+                      "reason=" + baseline["reason"])
                 if case.case_id.startswith("B"):
                     self.assertTrue(baseline["discovered"], baseline)
                     self.assertEqual(baseline["verification"]["supply_status"],
