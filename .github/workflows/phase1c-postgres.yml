@@ -155,6 +155,7 @@ jobs:
         run: python -m unittest -v test_phase1c_historical_operational
       - name: Audit historical supplier calendar coverage
         run: |
+          python -m unittest -v test_phase1c_supplier_estimates
           python -m unittest -v test_audit_phase1c_historical_supplier_calendars
           python audit_phase1c_historical_supplier_calendars.py > /tmp/phase1c_historical_supplier_calendar_coverage.json
       - name: Audit evaluation supplier calendar joins without answers
