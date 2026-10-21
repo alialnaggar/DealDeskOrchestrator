@@ -5,6 +5,9 @@ import hashlib
 import json
 from pathlib import Path
 import unittest
+from datetime import datetime, timezone
+
+from phase1c_supplier_estimates import estimate_supplier_offer
 
 import yaml
 
@@ -29,6 +32,17 @@ class HistoricalCalendarCoverageTests(unittest.TestCase):
                           result["offers_with_complete_min_mode_max"],
                           result["offers_supporting_dated_estimate_fields"]), (0, 0, 0))
         self.assertTrue(result["calendar_review_open"])
+
+    def test_all_historical_modal_offers_stay_undated_even_with_a_calendar(self):
+        source = json.loads(self.raw)
+        as_of = datetime(2026, 9, 1, 12, tzinfo=timezone.utc)
+        for offer in source["offers"]:
+            with self.subTest(offer=offer["supplier_item_id"]):
+                hypothetical = dict(offer, order_calendar_json={
+                    "working_weekdays": [1, 2, 3, 4, 5],
+                    "holiday_dates": [], "time_zone": "Europe/Berlin",
+                })
+                self.assertIsNone(estimate_supplier_offer(hypothetical, as_of))
 
     def test_tampered_source_rejected(self):
         with self.assertRaisesRegex(ValueError, "pinned index"):
