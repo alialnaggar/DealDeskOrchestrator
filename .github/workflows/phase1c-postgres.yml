@@ -75,9 +75,17 @@ jobs:
           python -m unittest -v test_audit_phase1c_product_attributes
           python audit_phase1c_product_attributes.py > /tmp/phase1c_product_attributes_audit.json
           python render_phase1c_sellable_catalogue.py --check
+          python -m unittest -v test_audit_phase1c_catalogue_import
           psql -X -v ON_ERROR_STOP=1 -v phase1c_keep_transaction=1 \
             -f phase1c_buildable_master.sql -f phase1c_sellable_catalogue.sql \
+            -c "\\copy (SELECT product_id, catalog_version, list_price, standard_cost, billing_model, unit_of_measure, fulfillment_mode, is_sellable, attributes_json FROM products WHERE catalog_version = 'CATALOGUE_2026_V1' ORDER BY product_id) TO '/tmp/phase1c_catalogue_import.csv' CSV HEADER" \
             -c ROLLBACK
+          python audit_phase1c_catalogue_import.py /tmp/phase1c_catalogue_import.csv > /tmp/phase1c_catalogue_import_audit.json
+      - name: Preserve V1 source-to-import reconciliation
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-catalogue-import-audit
+          path: /tmp/phase1c_catalogue_import_audit.json
       - name: Preserve V1 product attribute audit
         uses: actions/upload-artifact@v4
         with:
