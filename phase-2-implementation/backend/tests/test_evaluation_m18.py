@@ -8,6 +8,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from dealdesk_phase2.evaluation_m18 import (adjudicate, capture_trial,
                                              pinned_baseline, structural_flags)
+from dealdesk_phase2.live_m18 import SOURCES, run_one
 from dealdesk_phase2.checkpoint import thesis_checkpointer
 from dealdesk_phase2.fulfillment_agent import OfflineModelDouble
 from dealdesk_phase2.investigation_graph import run_original_investigate_and_review
@@ -60,6 +61,7 @@ class CaptureTests(unittest.TestCase):
         self.assertEqual(captured["reviewer_semantic_error_status"], "requires_human_review")
         self.assertNotIn("answer", str(captured).lower())
         self.assertTrue(structural_flags(captured)["requires_semantic_review"])
+        self.assertEqual(captured["validated_contribution"]["kind"], "abstention")
         with self.assertRaises(EvidenceMismatch):
             capture_trial("B01", state, {**baseline, "bundle_sha256": "wrong"},
                           provider="offline_double", model="scripted", prompt_version="none")
@@ -139,6 +141,12 @@ class CaptureTests(unittest.TestCase):
         self.assertTrue(flags["same_schedule_as_baseline"])
         self.assertTrue(flags["distinct_value_not_established"])
         self.assertFalse(flags["requires_semantic_review"] is False)
+
+    def test_live_pilot_rejects_unauthorized_cases_and_trial_counts_before_network(self):
+        self.assertEqual(set(SOURCES), {"B01", "B05"})
+        for case_id, trial in (("B02", 1), ("B01", 3), ("N01", 1)):
+            with self.subTest(case_id=case_id, trial=trial), self.assertRaises(ValueError):
+                run_one(case_id, trial, Path("benchmarks/results/unused.json"))
 
 
 @unittest.skipUnless(DB_READY, "Requires exact separate Phase 1C and disposable PostgreSQL")
