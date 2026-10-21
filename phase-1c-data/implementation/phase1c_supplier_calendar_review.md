@@ -24,3 +24,9 @@ The separate pinned **v2 evaluation input** contains 36 local synthetic supplier
 
 This check does not establish an accepted route or adjudicate case 020's modal-versus-maximum-lead issue. The **162 historical modal-only offers remain without dated estimates**, and the 100-case development batch reuses pilot offer states rather than providing independent supplier-calendar evidence. The field mark remains open pending a deliberate historical scope disposition and final imported-row/reader review. No evaluation input, source hash or answer changed; accepted answers remain **0/36** and `ready_for_generation=false`.
 
+
+## Incomplete-offer reader boundary — 21 October 2026
+
+The reader now emits a nonbinding supplier date range only when a local calendar has a valid IANA zone, unique ISO workdays and the declared empty holiday list, and when all three lead values are nonnegative, typed integers in min/mode/max order. Missing or malformed dated evidence leaves the offer as an undated conditional possibility; it cannot be completed from a current supplier calendar. The source-only historical audit still pins the original 162 offers, and a separate test passes a hypothetical calendar to each modal-only offer to verify that a calendar alone does not produce dates. The 36 evaluation source rows and ten matched offers are untouched; the existing database reference test checks the complete-calendar path and its nonbinding status.
+
+This is a defensive reader correction, not a historical calendar registry or a decision on whether dated historical routes belong in the first release. The supplier field mark, all other field marks and two calibration evidence reviews remain open. Evaluation answers stay at 0/36; `ready_for_generation=false`; case 020 is not adjudicated.
