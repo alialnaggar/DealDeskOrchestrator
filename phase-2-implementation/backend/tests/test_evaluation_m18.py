@@ -97,8 +97,32 @@ class CaptureTests(unittest.TestCase):
         self.assertEqual(scored["business_correctness"], "requires_reviewer_judgment")
         self.assertEqual(scored["answer_status"], "developer_provisional")
         with self.assertRaises(ValueError):
-            adjudicate(captured, {**answer, "review_status": "human_accepted"},
+            adjudicate(captured, {**answer, "review_status": "developer_supervisor_accepted"},
                        reviewer_id="engineering")
+        accepted = adjudicate(captured, {**answer,
+            "review_status": "developer_supervisor_accepted",
+            "acceptance_record": {"reviewer_id": "test_reviewer", "reviewed_at": "TEST-DATE",
+                                  "source_check": "synthetic test metadata"}},
+            reviewer_id="test_reviewer")
+        self.assertEqual(accepted["answer_status"], "developer_supervisor_accepted")
+        with self.assertRaises(ValueError):
+            adjudicate(captured, answer, reviewer_id="engineering", judgment={})
+        trial = adjudicate(captured, {**answer,
+            "review_status": "developer_supervisor_accepted",
+            "acceptance_record": {"reviewer_id": "test_reviewer", "reviewed_at": "TEST-DATE",
+                                  "source_check": "synthetic test metadata"}},
+            reviewer_id="test_reviewer", judgment={
+                "business_correctness": "uncertain", "usefulness_vs_baseline": "equivalent",
+                "raw_critical_failures": ["unsupported_claim"],
+                "surviving_critical_failures": [],
+                "rationale": "Synthetic judgment example; no model-quality observation"})
+        self.assertEqual(trial["raw_critical_failures"], ["unsupported_claim"])
+        self.assertEqual(trial["surviving_critical_failures"], [])
+        with self.assertRaises(ValueError):
+            adjudicate(captured, {**answer, "review_status": "independent_accepted",
+                "acceptance_record": {"reviewer_id": "test_reviewer", "reviewed_at": "TEST-DATE",
+                                      "source_check": "synthetic test metadata"}},
+                reviewer_id="test_reviewer")
         with self.assertRaises(EvidenceMismatch):
             adjudicate(captured, {**answer, "source_input_digest": "wrong"},
                        reviewer_id="engineering")

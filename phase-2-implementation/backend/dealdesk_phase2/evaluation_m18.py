@@ -144,7 +144,8 @@ def structural_flags(observation: dict) -> dict:
             "requires_semantic_review": True}
 
 
-def adjudicate(observation: dict, answer: dict, *, reviewer_id: str) -> dict:
+def adjudicate(observation: dict, answer: dict, *, reviewer_id: str,
+               judgment: dict | None = None) -> dict:
     """Never label developer-authored expectations as accepted ground truth."""
     if answer.get("case_id") != observation["case_id"] or not reviewer_id:
         raise ValueError("Answer identity and reviewer are required")
@@ -152,11 +153,41 @@ def adjudicate(observation: dict, answer: dict, *, reviewer_id: str) -> dict:
             or answer.get("source_input_digest") != observation["source_input_digest"]):
         raise EvidenceMismatch("Reviewer answer is not for this evidence")
     status = answer.get("review_status")
-    if status not in ("developer_provisional", "human_accepted"):
+    if status not in ("developer_provisional", "developer_supervisor_accepted",
+                      "independent_accepted"):
         raise ValueError("Answer must carry explicit review status")
-    if status == "human_accepted" and not answer.get("acceptance_record"):
+    record = answer.get("acceptance_record")
+    if status != "developer_provisional" and (not isinstance(record, dict)
+                                                or not record.get("reviewer_id")
+                                                or not record.get("reviewed_at")
+                                                or not record.get("source_check")
+                                                or record.get("reviewer_id") != reviewer_id):
         raise ValueError("Human acceptance record required")
+    if status == "independent_accepted" and not record.get(
+            "independent_of_case_author_and_model_output"):
+        raise ValueError("Independent review attestation required")
+    if judgment is not None:
+        if status == "developer_provisional":
+            raise ValueError("A provisional answer cannot support a rated trial")
+        if set(judgment) != {"business_correctness", "usefulness_vs_baseline",
+                             "raw_critical_failures", "surviving_critical_failures", "rationale"}:
+            raise ValueError("Trial judgment fields differ")
+        if (judgment["business_correctness"] not in ("correct", "incorrect", "uncertain")
+                or judgment["usefulness_vs_baseline"] not in
+                ("improved", "equivalent", "worse", "not_applicable", "uncertain")
+                or not isinstance(judgment["rationale"], str) or not judgment["rationale"].strip()
+                or any(not isinstance(judgment[key], list) or
+                       any(not isinstance(code, str) or not code.strip() for code in judgment[key])
+                       for key in ("raw_critical_failures", "surviving_critical_failures"))):
+            raise ValueError("Trial judgment must be explicit and evidence-explained")
     return {"case_id": observation["case_id"], "reviewer_id": reviewer_id,
             "answer_status": status, "structural": structural_flags(observation),
-            "business_correctness": "requires_reviewer_judgment",
-            "critical_failure": "requires_reviewer_judgment"}
+            "business_correctness": (judgment["business_correctness"] if judgment
+                                     else "requires_reviewer_judgment"),
+            "usefulness_vs_baseline": (judgment["usefulness_vs_baseline"] if judgment
+                                       else "requires_reviewer_judgment"),
+            "raw_critical_failures": (judgment["raw_critical_failures"] if judgment
+                                      else "requires_reviewer_judgment"),
+            "surviving_critical_failures": (judgment["surviving_critical_failures"] if judgment
+                                            else "requires_reviewer_judgment"),
+            "rationale": judgment["rationale"] if judgment else None}
