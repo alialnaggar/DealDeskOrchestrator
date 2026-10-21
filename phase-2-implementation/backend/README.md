@@ -233,3 +233,17 @@ The [gated M1.4 smoke](benchmarks/m1.4-gated-smoke-results.md) exercised the act
 ## M1.5–M1.6 status
 
 The earlier M1.4 smoke and failed access records above are historical. Groq is now the provisional development provider, after M1.5 found semantic overclaims despite valid citations. M1.6 adds `claim_validation.py`, a strict final JSON schema, checkpointed raw rejection audit, and template-rendered validated reviewer summaries. [Contract](../architecture/m1.6-claim-contract.md) and [results](../evaluation/m1.6-results.md) describe the five claim types, source limits, 63-test PostgreSQL CI and one live Groq trial. The live trial contained an unsupported absence claim but did not generate a verified alternative. The pinned Phase 1C assessment, tool budget and original deal remain authoritative.
+# M1.7 binding candidate and reviewer handoff
+
+The optional M1.7 `binding_proposal` v3 contribution cites a complete returned
+`inspect_fulfillment_paths` binding projection. The trusted Orchestrator
+constructs the pinned Phase 1C `Candidate`; `Phase1CAdapter.verify_candidate`
+performs the read-only fixed check. Original fixed results stay separate from
+candidate-specific six responsibility mappings. A typed reviewer package
+shows supply support as **unreserved**, unmet customer acceptance, withheld
+routing and audit rejection counts. M1.6 supplier-offer ideas remain
+nonactionable. Use `run_original_investigate_and_review` for the bounded
+handoff; the original-only runner remains compatible. The live adapter has
+an explicit `enable_binding_proposals=True` opt-in; routine CI uses offline
+model doubles. See [methodology](../evaluation/m1.7-binding-candidate-methodology.md).
+

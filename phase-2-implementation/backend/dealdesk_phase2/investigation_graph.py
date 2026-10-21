@@ -222,3 +222,24 @@ def run_original_then_investigate(original_graph, config: dict, adapter: Phase1C
                                                    "fulfillment_ai:" + result["execution"]]},
                                 as_node="finish")
     return original_graph.get_state(config).values
+
+
+def run_original_investigate_and_review(original_graph, config: dict, adapter: Phase1CAdapter,
+                                        model: InvestigationModel, *, assessment_id: str,
+                                        run_id: UUID) -> dict:
+    """Resume a checkpointed binding candidate after the bounded AI investigation."""
+    state = run_original_then_investigate(original_graph, config, adapter, model,
+                                          assessment_id=assessment_id, run_id=run_id)
+    snapshot = original_graph.get_state(config)
+    if snapshot.next:
+        original_graph.invoke(None, config)
+    state = original_graph.get_state(config).values
+    if (state.get("assessment_id") != assessment_id or state.get("phase1c_run_id") != str(run_id)):
+        raise EvidenceMismatch("Reviewer handoff restart identity differs")
+    if not state.get("reviewer_package") and not original_graph.get_state(config).next:
+        from .candidate_graph import original_only_package
+
+        original_graph.update_state(config, {"reviewer_package": original_only_package(state)},
+                                    as_node="finish")
+        state = original_graph.get_state(config).values
+    return state

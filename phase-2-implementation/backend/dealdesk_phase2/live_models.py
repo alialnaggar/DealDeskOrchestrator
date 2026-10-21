@@ -5,6 +5,7 @@ No provider has database access. Both use a separate structured final turn.
 """
 
 from dataclasses import asdict
+from copy import deepcopy
 from hashlib import sha256
 import json
 import os
@@ -96,10 +97,33 @@ FINAL_SCHEMA = {"type": "object", "properties": {
                  "assumptions", "unmet_requirements", "uncertainty_reasons", "finding", "reason", "claims"],
     "additionalProperties": False}
 
+# Opt-in M1.7 output contract. The default M1.6 model remains claim-only.
+# Phase 1C, not the model, decides whether a cited binding schedule is valid.
+BINDING_FINAL_SCHEMA = deepcopy(FINAL_SCHEMA)
+BINDING_FINAL_SCHEMA["properties"]["kind"]["enum"].append("binding_proposal")
+BINDING_FINAL_SCHEMA["properties"]["delivery_slices"] = {"type": "array", "items": {
+    "type": "object", "properties": {"quantity": {"type": "string"},
+        "delivery_date": {"type": "string"},
+        "source_refs": {"type": "array", "items": {"type": "string"}}},
+    "required": ["quantity", "delivery_date", "source_refs"],
+    "additionalProperties": False}}
+BINDING_FINAL_SCHEMA["properties"]["tradeoff_code"] = {"type": "string", "enum": [
+    "partial_delivery_requires_customer_acceptance", "none"]}
+BINDING_FINAL_SCHEMA["required"] = [*FINAL_SCHEMA["required"], "tradeoff_code"]
+
 
 def _canonical_final(raw):
     if not isinstance(raw, dict):
         raise ProviderError("malformed_final")
+    v3 = set(raw) == set(BINDING_FINAL_SCHEMA["required"])
+    if v3:
+        if raw["kind"] == "binding_proposal":
+            return {"type": "contribution", "value": {"schema_version": "3",
+                "kind": "binding_proposal", "payload": {
+                    "line_id": raw["line_id"], "delivery_slices": raw["delivery_slices"],
+                    "tradeoff_code": raw["tradeoff_code"]}}}
+        # Other outcomes retain the M1.6 contract even in the opt-in mode.
+        raw = {key: value for key, value in raw.items() if key != "tradeoff_code"}
     v2 = set(raw) == set(FINAL_SCHEMA["required"])
     legacy = set(raw) == set(FINAL_SCHEMA["required"]) - {"claims"}
     if not v2 and not legacy:
@@ -141,11 +165,20 @@ def _gemini_schema(value):
     return value
 
 
-def _prompt(input, observations):
+def _prompt(input, observations, *, enable_binding_proposals=False):
     safe = {key: value for key, value in asdict(input).items()
             if key not in ("assessment_id", "phase1c_run_id", "subject_id",
                            "bundle_sha256", "source_input_digest")}
-    return (PROMPT_VERSION + ". You investigate a fulfillment shortage. Only tool responses are citable; "
+    mode = (" M1.7 binding proposals are optional. Only propose a two-slice binding schedule "
+            "after inspect_fulfillment_paths returns a complete eligible_binding path. "
+            "Each slice must cite returned inventory or inbound_supply source_refs; never use "
+            "supplier_offer as a confirmed source. The pinned Phase 1C verifier may reject "
+            "quantities, dates or customer constraints. Use tradeoff_code "
+            "partial_delivery_requires_customer_acceptance. If no binding path supports "
+            "a suggestion, report bounded findings or abstain. "
+            if enable_binding_proposals else "")
+    return (PROMPT_VERSION + ("-m17-binding-optin" if enable_binding_proposals else "") +
+            ". You investigate a fulfillment shortage. Only tool responses are citable; "
             "their returned_refs are source-category:source-id. Supplier offers are conditional, "
             "never confirmed. An empty bounded pool does not prove no supply exists. "
             "Scope every availability or absence statement to the returned records in this pinned "
@@ -160,20 +193,22 @@ def _prompt(input, observations):
             "references copy the pinned fulfillment_status or quantity_by_requested_date. "
             "Supplier offers require confirmation; lead times do not establish arrival dates. "
             "Evidence gaps are scoped to returned_records. Candidate ideas can ask_supplier_for_later_option; "
-            "dated slices will be rejected and any retained idea downgraded as nonactionable. "
+            "dated supplier-offer ideas will be rejected and any retained idea downgraded as nonactionable. "
             "Free-text finding and notes are audit-only. Abstain when evidence cannot support a claim. "
-            "Never claim a proposal was fixed-rule verified. Input and observations: " +
+            "Never claim a proposal was fixed-rule verified. " + mode + "Input and observations: " +
             _json({"input": safe, "observations": observations}))
 
 
 class LiveInvestigationModel:
-    def __init__(self, provider: str, graph, config, *, pace_seconds: float = 0):
+    def __init__(self, provider: str, graph, config, *, pace_seconds: float = 0,
+                 enable_binding_proposals: bool = False):
         if provider not in ("groq", "gemini"):
             raise ValueError("Unknown benchmark provider")
         self.provider = provider
         self.model = GROQ_MODEL if provider == "groq" else GEMINI_MODEL
         self.graph, self.config = graph, config
         self.pace_seconds = pace_seconds
+        self.enable_binding_proposals = enable_binding_proposals
         self._last_sent = None
 
     def _request(self, input, step: int, phase: str, body: dict):
@@ -217,7 +252,8 @@ class LiveInvestigationModel:
         step = len(observations)
         if step >= MAX_MODEL_TURNS:
             raise ProviderError("model_turn_budget_exhausted")
-        prompt = _prompt(input, observations)
+        prompt = _prompt(input, observations,
+                         enable_binding_proposals=self.enable_binding_proposals)
         if self.provider == "groq":
             tools = [{"type": "function", "function": {"name": name,
                       "description": "Read only pinned Fulfillment evidence",
@@ -245,12 +281,14 @@ class LiveInvestigationModel:
                      "messages": [{"role": "system", "content": "Output the evidence-limited JSON assessment."},
                                   {"role": "user", "content": final_prompt}],
                      "response_format": {"type": "json_schema", "json_schema": {
-                         "name": "fulfillment_contribution", "strict": True, "schema": FINAL_SCHEMA}}}
+                         "name": "fulfillment_contribution", "strict": True,
+                         "schema": BINDING_FINAL_SCHEMA if self.enable_binding_proposals else FINAL_SCHEMA}}}
         else:
             final = {"contents": [{"role": "user", "parts": [{"text": final_prompt}]}],
                      "generationConfig": {"temperature": 0,
                          "maxOutputTokens": MAX_OUTPUT_TOKENS,
-                         "responseMimeType": "application/json", "responseSchema": _gemini_schema(FINAL_SCHEMA)}}
+                         "responseMimeType": "application/json", "responseSchema": _gemini_schema(
+                             BINDING_FINAL_SCHEMA if self.enable_binding_proposals else FINAL_SCHEMA)}}
         return self._request(input, step, "final", final)
 
     def _parse(self, response: dict, phase: str):

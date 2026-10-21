@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import Literal, Protocol, TypedDict
 
+from .candidate_contract import validate_from_graph
 from .claim_validation import FulfillmentClaimV2, assess_claims
 from .phase1c_adapter import EvidenceMismatch
 from .tool_ledger import was_returned
@@ -155,6 +156,13 @@ def restricted_input(context, pool: dict, selected: dict, remaining: int) -> Ful
 def validate_contribution(raw: dict, input: FulfillmentInputV1,
                           graph, config) -> dict:
     """Validate shape and seen citations, not business feasibility."""
+    if isinstance(raw, dict) and raw.get("schema_version") == "3":
+        if set(raw) != {"schema_version", "kind", "payload"} or raw["kind"] != "binding_proposal":
+            raise ValueError("Malformed v3 binding contribution envelope")
+        proposal = validate_from_graph(raw["payload"], input, graph, config)
+        return {"schema_version": "3", "kind": "binding_proposal",
+                "payload": proposal, "verification": "unverified",
+                "review_summary_status": "fixed_verification_pending"}
     if isinstance(raw, dict) and raw.get("schema_version") == "2":
         if set(raw) != {"schema_version", "kind", "payload"}:
             raise ValueError("Malformed v2 contribution envelope")

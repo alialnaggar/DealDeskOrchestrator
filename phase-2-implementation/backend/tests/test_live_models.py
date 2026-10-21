@@ -9,7 +9,8 @@ from uuid import UUID
 
 from langgraph.checkpoint.memory import InMemorySaver
 
-from dealdesk_phase2.live_models import LiveInvestigationModel, ProviderError, _post
+from dealdesk_phase2.live_models import (LiveInvestigationModel, ProviderError, _post,
+                                         _canonical_final, BINDING_FINAL_SCHEMA, FINAL_SCHEMA)
 from dealdesk_phase2.investigation_graph import run_original_then_investigate
 from dealdesk_phase2.orchestrator import build_original_graph
 from dealdesk_phase2.phase1c_adapter import Phase1CAdapter
@@ -25,6 +26,20 @@ def final(line="L1", citations=("supplier_offer:O1",)):
 
 
 class LiveModelTests(TestCase):
+    def test_opt_in_binding_schema_maps_to_v3_without_network(self):
+        raw = {**final(), "kind": "binding_proposal", "tradeoff_code":
+               "partial_delivery_requires_customer_acceptance",
+               "delivery_slices": [{"quantity": "8", "delivery_date": "2026-09-04",
+                                    "source_refs": ["inventory:STOCK"]},
+                                   {"quantity": "2", "delivery_date": "2026-09-08",
+                                    "source_refs": ["inbound_supply:IN"]}], "claims": []}
+        mapped = _canonical_final(raw)
+        self.assertEqual(mapped["value"]["schema_version"], "3")
+        self.assertEqual(mapped["value"]["payload"]["delivery_slices"][1]["quantity"], "2")
+        self.assertEqual(BINDING_FINAL_SCHEMA["properties"]["kind"]["enum"][-1],
+                         "binding_proposal")
+        self.assertNotIn("binding_proposal", FINAL_SCHEMA["properties"]["kind"]["enum"])
+
     def test_live_request_uses_descriptive_api_client_identity(self):
         from io import BytesIO
 

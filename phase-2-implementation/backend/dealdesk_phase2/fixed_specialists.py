@@ -5,7 +5,8 @@ from .phase1c_adapter import PinnedBundleV1
 
 
 def domain_result(name: str, pinned: PinnedBundleV1, decision: dict | None,
-                  assessment_id: str, prior: dict[str, SpecialistResultV1]) -> SpecialistResultV1:
+                  assessment_id: str, prior: dict[str, SpecialistResultV1],
+                  *, subject_id: str | None = None) -> SpecialistResultV1:
     execution, finding, prerequisite, payload, error = "completed", "unknown", "met", None, None
     if decision is None:
         execution, prerequisite = "skipped", "fixed_decision_unavailable"
@@ -59,6 +60,6 @@ def domain_result(name: str, pinned: PinnedBundleV1, decision: dict | None,
     else:
         raise ValueError(f"Unknown specialist: {name}")
     return {"version": "1", "specialist": name, "producer_type": "deterministic",
-            "assessment_id": assessment_id, "subject_id": pinned.context.original_deal_id,
+            "assessment_id": assessment_id, "subject_id": subject_id or pinned.context.original_deal_id,
             "bundle_sha256": pinned.context.bundle_sha256, "execution": execution,
             "finding": finding, "prerequisite": prerequisite, "payload": payload, "error": error}

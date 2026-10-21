@@ -49,6 +49,11 @@ class AssessmentStateV1(TypedDict, total=False):
     model_attempt_ledger: list[dict]
     # M1.6 raw rejected claims and validation errors; never reviewer-facing prose.
     ai_claim_audit: list[dict]
+    # M1.7 additive candidate slot, isolated from original fixed results.
+    candidate_state_version: str
+    candidate_records: dict[str, dict]
+    candidate_status: str
+    reviewer_package: dict
 
 
 def context_to_record(context: RunContextV1) -> dict:
@@ -76,12 +81,12 @@ def pinned_from_state(state: AssessmentStateV1) -> PinnedBundleV1:
 
 
 def validate_result(result: SpecialistResultV1, state: AssessmentStateV1,
-                    expected: str) -> None:
+                    expected: str, *, subject_id: str | None = None) -> None:
     pinned = pinned_from_state(state)
     if (result.get("version") != "1" or result.get("specialist") != expected
             or result.get("producer_type") != "deterministic"
             or result.get("assessment_id") != state["assessment_id"]
-            or result.get("subject_id") != pinned.context.original_deal_id
+            or result.get("subject_id") != (subject_id or pinned.context.original_deal_id)
             or result.get("bundle_sha256") != pinned.context.bundle_sha256
             or result.get("execution") not in ("completed", "skipped", "error")):
         raise EvidenceMismatch("Specialist result identity, producer or contract differs")

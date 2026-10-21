@@ -4,6 +4,7 @@ from uuid import UUID
 
 from langgraph.graph import END, START, StateGraph
 
+from .candidate_graph import add_candidate_nodes
 from .evidence_bundle import seal, unseal
 from .fixed_specialists import domain_result
 from .graph_state import (AssessmentStateV1, STATE_VERSION, SPECIALISTS,
@@ -18,7 +19,8 @@ def initial_state(assessment_id: str, run_id: UUID) -> AssessmentStateV1:
             "phase1c_run_id": str(run_id), "subject_kind": "original",
             "specialist_results": {}, "trace": [], "stop_reason": None,
             "review_status": "pending", "tool_access_ledger": [],
-            "investigation_status": "not_started"}
+            "investigation_status": "not_started", "candidate_records": {},
+            "candidate_status": "not_started"}
 
 
 def _decision(state: AssessmentStateV1) -> dict:
@@ -121,5 +123,16 @@ def build_original_graph(adapter: Phase1CAdapter, connection_factory, checkpoint
             continue
         builder.add_conditional_edges(left, next_or_stop,
                                       {"finish": "finish", "continue": right})
-    builder.add_edge("finish", END)
+    candidate_start, candidate_end = add_candidate_nodes(builder, adapter, connection_factory)
+
+    def candidate_or_end(state):
+        contribution = state.get("ai_fulfillment_result", {}).get("contribution") or {}
+        return "candidate" if (state.get("investigation_status") == "completed"
+                               and contribution.get("schema_version") == "3"
+                               and contribution.get("kind") == "binding_proposal"
+                               and contribution.get("verification") == "unverified") else "end"
+
+    builder.add_conditional_edges("finish", candidate_or_end,
+                                  {"candidate": candidate_start, "end": END})
+    builder.add_edge(candidate_end, END)
     return builder.compile(checkpointer=checkpointer, interrupt_after=list(interrupt_after))
