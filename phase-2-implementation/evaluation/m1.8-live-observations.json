@@ -1,0 +1,1259 @@
+{
+  "cohort": "two synthetic accepted source states, four independent assessment threads",
+  "trials": [
+    {
+      "ai_error": "malformed_contribution",
+      "ai_execution": "error",
+      "assessment_id": "M18-LIVE-c41ceaf8-83ef-4b20-9f2f-80d07605dbbc",
+      "baseline": {
+        "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+        "candidate": {
+          "candidate_id": "C-DISC-50701910c76e65fa",
+          "evidence_ids": [
+            "M18-IN-B01",
+            "M18-INV-B01"
+          ],
+          "slices": [
+            {
+              "delivery_date": "2026-09-04",
+              "evidence_ids": [
+                "M18-INV-B01"
+              ],
+              "line_id": "M18-L-B01",
+              "quantity": "8"
+            },
+            {
+              "delivery_date": "2026-09-08",
+              "evidence_ids": [
+                "M18-IN-B01"
+              ],
+              "line_id": "M18-L-B01",
+              "quantity": "2"
+            }
+          ]
+        },
+        "deal_id": "M18-D-B01",
+        "discovered": true,
+        "original": {
+          "business_status": "needs_revision",
+          "fulfillment": [
+            {
+              "line_id": "M18-L-B01",
+              "quantity_by_requested_date": "8.000",
+              "requested_quantity": "10",
+              "status": "late_alternative"
+            }
+          ]
+        },
+        "reason": "Proposal formed from dated reader shipping options; full recheck required",
+        "run_id": "00000000-0000-4000-8000-000000018001",
+        "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+        "verification": {
+          "business_status": "needs_revision",
+          "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+          "supply_status": "supply_supported_unreserved"
+        },
+        "version": "m1.8-pinned-baseline-v1"
+      },
+      "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+      "candidate_status": "not_started",
+      "candidates": [],
+      "case_id": "B01",
+      "configuration": {
+        "decision_output_cap": 1024,
+        "final_output_cap": 2048,
+        "phase1c_commit": "90c0bc8e285ee69262c7db826b786096a77ad004",
+        "sequential": true,
+        "source_record_cap": 25,
+        "temperature": 0,
+        "tool_call_cap": 12
+      },
+      "contribution_kind": null,
+      "elapsed_ms": 28559,
+      "github_actions_run_id": 39665398303,
+      "mechanical_flags": {
+        "baseline_discovered": true,
+        "candidate_citations_returned": true,
+        "distinct_value_not_established": true,
+        "fixed_supported_candidate": false,
+        "raw_rejection_count": 1,
+        "requires_semantic_review": true,
+        "reviewer_candidate_count": 0,
+        "same_schedule_as_baseline": false
+      },
+      "model": "openai/gpt-oss-120b",
+      "model_attempts": [
+        {
+          "attempt_id": "5f4f683c64b313b45c00aef987dca4b389ba15026c035cc9bbd3e9d58864fab2",
+          "error_code": null,
+          "finished_at": "2026-10-21T19:53:21.503372+00:00",
+          "latency_ms": 671,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "1df37abe620d1eba08618c36855f36eb6e758229ed6eecd66872509f8f1f0a75",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T19:53:20.826137+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 690,
+            "output_tokens": 101
+          }
+        },
+        {
+          "attempt_id": "23533d4176dc579f48b4db1a41229406662175c6e102aac1c16e711a179ee75d",
+          "error_code": null,
+          "finished_at": "2026-10-21T19:53:35.336621+00:00",
+          "latency_ms": 13772,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "9ab699040d8c0adea6363fc644fe3ac773ac9c654f96378ba2b07b76cec52142",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T19:53:21.558383+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 1166,
+            "output_tokens": 1024
+          }
+        },
+        {
+          "attempt_id": "1d1d5e23183dfa1f81ddd6b0819fb3134806595b4e0933a89b03e36902401158",
+          "error_code": null,
+          "finished_at": "2026-10-21T19:53:48.939321+00:00",
+          "latency_ms": 13589,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "6b282121a29e687024ef1f8aa85b0fcf2f7affc7b7eb5da5d853c81c27a82678",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T19:53:35.344346+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 1587,
+            "output_tokens": 1767
+          }
+        }
+      ],
+      "original_deal_id": "M18-D-B01",
+      "original_review_status": "needs_revision",
+      "phase1c_run_id": "00000000-0000-4000-8000-000000018001",
+      "prompt_version": "m16-fulfillment-claims-v1-m17-binding-optin",
+      "provider": "groq",
+      "raw_rejected_claims": [
+        {
+          "assessment_id": "M18-LIVE-c41ceaf8-83ef-4b20-9f2f-80d07605dbbc",
+          "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+          "detail": "Binding slice requires a positive whole quantity",
+          "original_content": {
+            "kind": "binding_proposal",
+            "payload": {
+              "delivery_slices": [
+                {
+                  "delivery_date": "2026-09-03",
+                  "quantity": "8.000",
+                  "source_refs": [
+                    "inventory:M18-INV-B01"
+                  ]
+                },
+                {
+                  "delivery_date": "2026-09-08",
+                  "quantity": "2.000",
+                  "source_refs": [
+                    "inbound_supply:M18-IN-B01",
+                    "inventory:M18-INV-B01"
+                  ]
+                }
+              ],
+              "line_id": "M18-L-B01",
+              "tradeoff_code": "partial_delivery_requires_customer_acceptance"
+            },
+            "schema_version": "3"
+          },
+          "reason": "malformed_contribution"
+        }
+      ],
+      "reviewer_package": {
+        "ai_contribution": null,
+        "ai_execution": "error",
+        "assessment_id": "M18-LIVE-c41ceaf8-83ef-4b20-9f2f-80d07605dbbc",
+        "audit_rejection_count": 1,
+        "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+        "candidate_workflow_status": "not_started",
+        "candidates": [],
+        "original": {
+          "deal_id": "M18-D-B01",
+          "fulfillment_finding": [
+            {
+              "earliest_full_date": "2026-09-08",
+              "installation": "not_requested",
+              "line_id": "M18-L-B01",
+              "mode": "stocked_finished",
+              "quantity_by_requested_date": "8.000",
+              "requested_quantity": 10,
+              "source_ids": [
+                "M18-IN-B01",
+                "M18-INV-B01"
+              ],
+              "status": "late_alternative",
+              "tentative": false
+            }
+          ],
+          "review_status": "needs_revision",
+          "run_id": "00000000-0000-4000-8000-000000018001",
+          "specialists": {
+            "approval_routing": {
+              "execution": "completed",
+              "finding": "withheld"
+            },
+            "configuration": {
+              "execution": "completed",
+              "finding": "confirmed"
+            },
+            "credit": {
+              "execution": "completed",
+              "finding": "calculated"
+            },
+            "fulfillment": {
+              "execution": "completed",
+              "finding": "needs_revision"
+            },
+            "policy": {
+              "execution": "completed",
+              "finding": "evaluated_with_interface_limits"
+            },
+            "pricing": {
+              "execution": "completed",
+              "finding": "calculated"
+            }
+          }
+        },
+        "reviewer_action": "Human review required; no approval, reservation or delivery promise",
+        "stopping_reason": null,
+        "unverified_planning_ideas": [],
+        "validated_ai_summary": [],
+        "version": "m1.7-review-v1"
+      },
+      "reviewer_semantic_error_status": "requires_human_review",
+      "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+      "started_at_utc": "2026-10-21T19:53:20.408415+00:00",
+      "stop_reason": null,
+      "tool_access": [
+        {
+          "arguments": {
+            "horizon": null,
+            "line_id": "M18-L-B01"
+          },
+          "evidence_status": null,
+          "identity": {
+            "allowed_lines": [
+              "M18-L-B01"
+            ],
+            "allowed_sources": [
+              "inbound_supply",
+              "inventory",
+              "shipping_lane",
+              "supplier_offer"
+            ],
+            "assessment_id": "M18-LIVE-c41ceaf8-83ef-4b20-9f2f-80d07605dbbc",
+            "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+            "customer_id": "M18-C-B01",
+            "permission_version": "m1.2-v1",
+            "phase1c_run_id": "00000000-0000-4000-8000-000000018001",
+            "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+            "specialist": "fulfillment",
+            "subject_id": "M18-D-B01"
+          },
+          "returned_refs": [],
+          "status": "reserved",
+          "tool": "inspect_fulfillment_paths"
+        },
+        {
+          "arguments": {
+            "horizon": null,
+            "line_id": "M18-L-B01"
+          },
+          "evidence_status": "eligible_binding",
+          "identity": {
+            "allowed_lines": [
+              "M18-L-B01"
+            ],
+            "allowed_sources": [
+              "inbound_supply",
+              "inventory",
+              "shipping_lane",
+              "supplier_offer"
+            ],
+            "assessment_id": "M18-LIVE-c41ceaf8-83ef-4b20-9f2f-80d07605dbbc",
+            "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+            "customer_id": "M18-C-B01",
+            "permission_version": "m1.2-v1",
+            "phase1c_run_id": "00000000-0000-4000-8000-000000018001",
+            "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+            "specialist": "fulfillment",
+            "subject_id": "M18-D-B01"
+          },
+          "returned_refs": [
+            "inbound_supply:M18-IN-B01",
+            "inventory:M18-INV-B01"
+          ],
+          "status": "completed",
+          "tool": "inspect_fulfillment_paths"
+        }
+      ],
+      "tool_calls": 1,
+      "trace": [
+        "evidence_pinned",
+        "configuration:completed",
+        "pricing:completed",
+        "fulfillment:completed",
+        "credit:completed",
+        "policy:completed",
+        "reconciled",
+        "approval_routing:completed",
+        "review_prepared",
+        "fulfillment_ai:error"
+      ],
+      "trial": 1,
+      "validated_contribution": {},
+      "version": "m1.8-observation-v1"
+    },
+    {
+      "ai_error": "malformed_contribution",
+      "ai_execution": "error",
+      "assessment_id": "M18-LIVE-06851da3-c0d3-435f-8fcb-f6a5a01d26af",
+      "baseline": {
+        "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+        "candidate": {
+          "candidate_id": "C-DISC-50701910c76e65fa",
+          "evidence_ids": [
+            "M18-IN-B01",
+            "M18-INV-B01"
+          ],
+          "slices": [
+            {
+              "delivery_date": "2026-09-04",
+              "evidence_ids": [
+                "M18-INV-B01"
+              ],
+              "line_id": "M18-L-B01",
+              "quantity": "8"
+            },
+            {
+              "delivery_date": "2026-09-08",
+              "evidence_ids": [
+                "M18-IN-B01"
+              ],
+              "line_id": "M18-L-B01",
+              "quantity": "2"
+            }
+          ]
+        },
+        "deal_id": "M18-D-B01",
+        "discovered": true,
+        "original": {
+          "business_status": "needs_revision",
+          "fulfillment": [
+            {
+              "line_id": "M18-L-B01",
+              "quantity_by_requested_date": "8.000",
+              "requested_quantity": "10",
+              "status": "late_alternative"
+            }
+          ]
+        },
+        "reason": "Proposal formed from dated reader shipping options; full recheck required",
+        "run_id": "00000000-0000-4000-8000-000000018001",
+        "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+        "verification": {
+          "business_status": "needs_revision",
+          "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+          "supply_status": "supply_supported_unreserved"
+        },
+        "version": "m1.8-pinned-baseline-v1"
+      },
+      "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+      "candidate_status": "not_started",
+      "candidates": [],
+      "case_id": "B01",
+      "configuration": {
+        "decision_output_cap": 1024,
+        "final_output_cap": 2048,
+        "phase1c_commit": "90c0bc8e285ee69262c7db826b786096a77ad004",
+        "sequential": true,
+        "source_record_cap": 25,
+        "temperature": 0,
+        "tool_call_cap": 12
+      },
+      "contribution_kind": null,
+      "elapsed_ms": 28480,
+      "github_actions_run_id": 39665728038,
+      "mechanical_flags": {
+        "baseline_discovered": true,
+        "candidate_citations_returned": true,
+        "distinct_value_not_established": true,
+        "fixed_supported_candidate": false,
+        "raw_rejection_count": 1,
+        "requires_semantic_review": true,
+        "reviewer_candidate_count": 0,
+        "same_schedule_as_baseline": false
+      },
+      "model": "openai/gpt-oss-120b",
+      "model_attempts": [
+        {
+          "attempt_id": "c26d31c9e48d17bbfb405004e26c6d1453e6217a028c658124370347ae522ff2",
+          "error_code": null,
+          "finished_at": "2026-10-21T19:55:49.681214+00:00",
+          "latency_ms": 595,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "1df37abe620d1eba08618c36855f36eb6e758229ed6eecd66872509f8f1f0a75",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T19:55:49.081725+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 690,
+            "output_tokens": 101
+          }
+        },
+        {
+          "attempt_id": "891dc492ffa3a3c94e6be0eb48656c5017b8e511a40b0cf104a86f83705e71c5",
+          "error_code": null,
+          "finished_at": "2026-10-21T19:56:03.627542+00:00",
+          "latency_ms": 13900,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "9ab699040d8c0adea6363fc644fe3ac773ac9c654f96378ba2b07b76cec52142",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T19:55:49.723000+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 1166,
+            "output_tokens": 1024
+          }
+        },
+        {
+          "attempt_id": "98d7918fc2b05b5fd6bb3186c5e2759d50b01c0478e2ffd66642d013bb010181",
+          "error_code": null,
+          "finished_at": "2026-10-21T19:56:17.175440+00:00",
+          "latency_ms": 13538,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "6b282121a29e687024ef1f8aa85b0fcf2f7affc7b7eb5da5d853c81c27a82678",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T19:56:03.632492+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 1587,
+            "output_tokens": 1733
+          }
+        }
+      ],
+      "original_deal_id": "M18-D-B01",
+      "original_review_status": "needs_revision",
+      "phase1c_run_id": "00000000-0000-4000-8000-000000018001",
+      "prompt_version": "m16-fulfillment-claims-v1-m17-binding-optin",
+      "provider": "groq",
+      "raw_rejected_claims": [
+        {
+          "assessment_id": "M18-LIVE-06851da3-c0d3-435f-8fcb-f6a5a01d26af",
+          "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+          "detail": "Binding slice requires a positive whole quantity",
+          "original_content": {
+            "kind": "binding_proposal",
+            "payload": {
+              "delivery_slices": [
+                {
+                  "delivery_date": "2026-09-03",
+                  "quantity": "8.000",
+                  "source_refs": [
+                    "inventory:M18-INV-B01"
+                  ]
+                },
+                {
+                  "delivery_date": "2026-09-08",
+                  "quantity": "2.000",
+                  "source_refs": [
+                    "inbound_supply:M18-IN-B01"
+                  ]
+                }
+              ],
+              "line_id": "M18-L-B01",
+              "tradeoff_code": "partial_delivery_requires_customer_acceptance"
+            },
+            "schema_version": "3"
+          },
+          "reason": "malformed_contribution"
+        }
+      ],
+      "reviewer_package": {
+        "ai_contribution": null,
+        "ai_execution": "error",
+        "assessment_id": "M18-LIVE-06851da3-c0d3-435f-8fcb-f6a5a01d26af",
+        "audit_rejection_count": 1,
+        "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+        "candidate_workflow_status": "not_started",
+        "candidates": [],
+        "original": {
+          "deal_id": "M18-D-B01",
+          "fulfillment_finding": [
+            {
+              "earliest_full_date": "2026-09-08",
+              "installation": "not_requested",
+              "line_id": "M18-L-B01",
+              "mode": "stocked_finished",
+              "quantity_by_requested_date": "8.000",
+              "requested_quantity": 10,
+              "source_ids": [
+                "M18-IN-B01",
+                "M18-INV-B01"
+              ],
+              "status": "late_alternative",
+              "tentative": false
+            }
+          ],
+          "review_status": "needs_revision",
+          "run_id": "00000000-0000-4000-8000-000000018001",
+          "specialists": {
+            "approval_routing": {
+              "execution": "completed",
+              "finding": "withheld"
+            },
+            "configuration": {
+              "execution": "completed",
+              "finding": "confirmed"
+            },
+            "credit": {
+              "execution": "completed",
+              "finding": "calculated"
+            },
+            "fulfillment": {
+              "execution": "completed",
+              "finding": "needs_revision"
+            },
+            "policy": {
+              "execution": "completed",
+              "finding": "evaluated_with_interface_limits"
+            },
+            "pricing": {
+              "execution": "completed",
+              "finding": "calculated"
+            }
+          }
+        },
+        "reviewer_action": "Human review required; no approval, reservation or delivery promise",
+        "stopping_reason": null,
+        "unverified_planning_ideas": [],
+        "validated_ai_summary": [],
+        "version": "m1.7-review-v1"
+      },
+      "reviewer_semantic_error_status": "requires_human_review",
+      "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+      "started_at_utc": "2026-10-21T19:55:48.716916+00:00",
+      "stop_reason": null,
+      "tool_access": [
+        {
+          "arguments": {
+            "horizon": null,
+            "line_id": "M18-L-B01"
+          },
+          "evidence_status": null,
+          "identity": {
+            "allowed_lines": [
+              "M18-L-B01"
+            ],
+            "allowed_sources": [
+              "inbound_supply",
+              "inventory",
+              "shipping_lane",
+              "supplier_offer"
+            ],
+            "assessment_id": "M18-LIVE-06851da3-c0d3-435f-8fcb-f6a5a01d26af",
+            "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+            "customer_id": "M18-C-B01",
+            "permission_version": "m1.2-v1",
+            "phase1c_run_id": "00000000-0000-4000-8000-000000018001",
+            "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+            "specialist": "fulfillment",
+            "subject_id": "M18-D-B01"
+          },
+          "returned_refs": [],
+          "status": "reserved",
+          "tool": "inspect_fulfillment_paths"
+        },
+        {
+          "arguments": {
+            "horizon": null,
+            "line_id": "M18-L-B01"
+          },
+          "evidence_status": "eligible_binding",
+          "identity": {
+            "allowed_lines": [
+              "M18-L-B01"
+            ],
+            "allowed_sources": [
+              "inbound_supply",
+              "inventory",
+              "shipping_lane",
+              "supplier_offer"
+            ],
+            "assessment_id": "M18-LIVE-06851da3-c0d3-435f-8fcb-f6a5a01d26af",
+            "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+            "customer_id": "M18-C-B01",
+            "permission_version": "m1.2-v1",
+            "phase1c_run_id": "00000000-0000-4000-8000-000000018001",
+            "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+            "specialist": "fulfillment",
+            "subject_id": "M18-D-B01"
+          },
+          "returned_refs": [
+            "inbound_supply:M18-IN-B01",
+            "inventory:M18-INV-B01"
+          ],
+          "status": "completed",
+          "tool": "inspect_fulfillment_paths"
+        }
+      ],
+      "tool_calls": 1,
+      "trace": [
+        "evidence_pinned",
+        "configuration:completed",
+        "pricing:completed",
+        "fulfillment:completed",
+        "credit:completed",
+        "policy:completed",
+        "reconciled",
+        "approval_routing:completed",
+        "review_prepared",
+        "fulfillment_ai:error"
+      ],
+      "trial": 2,
+      "validated_contribution": {},
+      "version": "m1.8-observation-v1"
+    },
+    {
+      "ai_error": "malformed_contribution",
+      "ai_execution": "error",
+      "assessment_id": "M18-LIVE-73b21784-9c61-4491-9e58-d698c05d357f",
+      "baseline": {
+        "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+        "candidate": {
+          "candidate_id": "C-DISC-9ce3e31f1a42c329",
+          "evidence_ids": [
+            "M18-IN-B05",
+            "M18-INV-B05"
+          ],
+          "slices": [
+            {
+              "delivery_date": "2026-09-04",
+              "evidence_ids": [
+                "M18-INV-B05"
+              ],
+              "line_id": "M18-L-B05",
+              "quantity": "11"
+            },
+            {
+              "delivery_date": "2026-09-11",
+              "evidence_ids": [
+                "M18-IN-B05"
+              ],
+              "line_id": "M18-L-B05",
+              "quantity": "7"
+            }
+          ]
+        },
+        "deal_id": "M18-D-B05",
+        "discovered": true,
+        "original": {
+          "business_status": "needs_revision",
+          "fulfillment": [
+            {
+              "line_id": "M18-L-B05",
+              "quantity_by_requested_date": "11.000",
+              "requested_quantity": "18",
+              "status": "late_alternative"
+            }
+          ]
+        },
+        "reason": "Proposal formed from dated reader shipping options; full recheck required",
+        "run_id": "00000000-0000-4000-8000-000000018005",
+        "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+        "verification": {
+          "business_status": "needs_revision",
+          "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+          "supply_status": "supply_supported_unreserved"
+        },
+        "version": "m1.8-pinned-baseline-v1"
+      },
+      "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+      "candidate_status": "not_started",
+      "candidates": [],
+      "case_id": "B05",
+      "configuration": {
+        "decision_output_cap": 1024,
+        "final_output_cap": 2048,
+        "phase1c_commit": "90c0bc8e285ee69262c7db826b786096a77ad004",
+        "sequential": true,
+        "source_record_cap": 25,
+        "temperature": 0,
+        "tool_call_cap": 12
+      },
+      "contribution_kind": null,
+      "elapsed_ms": 29215,
+      "github_actions_run_id": 39666053577,
+      "mechanical_flags": {
+        "baseline_discovered": true,
+        "candidate_citations_returned": true,
+        "distinct_value_not_established": true,
+        "fixed_supported_candidate": false,
+        "raw_rejection_count": 1,
+        "requires_semantic_review": true,
+        "reviewer_candidate_count": 0,
+        "same_schedule_as_baseline": false
+      },
+      "model": "openai/gpt-oss-120b",
+      "model_attempts": [
+        {
+          "attempt_id": "4d934b3c521572afac1e26b4abbd32ec4487803364b9953d3dddb530745ef209",
+          "error_code": null,
+          "finished_at": "2026-10-21T19:58:09.156209+00:00",
+          "latency_ms": 416,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "80e27cd9a259145c339634e6776a7a350c9a44814037523bc1eda8e9e00fb4db",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T19:58:08.732327+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 690,
+            "output_tokens": 101
+          }
+        },
+        {
+          "attempt_id": "ae3093152d1cfa95aedef6faa8e0244cd25f02ae5869b171bac45f237589a42a",
+          "error_code": null,
+          "finished_at": "2026-10-21T19:58:23.342920+00:00",
+          "latency_ms": 14124,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "7fa9d55a8787899e0e297a898d1020f7a9d24b38536004420061e403f39647d7",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T19:58:09.211889+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 1166,
+            "output_tokens": 1024
+          }
+        },
+        {
+          "attempt_id": "b164843a12dcc26b285dedabf7c5581067c08bdb4552e8869b981e4ec64e84da",
+          "error_code": null,
+          "finished_at": "2026-10-21T19:58:37.272718+00:00",
+          "latency_ms": 13915,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "56fa9cd1d531327d2e6444691f1f4b4c0eb3ef946200d1553c1be5ccd3a5513a",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T19:58:23.350476+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 1587,
+            "output_tokens": 1969
+          }
+        }
+      ],
+      "original_deal_id": "M18-D-B05",
+      "original_review_status": "needs_revision",
+      "phase1c_run_id": "00000000-0000-4000-8000-000000018005",
+      "prompt_version": "m16-fulfillment-claims-v1-m17-binding-optin",
+      "provider": "groq",
+      "raw_rejected_claims": [
+        {
+          "assessment_id": "M18-LIVE-73b21784-9c61-4491-9e58-d698c05d357f",
+          "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+          "detail": "Binding slice requires a positive whole quantity",
+          "original_content": {
+            "kind": "binding_proposal",
+            "payload": {
+              "delivery_slices": [
+                {
+                  "delivery_date": "2026-09-02",
+                  "quantity": "11.000",
+                  "source_refs": [
+                    "inventory:M18-INV-B05"
+                  ]
+                },
+                {
+                  "delivery_date": "2026-09-11",
+                  "quantity": "7.000",
+                  "source_refs": [
+                    "inbound_supply:M18-IN-B05"
+                  ]
+                }
+              ],
+              "line_id": "M18-L-B05",
+              "tradeoff_code": "partial_delivery_requires_customer_acceptance"
+            },
+            "schema_version": "3"
+          },
+          "reason": "malformed_contribution"
+        }
+      ],
+      "reviewer_package": {
+        "ai_contribution": null,
+        "ai_execution": "error",
+        "assessment_id": "M18-LIVE-73b21784-9c61-4491-9e58-d698c05d357f",
+        "audit_rejection_count": 1,
+        "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+        "candidate_workflow_status": "not_started",
+        "candidates": [],
+        "original": {
+          "deal_id": "M18-D-B05",
+          "fulfillment_finding": [
+            {
+              "earliest_full_date": "2026-09-11",
+              "installation": "not_requested",
+              "line_id": "M18-L-B05",
+              "mode": "stocked_finished",
+              "quantity_by_requested_date": "11.000",
+              "requested_quantity": 18,
+              "source_ids": [
+                "M18-IN-B05",
+                "M18-INV-B05"
+              ],
+              "status": "late_alternative",
+              "tentative": false
+            }
+          ],
+          "review_status": "needs_revision",
+          "run_id": "00000000-0000-4000-8000-000000018005",
+          "specialists": {
+            "approval_routing": {
+              "execution": "completed",
+              "finding": "withheld"
+            },
+            "configuration": {
+              "execution": "completed",
+              "finding": "confirmed"
+            },
+            "credit": {
+              "execution": "completed",
+              "finding": "calculated"
+            },
+            "fulfillment": {
+              "execution": "completed",
+              "finding": "needs_revision"
+            },
+            "policy": {
+              "execution": "completed",
+              "finding": "evaluated_with_interface_limits"
+            },
+            "pricing": {
+              "execution": "completed",
+              "finding": "calculated"
+            }
+          }
+        },
+        "reviewer_action": "Human review required; no approval, reservation or delivery promise",
+        "stopping_reason": null,
+        "unverified_planning_ideas": [],
+        "validated_ai_summary": [],
+        "version": "m1.7-review-v1"
+      },
+      "reviewer_semantic_error_status": "requires_human_review",
+      "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+      "started_at_utc": "2026-10-21T19:58:08.090906+00:00",
+      "stop_reason": null,
+      "tool_access": [
+        {
+          "arguments": {
+            "horizon": null,
+            "line_id": "M18-L-B05"
+          },
+          "evidence_status": null,
+          "identity": {
+            "allowed_lines": [
+              "M18-L-B05"
+            ],
+            "allowed_sources": [
+              "inbound_supply",
+              "inventory",
+              "shipping_lane",
+              "supplier_offer"
+            ],
+            "assessment_id": "M18-LIVE-73b21784-9c61-4491-9e58-d698c05d357f",
+            "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+            "customer_id": "M18-C-B05",
+            "permission_version": "m1.2-v1",
+            "phase1c_run_id": "00000000-0000-4000-8000-000000018005",
+            "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+            "specialist": "fulfillment",
+            "subject_id": "M18-D-B05"
+          },
+          "returned_refs": [],
+          "status": "reserved",
+          "tool": "inspect_fulfillment_paths"
+        },
+        {
+          "arguments": {
+            "horizon": null,
+            "line_id": "M18-L-B05"
+          },
+          "evidence_status": "eligible_binding",
+          "identity": {
+            "allowed_lines": [
+              "M18-L-B05"
+            ],
+            "allowed_sources": [
+              "inbound_supply",
+              "inventory",
+              "shipping_lane",
+              "supplier_offer"
+            ],
+            "assessment_id": "M18-LIVE-73b21784-9c61-4491-9e58-d698c05d357f",
+            "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+            "customer_id": "M18-C-B05",
+            "permission_version": "m1.2-v1",
+            "phase1c_run_id": "00000000-0000-4000-8000-000000018005",
+            "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+            "specialist": "fulfillment",
+            "subject_id": "M18-D-B05"
+          },
+          "returned_refs": [
+            "inbound_supply:M18-IN-B05",
+            "inventory:M18-INV-B05"
+          ],
+          "status": "completed",
+          "tool": "inspect_fulfillment_paths"
+        }
+      ],
+      "tool_calls": 1,
+      "trace": [
+        "evidence_pinned",
+        "configuration:completed",
+        "pricing:completed",
+        "fulfillment:completed",
+        "credit:completed",
+        "policy:completed",
+        "reconciled",
+        "approval_routing:completed",
+        "review_prepared",
+        "fulfillment_ai:error"
+      ],
+      "trial": 1,
+      "validated_contribution": {},
+      "version": "m1.8-observation-v1"
+    },
+    {
+      "ai_error": "malformed_contribution",
+      "ai_execution": "error",
+      "assessment_id": "M18-LIVE-d832a167-e2fe-4c8c-9986-997061610caf",
+      "baseline": {
+        "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+        "candidate": {
+          "candidate_id": "C-DISC-9ce3e31f1a42c329",
+          "evidence_ids": [
+            "M18-IN-B05",
+            "M18-INV-B05"
+          ],
+          "slices": [
+            {
+              "delivery_date": "2026-09-04",
+              "evidence_ids": [
+                "M18-INV-B05"
+              ],
+              "line_id": "M18-L-B05",
+              "quantity": "11"
+            },
+            {
+              "delivery_date": "2026-09-11",
+              "evidence_ids": [
+                "M18-IN-B05"
+              ],
+              "line_id": "M18-L-B05",
+              "quantity": "7"
+            }
+          ]
+        },
+        "deal_id": "M18-D-B05",
+        "discovered": true,
+        "original": {
+          "business_status": "needs_revision",
+          "fulfillment": [
+            {
+              "line_id": "M18-L-B05",
+              "quantity_by_requested_date": "11.000",
+              "requested_quantity": "18",
+              "status": "late_alternative"
+            }
+          ]
+        },
+        "reason": "Proposal formed from dated reader shipping options; full recheck required",
+        "run_id": "00000000-0000-4000-8000-000000018005",
+        "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+        "verification": {
+          "business_status": "needs_revision",
+          "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+          "supply_status": "supply_supported_unreserved"
+        },
+        "version": "m1.8-pinned-baseline-v1"
+      },
+      "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+      "candidate_status": "not_started",
+      "candidates": [],
+      "case_id": "B05",
+      "configuration": {
+        "decision_output_cap": 1024,
+        "final_output_cap": 2048,
+        "phase1c_commit": "90c0bc8e285ee69262c7db826b786096a77ad004",
+        "sequential": true,
+        "source_record_cap": 25,
+        "temperature": 0,
+        "tool_call_cap": 12
+      },
+      "contribution_kind": null,
+      "elapsed_ms": 28513,
+      "github_actions_run_id": 39666373575,
+      "mechanical_flags": {
+        "baseline_discovered": true,
+        "candidate_citations_returned": true,
+        "distinct_value_not_established": true,
+        "fixed_supported_candidate": false,
+        "raw_rejection_count": 1,
+        "requires_semantic_review": true,
+        "reviewer_candidate_count": 0,
+        "same_schedule_as_baseline": false
+      },
+      "model": "openai/gpt-oss-120b",
+      "model_attempts": [
+        {
+          "attempt_id": "9bce038ea38fabc8ad1331ed39cb0536e72ac93d9789254607e7ee7308b8637f",
+          "error_code": null,
+          "finished_at": "2026-10-21T20:00:21.714288+00:00",
+          "latency_ms": 614,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "80e27cd9a259145c339634e6776a7a350c9a44814037523bc1eda8e9e00fb4db",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T20:00:21.094082+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 690,
+            "output_tokens": 101
+          }
+        },
+        {
+          "attempt_id": "381a95f157bb2cca2c825d691d3ccd846f795fbc99376362cb72802fdd5f4ad0",
+          "error_code": null,
+          "finished_at": "2026-10-21T20:00:37.682812+00:00",
+          "latency_ms": 15910,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "7fa9d55a8787899e0e297a898d1020f7a9d24b38536004420061e403f39647d7",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T20:00:21.765090+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 1166,
+            "output_tokens": 1024
+          }
+        },
+        {
+          "attempt_id": "c0cea261274a5d5adfe7358dd370bcef55f8e80958f7c8a007282dd4bed38a05",
+          "error_code": null,
+          "finished_at": "2026-10-21T20:00:49.086089+00:00",
+          "latency_ms": 11390,
+          "model": "openai/gpt-oss-120b",
+          "prompt_digest": "56fa9cd1d531327d2e6444691f1f4b4c0eb3ef946200d1553c1be5ccd3a5513a",
+          "provider": "groq",
+          "response_model": "openai/gpt-oss-120b",
+          "started_at": "2026-10-21T20:00:37.689443+00:00",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 1587,
+            "output_tokens": 1526
+          }
+        }
+      ],
+      "original_deal_id": "M18-D-B05",
+      "original_review_status": "needs_revision",
+      "phase1c_run_id": "00000000-0000-4000-8000-000000018005",
+      "prompt_version": "m16-fulfillment-claims-v1-m17-binding-optin",
+      "provider": "groq",
+      "raw_rejected_claims": [
+        {
+          "assessment_id": "M18-LIVE-d832a167-e2fe-4c8c-9986-997061610caf",
+          "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+          "detail": "Binding slice requires a positive whole quantity",
+          "original_content": {
+            "kind": "binding_proposal",
+            "payload": {
+              "delivery_slices": [
+                {
+                  "delivery_date": "2026-09-02",
+                  "quantity": "11.000",
+                  "source_refs": [
+                    "inventory:M18-INV-B05"
+                  ]
+                },
+                {
+                  "delivery_date": "2026-09-11",
+                  "quantity": "7.000",
+                  "source_refs": [
+                    "inbound_supply:M18-IN-B05"
+                  ]
+                }
+              ],
+              "line_id": "M18-L-B05",
+              "tradeoff_code": "partial_delivery_requires_customer_acceptance"
+            },
+            "schema_version": "3"
+          },
+          "reason": "malformed_contribution"
+        }
+      ],
+      "reviewer_package": {
+        "ai_contribution": null,
+        "ai_execution": "error",
+        "assessment_id": "M18-LIVE-d832a167-e2fe-4c8c-9986-997061610caf",
+        "audit_rejection_count": 1,
+        "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+        "candidate_workflow_status": "not_started",
+        "candidates": [],
+        "original": {
+          "deal_id": "M18-D-B05",
+          "fulfillment_finding": [
+            {
+              "earliest_full_date": "2026-09-11",
+              "installation": "not_requested",
+              "line_id": "M18-L-B05",
+              "mode": "stocked_finished",
+              "quantity_by_requested_date": "11.000",
+              "requested_quantity": 18,
+              "source_ids": [
+                "M18-IN-B05",
+                "M18-INV-B05"
+              ],
+              "status": "late_alternative",
+              "tentative": false
+            }
+          ],
+          "review_status": "needs_revision",
+          "run_id": "00000000-0000-4000-8000-000000018005",
+          "specialists": {
+            "approval_routing": {
+              "execution": "completed",
+              "finding": "withheld"
+            },
+            "configuration": {
+              "execution": "completed",
+              "finding": "confirmed"
+            },
+            "credit": {
+              "execution": "completed",
+              "finding": "calculated"
+            },
+            "fulfillment": {
+              "execution": "completed",
+              "finding": "needs_revision"
+            },
+            "policy": {
+              "execution": "completed",
+              "finding": "evaluated_with_interface_limits"
+            },
+            "pricing": {
+              "execution": "completed",
+              "finding": "calculated"
+            }
+          }
+        },
+        "reviewer_action": "Human review required; no approval, reservation or delivery promise",
+        "stopping_reason": null,
+        "unverified_planning_ideas": [],
+        "validated_ai_summary": [],
+        "version": "m1.7-review-v1"
+      },
+      "reviewer_semantic_error_status": "requires_human_review",
+      "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+      "started_at_utc": "2026-10-21T20:00:20.600931+00:00",
+      "stop_reason": null,
+      "tool_access": [
+        {
+          "arguments": {
+            "horizon": null,
+            "line_id": "M18-L-B05"
+          },
+          "evidence_status": null,
+          "identity": {
+            "allowed_lines": [
+              "M18-L-B05"
+            ],
+            "allowed_sources": [
+              "inbound_supply",
+              "inventory",
+              "shipping_lane",
+              "supplier_offer"
+            ],
+            "assessment_id": "M18-LIVE-d832a167-e2fe-4c8c-9986-997061610caf",
+            "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+            "customer_id": "M18-C-B05",
+            "permission_version": "m1.2-v1",
+            "phase1c_run_id": "00000000-0000-4000-8000-000000018005",
+            "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+            "specialist": "fulfillment",
+            "subject_id": "M18-D-B05"
+          },
+          "returned_refs": [],
+          "status": "reserved",
+          "tool": "inspect_fulfillment_paths"
+        },
+        {
+          "arguments": {
+            "horizon": null,
+            "line_id": "M18-L-B05"
+          },
+          "evidence_status": "eligible_binding",
+          "identity": {
+            "allowed_lines": [
+              "M18-L-B05"
+            ],
+            "allowed_sources": [
+              "inbound_supply",
+              "inventory",
+              "shipping_lane",
+              "supplier_offer"
+            ],
+            "assessment_id": "M18-LIVE-d832a167-e2fe-4c8c-9986-997061610caf",
+            "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+            "customer_id": "M18-C-B05",
+            "permission_version": "m1.2-v1",
+            "phase1c_run_id": "00000000-0000-4000-8000-000000018005",
+            "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+            "specialist": "fulfillment",
+            "subject_id": "M18-D-B05"
+          },
+          "returned_refs": [
+            "inbound_supply:M18-IN-B05",
+            "inventory:M18-INV-B05"
+          ],
+          "status": "completed",
+          "tool": "inspect_fulfillment_paths"
+        }
+      ],
+      "tool_calls": 1,
+      "trace": [
+        "evidence_pinned",
+        "configuration:completed",
+        "pricing:completed",
+        "fulfillment:completed",
+        "credit:completed",
+        "policy:completed",
+        "reconciled",
+        "approval_routing:completed",
+        "review_prepared",
+        "fulfillment_ai:error"
+      ],
+      "trial": 2,
+      "validated_contribution": {},
+      "version": "m1.8-observation-v1"
+    }
+  ],
+  "version": "m1.8-live-observations-v1"
+}
