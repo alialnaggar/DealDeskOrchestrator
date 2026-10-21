@@ -27,6 +27,7 @@ from psycopg.rows import dict_row
 
 from phase1c_policy_decision import evaluate_compiled_policy
 from phase1c_candidate import assess_reader_slices, reader_input_digest
+from phase1c_supplier_estimates import estimate_supplier_offer
 
 
 def _rows(conn, query, args=()):
@@ -60,14 +61,6 @@ def _workday(start, weekdays):
     day = start
     while day.isoweekday() not in weekdays:
         day += timedelta(days=1)
-    return day
-
-
-def _supplier_lead_date(order_date, lead_days, weekdays):
-    """Indicative supplier workday offset; no order cutoff or commitment inferred."""
-    day = _workday(order_date, weekdays)
-    for _ in range(lead_days):
-        day = _workday(day + timedelta(days=1), weekdays)
     return day
 
 
@@ -346,23 +339,9 @@ def _supply_findings(bundle, as_of):
             line_fact["supplier_offer_days"] = [x["lead_days_mode"] for x in matching_offers]
             estimates = []
             for offer in matching_offers:
-                calendar = offer.get("order_calendar_json")
-                if not isinstance(calendar, dict) or not calendar.get("working_weekdays") or calendar.get("holiday_dates") != []:
-                    continue
-                weekdays = set(calendar["working_weekdays"])
-                if not weekdays.issubset(set(range(1, 8))):
-                    continue
-                order_date = as_of.astimezone(ZoneInfo(calendar["time_zone"])).date()
-                estimates.append({
-                    "supplier_item_id": offer["supplier_item_id"],
-                    "supplier_id": offer["supplier_id"],
-                    "source": "uncommitted_supplier_offer",
-                    "binding": False,
-                    "order_date": order_date,
-                    "earliest": _supplier_lead_date(order_date, offer["lead_days_min"], weekdays),
-                    "mode": _supplier_lead_date(order_date, offer["lead_days_mode"], weekdays),
-                    "latest": _supplier_lead_date(order_date, offer["lead_days_max"], weekdays),
-                })
+                estimate = estimate_supplier_offer(offer, as_of)
+                if estimate is not None:
+                    estimates.append(estimate)
             line_fact["supplier_offer_estimates"] = estimates
     plans = []
     aggregate_components = defaultdict(lambda: Decimal(0))
