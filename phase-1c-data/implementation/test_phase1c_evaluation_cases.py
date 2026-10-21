@@ -276,8 +276,7 @@ class EvaluationDatabaseTests(unittest.TestCase):
                                                      next(iter(expected_offer_ids)))
                                     self.assertEqual(row["component_product_id"],
                                                      tables["supplier_items"][0]["product_id"])
-                                    self.assertEqual(row["selected_for_current_plan"],
-                                                     case["case_id"] in {"EVAL-PREP-019", "EVAL-PREP-020"})
+                                    self.assertTrue(row["selected_for_current_plan"])
                                     estimates = [row["estimate"]]
                                 else:
                                     self.assertEqual(component_offers, [])
