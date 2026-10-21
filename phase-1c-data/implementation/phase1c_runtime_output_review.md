@@ -20,6 +20,6 @@ The integration suite now clones reference case 04 into a disposable run and exe
 
 ## Concurrent claim check — 21 October 2026
 
-A PostgreSQL test now starts two callers on the same committed development run from separate connections. It expects exactly one completed seven-row attempt, with the competing caller rejected after the row lock releases; all rows must retain attempt number 1. This checks the existing run-row lock and terminal-state guard under a simultaneous start. It does not implement a queue, timeout recovery, retry numbering, or specialist-level concurrency. The test cleans up the disposable run and keeps the runtime field mark open.
+A PostgreSQL test now starts two callers on the same committed development run from separate connections. Both full workflows passed: [push 39539540541](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39539540541) and [PR 39539544004](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39539544004) at `af6c839`. Exactly one caller completed a seven-row attempt, and the competing caller was rejected after the row lock released; all rows retained attempt number 1. This checks the existing run-row lock and terminal-state guard under a simultaneous start. It does not implement a queue, timeout recovery, retry numbering, or specialist-level concurrency. The test cleans up the disposable run and keeps the runtime field mark open.
 
 

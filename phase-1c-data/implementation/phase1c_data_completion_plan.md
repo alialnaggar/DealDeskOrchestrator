@@ -27,7 +27,7 @@ The next bounded step 7 increment records a committed failed deterministic attem
 
 A further step 7 test adds a committed digital-activation development run alongside the original physical reference run. It validates seven typed envelopes from actual reader/decision execution and checks commit visibility through a second connection. Both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538543777) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538548554) PostgreSQL workflows passed; the [runtime review](phase1c_runtime_output_review.md) records its bounded scope. Neither run is an AI specialist execution or an accepted evaluation answer.
 
-The next step 7 integration check puts two callers on one frozen development run. It requires one committed attempt and a rejected competitor, preserving one set of seven output rows. This tests concurrent claim behavior under PostgreSQL; CI must pass before the result is counted as verified. It does not enable retries or close the output field mark.
+The next step 7 integration check puts two callers on one frozen development run. Both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39539540541) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39539544004) PostgreSQL workflows passed: one committed attempt and a rejected competitor preserved one set of seven output rows. This tests concurrent claim behavior under PostgreSQL. It does not enable retries or close the output field mark.
 
 ## What happens next
 

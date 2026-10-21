@@ -18,7 +18,7 @@ A subsequent bounded runtime increment adds a committed `Failed` Orchestrator at
 
 The next integration check exercises a second, digital-activation reference run and reads its committed deterministic outputs from a separate connection. Both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538543777) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538548554) PostgreSQL workflows passed. This expands development-mode coverage without accepting evaluation labels or closing the runtime field mark.
 
-A simultaneous two-caller claim test is being checked in CI. It must leave exactly one seven-row attempt and reject the other caller. Retry design, real specialist failure handling, and the runtime field mark remain open.
+A simultaneous two-caller claim test passed both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39539540541) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39539544004) PostgreSQL workflows. It left exactly one seven-row attempt and rejected the other caller. Retry design, real specialist failure handling, and the runtime field mark remain open.
 
 ## Open gates
 
