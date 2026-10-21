@@ -17,6 +17,7 @@ CAPTURE_VERSION = "m1.8-observation-v1"
 def pinned_baseline(adapter, connection_factory, pinned):
     """Use exactly the separately pinned Phase 1C discovery and full verifier."""
     pool = adapter.validate_pinned_context(pinned)
+    original = adapter.fixed_original_decision(pinned)
     module = importlib.import_module("phase1c_partial_discovery")
     implementation = (adapter.checkout / "phase-1c-data" / "implementation").resolve()
     if not Path(module.__file__).resolve().is_relative_to(implementation):
@@ -27,6 +28,12 @@ def pinned_baseline(adapter, connection_factory, pinned):
               "deal_id": pinned.context.original_deal_id,
               "bundle_sha256": pinned.context.bundle_sha256,
               "source_input_digest": pinned.context.source_input_digest,
+              "original": {"business_status": original["status"],
+                           "fulfillment": [{"line_id": x["line_id"],
+                                            "status": x["status"],
+                                            "requested_quantity": str(x["requested_quantity"]),
+                                            "quantity_by_requested_date": str(x["quantity_by_requested_date"])}
+                                           for x in original["specialists"]["availability"]]},
               "discovered": candidate is not None, "reason": reason,
               "candidate": None, "verification": None}
     if candidate is None:
@@ -61,6 +68,8 @@ def capture_trial(case_id: str, state: dict, baseline: dict, *, provider: str,
         raise EvidenceMismatch("Trial and baseline identities or evidence differ")
     if not state.get("reviewer_package"):
         raise ValueError("Reviewer handoff has not completed")
+    if state["reviewer_package"].get("original", {}).get("deal_id") != context["original_deal_id"]:
+        raise EvidenceMismatch("Reviewer package original deal differs")
     ai = state.get("ai_fulfillment_result") or {}
     contribution = ai.get("contribution") or {}
     records = list(state.get("candidate_records", {}).values())
@@ -79,6 +88,10 @@ def capture_trial(case_id: str, state: dict, baseline: dict, *, provider: str,
         "provider": provider, "model": model, "prompt_version": prompt_version,
         "ai_execution": ai.get("execution", "not_run"),
         "contribution_kind": contribution.get("kind"),
+        "ai_error": ai.get("error"),
+        "original_review_status": state.get("review_status"),
+        "stop_reason": state.get("stop_reason"),
+        "trace": list(state.get("trace", [])),
         "candidate_status": state.get("candidate_status", "not_started"),
         "candidates": [{"candidate_id": x["candidate_id"], "status": x["status"],
             "proposed_slices": x["proposed_slices"],
@@ -88,13 +101,19 @@ def capture_trial(case_id: str, state: dict, baseline: dict, *, provider: str,
         "baseline": baseline,
         "raw_rejected_claims": state.get("ai_claim_audit", []),
         "reviewer_package": state["reviewer_package"],
+        "reviewer_semantic_error_status": "requires_human_review",
         "tool_calls": sum(bool(x.get("counted")) for x in ledger),
         "tool_access": [{"tool": x.get("tool"), "status": x.get("status"),
-                         "returned_refs": x.get("returned_refs", [])} for x in ledger],
+                         "arguments": x.get("args"),
+                         "evidence_status": x.get("result", {}).get("evidence"),
+                         "returned_refs": x.get("returned_refs", []),
+                         "identity": x.get("identity")} for x in ledger],
         "model_attempts": [{"attempt_id": x.get("attempt_id"),
             "provider": x.get("provider"), "model": x.get("model"),
             "status": x.get("status"), "usage": x.get("usage"),
-            "latency_ms": x.get("latency_ms"), "error_code": x.get("error_code")}
+            "latency_ms": x.get("latency_ms"), "error_code": x.get("error_code"),
+            "prompt_digest": x.get("prompt_digest"),
+            "started_at": x.get("started_at"), "finished_at": x.get("finished_at")}
             for x in latest_attempts.values()]}
 
 

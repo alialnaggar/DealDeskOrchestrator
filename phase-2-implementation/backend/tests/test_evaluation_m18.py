@@ -57,6 +57,7 @@ class CaptureTests(unittest.TestCase):
                                  prompt_version="none")
         self.assertEqual(captured["tool_calls"], 1)
         self.assertEqual(captured["raw_rejected_claims"], state["ai_claim_audit"])
+        self.assertEqual(captured["reviewer_semantic_error_status"], "requires_human_review")
         self.assertNotIn("answer", str(captured).lower())
         self.assertTrue(structural_flags(captured)["requires_semantic_review"])
         with self.assertRaises(EvidenceMismatch):
@@ -65,6 +66,26 @@ class CaptureTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             capture_trial("B01", {**state, "reviewer_package": {}}, baseline,
                           provider="offline_double", model="scripted", prompt_version="none")
+        with self.assertRaises(EvidenceMismatch):
+            capture_trial("B01", {**state, "reviewer_package": {"original": {"deal_id": "OTHER"}}},
+                          baseline, provider="offline_double", model="scripted",
+                          prompt_version="none")
+
+    def test_capture_retains_failed_model_and_candidate_rejection(self):
+        state, baseline = observation()
+        state["ai_fulfillment_result"] = {"execution": "error", "error": "malformed_contribution"}
+        state["candidate_records"] = {"C": {"candidate_id": "C", "status": "fixed_rejected",
+            "proposed_slices": [], "error": "ValueError"}}
+        state["model_attempt_ledger"] = [
+            {"attempt_id": "one", "status": "reserved", "provider": "groq", "model": "m"},
+            {"attempt_id": "one", "status": "error", "provider": "groq", "model": "m",
+             "error_code": "timeout", "latency_ms": 1200, "usage": {}}]
+        captured = capture_trial("B01", state, baseline, provider="offline_double",
+                                 model="scripted", prompt_version="none")
+        self.assertEqual(captured["ai_error"], "malformed_contribution")
+        self.assertEqual(captured["candidates"][0]["status"], "fixed_rejected")
+        self.assertEqual(captured["model_attempts"][0]["error_code"], "timeout")
+        self.assertFalse(structural_flags(captured)["fixed_supported_candidate"])
 
     def test_scoring_never_infers_quality_or_acceptance_from_json(self):
         state, baseline = observation()
@@ -133,6 +154,7 @@ class PinnedEvaluationCases(unittest.TestCase):
                       "slices=" + str(baseline["candidate"]["slices"] if
                                       baseline["candidate"] else []),
                       "verification=" + str(baseline["verification"]),
+                      "original=" + str(baseline["original"]),
                       "reason=" + baseline["reason"])
                 if case.case_id.startswith("B"):
                     self.assertTrue(baseline["discovered"], baseline)
