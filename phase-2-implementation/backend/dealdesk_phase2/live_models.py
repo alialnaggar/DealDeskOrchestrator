@@ -17,7 +17,7 @@ from . import model_attempts
 
 GROQ_MODEL = "openai/gpt-oss-120b"
 GEMINI_MODEL = "gemini-3.8-flash"
-PROMPT_VERSION = "m15-fulfillment-v1"
+PROMPT_VERSION = "m16-fulfillment-claims-v1"
 MAX_OUTPUT_TOKENS = 2048
 MAX_PROMPT_BYTES = 20000
 MAX_MODEL_TURNS = 6
@@ -61,6 +61,23 @@ TOOL_PARAMETERS = {
         "required": ["line_id", "source_category", "source_id"]},
 }
 
+CLAIM_SCHEMA = {"type": "object", "properties": {
+    "type": {"type": "string", "enum": [
+        "source_observation", "fixed_finding_reference",
+        "conditional_possibility", "evidence_gap", "candidate_idea"]},
+    "line_id": {"type": "string"}, "source_ref": {"type": "string"},
+    "field": {"type": "string"}, "value": {"type": "string"},
+    "scope": {"type": "string"}, "gap_code": {"type": "string"},
+    "idea_code": {"type": "string"}, "delivery_slices": {"type": "array",
+        "items": {"type": "object", "properties": {
+            "quantity": {"type": "string"}, "delivery_date": {"type": "string"},
+            "commitment_claim": {"type": "string", "enum": ["conditional", "unknown"]}},
+            "required": ["quantity", "delivery_date", "commitment_claim"],
+            "additionalProperties": False}}},
+    "required": ["type", "line_id", "source_ref", "field", "value", "scope",
+                 "gap_code", "idea_code", "delivery_slices"],
+    "additionalProperties": False}
+
 FINAL_SCHEMA = {"type": "object", "properties": {
     "kind": {"type": "string", "enum": ["proposal", "finding_without_proposal", "abstention"]},
     "line_id": {"type": "string"},
@@ -73,16 +90,30 @@ FINAL_SCHEMA = {"type": "object", "properties": {
     "assumptions": {"type": "array", "items": {"type": "string"}},
     "unmet_requirements": {"type": "array", "items": {"type": "string"}},
     "uncertainty_reasons": {"type": "array", "items": {"type": "string"}},
-    "finding": {"type": "string"}, "reason": {"type": "string"}},
+    "finding": {"type": "string"}, "reason": {"type": "string"},
+    "claims": {"type": "array", "items": CLAIM_SCHEMA}},
     "required": ["kind", "line_id", "delivery_slices", "citations", "tradeoffs",
-                 "assumptions", "unmet_requirements", "uncertainty_reasons", "finding", "reason"],
+                 "assumptions", "unmet_requirements", "uncertainty_reasons", "finding", "reason", "claims"],
     "additionalProperties": False}
 
 
 def _canonical_final(raw):
-    if not isinstance(raw, dict) or set(raw) != set(FINAL_SCHEMA["required"]):
+    if not isinstance(raw, dict):
+        raise ProviderError("malformed_final")
+    v2 = set(raw) == set(FINAL_SCHEMA["required"])
+    legacy = set(raw) == set(FINAL_SCHEMA["required"]) - {"claims"}
+    if not v2 and not legacy:
         raise ProviderError("malformed_final")
     kind = raw["kind"]
+    if v2:
+        if kind not in ("proposal", "finding_without_proposal", "abstention"):
+            raise ProviderError("malformed_final")
+        return {"type": "contribution", "value": {
+            "schema_version": "2", "kind": kind, "payload": {
+                "line_id": raw["line_id"], "claims": raw["claims"],
+                "notes": {key: raw[key] for key in (
+                    "finding", "reason", "tradeoffs", "assumptions",
+                    "unmet_requirements", "uncertainty_reasons")}}}}
     if kind == "proposal":
         fields = ("line_id", "delivery_slices", "citations", "tradeoffs", "assumptions",
                   "unmet_requirements", "uncertainty_reasons")
@@ -123,8 +154,15 @@ def _prompt(input, observations):
             "If the selected evidence is insufficient, state the bounded gap or abstain. "
             "Never approve, reserve or promise. You may abstain or report a finding. "
             "First choose one authorized local tool when useful; if ready for final output, "
-            "say READY. For a final proposal, use only conditional/unknown slices, and "
-            "never claim it was fixed-rule verified. Input and observations: " +
+            "say READY. Return typed claims: each has type, line_id, source_ref, field, "
+            "value, scope, gap_code, idea_code, delivery_slices; use empty strings and [] "
+            "for unused fields. Source observations copy exact returned record fields. Fixed "
+            "references copy the pinned fulfillment_status or quantity_by_requested_date. "
+            "Supplier offers require confirmation; lead times do not establish arrival dates. "
+            "Evidence gaps are scoped to returned_records. Candidate ideas can ask_supplier_for_later_option; "
+            "dated slices will be rejected and any retained idea downgraded as nonactionable. "
+            "Free-text finding and notes are audit-only. Abstain when evidence cannot support a claim. "
+            "Never claim a proposal was fixed-rule verified. Input and observations: " +
             _json({"input": safe, "observations": observations}))
 
 

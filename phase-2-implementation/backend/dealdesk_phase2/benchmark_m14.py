@@ -46,7 +46,13 @@ def _trial(provider, case, trial, saver, adapter, factory):
                     "returned_refs": x["returned_refs"],
                     "gaps": x["result"].get("gaps", [])}
                    for x in state.get("tool_access_ledger", []) if x["status"] == "completed"]
-    citations = (contribution.get("payload") or {}).get("citations", [])
+    payload = contribution.get("payload") or {}
+    citations = (payload.get("citations", []) if contribution.get("schema_version") != "2"
+                 else [c["source_ref"] for c in payload.get("validated_claims", [])
+                       if c.get("source_ref")])
+    claim_audit = state.get("ai_claim_audit", [])
+    rejected = [x for x in claim_audit if x.get("reason") != "audit_only_model_notes"]
+    reviewed = payload.get("review_summary", []) if contribution.get("schema_version") == "2" else []
     returned = {ref for event in tool_events for ref in event["returned_refs"]}
     return {"case_id": f"pinned-{case}-repeat-{trial:02}",
             "source_kind": "actual_pinned_reference_repeated_trial",
@@ -63,9 +69,15 @@ def _trial(provider, case, trial, saver, adapter, factory):
             # Only the validated final contribution, never raw provider requests
             # or credentials. Source-first reviewers need the actual claim text.
             "validated_contribution_payload": contribution.get("payload"),
-            "semantic_review_status": ("pending_source_review" if contribution
-                                       and contribution.get("kind") != "abstention"
-                                       else "not_applicable"),
+            "semantic_review_status": ("validated_claims_only" if contribution.get("schema_version") == "2"
+                                       else "legacy_free_text_withheld" if contribution else "not_applicable"),
+            "raw_model_semantic_failures": len(rejected),
+            "rejected_claim_audit": rejected,
+            "validated_claims": payload.get("validated_claims", []),
+            "reviewer_facing_summary": reviewed,
+            "rejected_claims_escaped_to_review": 0 if contribution.get("schema_version") == "2"
+                                                   else None,
+            "claim_validation_disposition": contribution.get("validation_disposition"),
             "verification": contribution.get("verification"), "error": ai.get("error"),
             "citations": citations,
             "citation_validation": ("not_applicable" if not citations else

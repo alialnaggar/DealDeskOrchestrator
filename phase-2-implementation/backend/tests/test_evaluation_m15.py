@@ -139,10 +139,11 @@ class SourceFirstSyntheticTests(unittest.TestCase):
                                 "status": "late_alternative"}}
         input = restricted_input(pinned.context, pool, selected, 12)
         prompt = _prompt(input, ())
-        self.assertEqual(PROMPT_VERSION, "m15-fulfillment-v1")
+        self.assertEqual(PROMPT_VERSION, "m16-fulfillment-claims-v1")
         self.assertIn("selected reader pool", prompt)
         self.assertIn("never claim globally", prompt)
         self.assertIn("Do not speculate", prompt)
+        self.assertIn("audit-only", prompt)
 
     def test_f06_uncited_or_blank_finding_is_rejected_with_fixed_fallback(self):
         for finding, citations in (("Eight units are confirmed", []),

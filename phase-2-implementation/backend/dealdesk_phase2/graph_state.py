@@ -47,6 +47,8 @@ class AssessmentStateV1(TypedDict, total=False):
     investigation_status: str
     # M1.4: sequential, checkpointed reservations and sanitized outcomes.
     model_attempt_ledger: list[dict]
+    # M1.6 raw rejected claims and validation errors; never reviewer-facing prose.
+    ai_claim_audit: list[dict]
 
 
 def context_to_record(context: RunContextV1) -> dict:
