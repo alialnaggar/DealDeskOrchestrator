@@ -3,7 +3,9 @@
 import json
 import os
 from copy import deepcopy
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Barrier
 from uuid import UUID
 import unittest
 
@@ -155,6 +157,40 @@ class DevelopmentRuntimeTests(unittest.TestCase):
                     "committed_and_observed": True, "model_execution_claimed": False}
                 path.write_text(json.dumps(report, indent=2) + "\n")
         finally:
+            with self.conn.transaction():
+                self.conn.execute("DELETE FROM deal_desk.agent_execution_log WHERE run_id = %s", (TEST_RUN,))
+                self.conn.execute("DELETE FROM deal_desk.deal_runs WHERE run_id = %s", (TEST_RUN,))
+
+    def test_two_callers_claim_only_one_completed_attempt(self):
+        import psycopg
+        from psycopg.rows import dict_row
+        self.conn.commit()
+        start = Barrier(2)
+
+        def caller():
+            with psycopg.connect(os.environ["DATABASE_URL"], autocommit=True,
+                                 row_factory=dict_row) as conn:
+                conn.execute("SET search_path TO deal_desk, public")
+                start.wait(timeout=15)
+                try:
+                    return ("completed", persist_development_attempt(conn, TEST_RUN, CONTRACT))
+                except ValueError as exc:
+                    return ("rejected", str(exc))
+
+        try:
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                futures = [pool.submit(caller) for _ in range(2)]
+                results = [future.result(timeout=45) for future in futures]
+            self.assertEqual(sorted(item[0] for item in results), ["completed", "rejected"])
+            self.assertIn("queued/running", next(item[1] for item in results if item[0] == "rejected"))
+            observed = self.conn.execute("""SELECT agent_name, attempt_number, status
+                FROM deal_desk.agent_execution_log WHERE run_id = %s""", (TEST_RUN,)).fetchall()
+            self.assertEqual(len(observed), 7)
+            self.assertEqual({row["attempt_number"] for row in observed}, {1})
+            self.assertEqual({row["status"] for row in observed}, {"Success"})
+            self.assertEqual(self.conn.execute("SELECT run_status FROM deal_desk.deal_runs WHERE run_id = %s", (TEST_RUN,)).fetchone()["run_status"], "completed")
+        finally:
+            self.conn.rollback()
             with self.conn.transaction():
                 self.conn.execute("DELETE FROM deal_desk.agent_execution_log WHERE run_id = %s", (TEST_RUN,))
                 self.conn.execute("DELETE FROM deal_desk.deal_runs WHERE run_id = %s", (TEST_RUN,))

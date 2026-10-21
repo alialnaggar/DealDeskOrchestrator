@@ -18,6 +18,8 @@ A subsequent bounded runtime increment adds a committed `Failed` Orchestrator at
 
 The next integration check exercises a second, digital-activation reference run and reads its committed deterministic outputs from a separate connection. Both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538543777) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538548554) PostgreSQL workflows passed. This expands development-mode coverage without accepting evaluation labels or closing the runtime field mark.
 
+A simultaneous two-caller claim test is being checked in CI. It must leave exactly one seven-row attempt and reject the other caller. Retry design, real specialist failure handling, and the runtime field mark remain open.
+
 ## Open gates
 
 1. **Substantive evaluation review:** Verify all six responsibility findings, overall action and human route case by case using the [pinned handoff](evaluation/reviews/v2_review_handoff.md). Case 020 has an explicit [route/gate choice](evaluation/reviews/case_020_route_adjudication.md): a timely conditional modal schedule versus an unsupported maximum-lead test slot. Continued work is not acceptance. All 36 cases remain unaccepted.

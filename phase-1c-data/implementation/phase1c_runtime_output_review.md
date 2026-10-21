@@ -18,4 +18,8 @@ The PostgreSQL integration test injects an invalid output contract into the real
 
 The integration suite now clones reference case 04 into a disposable run and executes the same reader, compiled decision and typed-output adapter for a `digital_activation` line. The original case 01 covers a physical line. The digital run commits its seven rows, which a separate connection checks against reader-visible evidence and the frozen run identity; cleanup then deletes the disposable rows. Both full workflows passed: [push 39538543777](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538543777) and [PR 39538548554](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538548554) at `0fc5f7f`. The CI `phase1c-development-runtime` artifact adds the second source run, mode and committed-row count. This is engineering coverage of two fulfillment modes, with no provider-proof substitution, AI specialist call, answer scoring or customer-facing approval. The field mark remains open pending genuine specialist output and broader failure/retry semantics.
 
+## Concurrent claim check — 21 October 2026
+
+A PostgreSQL test now starts two callers on the same committed development run from separate connections. It expects exactly one completed seven-row attempt, with the competing caller rejected after the row lock releases; all rows must retain attempt number 1. This checks the existing run-row lock and terminal-state guard under a simultaneous start. It does not implement a queue, timeout recovery, retry numbering, or specialist-level concurrency. The test cleans up the disposable run and keeps the runtime field mark open.
+
 
