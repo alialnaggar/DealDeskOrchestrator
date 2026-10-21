@@ -37,8 +37,8 @@ class SourceCase:
 
 # Meaningful variations: allocation, requested date, confirmed inbound date,
 # quantity and shipping transit. B01 is the 8+2 reference-source shape; the
-# other cases have distinct evidence rows and are still provisional synthetic
-# business cases until a person accepts their source-first review sheet.
+# other cases have distinct evidence rows. Ali's 2026-10-21 developer-side
+# acceptance is recorded separately from these model-blind synthetic inputs.
 CASES = (
     SourceCase("B01", 10, "2026-09-04", 20, 12, 5, 2, "2026-09-03", 2),
     SourceCase("B02", 14, "2026-09-04", 9, 3, 12, 2, "2026-09-04", 1),
