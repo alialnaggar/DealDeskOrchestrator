@@ -258,6 +258,37 @@ class EvaluationDatabaseTests(unittest.TestCase):
                                     self.assertEqual(expected_rules, [])
                                     self.assertEqual(service_facts, [])
                                 self.assertEqual(bundle["facts"]["compatibility"], [])
+                                expected_offer_ids = {row["supplier_item_id"] for row in
+                                                      tables.get("supplier_items", [])}
+                                self.assertEqual({row["supplier_item_id"] for row in
+                                                  bundle["supplier_offers"]}, expected_offer_ids)
+                                component_offers = [row for plan in
+                                    bundle["facts"]["supply"]["assembly_by_bom"].values()
+                                    for row in plan["component_supplier_offers"]]
+                                finished_estimates = [row for fact in bundle["facts"]["lines"]
+                                    for row in fact.get("supplier_offer_estimates", [])]
+                                component_ids = {f"EVAL-PREP-{n:03d}" for n in (15, 16, 19, 20)}
+                                if case["case_id"] in component_ids:
+                                    self.assertEqual(len(component_offers), 1)
+                                    self.assertEqual(finished_estimates, [])
+                                    row = component_offers[0]
+                                    self.assertEqual(row["supplier_item_id"],
+                                                     next(iter(expected_offer_ids)))
+                                    self.assertEqual(row["component_product_id"],
+                                                     tables["supplier_items"][0]["product_id"])
+                                    self.assertEqual(row["selected_for_current_plan"],
+                                                     case["case_id"] in {"EVAL-PREP-019", "EVAL-PREP-020"})
+                                    estimates = [row["estimate"]]
+                                else:
+                                    self.assertEqual(component_offers, [])
+                                    estimates = finished_estimates
+                                self.assertEqual({row["supplier_item_id"] for row in estimates},
+                                                 expected_offer_ids)
+                                for estimate in estimates:
+                                    self.assertEqual(estimate["source"], "uncommitted_supplier_offer")
+                                    self.assertFalse(estimate["binding"])
+                                    self.assertLessEqual(estimate["earliest"], estimate["mode"])
+                                    self.assertLessEqual(estimate["mode"], estimate["latest"])
                             packet = prepare_heldout_review_input(
                                 bundle, case_id=case["case_id"], development_manifest=development,
                                 historical_manifest=historical, business_contract=business_contract)
