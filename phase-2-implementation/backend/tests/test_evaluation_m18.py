@@ -4,8 +4,14 @@ import os
 from pathlib import Path
 import unittest
 
+from langgraph.checkpoint.memory import InMemorySaver
+
 from dealdesk_phase2.evaluation_m18 import (adjudicate, capture_trial,
                                              pinned_baseline, structural_flags)
+from dealdesk_phase2.checkpoint import thesis_checkpointer
+from dealdesk_phase2.fulfillment_agent import OfflineModelDouble
+from dealdesk_phase2.investigation_graph import run_original_investigate_and_review
+from dealdesk_phase2.orchestrator import build_original_graph
 from dealdesk_phase2.phase1c_adapter import EvidenceMismatch, Phase1CAdapter
 from m18_case_setup import CASES, install_disposable_cases
 
@@ -160,6 +166,79 @@ class PinnedEvaluationCases(unittest.TestCase):
                             "source_input_digest": other.context.source_input_digest},
                 "reviewer_package": {"original": {"deal_id": case.ids()["D"]}}},
                 baseline, provider="offline_double", model="scripted", prompt_version="none")
+
+    def test_scripted_candidate_capture_is_not_ai_quality_evidence(self):
+        case = CASES[0]
+        pinned = self.adapter.read_original(self.connect, case.run_id, "M18-SCRIPTED")
+        baseline = pinned_baseline(self.adapter, self.connect, pinned)
+        self.assertTrue(baseline["discovered"])
+        slices = baseline["candidate"]["slices"]
+        raw = {"line_id": case.ids()["L"], "delivery_slices": [
+            {"quantity": x["quantity"], "delivery_date": x["delivery_date"],
+             "source_refs": [("inventory:" if source == case.ids()["INV"] else
+                              "inbound_supply:") + source for source in x["evidence_ids"]]}
+            for x in slices], "tradeoff_code": "partial_delivery_requires_customer_acceptance"}
+        model = OfflineModelDouble((
+            {"type": "tool", "tool": "inspect_fulfillment_paths",
+             "arguments": {"line_id": case.ids()["L"]}},
+            {"type": "contribution", "value": {"schema_version": "3",
+              "kind": "binding_proposal", "payload": raw}}))
+        graph = build_original_graph(self.adapter, self.connect, InMemorySaver())
+        config = {"configurable": {"thread_id": "M18-SCRIPTED-B01"}}
+        state = run_original_investigate_and_review(graph, config, self.adapter, model,
+            assessment_id="M18-SCRIPTED", run_id=case.run_id)
+        captured = capture_trial(case.case_id, state, baseline,
+            provider="offline_double", model="scripted", prompt_version="none")
+        flags = structural_flags(captured)
+        self.assertTrue(flags["fixed_supported_candidate"], captured)
+        self.assertTrue(flags["same_schedule_as_baseline"])
+        self.assertTrue(flags["candidate_citations_returned"])
+        self.assertEqual(captured["reviewer_package"]["candidates"][0]["customer_acceptance"],
+                         "pending")
+        self.assertEqual(captured["reviewer_package"]["original"]["deal_id"], case.ids()["D"])
+        self.assertEqual(run_original_investigate_and_review(graph, config, self.adapter,
+            OfflineModelDouble(()), assessment_id="M18-SCRIPTED", run_id=case.run_id), state)
+
+    @unittest.skipUnless(os.getenv("CHECKPOINT_DATABASE_URL"),
+                         "Requires disposable PostgreSQL checkpoint database")
+    def test_observation_is_stable_across_postgres_candidate_restart(self):
+        case = CASES[0]
+        pinned = self.adapter.read_original(self.connect, case.run_id, "M18-RESTART")
+        baseline = pinned_baseline(self.adapter, self.connect, pinned)
+        slices = baseline["candidate"]["slices"]
+        proposal = {"line_id": case.ids()["L"], "delivery_slices": [
+            {"quantity": x["quantity"], "delivery_date": x["delivery_date"],
+             "source_refs": [("inventory:" if source == case.ids()["INV"] else
+                              "inbound_supply:") + source for source in x["evidence_ids"]]}
+            for x in slices], "tradeoff_code": "partial_delivery_requires_customer_acceptance"}
+        model = OfflineModelDouble((
+            {"type": "tool", "tool": "inspect_fulfillment_paths",
+             "arguments": {"line_id": case.ids()["L"]}},
+            {"type": "contribution", "value": {"schema_version": "3",
+             "kind": "binding_proposal", "payload": proposal}}))
+        config = {"configurable": {"thread_id": "M18-RESTART-B01"}}
+        with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(self.adapter, self.connect, saver,
+                                         interrupt_after=("candidate_construct",))
+            from dealdesk_phase2.investigation_graph import run_original_then_investigate
+            run_original_then_investigate(graph, config, self.adapter, model,
+                assessment_id="M18-RESTART", run_id=case.run_id)
+            self.assertEqual(graph.get_state(config).next, ("candidate_construct",))
+            graph.invoke(None, config)
+            self.assertEqual(graph.get_state(config).next, ("candidate_verify",))
+        with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(self.adapter, self.connect, saver)
+            state = run_original_investigate_and_review(graph, config, self.adapter,
+                OfflineModelDouble(()), assessment_id="M18-RESTART", run_id=case.run_id)
+            first = capture_trial(case.case_id, state, baseline, provider="offline_double",
+                                  model="scripted", prompt_version="none")
+            repeated = run_original_investigate_and_review(graph, config, self.adapter,
+                OfflineModelDouble(()), assessment_id="M18-RESTART", run_id=case.run_id)
+            second = capture_trial(case.case_id, repeated, baseline,
+                                   provider="offline_double", model="scripted", prompt_version="none")
+            self.assertEqual(first, second)
+            self.assertEqual(state["trace"].count("candidate_fixed_checked:supply_supported_unreserved"), 1)
+            self.assertEqual(first["tool_calls"], 1)
 
 
 if __name__ == "__main__":
