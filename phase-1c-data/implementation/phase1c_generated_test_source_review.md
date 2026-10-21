@@ -36,3 +36,6 @@ The per-case artifact now lists `supplier_offers` IDs in `reader_visible_raw_sou
 Retain this batch as a **provisional engineering regression** for deterministic reader, source selection and rule-path changes. The 22 cases have intelligible source reasons; no fabricated receipt, stock or provider proof should be added simply to reduce that count. The reused cancelled receipt, service coverage without slots, 20 templates and 67/100 reused-source cases limit breadth. Review individual deal inputs and findings before release; if broader operational diversity is a target, add dated independent synthetic states deliberately and rerun the entire batch and source exclusion registry. Keep any expected reviewer findings separate from observed statuses.
 
 No historical diagnostic becomes a label, and no baseline or agent accuracy is scored here. Six field marks, two calibration evidence reviews and `ready_for_generation=false` remain open; 36 evaluation answers remain 0/36 accepted; PR #1 draft.
+
+The later [100-case source disposition](phase1c_100_case_source_disposition.md) reconciles all case IDs with the development exclusion registry and completes the source-quality review **for bounded engineering regression use**. It does not turn observed decisions into accepted labels or make the cohort an independent evaluation sample.
+
