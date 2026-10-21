@@ -118,6 +118,28 @@ class BindingContractTests(unittest.TestCase):
         self.assertEqual(state["reviewer_package"]["candidates"], [])
         self.assertEqual(state["ai_claim_audit"][-1]["original_content"]["payload"], synthetic)
 
+    def test_reviewer_labels_validated_offer_inquiry_as_nonactionable(self):
+        from test_investigation_graph import InvestigationAdapter, RUN as SYNTHETIC_RUN
+        from test_claim_validation_m16 import claim, output, _tool
+
+        adapter = InvestigationAdapter()
+        graph = build_original_graph(adapter, None, InMemorySaver())
+        config = {"configurable": {"thread_id": "M17-review-offer-inquiry"}}
+        dated = claim("candidate_idea", source_ref="supplier_offer:O1",
+                      idea_code="ask_supplier_for_later_option",
+                      delivery_slices=[{"quantity": "8", "delivery_date": "2026-09-17",
+                                        "commitment_claim": "conditional"}])
+        state = run_original_investigate_and_review(graph, config, adapter,
+            OfflineModelDouble((_tool(), output(dated, kind="proposal"))),
+            assessment_id="M17-review-offer-inquiry", run_id=SYNTHETIC_RUN)
+        review = state["reviewer_package"]
+        self.assertEqual(review["candidates"], [])
+        self.assertEqual(review["unverified_planning_ideas"][0]["status"],
+                         "downgraded_nonactionable")
+        self.assertEqual(review["audit_rejection_count"], len(state["ai_claim_audit"]))
+        self.assertNotIn("2026-09-17", str(review))
+        self.assertEqual(state["ai_claim_audit"][0]["original_claim"], dated)
+
 
 @unittest.skipUnless(REQUIRED, "Requires separately pinned Phase 1C and disposable PostgreSQL DBs")
 class PinnedBindingCandidateTests(unittest.TestCase):

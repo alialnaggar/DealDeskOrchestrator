@@ -65,6 +65,8 @@ def _package(state, record=None):
     original["fulfillment_finding"] = state.get("specialist_results", {}).get(
         "fulfillment", {}).get("payload")
     ai = state.get("ai_fulfillment_result", {})
+    contribution = ai.get("contribution") or {}
+    ai_payload = contribution.get("payload") or {}
     item = None
     if record is not None:
         routing = record.get("specialist_results", {}).get("approval_routing", {}).get("payload", {})
@@ -109,7 +111,12 @@ def _package(state, record=None):
         "candidate_workflow_status": state.get("candidate_status", "not_started"),
         "stopping_reason": state.get("stop_reason"),
         "ai_execution": ai.get("execution", "not_run"),
-        "ai_contribution": (ai.get("contribution") or {}).get("kind"),
+        "ai_contribution": contribution.get("kind"),
+        "validated_ai_summary": (ai_payload.get("review_summary", [])
+                                 if contribution.get("schema_version") == "2" else []),
+        "unverified_planning_ideas": ([claim for claim in ai_payload.get("validated_claims", [])
+                                       if claim.get("type") == "candidate_idea"]
+                                      if contribution.get("schema_version") == "2" else []),
         "audit_rejection_count": len(state.get("ai_claim_audit", [])),
         "reviewer_action": "Human review required; no approval, reservation or delivery promise"}
 
