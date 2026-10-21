@@ -334,7 +334,7 @@ def _supply_findings(bundle, as_of):
             line_fact["fulfillment_status"] = "unknown"
         else:
             line_fact["fulfillment_status"] = "conditional" if any(x["product_id"] == product for x in bundle["supplier_offers"]) else "infeasible"
-        if not options and line["fulfillment_mode"] == "supplier_finished":
+        if line["fulfillment_mode"] == "supplier_finished":
             matching_offers = [x for x in bundle["supplier_offers"] if x["product_id"] == product]
             line_fact["supplier_offer_days"] = [x["lead_days_mode"] for x in matching_offers]
             estimates = []
