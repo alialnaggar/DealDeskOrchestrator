@@ -17,3 +17,10 @@ The reader only emits a dated `supplier_offer_estimates` route when an offer car
 3. If historical offer dates are deliberately outside this release, explicitly restrict the field-mark claim to the imported development/evaluation rows and retain the absence of historical dated routes as a documented limit. Review the final generated-test and evaluation offer links before a `resolved_by` entry.
 
 No fixture, source hash, schema, threshold, calibration choice or answer was changed in this review. The field mark and the two calibration evidence reviews remain open; all six field marks open; accepted evaluation answers **0/36**; `ready_for_generation=false`; PR #1 draft.
+
+## Evaluation source join check — 21 October 2026
+
+The separate pinned **v2 evaluation input** contains 36 local synthetic supplier rows with typed calendars and ten active, locally joined supplier offers in cases 007–012, 015–016 and 019–020. Each of those offers has a nonnegative ordered min/mode/max lead triplet and a validity window containing its run cutoff. `audit_phase1c_evaluation_supplier_calendars.py` reports only these source joins; five focused tests reject a missing supplier, invalid calendar, inverted lead range or expired offer. CI preserves the source-only report without answer material.
+
+This check does not establish an accepted route or adjudicate case 020's modal-versus-maximum-lead issue. The **162 historical modal-only offers remain without dated estimates**, and the 100-case development batch reuses pilot offer states rather than providing independent supplier-calendar evidence. The field mark remains open pending a deliberate historical scope disposition and final imported-row/reader review. No evaluation input, source hash or answer changed; accepted answers remain **0/36** and `ready_for_generation=false`.
+

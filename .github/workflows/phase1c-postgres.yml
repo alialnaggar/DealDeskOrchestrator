@@ -157,6 +157,17 @@ jobs:
         run: |
           python -m unittest -v test_audit_phase1c_historical_supplier_calendars
           python audit_phase1c_historical_supplier_calendars.py > /tmp/phase1c_historical_supplier_calendar_coverage.json
+      - name: Audit evaluation supplier calendar joins without answers
+        run: |
+          python -m unittest -v test_audit_phase1c_evaluation_supplier_calendars
+          python audit_phase1c_evaluation_supplier_calendars.py > /tmp/phase1c_evaluation_supplier_calendar_coverage.json
+          python -m json.tool /tmp/phase1c_evaluation_supplier_calendar_coverage.json
+      - name: Preserve evaluation supplier calendar join audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-evaluation-supplier-calendar-coverage
+          path: /tmp/phase1c_evaluation_supplier_calendar_coverage.json
+          if-no-files-found: error
       - name: Preserve historical supplier calendar coverage
         uses: actions/upload-artifact@v4
         with:
@@ -421,4 +432,5 @@ jobs:
             /tmp/phase1c_v2_author_assisted_review.json
             /tmp/phase1c_v2_author_assisted_validation.json
           if-no-files-found: error
+
 
