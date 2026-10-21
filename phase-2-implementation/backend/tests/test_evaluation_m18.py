@@ -10,6 +10,7 @@ from dealdesk_phase2.evaluation_m18 import (adjudicate, capture_trial,
                                              pinned_baseline, structural_flags)
 from dealdesk_phase2.live_m18 import SOURCES, run_one
 from dealdesk_phase2.checkpoint import thesis_checkpointer
+from dealdesk_phase2.candidate_contract import CANDIDATE_VERSION, TRADEOFF, construct_candidate
 from dealdesk_phase2.fulfillment_agent import OfflineModelDouble
 from dealdesk_phase2.investigation_graph import run_original_investigate_and_review
 from dealdesk_phase2.orchestrator import build_original_graph
@@ -61,6 +62,7 @@ class CaptureTests(unittest.TestCase):
         self.assertEqual(captured["reviewer_semantic_error_status"], "requires_human_review")
         self.assertNotIn("answer", str(captured).lower())
         self.assertTrue(structural_flags(captured)["requires_semantic_review"])
+        self.assertIsNone(structural_flags(captured)["candidate_citations_returned"])
         self.assertEqual(captured["validated_contribution"]["kind"], "abstention")
         with self.assertRaises(EvidenceMismatch):
             capture_trial("B01", state, {**baseline, "bundle_sha256": "wrong"},
@@ -220,6 +222,39 @@ class PinnedEvaluationCases(unittest.TestCase):
                             "source_input_digest": other.context.source_input_digest},
                 "reviewer_package": {"original": {"deal_id": case.ids()["D"]}}},
                 baseline, provider="offline_double", model="scripted", prompt_version="none")
+
+    def test_exploratory_early_dates_are_assessed_by_pinned_verifier(self):
+        # Post-pilot diagnostic: normalize only the rejected decimal syntax to
+        # whole units. This is not a model success or an accepted AI candidate.
+        for case_id, early, first, later, late in (
+                ("B01", "2026-09-03", 8, 2, "2026-09-08"),
+                ("B05", "2026-09-02", 11, 7, "2026-09-11")):
+            with self.subTest(case=case_id):
+                case = next(c for c in CASES if c.case_id == case_id)
+                pinned = self.adapter.read_original(self.connect, case.run_id,
+                                                    "M18-DATE-DIAGNOSTIC-" + case_id)
+                proposal = {"version": CANDIDATE_VERSION, "line_id": case.ids()["L"],
+                    "delivery_slices": [
+                        {"quantity": str(first), "delivery_date": early,
+                         "source_refs": ["inventory:" + case.ids()["INV"]]},
+                        {"quantity": str(later), "delivery_date": late,
+                         "source_refs": ["inbound_supply:" + case.ids()["IN"]]}],
+                    "tradeoff_code": TRADEOFF, "verification": "unverified"}
+                candidate, _ = construct_candidate(self.adapter, pinned, proposal)
+                try:
+                    checked, decision = self.adapter.verify_candidate(self.connect, pinned,
+                                                                      candidate)
+                except ValueError as exc:
+                    print("M1.8 exploratory early date", case_id, "rejected", type(exc).__name__)
+                else:
+                    print("M1.8 exploratory early date", case_id,
+                          "supply_status=" + checked["candidate_trace"]["assessment"]["status"],
+                          "business_status=" + decision["status"])
+                    self.assertEqual(checked["candidate_trace"]["source_input_digest"],
+                                     pinned.context.source_input_digest)
+                reread = self.adapter.read_original(self.connect, case.run_id,
+                                                    "M18-DATE-RECHECK-" + case_id)
+                self.assertEqual(reread.context.bundle_sha256, pinned.context.bundle_sha256)
 
     def test_scripted_candidate_capture_is_not_ai_quality_evidence(self):
         case = CASES[0]
