@@ -31,7 +31,7 @@ The next step 7 integration check puts two callers on one frozen development run
 
 ## What happens next
 
-The [compatibility field review](phase1c_compatibility_field_review.md) now inventories actual V1, V2 pilot and evaluation rule families from pinned source rows. The source-only CI audit guards against a V1 dependency leak and a changed evaluation rule family. It shows that generic predicates outside `requires_product` have unit-only coverage; the compatibility mark remains open. Full CI for this increment is pending.
+The [compatibility field review](phase1c_compatibility_field_review.md) now inventories actual V1, V2 pilot and evaluation rule families from pinned source rows. The source-only CI audit guards against a V1 dependency leak and a changed evaluation rule family. Both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39541377422) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39541381815) PostgreSQL workflows passed. Generic predicates outside `requires_product` have unit-only coverage; the compatibility mark remains open.
 
 The product price/cost audit now reports synthetic anchor-span exceptions for all 120 sellable rows, requires positive costs for all 36 components and reconciles fixed-p50 costs for all 102 generated sellable rows. The [field review](phase1c_product_field_review.md) records zero current span exceptions and the remaining market/unit evidence limits. Both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39540514226) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39540518036) PostgreSQL workflows passed; the price and cost marks remain open.
 

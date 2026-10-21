@@ -22,7 +22,7 @@ A simultaneous two-caller claim test passed both full [push](https://github.com/
 
 ## Open gates
 
-A source-only compatibility audit now checks the two V1 service-region rules, the isolated V2 dependency rule and four evaluation service-region rows. Its local mutation tests pass; full CI is pending. Generic predicate families remain outside the current evaluation input coverage, so the field mark is open.
+A source-only compatibility audit now checks the two V1 service-region rules, the isolated V2 dependency rule and four evaluation service-region rows. Its local mutation tests and both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39541377422) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39541381815) PostgreSQL workflows passed. Generic predicate families remain outside the current evaluation input coverage, so the field mark is open.
 
 The product price/cost source audit checks all 120 sellable prices against fictional category anchor spans, 36 positive component costs and 102 generated fixed-p50 cost calculations. The [product field review](implementation/phase1c_product_field_review.md) records the result; both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39540514226) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39540518036) PostgreSQL workflows passed. These internal checks do not establish market comparability or close the price/cost marks.
 
