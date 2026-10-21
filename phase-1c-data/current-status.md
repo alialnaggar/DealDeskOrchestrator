@@ -14,7 +14,7 @@ This page is a short navigation point for the active [draft PR #1](https://githu
 | Candidate experiment | Typed partial-delivery proposals, reader-backed deterministic reruns and traces are development experiments. They are not six live AI specialists, customer acceptance, supply reservations or delivery promises. |
 | Runtime output proof | One rollback-only PostgreSQL test now stores six deterministic responsibility summaries and an Orchestrator envelope from the real reader/decision path; the [runtime review](implementation/phase1c_runtime_output_review.md) and [passing CI artifact](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/38711977690) pin the limits. An invented supply reference is rejected against loaded source IDs. This is not six AI specialist executions or durable retries. |
 
-A subsequent bounded runtime increment adds a committed `Failed` Orchestrator attempt for a failed deterministic replay, preserving frozen identity while rolling back partial output. The [runtime review](implementation/phase1c_runtime_output_review.md) describes the test and its limits; it awaits the full CI result on this change. Retries and AI specialist failure handling remain open.
+A subsequent bounded runtime increment adds a committed `Failed` Orchestrator attempt for a failed deterministic replay, preserving frozen identity while rolling back partial output. The [runtime review](implementation/phase1c_runtime_output_review.md) describes the test and its limits; both [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39537556497) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39537562178) PostgreSQL workflows passed. Retries and AI specialist failure handling remain open.
 
 ## Open gates
 
