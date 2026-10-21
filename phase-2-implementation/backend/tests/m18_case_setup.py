@@ -63,6 +63,9 @@ def install_disposable_cases(connection):
     and business rules later decide all outcomes; no rule is encoded here.
     """
     with connection:
+        # The pinned schema's operational triggers use unqualified table names.
+        # Scope this only to the disposable fixture-write transaction.
+        connection.execute("SET LOCAL search_path TO deal_desk, public")
         found = connection.execute("SELECT count(*) FROM deal_desk.deals WHERE deal_id LIKE 'M18-D-%'").fetchone()[0]
         if found:
             raise RuntimeError("M1.8 case database is not fresh; refusing duplicate or mixed sources")

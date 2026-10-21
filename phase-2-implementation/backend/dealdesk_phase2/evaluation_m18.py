@@ -65,7 +65,11 @@ def capture_trial(case_id: str, state: dict, baseline: dict, *, provider: str,
     contribution = ai.get("contribution") or {}
     records = list(state.get("candidate_records", {}).values())
     attempts = state.get("model_attempt_ledger", [])
-    completed = [x for x in attempts if x.get("status") == "completed"]
+    # The checkpoint ledger has a reservation and (possibly) a terminal row
+    # for the same attempt. Keep failures and interrupted reservations too.
+    latest_attempts = {}
+    for item in attempts:
+        latest_attempts[item["attempt_id"]] = item
     ledger = state.get("tool_access_ledger", [])
     return {"version": CAPTURE_VERSION, "case_id": case_id,
         "assessment_id": state["assessment_id"], "phase1c_run_id": state["phase1c_run_id"],
@@ -87,10 +91,11 @@ def capture_trial(case_id: str, state: dict, baseline: dict, *, provider: str,
         "tool_calls": sum(bool(x.get("counted")) for x in ledger),
         "tool_access": [{"tool": x.get("tool"), "status": x.get("status"),
                          "returned_refs": x.get("returned_refs", [])} for x in ledger],
-        "model_attempts": [{"provider": x.get("provider"), "model": x.get("model"),
+        "model_attempts": [{"attempt_id": x.get("attempt_id"),
+            "provider": x.get("provider"), "model": x.get("model"),
             "status": x.get("status"), "usage": x.get("usage"),
             "latency_ms": x.get("latency_ms"), "error_code": x.get("error_code")}
-            for x in completed]}
+            for x in latest_attempts.values()]}
 
 
 def structural_flags(observation: dict) -> dict:
@@ -106,11 +111,16 @@ def structural_flags(observation: dict) -> dict:
     same_schedule = (comparable is not None and baseline_slices is not None and
                      [(s["quantity"], s["delivery_date"]) for s in comparable] ==
                      [(s["quantity"], s["delivery_date"]) for s in baseline_slices])
+    cited = {ref for candidate in candidates for sl in candidate["proposed_slices"]
+             for ref in sl.get("source_refs", [])}
+    returned = {ref for item in observation["tool_access"]
+                if item["status"] == "completed" for ref in item["returned_refs"]}
     return {"fixed_supported_candidate": bool(verified),
             "baseline_discovered": baseline["discovered"],
             "same_schedule_as_baseline": same_schedule,
             "distinct_value_not_established": True,
             "raw_rejection_count": len(observation["raw_rejected_claims"]),
+            "candidate_citations_returned": cited <= returned,
             "reviewer_candidate_count": len(review.get("candidates", [])),
             "requires_semantic_review": True}
 
