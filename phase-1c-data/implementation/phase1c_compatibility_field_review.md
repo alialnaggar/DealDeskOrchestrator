@@ -26,3 +26,10 @@ No input packet, answer, field mark, policy threshold, calibration value or sour
 
 This inventory protects the existing bounded scope and makes its coverage limit explicit. It does not validate every business meaning or accept expected findings. The compatibility mark remains open for final scope disposition and reader/source review.
 
+## Generated development replay exposure — 21 October 2026
+
+The 100-case batch copies the eligible V1 service template `PILOT-DEAL-05` into cases 014, 032, 050, 068 and 086; it copies the ineligible V1 service template `CONFLICT-DEAL-12` into cases 015, 033, 051, 069, 087 and 097. The batch has 89 other cases without service facts, including the V2 dependency pair 099–100. This is template exposure, not 11 independent service labels.
+
+`test_phase1c_generated_test_batch.py` now checks the source template mapping and, on PostgreSQL replay, each selected service coverage rule ID, region and observed eligible/conditional versus ineligible/infeasible service fact. It also rejects service-fact leakage into other cases, requires no committed service slot, and confines applicable generic compatibility findings to the V2 dependency pair. The existing case-review artifact remains explicitly diagnostic with zero independently reviewed answers. These checks protect version and negative-case selection, not the business adjudication of an accepted outcome.
+
+The field mark remains **open**: bounded V1/V2 release scope and evaluation reader findings still require explicit field review. None of the six field marks or two calibration evidence reviews is dispositioned here; accepted evaluation answers remain **0/36** and `ready_for_generation=false`.
