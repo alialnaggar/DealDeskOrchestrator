@@ -6,6 +6,8 @@ from pathlib import Path
 import unittest
 from uuid import UUID
 
+from langgraph.checkpoint.memory import InMemorySaver
+
 from dealdesk_phase2.candidate_contract import validate_binding_proposal
 from dealdesk_phase2.checkpoint import thesis_checkpointer
 from dealdesk_phase2.fulfillment_agent import FulfillmentInputV1, OfflineModelDouble
@@ -91,6 +93,30 @@ class BindingContractTests(unittest.TestCase):
         for bad in (proposal(early="0"), proposal(early="8.5"), proposal(later="2026-02-30")):
             with self.assertRaises(ValueError):
                 validate_binding_proposal(bad, fake_input(), ledger())
+
+    def test_conditional_offer_failure_preserves_original_and_raw_audit(self):
+        from test_investigation_graph import InvestigationAdapter, RUN as SYNTHETIC_RUN
+
+        adapter = InvestigationAdapter()
+        saver = InMemorySaver()
+        graph = build_original_graph(adapter, None, saver)
+        config = {"configurable": {"thread_id": "M17-conditional-offer"}}
+        synthetic = {"line_id": "L1", "tradeoff_code":
+                     "partial_delivery_requires_customer_acceptance",
+                     "delivery_slices": [{"quantity": "12", "delivery_date": "2026-09-04",
+                                          "source_refs": ["inventory:S1"]},
+                                         {"quantity": "8", "delivery_date": "2026-09-17",
+                                          "source_refs": ["supplier_offer:O1"]}]}
+        model = OfflineModelDouble((
+            {"type": "tool", "tool": "inspect_fulfillment_paths", "arguments": {"line_id": "L1"}},
+            contribution(synthetic)))
+        state = run_original_investigate_and_review(graph, config, adapter, model,
+            assessment_id="M17-conditional-offer", run_id=SYNTHETIC_RUN)
+        self.assertEqual(state["ai_fulfillment_result"]["execution"], "error")
+        self.assertEqual(state["review_status"], "needs_revision")
+        self.assertEqual(state["candidate_records"], {})
+        self.assertEqual(state["reviewer_package"]["candidates"], [])
+        self.assertEqual(state["ai_claim_audit"][-1]["original_content"]["payload"], synthetic)
 
 
 @unittest.skipUnless(REQUIRED, "Requires separately pinned Phase 1C and disposable PostgreSQL DBs")

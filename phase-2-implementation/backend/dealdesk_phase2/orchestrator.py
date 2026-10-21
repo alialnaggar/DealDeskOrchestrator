@@ -127,7 +127,8 @@ def build_original_graph(adapter: Phase1CAdapter, connection_factory, checkpoint
 
     def candidate_or_end(state):
         contribution = state.get("ai_fulfillment_result", {}).get("contribution") or {}
-        return "candidate" if (state.get("investigation_status") == "completed"
+        return "candidate" if (state.get("candidate_status") in (None, "not_started")
+                               and state.get("investigation_status") == "completed"
                                and contribution.get("schema_version") == "3"
                                and contribution.get("kind") == "binding_proposal"
                                and contribution.get("verification") == "unverified") else "end"
