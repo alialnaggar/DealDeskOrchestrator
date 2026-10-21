@@ -33,6 +33,10 @@ class PriceDistributionAuditTests(unittest.TestCase):
                           for pid in row["above_proposed_p90"]],
                          ["SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-009"])
         self.assertFalse(report["price_comparability_verified"])
+        self.assertEqual(report["component_costs_checked"], 36)
+        self.assertEqual(report["generated_fixed_p50_costs_reconciled"], 102)
+        self.assertEqual(report["outside_synthetic_p10_p90_anchor_span"], [])
+        self.assertFalse(report["anchor_span_is_hard_price_limit"])
         self.assertFalse(report["ready_for_generation"])
 
     def test_a_changed_buildable_price_changes_the_measured_margin(self):
@@ -57,6 +61,26 @@ class PriceDistributionAuditTests(unittest.TestCase):
                  if r["category"] == "cloud_services_and_subscriptions"]
         self.assertGreater(len({row["unit_of_measure"] for row in cloud}), 1)
 
+    def test_component_cost_coverage_and_positive_values(self):
+        altered = deepcopy(self.costs)
+        altered["component_standard_costs_eur"].pop("COMP-COMPUTE-001")
+        with self.assertRaisesRegex(ValueError, "exactly 36"):
+            audit(self.portfolio, altered, self.config, self.contract)
+        altered = deepcopy(self.costs)
+        altered["component_standard_costs_eur"]["COMP-COMPUTE-001"] = "-1"
+        with self.assertRaisesRegex(ValueError, "must be positive"):
+            audit(self.portfolio, altered, self.config, self.contract)
+
+    def test_anchor_span_exception_is_reported_without_making_it_a_market_limit(self):
+        altered = deepcopy(self.costs)
+        altered["products"][0]["product_list_price_eur"] = 100
+        altered["products"][0]["product_standard_cost_eur"] = 70
+        report = audit(self.portfolio, altered, self.config, self.contract)
+        self.assertEqual([x["product_id"] for x in report["outside_synthetic_p10_p90_anchor_span"]],
+                         [altered["products"][0]["product_id"]])
+        self.assertFalse(report["anchor_span_is_hard_price_limit"])
+
 
 if __name__ == "__main__":
     unittest.main()
+

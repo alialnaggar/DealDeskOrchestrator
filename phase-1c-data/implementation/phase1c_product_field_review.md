@@ -17,3 +17,10 @@ The additional source-only audit reports **156 distinct rows**: 36 component, 41
 `calibration_config.yaml` still contains historical pre-generation prose and null top-level component/total targets although its operational proposal and the generated V1 fixture already use 36/156. Updating that whole-file configuration would change fingerprints used by pinned evaluation inputs. The approved decision is recorded separately while the current input hash is preserved. Before marking the catalogue evidence reviews closed, reconcile the configuration/version strategy with the final evaluation input version, then run all row validators and clean PostgreSQL replay on that version. No fixture row, hash, threshold, schema, field mark or answer was changed by this review.
 
 **Status:** 3/3 product marks remain open; all six total field marks and two calibration evidence-review marks remain open. Evaluation accepted answers 0/36; `ready_for_generation=false`; PR #1 draft.
+
+## Row-level price and cost check — 21 October 2026
+
+The price-distribution audit now compares all **120 sellable prices** with their fictional category p10–p90 anchor span. No current row lies outside that span. Those anchors are synthetic percentile inputs, **not hard price bounds or like-for-like market comparables**; the audit reports exceptions if a future row moves outside rather than silently rejecting it. Price groups still separate billing model and unit, so a `device` is not compared directly with an `instance_month` or `licence_year`.
+
+The same audit checks that **all 36 component IDs** have positive finite draft costs and independently recomputes the fixed category-p50 standard cost for **all 102 generated sellable rows**, rounded to cents. Six focused tests pass locally, including missing/negative component cost and price-span mutation cases. The 18 explicit buildable costs and their BOM rollups retain their separate checks. This establishes internal fixture consistency only; tax/date/unit sourcing and external comparable evidence remain open, so neither price nor cost mark is closed. No fixture, configuration, evaluation input or answer was changed.
+

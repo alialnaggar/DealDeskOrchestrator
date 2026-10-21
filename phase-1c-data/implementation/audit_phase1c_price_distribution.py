@@ -45,10 +45,25 @@ def audit(portfolio, costs, config, contract):
     buildable = {p["product_id"]: p for p in costs["products"]}
     if len(catalogue) != 120 or len(buildable) != 18 or not set(buildable) <= set(catalogue):
         raise ValueError("expected 120 sellable products and 18 distinct buildable costs")
+    components = {p["product_id"] for p in portfolio["products"]
+                  if p["fulfillment_mode"] == "component" and not p["is_sellable"]}
+    component_costs = costs["component_standard_costs_eur"]
+    if len(components) != 36 or set(component_costs) != components:
+        raise ValueError("component costs must cover exactly 36 catalogue components")
+    for pid, value in component_costs.items():
+        if number(value) <= 0:
+            raise ValueError(f"{pid}: component cost must be positive")
     generated = product_rows(portfolio, costs, config, contract)
     records = []
+    reconciled_generated_costs = 0
     for row in generated:
         pid, _, _, _, category, _, _, price, cost, billing, unit, _, mode, _ = row
+        p50 = number(config["commercial_supply"]["standard_cost"]
+                     ["target_list_margin_percent_by_category"][category]["p50"])
+        expected = (number(price) * (1 - p50 / 100)).quantize(CENT, rounding=ROUND_HALF_UP)
+        if number(cost) != expected:
+            raise ValueError(f"{pid}: generated cost does not reconcile to fixed category p50")
+        reconciled_generated_costs += 1
         records.append((pid, category, mode, billing, unit, number(price), number(cost), "generated"))
     for pid, draft in buildable.items():
         product = catalogue[pid]
@@ -62,12 +77,17 @@ def audit(portfolio, costs, config, contract):
 
     by_category = defaultdict(list)
     price_groups = defaultdict(list)
+    outside_anchor_span = []
     for pid, category, mode, billing, unit, price, cost, source in records:
         if price <= 0 or cost < 0 or cost > price:
             raise ValueError(f"{pid}: invalid price/cost")
         margin = (price - cost) / price * 100
         by_category[category].append((pid, margin, source))
         price_groups[(category, billing, unit)].append(price)
+        anchor = config["product_catalogue"]["categories"][category]["price_eur"]
+        if price < number(anchor["p10"]) or price > number(anchor["p90"]):
+            outside_anchor_span.append({"product_id": pid, "source": source,
+                                        "category": category, "price_eur": rounded(price)})
     targets = config["commercial_supply"]["standard_cost"]["target_list_margin_percent_by_category"]
     categories = []
     for category in sorted(by_category):
@@ -101,7 +121,11 @@ def audit(portfolio, costs, config, contract):
         "basis": "provisional_synthetic_fixture_not_market_comparables",
         "sellable_count": len(records), "generated_count": len(generated),
         "buildable_draft_count": len(buildable), "categories": categories,
-        "price_groups": groups, "price_comparability_verified": False,
+        "price_groups": groups, "component_costs_checked": len(component_costs),
+        "generated_fixed_p50_costs_reconciled": reconciled_generated_costs,
+        "outside_synthetic_p10_p90_anchor_span": outside_anchor_span,
+        "anchor_span_is_hard_price_limit": False,
+        "price_comparability_verified": False,
         "calibration_frozen": False, "ready_for_generation": False,
     }
 
@@ -112,3 +136,4 @@ if __name__ == "__main__":
     config = yaml.safe_load((HERE / "calibration_config.yaml").read_text())
     contract = yaml.safe_load((HERE / "phase1c_data_contract.yaml").read_text())
     print(json.dumps(audit(portfolio, costs, config, contract), indent=2))
+
