@@ -78,13 +78,24 @@ def audit(portfolio, costs, config, contract):
     by_category = defaultdict(list)
     price_groups = defaultdict(list)
     outside_anchor_span = []
+    mismatched_category_units = []
+    anchor_span_checked_count = 0
     for pid, category, mode, billing, unit, price, cost, source in records:
         if price <= 0 or cost < 0 or cost > price:
             raise ValueError(f"{pid}: invalid price/cost")
         margin = (price - cost) / price * 100
         by_category[category].append((pid, margin, source))
         price_groups[(category, billing, unit)].append(price)
-        anchor = config["product_catalogue"]["categories"][category]["price_eur"]
+        category_config = config["product_catalogue"]["categories"][category]
+        declared_unit = category_config["default_unit_of_measure"]
+        if unit != declared_unit:
+            mismatched_category_units.append({
+                "product_id": pid, "source": source, "category": category,
+                "product_unit": unit, "category_default_unit": declared_unit,
+            })
+            continue
+        anchor_span_checked_count += 1
+        anchor = category_config["price_eur"]
         if price < number(anchor["p10"]) or price > number(anchor["p90"]):
             outside_anchor_span.append({"product_id": pid, "source": source,
                                         "category": category, "price_eur": rounded(price)})
@@ -123,6 +134,9 @@ def audit(portfolio, costs, config, contract):
         "buildable_draft_count": len(buildable), "categories": categories,
         "price_groups": groups, "component_costs_checked": len(component_costs),
         "generated_fixed_p50_costs_reconciled": reconciled_generated_costs,
+        "category_default_unit_match_count": anchor_span_checked_count,
+        "category_default_unit_mismatches": sorted(mismatched_category_units,
+                                                     key=lambda row: row["product_id"]),
         "outside_synthetic_p10_p90_anchor_span": outside_anchor_span,
         "anchor_span_is_hard_price_limit": False,
         "price_comparability_verified": False,
@@ -136,4 +150,5 @@ if __name__ == "__main__":
     config = yaml.safe_load((HERE / "calibration_config.yaml").read_text())
     contract = yaml.safe_load((HERE / "phase1c_data_contract.yaml").read_text())
     print(json.dumps(audit(portfolio, costs, config, contract), indent=2))
+
 
