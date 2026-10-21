@@ -219,7 +219,7 @@ class PinnedBindingCandidateTests(unittest.TestCase):
             self.assertTrue(review["candidates"],
                 {"candidate_status": state.get("candidate_status"),
                  "stop_reason": state.get("stop_reason"), "trace": state.get("trace"),
-                 "candidate_records": state.get("candidate_records"),
+                 "candidate_ids": list(state.get("candidate_records", {})),
                  "ai_execution": state.get("ai_fulfillment_result", {}).get("execution")})
             self.assertEqual(review["original"]["deal_id"], DEAL)
             self.assertEqual(review["candidates"][0]["status"], "fixed_checked")

@@ -211,6 +211,7 @@ def add_candidate_nodes(builder, adapter, connection_factory):
     for current, following in zip(names, names[1:]):
         builder.add_conditional_edges(current, next_or_review,
                                       {"review": "candidate_review", "continue": following})
+    builder.add_edge("candidate_approval_routing", "candidate_review")
     return "candidate_construct", "candidate_review"
 
 
