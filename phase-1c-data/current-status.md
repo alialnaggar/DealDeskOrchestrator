@@ -14,6 +14,8 @@ This page is a short navigation point for the active [draft PR #1](https://githu
 | Candidate experiment | Typed partial-delivery proposals, reader-backed deterministic reruns and traces are development experiments. They are not six live AI specialists, customer acceptance, supply reservations or delivery promises. |
 | Runtime output proof | One rollback-only PostgreSQL test now stores six deterministic responsibility summaries and an Orchestrator envelope from the real reader/decision path; the [runtime review](implementation/phase1c_runtime_output_review.md) and [passing CI artifact](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/38711977690) pin the limits. An invented supply reference is rejected against loaded source IDs. This is not six AI specialist executions or durable retries. |
 
+A subsequent bounded runtime increment adds a committed `Failed` Orchestrator attempt for a failed deterministic replay, preserving frozen identity while rolling back partial output. The [runtime review](implementation/phase1c_runtime_output_review.md) describes the test and its limits; it awaits the full CI result on this change. Retries and AI specialist failure handling remain open.
+
 ## Open gates
 
 1. **Substantive evaluation review:** Verify all six responsibility findings, overall action and human route case by case using the [pinned handoff](evaluation/reviews/v2_review_handoff.md). Case 020 has an explicit [route/gate choice](evaluation/reviews/case_020_route_adjudication.md): a timely conditional modal schedule versus an unsupported maximum-lead test slot. Continued work is not acceptance. All 36 cases remain unaccepted.
@@ -30,3 +32,4 @@ In parallel, finish the six field reviews and evidence-based closure of the two 
 ## Completion sequence
 
 The [ordered data completion plan](implementation/phase1c_data_completion_plan.md) defines eight steps and their pass criteria, including which calibration/field/runtime work can proceed in parallel. The release flag remains false until its final audit; this page remains the short status snapshot.
+

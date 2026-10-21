@@ -10,6 +10,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from psycopg.types.json import Jsonb
+from psycopg.pq import TransactionStatus
 
 from phase1c_deal_decision import assemble_deal_decision
 from phase1c_reader import read_run
@@ -144,3 +145,53 @@ def execute_development_run(conn, run_id, contract):
         cur.execute("UPDATE deal_desk.deal_runs SET run_status = 'completed', completed_at = clock_timestamp() WHERE run_id = %s", (run_id,))
     return {"run_id": str(run_id), "decision_status": decision["status"], "rows": len(rows),
             "engine": "deterministic_development", "accepted_evaluation_answers": 0}
+
+
+def persist_development_attempt(conn, run_id, contract):
+    """Commit one development attempt, including a failed attempt after rollback.
+
+    Requires an idle connection so this operation cannot commit unrelated caller
+    work. Failure details record only the exception class, never raw source data.
+    This does not retry, resume, or perform any external side effect.
+    """
+    if conn.info.transaction_status != TransactionStatus.IDLE:
+        raise ValueError("Attempt requires an idle connection")
+    try:
+        with conn.transaction():
+            return execute_development_run(conn, run_id, contract)
+    except Exception as exc:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute("""SELECT run_id, deal_id, run_status, as_of_at,
+                    data_snapshot_ref, config_hash, applied_policy_set_code,
+                    catalog_version_used FROM deal_desk.deal_runs
+                    WHERE run_id = %s FOR UPDATE""", (run_id,))
+                run = cur.fetchone()
+                if run is None or run["run_status"] not in ("queued", "running"):
+                    raise
+                cur.execute("SELECT count(*) AS n FROM deal_desk.agent_execution_log WHERE run_id = %s", (run_id,))
+                if cur.fetchone()["n"]:
+                    raise
+                snapshot = {"run_id": str(run_id), "deal_id": run["deal_id"],
+                            "as_of_at": run["as_of_at"].isoformat(),
+                            "data_snapshot_ref": run["data_snapshot_ref"],
+                            "config_hash": run["config_hash"],
+                            "policy_set_code": run["applied_policy_set_code"],
+                            "catalog_version": run["catalog_version_used"]}
+                now = datetime.now(timezone.utc)
+                cur.execute("""INSERT INTO deal_desk.agent_execution_log
+                    (run_id, deal_id, agent_name, attempt_number, started_at,
+                     completed_at, status, error_message, input_snapshot_json,
+                     flags_json, applied_policy_set_code, catalog_version_used)
+                    VALUES (%s,%s,'Orchestrator',1,%s,%s,'Failed',%s,%s,%s,%s,%s)""",
+                    (run_id, run["deal_id"], now, now, type(exc).__name__,
+                     Jsonb(snapshot), Jsonb({"engine": "deterministic_development",
+                                             "retryable": False}),
+                     run["applied_policy_set_code"], run["catalog_version_used"]))
+                cur.execute("""UPDATE deal_desk.deal_runs
+                    SET run_status = 'failed', completed_at = clock_timestamp()
+                    WHERE run_id = %s""", (run_id,))
+        return {"run_id": str(run_id), "run_status": "failed", "rows": 1,
+                "failure_type": type(exc).__name__, "engine": "deterministic_development",
+                "accepted_evaluation_answers": 0}
+

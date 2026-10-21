@@ -9,7 +9,7 @@ import unittest
 
 import yaml
 
-from phase1c_development_runtime import execute_development_run, _known_evidence
+from phase1c_development_runtime import execute_development_run, persist_development_attempt, _known_evidence
 from phase1c_reader import read_run
 from phase1c_deal_decision import assemble_deal_decision
 from validate_phase1c_runtime_outputs import validate_execution_rows
@@ -88,6 +88,35 @@ class DevelopmentRuntimeTests(unittest.TestCase):
         self.assertEqual(self.conn.execute("SELECT count(*) FROM deal_desk.agent_execution_log WHERE run_id = %s", (TEST_RUN,)).fetchone()["count"], 0)
         self.assertEqual(self.conn.execute("SELECT run_status FROM deal_desk.deal_runs WHERE run_id = %s", (TEST_RUN,)).fetchone()["run_status"], "running")
 
+    def test_failed_attempt_survives_commit_without_partial_outputs_or_retry(self):
+        import psycopg
+        from psycopg.rows import dict_row
+        bad = {**CONTRACT, "controlled_vocabularies": {**CONTRACT["controlled_vocabularies"], "agent_names": []}}
+        self.conn.commit()  # commit the cloned disposable run; the attempt API requires idle
+        try:
+            result = persist_development_attempt(self.conn, TEST_RUN, bad)
+            self.assertEqual(result["run_status"], "failed")
+            with psycopg.connect(os.environ["DATABASE_URL"], row_factory=dict_row) as observer:
+                observer.execute("SET search_path TO deal_desk, public")
+                rows = observer.execute("""SELECT agent_name, attempt_number, status,
+                    output_json, error_message, input_snapshot_json, flags_json
+                    FROM deal_desk.agent_execution_log WHERE run_id = %s""", (TEST_RUN,)).fetchall()
+                self.assertEqual(len(rows), 1)
+                self.assertEqual((rows[0]["agent_name"], rows[0]["attempt_number"], rows[0]["status"]),
+                                 ("Orchestrator", 1, "Failed"))
+                self.assertIsNone(rows[0]["output_json"])
+                self.assertEqual(rows[0]["error_message"], "ValueError")
+                self.assertEqual(rows[0]["flags_json"]["retryable"], False)
+                self.assertEqual(validate_execution_rows([{"run_id": str(TEST_RUN), **rows[0]}], CONTRACT)["errors"], [])
+                self.assertEqual(observer.execute("SELECT run_status FROM deal_desk.deal_runs WHERE run_id = %s", (TEST_RUN,)).fetchone()["run_status"], "failed")
+            with self.assertRaisesRegex(ValueError, "queued/running"):
+                persist_development_attempt(self.conn, TEST_RUN, CONTRACT)
+        finally:
+            with self.conn.transaction():
+                self.conn.execute("DELETE FROM deal_desk.agent_execution_log WHERE run_id = %s", (TEST_RUN,))
+                self.conn.execute("DELETE FROM deal_desk.deal_runs WHERE run_id = %s", (TEST_RUN,))
+
 
 if __name__ == "__main__":
     unittest.main()
+
