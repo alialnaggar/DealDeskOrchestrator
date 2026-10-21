@@ -196,12 +196,16 @@ class PinnedBindingCandidateTests(unittest.TestCase):
             self.assertEqual(paused.values["candidate_status"], "unverified")
             context = paused.values["context"]
             spent = sum(bool(x.get("counted")) for x in paused.values["tool_access_ledger"])
+            original_results = paused.values["specialist_results"]
+            claim_audit = paused.values.get("ai_claim_audit", [])
         with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:
             graph = build_original_graph(self.adapter, self.connect, saver)
             state = run_original_investigate_and_review(graph, config, self.adapter,
                 OfflineModelDouble(()), assessment_id="M17-RESTART", run_id=RUN)
             self.assertFalse(graph.get_state(config).next)
             self.assertEqual(state["context"], context)
+            self.assertEqual(state["specialist_results"], original_results)
+            self.assertEqual(state.get("ai_claim_audit", []), claim_audit)
             self.assertEqual(state["trace"].count("candidate_constructed:unverified"), 1)
             self.assertEqual(sum(bool(x.get("counted")) for x in state["tool_access_ledger"]), spent)
             self.assertEqual(len(state["specialist_results"]), 6)
@@ -212,8 +216,18 @@ class PinnedBindingCandidateTests(unittest.TestCase):
             self.assertTrue(all(v["subject_id"] == candidate["candidate_id"] for v in
                                 candidate["specialist_results"].values()))
             review = state["reviewer_package"]
+            self.assertTrue(review["candidates"],
+                {"candidate_status": state.get("candidate_status"),
+                 "stop_reason": state.get("stop_reason"), "trace": state.get("trace"),
+                 "candidate_records": state.get("candidate_records"),
+                 "ai_execution": state.get("ai_fulfillment_result", {}).get("execution")})
             self.assertEqual(review["original"]["deal_id"], DEAL)
             self.assertEqual(review["candidates"][0]["status"], "fixed_checked")
+            self.assertEqual(review["candidates"][0]["verification_outcome"],
+                             "binding_supply_supported_unreserved")
+            self.assertEqual(review["candidates"][0]["customer_acceptance"], "pending")
+            self.assertEqual({x["reference"] for x in review["candidates"][0]["returned_source_provenance"]},
+                             {"inventory:" + STOCK, "inbound_supply:" + INBOUND})
             self.assertFalse(review["candidates"][0]["routing"]["eligible_for_ordinary_routing"])
             self.assertIsNone(review["candidates"][0]["routing"]["required_roles"])
             with psycopg.connect(os.environ["CHECKPOINT_DATABASE_URL"]) as conn:
@@ -221,6 +235,11 @@ class PinnedBindingCandidateTests(unittest.TestCase):
                     "WHERE thread_id=%s ORDER BY checkpoint_id DESC LIMIT 1", ("M17-RESTART",)).fetchone()[0]
             self.assertGreater(storage, 0)
             print(f"M1.7 completed candidate checkpoint JSONB field: {storage} bytes")
+            repeated = run_original_investigate_and_review(graph, config, self.adapter,
+                OfflineModelDouble(()), assessment_id="M17-RESTART", run_id=RUN)
+            self.assertEqual(repeated, state)
+            self.assertEqual(repeated["trace"].count("candidate_fixed_checked:supply_supported_unreserved"), 1)
+            self.assertFalse(graph.get_state(config).next)
 
     def test_unavailable_later_date_keeps_candidate_unverified(self):
         pinned = self.adapter.read_original(self.connect, RUN, "M17-LATE")

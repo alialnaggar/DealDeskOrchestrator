@@ -89,6 +89,12 @@ def _package(state, record=None):
                     sources[ref] = {"reference": ref, "fields": row["fields"],
                                     "tool_evidence_status": event["result"].get("evidence")}
         item["returned_source_provenance"] = [sources[ref] for ref in sorted(cited) if ref in sources]
+        item["verification_outcome"] = (
+            "binding_supply_supported_unreserved"
+            if record.get("status") == "fixed_checked"
+            and record.get("fixed_supply_status") == "supply_supported_unreserved"
+            else "not_confirmed_by_fixed_verifier")
+        item["customer_acceptance"] = "pending"
         item["routing"] = {"eligible_for_ordinary_routing": bool(
             record.get("fixed_supply_status") == "supply_supported_unreserved"
             and record.get("fixed_business_status") == "approval_required"
