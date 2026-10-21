@@ -100,3 +100,7 @@ graph specialist result; Phase 1C's aggregate function calculates the fixed
 domains together.
 
 **M1.4 gated smoke:** [Actual measurements](backend/benchmarks/m1.4-gated-smoke-results.md) show one Groq Fulfillment finding with three authorized tool calls and an accepted offer citation. Gemini's capability gate did not pass; its Fulfillment case and all paired repetitions remained unrun. Groq may be used provisionally for bounded development, subject to Ali's decision; no permanent provider choice is recorded.
+
+## M1.5–M1.6 measured Fulfillment boundary
+
+Groq `openai/gpt-oss-120b` is the approved **provisional development provider**; Gemini remains optional for future comparison, with no permanent reasoning-quality winner. M1.5 found critical semantic-scope failures even with valid JSON and citations. M1.6 now emits [five typed evidence-scoped claims](architecture/m1.6-claim-contract.md), validates them against fixed Phase 1C findings or actual authorized tool returns, audits every rejection and renders review text only from accepted claims. [Measured M1.6 results](evaluation/m1.6-results.md): 63 passing CI tests including PostgreSQL restart; one controlled Groq R03 trial rejected a broad absence claim while retaining one direct source observation. The fixed deal result did not change. No alternative was verified and no further specialist or M1.7 is authorized.
