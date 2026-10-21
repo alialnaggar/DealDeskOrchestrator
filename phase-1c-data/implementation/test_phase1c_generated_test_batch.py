@@ -34,6 +34,16 @@ FILES = ("phase1c_buildable_master.sql", "phase1c_sellable_catalogue.sql",
          "phase1c_stress_pilot.sql", "phase1c_dependency_pilot.sql",
          "phase1c_generated_test_batch.sql")
 
+# Pinned template exposure, not expected decisions or independently accepted answers.
+SERVICE_CASES = {
+    **{f"GEN-TEST-{n:03d}": ("PILOT-DEAL-05", "PILOT-SERVICE-COVERAGE",
+                                  "eligible", "conditional")
+       for n in (14, 32, 50, 68, 86)},
+    **{f"GEN-TEST-{n:03d}": ("CONFLICT-DEAL-12", "CONFLICT-SERVICE-OUTSIDE",
+                                  "ineligible", "infeasible")
+       for n in (15, 33, 51, 69, 87, 97)},
+}
+
 
 class GeneratedBatchRenderTests(unittest.TestCase):
     def test_source_only_reproducibility(self):
@@ -67,6 +77,13 @@ class GeneratedBatchRenderTests(unittest.TestCase):
         self.assertNotIn("target_bucket", sql)
         self.assertNotIn("historical_decision", sql)
         self.assertNotIn("expected_decision", sql)
+        copies = re.findall(
+            r"INSERT INTO deal_lines .*?SELECT .*?'(GEN-TEST-\d{3})'.*?"
+            r"FROM deal_lines WHERE deal_id='([^']+)'", sql)
+        self.assertEqual(len(copies), 100)
+        self.assertEqual({case: template for case, template in copies
+                          if template in {row[0] for row in SERVICE_CASES.values()}},
+                         {case: row[0] for case, row in SERVICE_CASES.items()})
 
 
 @unittest.skipUnless(psycopg is not None and os.environ.get("DATABASE_URL"),
@@ -164,6 +181,23 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                     self.assertEqual(bundle["run"]["catalog_version_used"], slot["catalog_version"])
                     decision = assemble_deal_decision(bundle)
                     self.assertNotEqual(decision["status"], "approved")
+                    expected_service = SERVICE_CASES.get(slot["case_id"])
+                    service_facts_for_case = [fact["service"] for fact in bundle["facts"]["lines"]
+                                              if "service" in fact]
+                    if expected_service:
+                        _, rule_id, coverage, status = expected_service
+                        self.assertEqual(len(service_facts_for_case), 1)
+                        self.assertEqual(service_facts_for_case[0]["coverage_rule_ids"], [rule_id])
+                        self.assertEqual(service_facts_for_case[0]["coverage"], coverage)
+                        self.assertEqual(service_facts_for_case[0]["status"], status)
+                        self.assertFalse(service_facts_for_case[0]["slot_committed"])
+                        self.assertEqual((bundle["deal"]["destination_country_code"],
+                                          bundle["deal"]["destination_region"]), ("DE", "DE-NW"))
+                    else:
+                        self.assertEqual(service_facts_for_case, [])
+                    self.assertEqual({f["compatibility_rule_id"] for f in
+                                      bundle["facts"]["compatibility"] if f["status"] in ("pass", "fail")},
+                                     {"V2-REQUIRES-ADDON"} if index in (99, 100) else set())
                     statuses[decision["status"]] += 1
                     customers[bundle["deal"]["customer_id"]] += 1
                     archetype = slot["archetype_id"]
@@ -401,6 +435,9 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
                 }
                 self.assertEqual(case_review["service_review_summary"]["service_line_count"], 11)
                 self.assertEqual(case_review["service_review_summary"]["slot_committed_count"], 0)
+                self.assertEqual({case["case_id"]: case["service_coverage_rule_ids"]
+                                  for case in case_observations if case["service_facts"]},
+                                 {case: [row[1]] for case, row in SERVICE_CASES.items()})
                 diagnostic = {
                     "status": "development_diagnostic_not_answer_key",
                     "deal_count": sum(statuses.values()),
@@ -498,5 +535,3 @@ class GeneratedBatchDatabaseTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
