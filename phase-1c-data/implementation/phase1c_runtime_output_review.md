@@ -14,3 +14,8 @@ Next runtime increment: define attempts and failure semantics before allowing re
 
 The PostgreSQL integration test injects an invalid output contract into the real execution path, then reads the failed row and run status through a separate connection to prove commit visibility. It checks that no specialist success row or `output_json` survives and that repeating the attempt is rejected. It cleans up its disposable run afterward. Both full workflows passed: [push 39537556497](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39537556497) and [PR 39537562178](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39537562178) on `a1ed76d`. This tests committed failure bookkeeping on CI PostgreSQL, not process-crash recovery, concurrency, production durability or AI specialist failure handling. The output field mark stays open.
 
+## Second development mode — 21 October 2026
+
+The integration suite now clones reference case 04 into a disposable run and executes the same reader, compiled decision and typed-output adapter for a `digital_activation` line. The original case 01 covers a physical line. The digital run commits its seven rows, which a separate connection checks against reader-visible evidence and the frozen run identity; cleanup then deletes the disposable rows. The CI report adds the second source run, mode and committed-row count. This is engineering coverage of two fulfillment modes, with no provider-proof substitution, AI specialist call, answer scoring or customer-facing approval. The field mark remains open pending genuine specialist output and broader failure/retry semantics.
+
+

@@ -16,6 +16,8 @@ This page is a short navigation point for the active [draft PR #1](https://githu
 
 A subsequent bounded runtime increment adds a committed `Failed` Orchestrator attempt for a failed deterministic replay, preserving frozen identity while rolling back partial output. The [runtime review](implementation/phase1c_runtime_output_review.md) describes the test and its limits; both [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39537556497) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39537562178) PostgreSQL workflows passed. Retries and AI specialist failure handling remain open.
 
+The next integration check exercises a second, digital-activation reference run and reads its committed deterministic outputs from a separate connection. Its CI result is pending. This expands development-mode coverage without accepting evaluation labels or closing the runtime field mark.
+
 ## Open gates
 
 1. **Substantive evaluation review:** Verify all six responsibility findings, overall action and human route case by case using the [pinned handoff](evaluation/reviews/v2_review_handoff.md). Case 020 has an explicit [route/gate choice](evaluation/reviews/case_020_route_adjudication.md): a timely conditional modal schedule versus an unsupported maximum-lead test slot. Continued work is not acceptance. All 36 cases remain unaccepted.
@@ -32,4 +34,5 @@ In parallel, finish the six field reviews and evidence-based closure of the two 
 ## Completion sequence
 
 The [ordered data completion plan](implementation/phase1c_data_completion_plan.md) defines eight steps and their pass criteria, including which calibration/field/runtime work can proceed in parallel. The release flag remains false until its final audit; this page remains the short status snapshot.
+
 

@@ -18,6 +18,7 @@ from validate_phase1c_runtime_outputs import validate_execution_rows
 HERE = Path(__file__).resolve().parent
 CONTRACT = yaml.safe_load((HERE / "phase1c_data_contract.yaml").read_text())
 SOURCE_RUN = UUID("00000000-0000-4000-8000-000000010001")
+DIGITAL_RUN = UUID("00000000-0000-4000-8000-000000040001")
 TEST_RUN = UUID("a85b1c01-0000-4000-8000-000000000001")
 
 
@@ -116,7 +117,50 @@ class DevelopmentRuntimeTests(unittest.TestCase):
                 self.conn.execute("DELETE FROM deal_desk.agent_execution_log WHERE run_id = %s", (TEST_RUN,))
                 self.conn.execute("DELETE FROM deal_desk.deal_runs WHERE run_id = %s", (TEST_RUN,))
 
+    def test_second_digital_mode_commits_typed_outputs(self):
+        import psycopg
+        from psycopg.rows import dict_row
+        self.conn.execute("DELETE FROM deal_desk.deal_runs WHERE run_id = %s", (TEST_RUN,))
+        self.conn.execute("""INSERT INTO deal_desk.deal_runs
+            (run_id, deal_id, original_policy_set_code, applied_policy_set_code,
+             catalog_version_used, as_of_at, data_snapshot_ref, input_snapshot_json,
+             config_hash, run_status, started_at)
+            SELECT %s, deal_id, original_policy_set_code, applied_policy_set_code,
+                   catalog_version_used, as_of_at, data_snapshot_ref, input_snapshot_json,
+                   config_hash, 'running', as_of_at + interval '1 second'
+            FROM deal_desk.deal_runs WHERE run_id = %s""", (TEST_RUN, DIGITAL_RUN))
+        bundle = read_run(self.conn, TEST_RUN, commercial_rule_mode="compiled")
+        self.assertEqual(bundle["lines"][0]["fulfillment_mode"], "digital_activation")
+        self.conn.commit()
+        try:
+            result = persist_development_attempt(self.conn, TEST_RUN, CONTRACT)
+            self.assertEqual(result["rows"], 7)
+            with psycopg.connect(os.environ["DATABASE_URL"], row_factory=dict_row) as observer:
+                observer.execute("SET search_path TO deal_desk, public")
+                stored = observer.execute("""SELECT run_id, agent_name, attempt_number,
+                    status, input_snapshot_json, output_json, model_name
+                    FROM deal_desk.agent_execution_log WHERE run_id = %s
+                    ORDER BY execution_id""", (TEST_RUN,)).fetchall()
+                self.assertEqual(len(stored), 7)
+                self.assertEqual({x["status"] for x in stored}, {"Success"})
+                self.assertEqual(validate_execution_rows(stored, CONTRACT,
+                    known_evidence=_known_evidence(bundle))["errors"], [])
+                self.assertTrue(all(x["model_name"] is None for x in stored))
+                self.assertEqual(observer.execute("SELECT run_status FROM deal_desk.deal_runs WHERE run_id = %s", (TEST_RUN,)).fetchone()["run_status"], "completed")
+            if os.environ.get("PHASE1C_RUNTIME_REPORT"):
+                path = Path(os.environ["PHASE1C_RUNTIME_REPORT"])
+                report = json.loads(path.read_text())
+                report["second_mode"] = {"source_run_id": str(DIGITAL_RUN),
+                    "fulfillment_mode": "digital_activation", "stored_rows": len(stored),
+                    "committed_and_observed": True, "model_execution_claimed": False}
+                path.write_text(json.dumps(report, indent=2) + "\n")
+        finally:
+            with self.conn.transaction():
+                self.conn.execute("DELETE FROM deal_desk.agent_execution_log WHERE run_id = %s", (TEST_RUN,))
+                self.conn.execute("DELETE FROM deal_desk.deal_runs WHERE run_id = %s", (TEST_RUN,))
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
