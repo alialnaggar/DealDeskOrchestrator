@@ -16,7 +16,7 @@ This page is a short navigation point for the active [draft PR #1](https://githu
 
 A subsequent bounded runtime increment adds a committed `Failed` Orchestrator attempt for a failed deterministic replay, preserving frozen identity while rolling back partial output. The [runtime review](implementation/phase1c_runtime_output_review.md) describes the test and its limits; both [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39537556497) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39537562178) PostgreSQL workflows passed. Retries and AI specialist failure handling remain open.
 
-The next integration check exercises a second, digital-activation reference run and reads its committed deterministic outputs from a separate connection. Its CI result is pending. This expands development-mode coverage without accepting evaluation labels or closing the runtime field mark.
+The next integration check exercises a second, digital-activation reference run and reads its committed deterministic outputs from a separate connection. Both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538543777) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538548554) PostgreSQL workflows passed. This expands development-mode coverage without accepting evaluation labels or closing the runtime field mark.
 
 ## Open gates
 

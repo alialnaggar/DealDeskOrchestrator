@@ -25,7 +25,7 @@ The [runtime output review](phase1c_runtime_output_review.md) records a complete
 
 The next bounded step 7 increment records a committed failed deterministic attempt after rolling back an invalid execution, with a separate-connection visibility test and no partial outputs or retry. Both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39537556497) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39537562178) PostgreSQL workflows passed; see the [runtime output review](phase1c_runtime_output_review.md). This does not close the runtime mark or supply accepted evaluation answers.
 
-A further step 7 test adds a committed digital-activation development run alongside the original physical reference run. It validates seven typed envelopes from actual reader/decision execution and checks commit visibility through a second connection. The [runtime review](phase1c_runtime_output_review.md) records its bounded scope; the full PostgreSQL workflow must pass before this second-mode proof is verified. Neither run is an AI specialist execution or an accepted evaluation answer.
+A further step 7 test adds a committed digital-activation development run alongside the original physical reference run. It validates seven typed envelopes from actual reader/decision execution and checks commit visibility through a second connection. Both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538543777) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39538548554) PostgreSQL workflows passed; the [runtime review](phase1c_runtime_output_review.md) records its bounded scope. Neither run is an AI specialist execution or an accepted evaluation answer.
 
 ## What happens next
 
