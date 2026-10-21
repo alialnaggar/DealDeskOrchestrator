@@ -228,6 +228,8 @@ jobs:
           python audit_phase1c_build_readiness.py > /tmp/phase1c_build_readiness.json
           python -m unittest -v test_audit_phase1c_price_distribution
           python audit_phase1c_price_distribution.py > /tmp/phase1c_price_distribution.json
+          python -m unittest -v test_audit_phase1c_price_unit_exposure
+          python audit_phase1c_price_unit_exposure.py > /tmp/phase1c_price_unit_exposure.json
           python -m unittest -v test_experiment_phase1c_margin_spread
           python experiment_phase1c_margin_spread.py > /tmp/phase1c_margin_spread_experiment.json
           python -m unittest -v test_validate_phase1c_technical_fit_pilot
@@ -249,6 +251,12 @@ jobs:
         with:
           name: phase1c-price-distribution
           path: /tmp/phase1c_price_distribution.json
+      - name: Preserve source-only price unit exposure
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-price-unit-exposure
+          path: /tmp/phase1c_price_unit_exposure.json
+          if-no-files-found: error
       - name: Compare reader results with 14 reference scenarios
         run: python -m unittest -v test_phase1c_reader
       - name: Validate and compile synthetic policy profiles
