@@ -22,6 +22,8 @@ A simultaneous two-caller claim test passed both full [push](https://github.com/
 
 ## Open gates
 
+A source-only compatibility audit now checks the two V1 service-region rules, the isolated V2 dependency rule and four evaluation service-region rows. Its local mutation tests pass; full CI is pending. Generic predicate families remain outside the current evaluation input coverage, so the field mark is open.
+
 The product price/cost source audit checks all 120 sellable prices against fictional category anchor spans, 36 positive component costs and 102 generated fixed-p50 cost calculations. The [product field review](implementation/phase1c_product_field_review.md) records the result; both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39540514226) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39540518036) PostgreSQL workflows passed. These internal checks do not establish market comparability or close the price/cost marks.
 
 1. **Substantive evaluation review:** Verify all six responsibility findings, overall action and human route case by case using the [pinned handoff](evaluation/reviews/v2_review_handoff.md). Case 020 has an explicit [route/gate choice](evaluation/reviews/case_020_route_adjudication.md): a timely conditional modal schedule versus an unsupported maximum-lead test slot. Continued work is not acceptance. All 36 cases remain unaccepted.

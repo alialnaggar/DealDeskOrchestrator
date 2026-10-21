@@ -266,6 +266,15 @@ jobs:
         with:
           name: phase1c-dependency-scope
           path: /tmp/phase1c_dependency_scope.json
+      - name: Audit compatibility rule families in development and evaluation inputs
+        run: |
+          python -m unittest -v test_audit_phase1c_compatibility_scope
+          python audit_phase1c_compatibility_scope.py > /tmp/phase1c_compatibility_scope.json
+      - name: Preserve compatibility source scope
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-compatibility-scope
+          path: /tmp/phase1c_compatibility_scope.json
       - name: Diagnose 400 historical baseline decisions
         run: |
           python -m unittest -v test_render_phase1c_historical_service_coverage
@@ -412,3 +421,4 @@ jobs:
             /tmp/phase1c_v2_author_assisted_review.json
             /tmp/phase1c_v2_author_assisted_validation.json
           if-no-files-found: error
+

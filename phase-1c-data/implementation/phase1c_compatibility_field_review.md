@@ -19,3 +19,10 @@ The condition validator now also rejects malformed dotted attribute/deal-field p
 3. Check negative/missing evidence and exact effective catalogue version in the final input replay. Region eligibility must not be called a confirmed installation slot. Record a `resolved_by` entry only for the actually supported scope.
 
 No input packet, answer, field mark, policy threshold, calibration value or source cohort was changed by this validation tightening. Six field marks and two calibration evidence reviews remain open; accepted answers **0/36**; `ready_for_generation=false`; PR #1 draft.
+
+## Pinned source-family inventory — 21 October 2026
+
+`audit_phase1c_compatibility_scope.py` checks the actual V1 pilot SQL, isolated V2 dependency SQL and 36 v2 evaluation source definitions, without loading answer drafts. It finds two V1 `installation_eligibility` development rules, one V2-only `requires_product` rule, and four V1 `installation_eligibility` evaluation rows in cases 027–030. The evaluation inputs contain no `excludes_product`, `attribute_constraint` or `required_deal_field` rule row. Three focused local tests pass, including mutations that would move the dependency into V1 or change an evaluation rule family. The audit is wired into PostgreSQL CI with a source-scope artifact; its full CI result is pending.
+
+This inventory protects the existing bounded scope and makes its coverage limit explicit. It does not validate every business meaning or accept expected findings. The compatibility mark remains open for final scope disposition and reader/source review.
+
