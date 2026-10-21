@@ -4,8 +4,10 @@ The separate review convention is proposed, never injected into source inputs.
 """
 
 from collections import Counter
+from datetime import date, datetime
 import json
 from pathlib import Path
+import re
 
 import yaml
 
@@ -16,7 +18,12 @@ from audit_phase1c_price_distribution import audit as price_audit
 HERE = Path(__file__).resolve().parent
 
 
-def audit(portfolio, costs, config, contract, review):
+HISTORICAL_DEAL = re.compile(
+    r"^INSERT INTO deals .*? VALUES \('(HIST-DEAL-\d+)', '[^']+', '[^']+', "
+    r"'[^']+', '([^']+)'", re.MULTILINE)
+
+
+def audit(portfolio, costs, config, contract, review, historical_sql):
     version = portfolio["catalog_version"]
     if (review["catalog_version"] != version or review["currency"] != config["currency"]
             or review["status"] != "proposed_synthetic_convention_for_review_not_calibration_freeze"
@@ -61,6 +68,11 @@ def audit(portfolio, costs, config, contract, review):
             "component_draft": 36, "buildable_bom_draft": 18,
             "seeded_category_draw_and_fixed_p50": 102}:
         raise ValueError("source classification coverage differs")
+    historical = HISTORICAL_DEAL.findall(historical_sql)
+    if len(historical) != 400 or len({deal for deal, _ in historical}) != 400:
+        raise ValueError("historical submission date coverage differs")
+    dates = [datetime.fromisoformat(submitted).date() for _, submitted in historical]
+    calibrated = date.fromisoformat(str(config["product_catalogue"]["metadata"]["calibrated_on"]))
     return {
         "basis": "source_only_review_ledger_not_a_released_price_contract",
         "review_status": review["status"], "catalog_version": version,
@@ -69,6 +81,11 @@ def audit(portfolio, costs, config, contract, review):
         "fx_reference_date": str(config["product_catalogue"]["metadata"]
                                  ["usd_normalization"]["reference_date"]),
         "portfolio_as_of_at": portfolio["as_of_at"],
+        "historical_submission_dates": {
+            "count": len(dates), "earliest": min(dates).isoformat(),
+            "latest": max(dates).isoformat(),
+            "before_catalogue_research_calibration_date": sum(d < calibrated for d in dates),
+        },
         "source_class_counts": dict(sorted(counts.items())),
         "sellable_unit_mismatches": len(mismatched),
         "sku_observation_dates_recorded": 0,
@@ -85,4 +102,6 @@ if __name__ == "__main__":
     config = yaml.safe_load((HERE / "calibration_config.yaml").read_text())
     contract = yaml.safe_load((HERE / "phase1c_data_contract.yaml").read_text())
     review = json.loads((HERE / "phase1c_v1_price_basis_review.json").read_text())
-    print(json.dumps(audit(portfolio, costs, config, contract, review), indent=2))
+    historical_sql = "\n".join((HERE / f"phase1c_historical_inputs_{n:02d}.sql").read_text()
+                               for n in range(1, 9))
+    print(json.dumps(audit(portfolio, costs, config, contract, review, historical_sql), indent=2))
