@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import re
+import tempfile
 import unittest
 
 from render_phase1c_evaluation_cases import build_from_files, render, OUTPUT_DIR, HERE
@@ -162,8 +163,19 @@ class EvaluationAuthoringTests(unittest.TestCase):
 class EvaluationDatabaseTests(unittest.TestCase):
     def test_reader_packets_reproduce_without_development_or_cross_case_sources(self):
         inputs, authoring = build_from_files()
-        self._export(inputs, authoring, OUTPUT_DIR, inputs["business_contract"],
-                     os.environ.get("PHASE1C_EVALUATION_PACKETS"))
+        with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
+            first_output = Path(os.environ.get("PHASE1C_EVALUATION_PACKETS") or first)
+            second_output = Path(second)
+            self._export(inputs, authoring, OUTPUT_DIR, inputs["business_contract"], first_output)
+            self._export(inputs, authoring, OUTPUT_DIR, inputs["business_contract"], second_output)
+            expected_files = {"packet_index.json"} | {
+                f"EVAL-PREP-{number:03d}{suffix}.json"
+                for number in range(1, 37) for suffix in ("", "-provider")
+            }
+            self.assertEqual({path.name for path in first_output.iterdir()}, expected_files)
+            self.assertEqual({path.name for path in second_output.iterdir()}, expected_files)
+            self.assertEqual({name: (first_output / name).read_bytes() for name in expected_files},
+                             {name: (second_output / name).read_bytes() for name in expected_files})
 
     def test_archived_v1_packets_remain_bound_to_first_review(self):
         archive = OUTPUT_DIR / "archive" / "v1"
