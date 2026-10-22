@@ -4,6 +4,10 @@
 
 The source-definition SHA-256 is `1b7e0dffb3eaae8ee7c7e4bcd82aba0d55da11321198ce8c54e1581fae6740cc`; canonical index SHA-256 is `7deac5b7a9337a49e3a64b60ca99cd1c0118bb9cfa61ea9abe73b3cacfa444dc`. The [001–012](v2_batch_001_012_review.md), [013–024](v2_batch_013_024_review.md) and [025–036](v2_batch_025_036_review.md) source-first aids checked packet/provider hashes, source arithmetic, dates and route conditions before comparing the [preserved model draft](model_review_v2_draft.json) and [separate author-assisted amendments](v2_author_amendments.json). Agreement between these related analyses is not independent corroboration. No source, provider file, index, draft, amendment or hash is changed by this reconciliation.
 
+## Corrected diagnostic view
+
+The [separate Codex correction layer](v2_codex_diagnostic_corrections.json) amends 22 draft cases (003–006, 009–018, 023–030) after the six [author-assisted amendments](v2_author_amendments.json). It removes the nonexistent cancelled receipt from 009–010, puts source repair and rerun before any later approval route in conditional/evidence/revision cases, and specifies the selected material plan in 013–014. These two layers are disjoint, bind the same original draft SHA-256, and are applied only to a reviewer-side diagnostic copy. Eight cases retain their original model draft. The CI combined-view check validates all 36 packet/provider pins and records **0 independently reviewed answers**; its artifact is diagnostic and cannot serve as an answer key.
+
 ## Provisional pattern for diagnostics only
 
 Each row covers two distinct input cases, not two independent adjudications. The gate column is a proposal to inspect during development, never an expected label for an accuracy calculation.
