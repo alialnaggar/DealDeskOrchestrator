@@ -208,7 +208,7 @@ tables:
       basis: SYN
       generation: Explicit working weekdays/holiday convention per supplier
       validation: Typed JSON object; lead-workday calculation uses this calendar, not generic date addition
-      review_before_generation: The eight-table pilot checks supplier weekdays and lead-workday arithmetic; integrate it with full generated rows and source-specific freshness/evidence.
+      resolved_by: Scoped first-release disposition on 22 October 2026 in phase1c_supplier_calendar_review.md. Imported development and v2 evaluation suppliers have typed calendars with linked-offer and reader checks (test_phase1c_generated_test_batch, audit_phase1c_evaluation_supplier_calendars, test_phase1c_evaluation_cases, test_phase1c_supplier_estimates). The 162 pinned historical offers have no calendar or complete lead bounds and are explicitly outside dated-offer coverage; audit_phase1c_historical_supplier_calendars and its negative tests require zero historical dated estimates. Regional calendar dates are fictional and uncommitted, not supplier promises. Reopen if historical dated routes enter scope or source/calendar/lead values change.
   pricing_rules:
     pricing_rule_id:
       sql_type: TEXT
