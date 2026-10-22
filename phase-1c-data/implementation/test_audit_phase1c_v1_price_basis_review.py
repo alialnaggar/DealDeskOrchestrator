@@ -44,6 +44,8 @@ class V1PriceBasisReviewTests(unittest.TestCase):
         self.assertEqual(result["historical_submission_dates"]
                          ["before_catalogue_research_calibration_date"], 400)
         self.assertEqual(result["accepted_evaluation_answers"], 0)
+        self.assertEqual(result["tax_basis_for_v1"],
+                         "approved_fictional_tax_exclusive_per_stored_unit")
         self.assertFalse(result["ready_for_generation"])
 
     def test_currency_or_status_cannot_silently_be_promoted(self):
@@ -53,6 +55,10 @@ class V1PriceBasisReviewTests(unittest.TestCase):
             self.run_audit(review=review)
         review = deepcopy(self.review)
         review["status"] = "approved"
+        with self.assertRaisesRegex(ValueError, "provisional status"):
+            self.run_audit(review=review)
+        review = deepcopy(self.review)
+        review["quote_arithmetic_basis"] = "market comparable"
         with self.assertRaisesRegex(ValueError, "provisional status"):
             self.run_audit(review=review)
 
