@@ -1,10 +1,10 @@
-name: Phase 2 M1.8 one opt-in Groq candidate trial
+name: Phase 2 one opt-in Groq candidate trial (M1.8/M1.9)
 
 on:
   # This Phase 2 workflow is not on the default branch. A reviewed push to
-  # this dedicated branch runs exactly one selected trial, never routine CI.
+  # a dedicated branch runs exactly one selected trial, never routine CI.
   push:
-    branches: [phase2-m18-live-run]
+    branches: [phase2-m18-live-run, phase2-m19-live-run]
 
 permissions:
   contents: read
