@@ -453,7 +453,7 @@ tables:
       basis: SYN+CAT
       generation: Versioned typed configuration/region predicate
       validation: JSON object; executable grammar and missing-key result defined before generation
-      review_before_generation: Predicate shape and installation regions are defined in phase1c_data_contract.yaml; complete dependency coverage and row execution.
+      resolved_by: Scoped first-release disposition on 22 October 2026 in phase1c_compatibility_field_review.md. V1 development and v2 evaluation rows contain regional installation eligibility only, with exact source semantics and selected reader behavior guarded by audit_phase1c_compatibility_scope, test_phase1c_generated_test_batch and test_phase1c_evaluation_cases. The V2 requires_product pair is isolated development coverage; other generic families are validator/unit coverage only and excluded from generated first-release claims. Eligibility is not an appointment or a delivery promise. Reopen for expanded rule-family or V1 dependency scope or changed source facts.
     severity:
       sql_type: TEXT
       nullable: false
