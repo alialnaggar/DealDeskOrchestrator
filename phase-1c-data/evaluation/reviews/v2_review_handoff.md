@@ -61,3 +61,22 @@ The [source-first 013–024 review aid](v2_batch_013_024_review.md) checks build
 ## Third 12-case review aid — 22 October 2026
 
 The [source-first 025–036 review aid](v2_batch_025_036_review.md) checks full digital term evidence, exact scheduled-service region and missing booking, credit/margin hard blocks, and Legal routing before comparing original and author-assisted drafts. Together with the [001–012](v2_batch_001_012_review.md) and [013–024](v2_batch_013_024_review.md) aids, all 36 cases now have a Codex model-assisted source-first handoff. They are **not accepted answer keys**: accountable six-responsibility case dispositions remain 0/36, and `ready_for_generation=false`.
+
+## Human disposition intake — 22 October 2026
+
+The [reviewer-only intake checker](../../implementation/phase1c_evaluation_acceptance.py) now makes step 6's acceptance boundary executable without creating answer labels. CI validates its empty form: **36 pending, zero recorded acceptances**. Its focused tests reject changed input/case/source-review hashes, model or model-assisted source drafts, invented review claims, missing packet/provider files, incomplete adjudicator provenance, and attempts to promote `ready_for_generation` or agent visibility. A valid structural record still reports `independence_or_correctness_certified=false`: a program cannot verify a person's identity, independence or substantive reasoning.
+
+An accountable reviewer starts with the source packets and [blank workspace](../provisional_review_template.json), records all six findings and a source-first human review, and only afterwards compares model/author-assisted material. Keep completed files in a reviewer-only location **outside agent-visible inputs**. From `implementation/`, after that source review is complete:
+
+```sh
+python phase1c_evaluation_review.py --review-file /private/reviewer-work.json --packet-directory /private/pinned-packets
+python phase1c_evaluation_acceptance.py --bind-review /private/dispositions.json --review-file /private/reviewer-work.json --packet-directory /private/pinned-packets
+```
+
+The binding command records exact source-review file and completed-case hashes as `reviewed_pending_disposition`; it accepts **nothing**. The human adjudicator then changes a reviewed case to `accepted` or `rejected`, supplies `adjudicator` (`identity`, `method=human`, timezone-aware `decided_at`, `source_first_attestation`), case `reason`, and `draft_comparison_and_assistance`, then checks it:
+
+```sh
+python phase1c_evaluation_acceptance.py --intake /private/dispositions.json --review-file /private/reviewer-work.json --packet-directory /private/pinned-packets
+```
+
+The report counts **recorded attestations only**. It never certifies business correctness or independent expertise and cannot turn existing model/author drafts into human source-first reviews. A source or reviewer file change invalidates its hash binding. Do not score an agent or alter the release flag based on structural counts. The current reviewer workspace is blank; **0/36 accepted**, `ready_for_generation=false`, PR #1 draft.
