@@ -57,7 +57,7 @@ def audit(raw, index, contract):
         "offers_with_typed_calendar": typed,
         "offers_with_complete_min_mode_max": complete_leads,
         "offers_supporting_dated_estimate_fields": dated,
-        "calendar_review_open": dated != len(offers),
+        "historical_dated_offer_gap": dated != len(offers),
         "ready_for_generation": False,
     }
 
