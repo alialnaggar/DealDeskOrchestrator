@@ -1,0 +1,896 @@
+{
+  "schema_version": 1,
+  "status": "author_assisted_amendments_not_accepted_answers",
+  "source_review_sha256": "9cdffe708cf4fab3ddc022132e60a4aaf2c1f036cc832c01691673203657bc72",
+  "input_index_sha256": "7deac5b7a9337a49e3a64b60ca99cd1c0118bb9cfa61ea9abe73b3cacfa444dc",
+  "reviewer": {
+    "identity": "Codex model-assisted source reconciliation, 22 October 2026",
+    "method": "model_assisted",
+    "reviewed_at": "2026-10-22T15:02:24.763Z",
+    "independence_statement": "Source-first diagnostic comparison with preserved model draft and prior author-assisted amendments. This is Codex model-assisted correction, not blind, independently expert-validated or an accepted answer. Unchanged cases retain their prior provenance."
+  },
+  "cases": [
+    {
+      "case_id": "EVAL-PREP-003",
+      "packet_sha256": "9072b3083ed5d48ef5da028d57803e57f98cc3d4b8deeaf5233f1c1a2425a4dc",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after a customer-accepted revision or a newly supported supply route and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 3918.80 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 3.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_revision",
+        "human_actions": [
+          "Sales and supply owner must propose a supported quantity/date or obtain a new evidenced supply route; obtain customer acceptance if the submission changes.",
+          "After a customer-accepted revision or a newly supported supply route, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-003: needs_revision follows declared precedence among needs_revision, approval_required. At WH-EU-CENTRAL, free stock = 5.000−5.000 = 0.000; demand is 2. Snapshot 2026-09-01 10:38:00+00:00 is 1.416667 hours old at the run. Current net supply is insufficient; no inbound supply or supplier offer exists in this complete snapshot. Partial delivery is not permitted. The 2026-09-10 request needs a changed quantity/date or a newly evidenced supply proposal; no replenishment date can be derived. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Which changed proposal or newly evidenced supply source can the customer accept?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-004",
+      "packet_sha256": "9022895e0db8deff0a619db263983329f48bd0f726e8071c01930d83ffaebe95",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after a customer-accepted revision or a newly supported supply route and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 7595.20 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 6.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_revision",
+        "human_actions": [
+          "Sales and supply owner must propose a supported quantity/date or obtain a new evidenced supply route; obtain customer acceptance if the submission changes.",
+          "After a customer-accepted revision or a newly supported supply route, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-004: needs_revision follows declared precedence among needs_revision, approval_required. At WH-EU-CENTRAL, free stock = 8.000−8.000 = 0.000; demand is 4. Snapshot 2026-09-01 10:29:00+00:00 is 1.583333 hours old at the run. Current net supply is insufficient; no inbound supply or supplier offer exists in this complete snapshot. Partial delivery permission does not create any stock. The 2026-09-11 request needs a changed quantity/date or a newly evidenced supply proposal; no replenishment date can be derived. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Which changed proposal or newly evidenced supply source can the customer accept?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-005",
+      "packet_sha256": "7137474bf7e6187188d59fee9520c9b161ea5f9bc61cfdd353622e23e6f2f8e9",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after fresh source evidence and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 3918.80 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 3.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_evidence",
+        "human_actions": [
+          "Inventory owner must refresh SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-001 at WH-EU-CENTRAL and recheck net stock plus dispatch.",
+          "After fresh source evidence, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-005: needs_evidence follows declared precedence among needs_evidence, approval_required. At WH-EU-CENTRAL, free stock = 5.000−0.000 = 5.000; demand is 2. Snapshot 2026-08-30 11:05:00+00:00 is 49.000000 hours old at the run. The observation exceeds the 24-hour bound and cannot establish current stock even though its historical net quantity is adequate. Refresh the product/location inventory; do not infer a permanent shortage or promise a date. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "What is the refreshed product/location free quantity at the evaluation as-of time?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-006",
+      "packet_sha256": "2c75667976cbb6317ffd20169c6db67dad9c41b2c0c087e8fe3385324c3d4c39",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after fresh source evidence and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 7595.20 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 6.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_evidence",
+        "human_actions": [
+          "Inventory owner must refresh SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-001 at WH-EU-CENTRAL and recheck net stock plus dispatch.",
+          "After fresh source evidence, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-006: needs_evidence follows declared precedence among needs_evidence, approval_required. At WH-EU-CENTRAL, free stock = 8.000−1.000 = 7.000; demand is 4. Snapshot 2026-08-29 23:06:00+00:00 is 61.000000 hours old at the run. The observation exceeds the 24-hour bound and cannot establish current stock even though its historical net quantity is adequate. Refresh the product/location inventory; do not infer a permanent shortage or promise a date. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "What is the refreshed product/location free quantity at the evaluation as-of time?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-009",
+      "packet_sha256": "bed348a585b9cbcaaca8e2a2082b6289bc1125b998672b441a4fda4cb43fb8f9",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after a binding supplier/PO receipt and a confirmed dispatch plan and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 5645.40 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 3.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Procurement must obtain a binding supplier/PO confirmation for 2 units and confirm receipt and dispatch timing against the requested date. This packet contains no inbound receipt; the active offer is uncommitted.",
+          "After a binding supplier/PO receipt and a confirmed dispatch plan, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-009: needs_commitment follows declared precedence among needs_commitment, approval_required. No confirmed inbound record is supplied. Active offer EVAL36-009-OFFER matches the product and EUR catalogue unit cost 2386.20, valid 2026-08-20 through 2026-09-30. Order 2 meets minimum 1.000 and multiple 1.000. On the declared Monday-Friday calendar with no holidays, a Sep 1 order has conditional receipt range 2026-09-02–2026-09-08 (mode 2026-09-04); latest receipt plus 1 transit workdays reaches 2026-09-09, within requested 2026-09-10. This is feasible uncommitted procurement, requiring supplier confirmation and PO commitment; neither missing nor cancelled inbound makes the active offer impossible. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Will the supplier commit the offered quantity and dates, and can dispatch be confirmed?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-010",
+      "packet_sha256": "b02e36696b1192229fa3f3f8a03b24571310c29f199642efa53f3574679612b8",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after a binding supplier/PO receipt and a confirmed dispatch plan and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 10941.60 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 6.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Procurement must obtain a binding supplier/PO confirmation for 4 units and confirm receipt and dispatch timing against the requested date. This packet contains no inbound receipt; the active offer is uncommitted.",
+          "After a binding supplier/PO receipt and a confirmed dispatch plan, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-010: needs_commitment follows declared precedence among needs_commitment, approval_required. No confirmed inbound record is supplied. Active offer EVAL36-010-OFFER matches the product and EUR catalogue unit cost 2386.20, valid 2026-08-20 through 2026-09-30. Order 4 meets minimum 1.000 and multiple 1.000. On the declared Monday-Friday calendar with no holidays, a Sep 1 order has conditional receipt range 2026-09-03–2026-09-09 (mode 2026-09-07); latest receipt plus 2 transit workdays reaches 2026-09-11, within requested 2026-09-11. This is feasible uncommitted procurement, requiring supplier confirmation and PO commitment; neither missing nor cancelled inbound makes the active offer impossible. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Will the supplier commit the offered quantity and dates, and can dispatch be confirmed?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-011",
+      "packet_sha256": "0f4e90857be2efdda23742539c542b55a85dfe4f3fe7601a6b473dd7be354d13",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after a binding supplier/PO receipt and a confirmed dispatch plan and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 5645.40 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 3.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Procurement must obtain a new binding supplier/PO confirmation for 2 units, arrival and warehouse dispatch; do not reuse a cancelled receipt.",
+          "After a binding supplier/PO receipt and a confirmed dispatch plan, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-011: needs_commitment follows declared precedence among needs_commitment, approval_required. Receipt EVAL36-011-RECEIPT and PO EVAL36-011-PO are both Cancelled; their 4.000 units cannot count as binding supply. Active offer EVAL36-011-OFFER matches the product and EUR catalogue unit cost 2386.20, valid 2026-08-20 through 2026-09-30. Order 2 meets minimum 1.000 and multiple 1.000. On the declared Monday-Friday calendar with no holidays, a Sep 1 order has conditional receipt range 2026-09-02–2026-09-08 (mode 2026-09-04); latest receipt plus 1 transit workdays reaches 2026-09-09, within requested 2026-09-10. This is feasible uncommitted procurement, requiring supplier confirmation and PO commitment; neither missing nor cancelled inbound makes the active offer impossible. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Will the supplier commit the offered quantity and dates, and can dispatch be confirmed?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-012",
+      "packet_sha256": "1769145a278a4356b8d887b26b729d9a9375aab260c92f9775c89183b5b7b562",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after a binding supplier/PO receipt and a confirmed dispatch plan and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 10941.60 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 6.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Procurement must obtain a new binding supplier/PO confirmation for 4 units, arrival and warehouse dispatch; do not reuse a cancelled receipt.",
+          "After a binding supplier/PO receipt and a confirmed dispatch plan, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-012: needs_commitment follows declared precedence among needs_commitment, approval_required. Receipt EVAL36-012-RECEIPT and PO EVAL36-012-PO are both Cancelled; their 7.000 units cannot count as binding supply. Active offer EVAL36-012-OFFER matches the product and EUR catalogue unit cost 2386.20, valid 2026-08-20 through 2026-09-30. Order 4 meets minimum 1.000 and multiple 1.000. On the declared Monday-Friday calendar with no holidays, a Sep 1 order has conditional receipt range 2026-09-03–2026-09-09 (mode 2026-09-07); latest receipt plus 2 transit workdays reaches 2026-09-11, within requested 2026-09-11. This is feasible uncommitted procurement, requiring supplier confirmation and PO commitment; neither missing nor cancelled inbound makes the active offer impossible. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Will the supplier commit the offered quantity and dates, and can dispatch be confirmed?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-013",
+      "packet_sha256": "24762884769d0c1a0d3e7c9be832d81629bc2279b2c45e58c1c54ba4ed958e76",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after committed sequenced workshop slots and a confirmed dispatch plan and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 2037.00 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 3.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Workshop must commit 1.5 hours each for sequenced assembly/test after component availability and warehouse must confirm dispatch; confirm the selected BOM and material plan.",
+          "After committed sequenced workshop slots and a confirmed dispatch plan, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-013: needs_commitment follows declared precedence among needs_commitment, approval_required. BOM demand for 2 outputs is 2 compute, 4.04 storage (2 per output ×1.01 scrap), 2 chassis and 2 from one NETWORK_OPTION substitute. Each operation needs 2×0.500 + ceil(2/4)×0.500 = 1.5 hours: assembly sequence 1, test sequence 2. Current net compute/chassis/primary network is 7.000 each and storage 9.000, all covering demand. Priority-0 network suffices; do not double-count the alternate. Capacity observations are 1.416667 hours old and show 7.000 unallocated hours per weekday operation, adequate for 1.5; weekend slots are zero. A conservative separate-day schedule of assembly 2026-09-02 then test 2026-09-03, with 1 transit workdays, yields indicative 2026-09-04 before requested 2026-09-10. The daily snapshot establishes feasible capacity, not a booked production commitment or exact intraday completion. Human workshop and warehouse confirmation is required. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Which assembly/test slots and dispatch cutoff will the workshop and warehouse actually commit?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-014",
+      "packet_sha256": "cfbb2be9d60cafb45e44c6e877d0cb012a7bf0445a6e97d7ae6a084402c5a9f9",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after committed sequenced workshop slots and a confirmed dispatch plan and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 3948.00 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 6.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Workshop must commit 2.5 hours each for sequenced assembly/test after component availability and warehouse must confirm dispatch; confirm the selected BOM and material plan.",
+          "After committed sequenced workshop slots and a confirmed dispatch plan, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-014: needs_commitment follows declared precedence among needs_commitment, approval_required. BOM demand for 4 outputs is 4 compute, 8.08 storage (2 per output ×1.01 scrap), 4 chassis and 4 from one NETWORK_OPTION substitute. Each operation needs 4×0.500 + ceil(4/4)×0.500 = 2.5 hours: assembly sequence 1, test sequence 2. Current net compute/chassis/primary network is 11.000 each and storage 15.000, all covering demand. Priority-0 network suffices; do not double-count the alternate. Capacity observations are 1.583333 hours old and show 8.000 unallocated hours per weekday operation, adequate for 2.5; weekend slots are zero. A conservative separate-day schedule of assembly 2026-09-02 then test 2026-09-03, with 2 transit workdays, yields indicative 2026-09-07 before requested 2026-09-11. The daily snapshot establishes feasible capacity, not a booked production commitment or exact intraday completion. Human workshop and warehouse confirmation is required. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Which assembly/test slots and dispatch cutoff will the workshop and warehouse actually commit?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-015",
+      "packet_sha256": "b6b40a791af78f504f9143b689e14c83d7935efc51c12bb46318e989ac685433",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after committed sequenced workshop slots and a confirmed dispatch plan and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 2037.00 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 3.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Workshop must commit 1.5 hours each for sequenced assembly/test after component availability and warehouse must confirm dispatch; confirm alternate network selection where used.",
+          "After committed sequenced workshop slots and a confirmed dispatch plan, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-015: needs_commitment follows declared precedence among needs_commitment, approval_required. BOM demand for 2 outputs is 2 compute, 4.04 storage (2 per output ×1.01 scrap), 2 chassis and 2 from one NETWORK_OPTION substitute. Each operation needs 2×0.500 + ceil(2/4)×0.500 = 1.5 hours: assembly sequence 1, test sequence 2. Primary network stock is fully allocated (free zero), and alternate on-hand is zero. Confirmed matching alternate COMP-NETWORK_AND_POWER-002 receipt EVAL36-015-RECEIPT has 5.000 unallocated units on 2026-09-03, adequate for 2; the same-group priority-1 substitute is explicitly supplied in BOM. This supports a legitimate alternate path, without additive counting or requiring unavailable primary stock. Capacity observations are 1.416667 hours old and show 7.000 unallocated hours per weekday operation, adequate for 1.5; weekend slots are zero. A conservative separate-day schedule of assembly 2026-09-03 then test 2026-09-04, with 1 transit workdays, yields indicative 2026-09-07 before requested 2026-09-10. The daily snapshot establishes feasible capacity, not a booked production commitment or exact intraday completion. Human workshop and warehouse confirmation is required. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Which assembly/test slots and dispatch cutoff will the workshop and warehouse actually commit?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-016",
+      "packet_sha256": "8f1fe69b6d6d4f5e2f2757422678304422f3b3c34d4f9e6f60b3ba304877bfea",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after committed sequenced workshop slots and a confirmed dispatch plan and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 3948.00 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 6.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Workshop must commit 2.5 hours each for sequenced assembly/test after component availability and warehouse must confirm dispatch; confirm alternate network selection where used.",
+          "After committed sequenced workshop slots and a confirmed dispatch plan, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-016: needs_commitment follows declared precedence among needs_commitment, approval_required. BOM demand for 4 outputs is 4 compute, 8.08 storage (2 per output ×1.01 scrap), 4 chassis and 4 from one NETWORK_OPTION substitute. Each operation needs 4×0.500 + ceil(4/4)×0.500 = 2.5 hours: assembly sequence 1, test sequence 2. Primary network stock is fully allocated (free zero), and alternate on-hand is zero. Confirmed matching alternate COMP-NETWORK_AND_POWER-002 receipt EVAL36-016-RECEIPT has 7.000 unallocated units on 2026-09-04, adequate for 4; the same-group priority-1 substitute is explicitly supplied in BOM. This supports a legitimate alternate path, without additive counting or requiring unavailable primary stock. Capacity observations are 1.583333 hours old and show 8.000 unallocated hours per weekday operation, adequate for 2.5; weekend slots are zero. A conservative separate-day schedule of assembly 2026-09-04 then test 2026-09-07, with 2 transit workdays, yields indicative 2026-09-09 before requested 2026-09-11. The daily snapshot establishes feasible capacity, not a booked production commitment or exact intraday completion. Human workshop and warehouse confirmation is required. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Which assembly/test slots and dispatch cutoff will the workshop and warehouse actually commit?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-017",
+      "packet_sha256": "c497769337268bf292bbc2fae6d897c22ca88cebf292ad514c27d76937165504",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after fresh source evidence and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 2037.00 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 3.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_evidence",
+        "human_actions": [
+          "Workshop must refresh all required dated assembly/test capacity and then verify operation sequence and lane timing.",
+          "After fresh source evidence, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-017: needs_evidence follows declared precedence among needs_evidence, approval_required. BOM demand for 2 outputs is 2 compute, 4.04 storage (2 per output ×1.01 scrap), 2 chassis and 2 from one NETWORK_OPTION substitute. Each operation needs 2×0.500 + ceil(2/4)×0.500 = 1.5 hours: assembly sequence 1, test sequence 2. Net components cover demand: compute/chassis/network 7.000, storage 9.000. Nominal weekday capacity 7.000 hours per operation is enough numerically, but every capacity observation is 51.000000 hours old (2026-08-30 09:17:00+00:00) and fails the inclusive 24-hour bound. Historical slots cannot establish current production availability, regardless of fresh component stock. Refresh assembly and test observations before evaluating any promised date. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "What current assembly and test capacity remains for the requested date?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-018",
+      "packet_sha256": "68af2a45af0deb79e4f22f771ef0c33ac34c408b40fd1ff85cd21d5f03d84e32",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after fresh source evidence and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 3948.00 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 6.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_evidence",
+        "human_actions": [
+          "Workshop must refresh all required dated assembly/test capacity and then verify operation sequence and lane timing.",
+          "After fresh source evidence, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-018: needs_evidence follows declared precedence among needs_evidence, approval_required. BOM demand for 4 outputs is 4 compute, 8.08 storage (2 per output ×1.01 scrap), 4 chassis and 4 from one NETWORK_OPTION substitute. Each operation needs 4×0.500 + ceil(4/4)×0.500 = 2.5 hours: assembly sequence 1, test sequence 2. Net components cover demand: compute/chassis/network 11.000, storage 15.000. Nominal weekday capacity 8.000 hours per operation is enough numerically, but every capacity observation is 52.000000 hours old (2026-08-30 08:18:00+00:00) and fails the inclusive 24-hour bound. Historical slots cannot establish current production availability, regardless of fresh component stock. Refresh assembly and test observations before evaluating any promised date. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "What current assembly and test capacity remains for the requested date?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-023",
+      "packet_sha256": "c5cfd05dae6ede4235d26832147c6b7dd567c1d859042375a560c18c8a6fc6cd",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after matching full-term provider evidence or a changed customer term and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 16528.80 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 3.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_evidence",
+        "human_actions": [
+          "Provider evidence owner must supply matching current simulated proof for identity, net units, binding dates, validity and entire anniversary term.",
+          "After matching full-term provider evidence or a changed customer term, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-023: needs_evidence follows declared precedence among needs_evidence, approval_required. Pool EVAL36-023-POOL matches product, business edition, DE region, instance units and 12m term. Net pool capacity = 7.000−1.000 = 6.000, covering 2 concurrent instances. Snapshot is 1.416667 hours old; 1-day lead from Sep 1 precedes activation 2026-09-03. Pool claims binding confirmation at 2026-09-01 08:58:00+00:00 and validity through 2027-09-10 00:00:00+00:00. Separate provider records are empty; local evidence_ref EVAL36-023-PROVIDER-PROOF alone does not establish declared provider proof or full 2026-09-03–2027-09-03 coverage. Request matching proof; do not call the binding flag real-world verification or infer impossible capacity. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Where is the separate provider record establishing the whole requested term?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-024",
+      "packet_sha256": "49ef1ed5fe79aa1309fd40fd27b5d0af52107663f757e05438d1feeb7bef90c5",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after matching full-term provider evidence or a changed customer term and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 32035.20 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 6.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_evidence",
+        "human_actions": [
+          "Provider evidence owner must supply matching current simulated proof for identity, net units, binding dates, validity and entire anniversary term.",
+          "After matching full-term provider evidence or a changed customer term, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-024: needs_evidence follows declared precedence among needs_evidence, approval_required. Pool EVAL36-024-POOL matches product, business edition, DE region, instance units and 12m term. Net pool capacity = 9.000−1.000 = 8.000, covering 4 concurrent instances. Snapshot is 1.583333 hours old; 2-day lead from Sep 1 precedes activation 2026-09-04. Pool claims binding confirmation at 2026-09-01 08:49:00+00:00 and validity through 2027-09-10 00:00:00+00:00. Separate provider records are empty; local evidence_ref EVAL36-024-PROVIDER-PROOF alone does not establish declared provider proof or full 2026-09-04–2027-09-04 coverage. Request matching proof; do not call the binding flag real-world verification or infer impossible capacity. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Where is the separate provider record establishing the whole requested term?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-025",
+      "packet_sha256": "ac14c1af1b88d315144641bf63b96a2710bdecf7722d5c3ca6527148f0f916b0",
+      "provider_file_sha256": "26dd6a192219baf145e37b4400fbb9caa2fa1b45050694110ab53bdebe439b09",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after matching full-term provider evidence or a changed customer term and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 16528.80 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 3.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_evidence",
+        "human_actions": [
+          "Provider evidence owner must obtain full-term coverage through 2027-09-03, or Sales must submit an explicitly changed term; current proof is insufficient.",
+          "After matching full-term provider evidence or a changed customer term, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-025: needs_evidence follows declared precedence among needs_evidence, approval_required. Pool EVAL36-025-POOL matches product, business edition, DE region, instance units and 12m term. Net pool capacity = 7.000−1.000 = 6.000, covering 2 concurrent instances. Snapshot is 1.416667 hours old; 1-day lead from Sep 1 precedes activation 2026-09-03. Pool claims binding confirmation at 2026-09-01 09:00:00+00:00 and validity through 2027-09-10 00:00:00+00:00. Controlled record source_class synthetic_provider_manifest matches identities/signature=True, quantities=True, binding/validity dates=True; verified_at 2026-09-01T11:00:00+00:00 is 1.416667 hours old (≤168 hours), not future, and issued_at precedes run. Declared coverage 2026-09-03–2026-12-31 must include 2026-09-03–2027-09-03. Coverage stops before the anniversary; a later valid_until is not a substitute for covers_until. Obtain a full-term proof/commitment or submit a changed term proposal. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Can the provider establish binding coverage through 2027-09-03 rather than only 2026-12-31?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-026",
+      "packet_sha256": "3c7a7004edc958b61868b59fe9f55d3b96538145d7a302690fba425f80b14b55",
+      "provider_file_sha256": "1efe0169c024fe6a3c6dcca833b31af595415e0d07aa7d27c294950a30544a3e",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after matching full-term provider evidence or a changed customer term and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 32035.20 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 6.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_evidence",
+        "human_actions": [
+          "Provider evidence owner must obtain full-term coverage through 2027-09-04, or Sales must submit an explicitly changed term; current proof is insufficient.",
+          "After matching full-term provider evidence or a changed customer term, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-026: needs_evidence follows declared precedence among needs_evidence, approval_required. Pool EVAL36-026-POOL matches product, business edition, DE region, instance units and 12m term. Net pool capacity = 9.000−1.000 = 8.000, covering 4 concurrent instances. Snapshot is 1.583333 hours old; 2-day lead from Sep 1 precedes activation 2026-09-04. Pool claims binding confirmation at 2026-09-01 08:51:00+00:00 and validity through 2027-09-10 00:00:00+00:00. Controlled record source_class synthetic_provider_manifest matches identities/signature=True, quantities=True, binding/validity dates=True; verified_at 2026-09-01T10:51:00+00:00 is 1.583333 hours old (≤168 hours), not future, and issued_at precedes run. Declared coverage 2026-09-04–2026-12-31 must include 2026-09-04–2027-09-04. Coverage stops before the anniversary; a later valid_until is not a substitute for covers_until. Obtain a full-term proof/commitment or submit a changed term proposal. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Can the provider establish binding coverage through 2027-09-04 rather than only 2026-12-31?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-027",
+      "packet_sha256": "c894adb22258cccd0cb207265b07d79afaa52f555721c5973fb39f0090c44eb2",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after a staffed, booked service appointment and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 42408.40 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 3.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Service scheduling owner must confirm staffing and book 2 packages in DE-NW for the customer-accepted date.",
+          "After a staffed, booked service appointment, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-027: needs_commitment follows declared precedence among needs_commitment, approval_required. Declared active installation_eligibility rule EVAL36-027-SERVICE-COVERAGE matches SELL-PROFESSIONAL_AND_IMPLEMENTATION_SERVICES-001, destination DE/DE-NW and eligible=true. The contract applies this to scheduled-service coverage even though installation_requested=false. Coverage supports 2 service packages, but no booked service slot or staffing commitment is supplied for 2026-09-10; eligibility is not a booking. Obtain an actual service commitment. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "What actual service slot and staffing commitment can cover the requested packages and date?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-028",
+      "packet_sha256": "b66bd7a6ad845e3595aa8cf9af1dd00931c671e70f29f50f3e9a33ddb1e5aaa3",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after a staffed, booked service appointment and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 82193.60 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 6.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Service scheduling owner must confirm staffing and book 4 packages in DE-NW for the customer-accepted date.",
+          "After a staffed, booked service appointment, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-028: needs_commitment follows declared precedence among needs_commitment, approval_required. Declared active installation_eligibility rule EVAL36-028-SERVICE-COVERAGE matches SELL-PROFESSIONAL_AND_IMPLEMENTATION_SERVICES-001, destination DE/DE-NW and eligible=true. The contract applies this to scheduled-service coverage even though installation_requested=false. Coverage supports 4 service packages, but no booked service slot or staffing commitment is supplied for 2026-09-11; eligibility is not a booking. Obtain an actual service commitment. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "What actual service slot and staffing commitment can cover the requested packages and date?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-029",
+      "packet_sha256": "804c94095b50d86bea226db6e27f0afca3c818b619a1c12624c49bb066b8ca30",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after the revised proposal and customer acceptance and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 42408.40 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 3.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_revision",
+        "human_actions": [
+          "Sales and service owner must propose a covered destination or different supported service and obtain customer acceptance before rerun.",
+          "After a covered proposal exists, scheduling owner must confirm staffing and book actual service capacity.",
+          "After the revised proposal and customer acceptance, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-029: needs_revision follows declared precedence among needs_revision, needs_commitment, approval_required. Active rule EVAL36-029-SERVICE-COVERAGE explicitly marks destination DE/DE-BY ineligible for SELL-PROFESSIONAL_AND_IMPLEMENTATION_SERVICES-001. The approved service contract requires a changed service/destination proposal; the raw blocker severity is not an independent hard prohibition overriding that declared interpretation. installation_requested=false removes an extra installation request, not this scheduled-service regional requirement. No booked slot exists either; changing region alone would still require a service commitment for 2 packages. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Which covered destination or alternative service will the customer accept, and what booking supports it?"
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-030",
+      "packet_sha256": "a4dda68a57028c87c6be5c6799a34b896db7cfbe88f3e5908aa13a5ddcc6044e",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Potential later human route, after the revised proposal and customer acceptance and a fresh six-responsibility check: Regional_Manager. No executable approval route is established for the current unresolved submission. Quote commitment EUR 82193.60 is below the >EUR 100000 Sales Director and >EUR 300000 Sales VP value thresholds; discount 6.000000% does not trigger >10% or >20% discount escalation. No Finance exception trigger applies to the within-limit Active credit record and 30-day terms. No Legal clause trigger is supplied. AP-BASE route entries present required roles only; no deal approval, booking, reservation, supplier/provider commitment or delivery promise has been granted. Resolve subordinate revision/evidence/commitment requirements and rerun before relying on this route."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_revision",
+        "human_actions": [
+          "Sales and service owner must propose a covered destination or different supported service and obtain customer acceptance before rerun.",
+          "After a covered proposal exists, scheduling owner must confirm staffing and book actual service capacity.",
+          "After the revised proposal and customer acceptance, rerun all six responsibilities on the resulting proposal and a newly frozen source snapshot. Only then present an applicable Regional_Manager route for human review; no approval has been granted."
+        ],
+        "rationale": "Draft EVAL-PREP-030: needs_revision follows declared precedence among needs_revision, needs_commitment, approval_required. Active rule EVAL36-030-SERVICE-COVERAGE explicitly marks destination DE/DE-BY ineligible for SELL-PROFESSIONAL_AND_IMPLEMENTATION_SERVICES-001. The approved service contract requires a changed service/destination proposal; the raw blocker severity is not an independent hard prohibition overriding that declared interpretation. installation_requested=false removes an extra installation request, not this scheduled-service regional requirement. No booked slot exists either; changing region alone would still require a service commitment for 4 packages. All six responsibility findings remain part of this model draft; independent acceptance is outstanding.",
+        "unresolved_questions": [
+          "Which covered destination or alternative service will the customer accept, and what booking supports it?"
+        ]
+      }
+    }
+  ]
+}
