@@ -15,6 +15,19 @@ from pathlib import Path
 from phase1c_evaluation_review import (EVALUATION, digest, render,
                                        validate_review_workspace)
 
+PINNED_V2_INDEX_SHA256 = "7deac5b7a9337a49e3a64b60ca99cd1c0118bb9cfa61ea9abe73b3cacfa444dc"
+PINNED_V2_SOURCE_SHA256 = "1b7e0dffb3eaae8ee7c7e4bcd82aba0d55da11321198ce8c54e1581fae6740cc"
+
+
+def check_v2_index(index):
+    """Refuse a different evaluation input version before writing reviewer files."""
+    if (not isinstance(index, dict)
+            or index.get("source_definition_sha256") != PINNED_V2_SOURCE_SHA256
+            or not isinstance(index.get("cases"), list)
+            or len(index["cases"]) != 36
+            or digest(index) != PINNED_V2_INDEX_SHA256):
+        raise ValueError("Evaluation index differs from pinned v2; version inputs and review intake separately")
+
 
 def empty_intake(index):
     """Create a blank, hash-bound register without reading answer drafts."""
@@ -189,6 +202,7 @@ def main():
     parser.add_argument("--packet-directory", type=Path)
     args = parser.parse_args()
     index = json.loads(args.index.read_text())
+    check_v2_index(index)
     review_bytes = args.review_file.read_bytes() if args.review_file else None
     if args.write_empty:
         args.write_empty.write_text(render(empty_intake(index)))
