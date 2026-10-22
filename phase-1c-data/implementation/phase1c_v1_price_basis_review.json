@@ -1,8 +1,9 @@
 {
-  "status": "proposed_synthetic_convention_for_review_not_calibration_freeze",
+  "status": "approved_bounded_synthetic_v1_convention_not_calibration_release",
+  "decision": "Ali selected bounded synthetic V1 convention on 22 October 2026; this does not approve market comparability, historical price validity or evaluation answers.",
   "catalog_version": "CATALOGUE_2026_V1",
   "currency": "EUR",
-  "proposed_quote_arithmetic_basis": "Fictional tax-exclusive list price and standard cost per stored product unit; no freight or tax adjustment is included in catalogue margin arithmetic.",
+  "quote_arithmetic_basis": "Fictional tax-exclusive list price and standard cost per stored product unit; no freight or tax adjustment is included in catalogue margin arithmetic.",
   "temporal_interpretation": "The current reader uses one static versioned V1 catalogue across simulated historical and evaluation cutoffs. This is a synthetic scenario convention, not evidence of historical market prices or a per-SKU effective interval.",
   "public_anchor_role": "Taxonomy and broad synthetic generator-band design only; no individual fictional SKU has a verified like-for-like external price or procurement cost.",
   "date_fields": {
