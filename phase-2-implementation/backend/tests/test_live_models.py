@@ -47,6 +47,8 @@ class LiveModelTests(TestCase):
         prompt = _prompt(fake_input(), (), enable_binding_proposals=True)
         self.assertIn(BINDING_PROMPT_SUFFIX, prompt)
         self.assertIn("never '8.000', '8.0', 8", prompt)
+        self.assertIn("8.000 means eight units", prompt)
+        self.assertIn("8.5 is not eight whole units", prompt)
         self.assertIn("source-to-slice support", prompt)
         self.assertNotIn(BINDING_PROMPT_SUFFIX, _prompt(fake_input(), ()))
         quantity_schema = BINDING_FINAL_SCHEMA["properties"]["delivery_slices"]["items"]["properties"]["quantity"]
