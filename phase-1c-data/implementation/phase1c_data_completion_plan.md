@@ -43,4 +43,6 @@ Apply the approved step 2 scope to **step 3's five source-data field reviews**. 
 
 **Definition of “data fully ready”:** step 8, not simply “rows generated.” Until then, the existing data remains useful for engineering and teaching but provisional for thesis accuracy claims.
 
+## 22 October 2026 — supplier calendar scope decision
 
+Step 3 now has one scoped field disposition. `suppliers.order_calendar_json` is resolved for the imported development and v2 evaluation cohorts after generated-row supplier joins, the 36-row/ten-offer evaluation source audit and PostgreSQL reader replay of all ten nonbinding estimates. The 162 pinned historical modal-only offers are excluded from first-release dated-offer coverage; the hash-checked historical audit and negative tests preserve zero historical estimates. See the [supplier review](phase1c_supplier_calendar_review.md). Historical dated routes would require new versioned calendars and full lead bounds, cutoff replay and renewed field review. This leaves four source-data field marks plus the runtime-output mark open, both calibration evidence reviews open, 0/36 accepted evaluation answers and `ready_for_generation=false`. Step 5 cannot be declared complete from this disposition; case 020 is unresolved.
