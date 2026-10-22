@@ -57,7 +57,7 @@ tables:
       basis: CAT+SYN
       generation: Product-specific typed attribute template from catalogue calibration
       validation: JSON object; required keys, units and option combinations per archetype must be validated
-      review_before_generation: Contract defined in phase1c_data_contract.yaml; implement and test archetype-specific row validation and option compatibility.
+      resolved_by: Scoped synthetic V1 and isolated V2 disposition on 22 October 2026 in phase1c_product_field_review.md. audit_phase1c_product_attributes checks all 156 V1 rows against mode-specific JSON rules, 36 declared component specs, 24 active BOMs and 25 alternatives for synthetic fit, and guards both V2 dependency product clones against attribute drift. The generated-row validator and source-to-import PostgreSQL reconciliation check loaded product attributes; BOM selection chooses only declared alternatives. This is internal fictional fit, not manufacturer certification or unrestricted arbitrary configuration compatibility. Reopen if catalogue, BOM, component specs, V2 extension or configurable option scope changes.
     list_price:
       sql_type: NUMERIC(14,2)
       nullable: false
