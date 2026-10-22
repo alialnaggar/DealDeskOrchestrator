@@ -62,3 +62,7 @@ Ali selected the bounded fictional V1 EUR, tax-exclusive, per-stored-unit conven
 ## 22 October 2026 — v2 input reproducibility gate
 
 Step 5 now repeats the 36-case export on two fresh connections to the dedicated, empty evaluation PostgreSQL database and compares all 73 exact packet/provider/index files after each pass checks the pinned index. This is a reproducibility check for the existing v2 inputs, with no source/hash or reviewer answer change. Once the full workflow passes, treat v2 as the pinned input version for the current bounded synthetic scope and proceed to step 6's independent six-responsibility review. Any later change to source facts or approved conventions requires a new input version and renewed review. Case 020 remains for explicit adjudication; 0/36 accepted answers, the runtime-output mark and `ready_for_generation=false` remain.
+
+## 22 October 2026 — case 020 interpretation selected
+
+Ali selected the specific timely modal offer/assembly/test route for a **proposed** `needs_commitment` gate in case 020. The [hash-bound reviewer-only record](../evaluation/reviews/case_020_business_choice.json) preserves the maximum-lead missing-test limit and outstanding supplier/workshop/dispatch commitments. This resolves the business choice for step 6, not the case answer: all six findings and human actions still need substantive reviewer acceptance, as do the other 35 cases. No evaluation source, provider, packet hash or original draft changed; accepted answers remain **0/36** and `ready_for_generation=false`.
