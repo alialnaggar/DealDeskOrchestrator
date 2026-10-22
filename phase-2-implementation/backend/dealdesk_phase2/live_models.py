@@ -19,7 +19,7 @@ from . import model_attempts
 GROQ_MODEL = "openai/gpt-oss-120b"
 GEMINI_MODEL = "gemini-3.8-flash"
 PROMPT_VERSION = "m16-fulfillment-claims-v1"
-BINDING_PROMPT_SUFFIX = "-m17-binding-optin-m19-wholeunits-v1"
+BINDING_PROMPT_SUFFIX = "-m17-binding-optin-m19-wholeunits-v2"
 MAX_OUTPUT_TOKENS = 2048
 MAX_PROMPT_BYTES = 20000
 MAX_MODEL_TURNS = 6
@@ -179,6 +179,10 @@ def _prompt(input, observations, *, enable_binding_proposals=False):
             "partial_delivery_requires_customer_acceptance. For binding_proposal, each "
             "quantity must be a positive whole-unit string of ASCII digits only: write '8' "
             "and '2', never '8.000', '8.0', 8, a rounded fraction or a unit with a suffix. "
+            "Source records may encode a whole quantity as a decimal (for example 8.000 means "
+            "eight units); that is not fractional stock. If a returned binding path actually "
+            "supports eight units, write '8' in your proposal. A true fractional value such "
+            "as 8.5 is not eight whole units and must never be rounded. "
             "Copy dates and source_refs exactly as supported by returned binding paths; "
             "do not attach an inbound source to a stock-only early slice or invent a date. "
             "If exact whole units or source-to-slice support are uncertain, abstain or report "
