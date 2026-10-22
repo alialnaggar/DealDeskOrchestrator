@@ -129,6 +129,16 @@ For the example user service, install under `~/.config/systemd/user/` as the the
 
 ## 8. Daily development and safe handoff
 
+Historical opt-in experiment refs `phase2-m14-diagnostic-run`,
+`phase2-m14-live-run` and `phase2-m14-smoke-run` still exist on GitHub with
+their old workflow versions. No one should push to those branches. Their
+historical results remain in committed reports and Actions records. Archive or
+delete the obsolete refs through a separately reviewed repository-owner action
+when the historical pointers are no longer needed; removing a workflow from
+the active Phase 2 branch does not rewrite old branch contents. The active
+M1.8/M1.9 one-trial branch also must not be pushed without a new live-call
+authorization.
+
 1. In a **new** Discord thread, ask OpenCode to read `AGENTS.md`, the [master blueprint](../planning/master-implementation-blueprint.md), the exact current branch and CI. Confirm the checkout path and branch before edits. Ask for a narrow diff and test plan. Keep source-first evaluation answer keys out of model-visible prompts.
 2. Work only on the approved Phase 2 feature branch/worktree. Inspect `git status --short --branch`, `git fetch origin`, diff and tracking divergence; use `git pull --ff-only` only on a clean compatible checkout. Never reset, force-push or merge the Phase 1C draft PR silently.
 3. Run offline tests and disposable PostgreSQL integration. Confirm no live Groq call occurred. Have an independent review for business/identity changes. Before push, inspect the actual diff, secret scan and current branch, then commit one bounded change. A human reviews the commit/PR and GitHub Actions. Failed CI is corrected, not hidden.
