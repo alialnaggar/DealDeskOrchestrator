@@ -49,3 +49,7 @@ After the full PostgreSQL CI pass, v2 can be treated as the pinned input version
 ## Case 020 business interpretation — 22 October 2026
 
 Ali selected the conditional modal route as sufficient for a **proposed** `needs_commitment` gate, with explicit supplier, workshop and dispatch commitments still required. The maximum-lead route lacks the later test observation and stays unsupported for the requested date. The [hash-bound reviewer-only record](case_020_business_choice.json) and [adjudication brief](case_020_route_adjudication.md) hold the exact limits. This resolves the business interpretation to apply during review; it does not accept a six-responsibility case answer, change v2 inputs, or authorize an executable approval route. Review all 36 cases source-first; accepted answers remain **0/36**.
+
+## First 12-case review aid — 22 October 2026
+
+The [source-first 001–012 review aid](v2_batch_001_012_review.md) checks each pinned packet/provider pair, commercial arithmetic, supply state and indicative route, then separately identifies three saved-draft wording issues for reviewer adjudication. It is Codex model-assisted analysis, not an independently accepted answer key. Keep the blank workspace and source packets first in the review order; accepted answers remain **0/36**.
