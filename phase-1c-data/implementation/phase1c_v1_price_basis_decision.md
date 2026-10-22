@@ -20,3 +20,9 @@
 **Recommendation:** A is proportionate for a synthetic decision and orchestration experiment. Its strength is reproducible arithmetic and deliberately constructed cases, not market price estimation. It leaves the six field marks and two calibration evidence reviews open until the bounded claim is explicitly accepted and recorded in their own dispositions. It does not make 400 historical diagnostic decisions into labels or imply automatic deal approval, supply reservation or delivery commitment.
 
 The supporting executable artifact is `audit_phase1c_v1_price_basis_review.py` with `phase1c_v1_price_basis_review.json`; CI preserves a 156-row ledger. The separate price-unit exposure audit records the exact downstream scope. Nothing in this sheet changes the pinned configuration, product rows, historical shards, evaluation source definitions or answers.
+
+## Decision recorded — 22 October 2026
+
+Ali selected **A, bounded synthetic V1 convention**. The existing V1 list price and standard cost are fictional EUR values, tax-exclusive per stored product unit, held static by catalogue version for simulated cutoffs. No freight or tax adjustment enters catalogue margin arithmetic. Category bands only shaped scenario values; even the 84 default-unit matches are not externally verified comparables, and the other 36 sellable products use different units without conversion. The 400 historical submissions precede the configuration research calibration date; their static V1 values are synthetic scenario facts, not observed historical prices. Zero per-SKU observation dates or effective intervals are recorded.
+
+This decision preserves all current product prices, costs, quote facts, policy thresholds and input hashes. The 156-row source ledger and full PostgreSQL replay must pass before field or calibration evidence dispositions are recorded. It does not approve any deal, accept evaluation answers, settle case 020 or set `ready_for_generation=true`.
