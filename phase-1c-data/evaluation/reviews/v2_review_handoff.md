@@ -57,3 +57,7 @@ The [source-first 001–012 review aid](v2_batch_001_012_review.md) checks each 
 ## Second 12-case review aid — 22 October 2026
 
 The [source-first 013–024 review aid](v2_batch_013_024_review.md) checks buildable component/operation evidence, stale workshop observations, the competing 019/020 routes and separate digital provider proof before comparing preserved drafts. Case 020's selected modal interpretation remains a reviewer-only business choice, not an accepted answer. This is Codex model-assisted review material; source packets and the blank workspace precede it in the reviewer workflow. **0/36 accepted**.
+
+## Third 12-case review aid — 22 October 2026
+
+The [source-first 025–036 review aid](v2_batch_025_036_review.md) checks full digital term evidence, exact scheduled-service region and missing booking, credit/margin hard blocks, and Legal routing before comparing original and author-assisted drafts. Together with the [001–012](v2_batch_001_012_review.md) and [013–024](v2_batch_013_024_review.md) aids, all 36 cases now have a Codex model-assisted source-first handoff. They are **not accepted answer keys**: accountable six-responsibility case dispositions remain 0/36, and `ready_for_generation=false`.
