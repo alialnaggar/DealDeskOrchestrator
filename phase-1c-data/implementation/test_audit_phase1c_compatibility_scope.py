@@ -35,6 +35,26 @@ class CompatibilityScopeAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "evaluation compatibility scope"):
             audit(self.sql, changed)
 
+    def test_development_service_region_or_dependency_target_change_is_detected(self):
+        for filename, before, after in (
+            ("phase1c_vertical_pilot.sql", '"eligible":true', '"eligible":false'),
+            ("phase1c_dependency_pilot.sql", "WORKPLACE-005-V2", "WORKPLACE-006-V2"),
+        ):
+            with self.subTest(filename=filename):
+                changed = dict(self.sql)
+                changed[filename] = changed[filename].replace(before, after)
+                with self.assertRaisesRegex(ValueError, "development compatibility scope"):
+                    audit(changed, self.evaluation)
+
+    def test_evaluation_region_or_eligibility_change_is_detected(self):
+        for field, value in (("region", "DE-BY"), ("eligible", False)):
+            with self.subTest(field=field):
+                changed = deepcopy(self.evaluation)
+                case = next(c for c in changed["cases"] if c["case_id"] == "EVAL-PREP-027")
+                case["tables"]["compatibility_rules"][0]["condition_json"][field] = value
+                with self.assertRaisesRegex(ValueError, "evaluation regional source semantics"):
+                    audit(self.sql, changed)
+
 
 if __name__ == "__main__":
     unittest.main()
