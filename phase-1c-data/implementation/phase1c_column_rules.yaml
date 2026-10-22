@@ -64,14 +64,14 @@ tables:
       basis: CAT+SYN
       generation: Sample category EUR price band and chosen unit; components may have zero list
       validation: Active sellable price positive and within relevant unit/category band; preserve price-anchor date
-      review_before_generation: Recheck catalogue sample dates, currency, unit and category comparability.
+      resolved_by: Ali selected the bounded fictional V1 EUR tax-exclusive per-stored-unit convention on 22 October 2026; see phase1c_v1_price_basis_decision.md and phase1c_product_field_review.md. The 156-row source-to-import PostgreSQL check, audit_phase1c_price_distribution and audit_phase1c_v1_price_basis_review reconcile all 120 sellable prices and preserve 36 category-default unit mismatches, zero per-SKU observation/effective dates and 400 pre-calibration historical submissions. Category bands are synthetic generator inputs, not unit-specific observed comparables or historical market prices. Reopen for changed prices, units, tax/date assumptions or external-comparability claims; version affected inputs.
     standard_cost:
       sql_type: NUMERIC(14,2)
       nullable: false
       basis: SYN+DER
       generation: Independent category margin draw or BOM materials plus labor and overhead
       validation: Nonnegative; component cost positive; assembled expected material scrap cost remains unrounded, plus labor/overhead within 5%; portfolio realized margin target checked
-      review_before_generation: Prove category/BOM costs and achieved portfolio margin from pilot rows.
+      resolved_by: Ali retained fixed category-p50 synthetic costs for 102 generated V1 sellable rows on 15 October 2026 and selected the fictional tax-exclusive per-stored-unit V1 convention on 22 October; see phase1c_product_field_review.md and phase1c_v1_price_basis_decision.md. audit_phase1c_price_distribution recomputes all 102 costs, verifies positive costs of all 36 components and reports achieved category margins. The 18 explicit buildable costs have BOM rollup checks; the 156-row source-to-import PostgreSQL reconciliation confirms loaded values. These are synthetic standard costs, not supplier procurement quotes; narrow p50 spread and workstation margin above category p90 remain disclosed. Reopen for changed algorithm, cost source, units or catalogue version and replay affected inputs.
     billing_model:
       sql_type: TEXT
       nullable: false
