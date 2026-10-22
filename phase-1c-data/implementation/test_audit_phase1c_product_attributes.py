@@ -7,7 +7,7 @@ import unittest
 
 import yaml
 
-from audit_phase1c_product_attributes import audit
+from audit_phase1c_product_attributes import audit, audit_v2_attribute_clones
 
 
 HERE = Path(__file__).resolve().parent
@@ -57,6 +57,20 @@ class ProductAttributesAuditTests(unittest.TestCase):
         row["attributes_json"] = None
         self.assertTrue(any("product attributes must be an object" in e
                             for e in audit(draft, self.contract, self.fit)["errors"]))
+
+    def test_v2_dependency_clones_preserve_v1_attributes(self):
+        sql = (HERE / "phase1c_dependency_pilot.sql").read_text()
+        self.assertEqual(audit_v2_attribute_clones(sql), 2)
+        with self.assertRaisesRegex(ValueError, "V2 dependency"):
+            audit_v2_attribute_clones(sql.replace("product_type, attributes_json,",
+                                                  "product_type, '{}'::jsonb,", 1))
+
+    def test_v2_dependency_clone_identity_change_fails(self):
+        sql = (HERE / "phase1c_dependency_pilot.sql").read_text()
+        with self.assertRaisesRegex(ValueError, "identity or source scope"):
+            audit_v2_attribute_clones(sql.replace(
+                "WHERE product_id='SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-004'",
+                "WHERE product_id='SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-006'"))
 
 
 if __name__ == "__main__":
