@@ -1,0 +1,251 @@
+{
+  "additive_reader_paths": {
+    "R02": [
+      "facts.supply.assembly.*.component_supplier_offers",
+      "facts.supply.assembly_by_bom.*.component_supplier_offers"
+    ],
+    "R13": [
+      "facts.supply.assembly.*.component_supplier_offers",
+      "facts.supply.assembly_by_bom.*.component_supplier_offers"
+    ],
+    "R14": [
+      "facts.supply.assembly.*.component_supplier_offers",
+      "facts.supply.assembly_by_bom.*.component_supplier_offers"
+    ]
+  },
+  "cases": [
+    {
+      "binding_verification_development": "supply_supported_unreserved",
+      "binding_verification_pinned": "supply_supported_unreserved",
+      "candidate_six_domain_digest_development": "78af217983802fbc9f672e7d62a2a53ef9959f7e11326637f92bd53cc0147843",
+      "candidate_six_domain_digest_pinned": "78af217983802fbc9f672e7d62a2a53ef9959f7e11326637f92bd53cc0147843",
+      "candidate_six_domain_values_equal": true,
+      "candidate_source_digest_equal": true,
+      "candidate_status_development": "needs_revision",
+      "candidate_status_pinned": "needs_revision",
+      "case": "B01",
+      "changed_observations": [],
+      "fixed_status_development": "needs_revision",
+      "fixed_status_pinned": "needs_revision",
+      "six_domain_fixed_values_digest_development": "bb2a449a7c1fac99569e2898b72a9ebb78ef06f8db38050e92415a95103a5c59",
+      "six_domain_fixed_values_digest_pinned": "bb2a449a7c1fac99569e2898b72a9ebb78ef06f8db38050e92415a95103a5c59",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4"
+    },
+    {
+      "binding_verification_development": "supply_supported_unreserved",
+      "binding_verification_pinned": "supply_supported_unreserved",
+      "candidate_six_domain_digest_development": "2a1b89dd8addc4ebe84c14c1f3060373fdc4899ec65839ec30f42ea3782c959c",
+      "candidate_six_domain_digest_pinned": "2a1b89dd8addc4ebe84c14c1f3060373fdc4899ec65839ec30f42ea3782c959c",
+      "candidate_six_domain_values_equal": true,
+      "candidate_source_digest_equal": true,
+      "candidate_status_development": "needs_revision",
+      "candidate_status_pinned": "needs_revision",
+      "case": "B05",
+      "changed_observations": [],
+      "fixed_status_development": "needs_revision",
+      "fixed_status_pinned": "needs_revision",
+      "six_domain_fixed_values_digest_development": "55127a7041cd57b410d292dd7518fb7b9565ec08a9868d7d07404ff87f768952",
+      "six_domain_fixed_values_digest_pinned": "55127a7041cd57b410d292dd7518fb7b9565ec08a9868d7d07404ff87f768952",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd"
+    },
+    {
+      "case": "R01",
+      "changed_observations": [],
+      "fixed_status_development": "approval_required",
+      "fixed_status_pinned": "approval_required",
+      "six_domain_fixed_values_digest_development": "ac737409d949c810913b087dc30ba4e3eb035e2820d69ef71a5b0efbd3efd888",
+      "six_domain_fixed_values_digest_pinned": "ac737409d949c810913b087dc30ba4e3eb035e2820d69ef71a5b0efbd3efd888",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "18777b083ddbdf0f3a594620fc34f06445f76308d2247dc8d242a1a7b46e37e1"
+    },
+    {
+      "case": "R02",
+      "changed_observations": [
+        "reader_shape"
+      ],
+      "fixed_status_development": "needs_commitment",
+      "fixed_status_pinned": "needs_commitment",
+      "six_domain_fixed_values_digest_development": "596c67f73c42f86a3c59f1417f98dca76bccaab5c5be72df83c04f5863886f0c",
+      "six_domain_fixed_values_digest_pinned": "596c67f73c42f86a3c59f1417f98dca76bccaab5c5be72df83c04f5863886f0c",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "fae84519aabbc2900a92ed393ba54851ca53ccece2e9a802c9bf4039dce9c61e"
+    },
+    {
+      "case": "R03",
+      "changed_observations": [],
+      "fixed_status_development": "needs_evidence",
+      "fixed_status_pinned": "needs_evidence",
+      "six_domain_fixed_values_digest_development": "58ef8b0b3016ba4b0271d5412b53b00600b0847a3ac73fee079998ef4aa6b681",
+      "six_domain_fixed_values_digest_pinned": "58ef8b0b3016ba4b0271d5412b53b00600b0847a3ac73fee079998ef4aa6b681",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "9b04bebaa1bb40dcaa831c621c175baaa0bf8329cd962b322d2ba2fe71b8ed9a"
+    },
+    {
+      "case": "R04",
+      "changed_observations": [],
+      "fixed_status_development": "needs_evidence",
+      "fixed_status_pinned": "needs_evidence",
+      "six_domain_fixed_values_digest_development": "3e8c976ebffdfc0657367b207bd11b531c691521d9495ba472a7436e3f09e4cf",
+      "six_domain_fixed_values_digest_pinned": "3e8c976ebffdfc0657367b207bd11b531c691521d9495ba472a7436e3f09e4cf",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "f149e13a4bbc45e5985c52ccfb7595c255f071ee435fb102c5aa472550bb136d"
+    },
+    {
+      "case": "R05",
+      "changed_observations": [],
+      "fixed_status_development": "needs_commitment",
+      "fixed_status_pinned": "needs_commitment",
+      "six_domain_fixed_values_digest_development": "c5be59fd59602c0721755a34d047bc6666caaa8ddf809f4917d9ce5b3d8dff3b",
+      "six_domain_fixed_values_digest_pinned": "c5be59fd59602c0721755a34d047bc6666caaa8ddf809f4917d9ce5b3d8dff3b",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "f9ba495cb0bf721f6d7d20b5d607e4b841f9ea4b2bff23abc54308826bed3bc5"
+    },
+    {
+      "case": "R06",
+      "changed_observations": [],
+      "fixed_status_development": "needs_evidence",
+      "fixed_status_pinned": "needs_evidence",
+      "six_domain_fixed_values_digest_development": "14be6c3144cb46af62e81afb7f55a8743a4e1da6ff74a0a485e9f2eccf0f92e9",
+      "six_domain_fixed_values_digest_pinned": "14be6c3144cb46af62e81afb7f55a8743a4e1da6ff74a0a485e9f2eccf0f92e9",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "19959661e42c9a9266b78dbd3b2f936995a471aae63f854c796d767b90626223"
+    },
+    {
+      "case": "R07",
+      "changed_observations": [],
+      "fixed_status_development": "needs_revision",
+      "fixed_status_pinned": "needs_revision",
+      "six_domain_fixed_values_digest_development": "f447fe03fc0cc34c062e550758238476397cb41388122d0421296d9e2b7815db",
+      "six_domain_fixed_values_digest_pinned": "f447fe03fc0cc34c062e550758238476397cb41388122d0421296d9e2b7815db",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "3b57c8538a1aa0fcd03e6125221886e2cf126619eacdd481ab62db8020c9a888"
+    },
+    {
+      "case": "R08",
+      "changed_observations": [],
+      "fixed_status_development": "needs_evidence",
+      "fixed_status_pinned": "needs_evidence",
+      "six_domain_fixed_values_digest_development": "b808acf851f276c0088ae337ef2f90f4087bc10534c70f0cbdb6cff3546de1a9",
+      "six_domain_fixed_values_digest_pinned": "b808acf851f276c0088ae337ef2f90f4087bc10534c70f0cbdb6cff3546de1a9",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "75d593e51c29d68551f1a7717674db7c5f021aaa1e4dd7a47e32f7fce154ea7c"
+    },
+    {
+      "case": "R09",
+      "changed_observations": [],
+      "fixed_status_development": "blocked",
+      "fixed_status_pinned": "blocked",
+      "six_domain_fixed_values_digest_development": "3ad705d2a3319c9d9644ac7204a7f74a9f641689f477319de95ec166b549462d",
+      "six_domain_fixed_values_digest_pinned": "3ad705d2a3319c9d9644ac7204a7f74a9f641689f477319de95ec166b549462d",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "50ee581769a4fc8c2e65026e38b6fab1eec23a4a8be1133867ed9f409ceacaeb"
+    },
+    {
+      "case": "R10",
+      "changed_observations": [],
+      "fixed_status_development": "needs_evidence",
+      "fixed_status_pinned": "needs_evidence",
+      "six_domain_fixed_values_digest_development": "1f15320169b076402e9cf888c31e363ff69b91f2efb3de380a5fdc90986a5bf2",
+      "six_domain_fixed_values_digest_pinned": "1f15320169b076402e9cf888c31e363ff69b91f2efb3de380a5fdc90986a5bf2",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "be1e28f79525a634265606508bd25d5aae8947f1450d936bd641d31fa103a6a0"
+    },
+    {
+      "case": "R11",
+      "changed_observations": [],
+      "fixed_status_development": "approval_required",
+      "fixed_status_pinned": "approval_required",
+      "six_domain_fixed_values_digest_development": "aa1f9fb3976668f12a91ae35c6c10b5c20bf12778098ff7a458004629e2681c6",
+      "six_domain_fixed_values_digest_pinned": "aa1f9fb3976668f12a91ae35c6c10b5c20bf12778098ff7a458004629e2681c6",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "32603b257a69ac9a4bf548c66567f781e5c4c6bd4496a34825e13461955a3f34"
+    },
+    {
+      "case": "R12",
+      "changed_observations": [],
+      "fixed_status_development": "approval_required",
+      "fixed_status_pinned": "approval_required",
+      "six_domain_fixed_values_digest_development": "22d537d608b586e6bce147838669bb7413c6c012f3d50195f912af866ef9c7e7",
+      "six_domain_fixed_values_digest_pinned": "22d537d608b586e6bce147838669bb7413c6c012f3d50195f912af866ef9c7e7",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "400066ef0cc0fbb202fcafe262f037cf5a453f965cf85fbdf04c91e1d8e087c8"
+    },
+    {
+      "case": "R13",
+      "changed_observations": [
+        "reader_shape"
+      ],
+      "fixed_status_development": "needs_commitment",
+      "fixed_status_pinned": "needs_commitment",
+      "six_domain_fixed_values_digest_development": "b9e208d592732ff76c2eaf6516a8fa18f2cc58e50f56a44f22d385f1988c5296",
+      "six_domain_fixed_values_digest_pinned": "b9e208d592732ff76c2eaf6516a8fa18f2cc58e50f56a44f22d385f1988c5296",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "85dcde9de892ab9ca947de0dac49a51e6174fc5ca35432061efa0eacf28806f7"
+    },
+    {
+      "case": "R14",
+      "changed_observations": [
+        "reader_shape"
+      ],
+      "fixed_status_development": "needs_revision",
+      "fixed_status_pinned": "needs_revision",
+      "six_domain_fixed_values_digest_development": "39800d221824604f18b40d4614f6441e1823fcdcdf2c8f8f3816d5e917aa7025",
+      "six_domain_fixed_values_digest_pinned": "39800d221824604f18b40d4614f6441e1823fcdcdf2c8f8f3816d5e917aa7025",
+      "six_domain_fixed_values_equal": true,
+      "source_digest_equal": true,
+      "source_input_digest": "700777a2a303b91e9d23621e9596f99518377c276784b6e0e841fb34695b8602"
+    }
+  ],
+  "comparison_ci": "https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39770918068",
+  "development_sha": "963d217991afa78c8273386f83a13e7de3b87cc2",
+  "file_sha256": {
+    "phase1c_candidate.py": {
+      "development": "f3b2d9822df1b4dd04f60aa94cffdcc84247a797eaaeaacb23a2514458d0b9ca",
+      "pinned": "f3b2d9822df1b4dd04f60aa94cffdcc84247a797eaaeaacb23a2514458d0b9ca"
+    },
+    "phase1c_deal_decision.py": {
+      "development": "92d75fe1b810a2178ad17d003d583b110dbb98650214f0e677523a76f73b062f",
+      "pinned": "92d75fe1b810a2178ad17d003d583b110dbb98650214f0e677523a76f73b062f"
+    },
+    "phase1c_partial_discovery.py": {
+      "development": "95edf14ffa85289c1dabce61f778014c50d272eb4ce4a62919b9e2db7ba0c848",
+      "pinned": "95edf14ffa85289c1dabce61f778014c50d272eb4ce4a62919b9e2db7ba0c848"
+    },
+    "phase1c_policy_decision.py": {
+      "development": "d1cfa43b2f9593105763c1ddbe2318cb1e1bbbfc3a0cf631682727ce9014efe7",
+      "pinned": "d1cfa43b2f9593105763c1ddbe2318cb1e1bbbfc3a0cf631682727ce9014efe7"
+    },
+    "phase1c_reader.py": {
+      "development": "673a78eae39c9675d7e8658610569118c55a0ee2ba885e868f6f511579bcd58b",
+      "pinned": "d400a95df7d3b563fb42a7f0c970782331038a22909175bf0b7fa07dd0617733"
+    },
+    "phase1c_row_fixtures.sql": {
+      "development": "8f8219630d379c133164879e5ee9f300b3a9acdaf043ff31af6cfee54a3385de",
+      "pinned": "8f8219630d379c133164879e5ee9f300b3a9acdaf043ff31af6cfee54a3385de"
+    },
+    "schema.sql": {
+      "development": "637a8d78ef8ec15e912c02209ccac2ab04623aa37c44595eeed9df33d36bca0f",
+      "pinned": "637a8d78ef8ec15e912c02209ccac2ab04623aa37c44595eeed9df33d36bca0f"
+    }
+  },
+  "pinned_sha": "90c0bc8e285ee69262c7db826b786096a77ad004",
+  "scope": "14 reference runs and two disposable binding cases; read-only comparison, no pin upgrade",
+  "version": "m1.9-compatibility-summary-v1"
+}
