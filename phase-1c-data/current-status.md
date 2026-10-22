@@ -20,6 +20,8 @@ The next integration check exercises a second, digital-activation reference run 
 
 A simultaneous two-caller claim test passed both full [push](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39539540541) and [PR](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39539544004) PostgreSQL workflows. It left exactly one seven-row attempt and rejected the other caller. Retry design, real specialist failure handling, and the runtime field mark remain open.
 
+The existing v2 evaluation input now has a two-pass rollback-only PostgreSQL replay gate: it compares exact bytes for 36 packets, 36 separate provider files and their pinned index across fresh connections. The [review handoff](evaluation/reviews/v2_review_handoff.md) records the input boundary. This does not accept a case answer or change the unresolved case-020 choice.
+
 ## Open gates
 
 The [100-case development source disposition](implementation/phase1c_100_case_source_disposition.md) completes the bounded step 4 review for regression use: all 100 unique cases are in the development exclusion registry and remain pending independent review. Their repeated source states and observed decisions cannot be used as evaluation labels. The 36-case evaluation review remains separate and open.
