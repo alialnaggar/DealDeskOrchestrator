@@ -1,6 +1,6 @@
 # Phase 2 — Planning and implementation operating plan
 
-**Status:** Workshops 1–3 and M1 integration decisions approved at their recorded levels; M1.0 and original-only M1.1 implemented. The full technical blueprint and AI specialists remain unfinished. **Branch:** `phase2-agent-implementation`. **Source of truth:** this GitHub repository. Distinguish completed milestones from proposed later work.
+**Status:** Workshops 1–3 and M1 integration decisions approved at their recorded levels; bounded M1.0–M1.9 implementation completed. The [living master blueprint](planning/master-implementation-blueprint.md) consolidates the approved design, measured implementation and future gates. Five AI specialist capabilities, frontend and deployment remain unfinished. **Branch:** `phase2-agent-implementation`. **Source of truth:** this GitHub repository. Distinguish completed milestones from proposed later work.
 
 ## Purpose
 Build a comprehensive **Deal Desk Orchestrator — Phase 2 Master Implementation Blueprint**, potentially 50–80 pages if warranted by substance, before broad agent implementation. It must explain *what to build, why, interfaces, invariants, tests, acceptance criteria and forbidden behavior*. Do not generate a long one-shot document filled with assumptions. Develop sections iteratively from verified repository sources and user-approved decisions; keep it change-controlled, not frozen. Begin narrow implementation when interfaces and first milestone are sufficiently specified, rather than waiting for every document or Phase 1C dataset to finish.
@@ -11,7 +11,7 @@ Build a comprehensive **Deal Desk Orchestrator — Phase 2 Master Implementation
 | ChatGPT | Planning, architecture workshops, learning, reviewing decisions, preparing blueprint sections |
 | GitHub | Authoritative blueprint, agent specifications, source code, tests, decisions, progress, pull requests and CI |
 | Oracle VM | Working repository clone, implementation, local tests, tooling; not authoritative until changes are pushed |
-| Discord + Kimaki + OpenCode | Current remote conversational interface to coding agents on the VM; optional, not mandatory forever |
+| Discord + Kimaki + OpenCode 2 | Proposed remote coding interface; [VM handoff](development/oracle-vm-discord-handoff.md) is a plan, not a deployed/verified service |
 | Codex / Claude Code / free OpenCode models | Coding assistants operating on checked-out repository, subject to `AGENTS.md` instructions |
 
 Do not confuse GitHub (versioned storage/review) with the interface used to instruct a coding agent. Keep Odoo and n8n infrastructure separate from thesis work. Audit VM Python, dependency, PostgreSQL, testing, capacity and model authentication readiness before changing infrastructure.
@@ -32,7 +32,7 @@ Do not confuse GitHub (versioned storage/review) with the interface used to inst
 Include diagrams, state transitions, example deal traces, sample typed/JSON contracts, failure cases and test matrices where they add clarity. Avoid duplicating authoritative business rules: link to the governing Phase 1B/1C documents and version decisions.
 
 ## Document organization (proposal, subject to repository audit)
-- `phase-2-implementation/master-implementation-blueprint.md` — authoritative comprehensive plan
+- [`planning/master-implementation-blueprint.md`](planning/master-implementation-blueprint.md) — living implementation map with actual-versus-target status
 - `phase-2-implementation/architecture/` — focused technical design, orchestration and contracts; [Workshop 1 baseline](architecture/workshop-1-architecture-baseline.md)
 - `phase-2-implementation/specifications/` — six agent specifications
 - [implementation roadmap](planning/implementation-roadmap.md)
@@ -70,8 +70,7 @@ Before changing, replacing, removing or materially expanding an agreed technolog
 
 ## Immediate next action
 
-**M1.3 completed:** The approved original-assessment workflow now conditionally runs a bounded, offline Fulfillment investigation after its fixed assessment. See the [backend implementation and limits](backend/README.md), [roadmap](planning/implementation-roadmap.md), and [M1.3 CI run](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39271579933). The Phase 1C pin remains `90c0bc8e285ee69262c7db826b786096a77ad004`. Review live-model provider options separately before approving network model calls; candidate verification is later work.
-**M1.4 underway:** Ali approved a bounded GroqCloud-versus-Gemini free-tier benchmark, not a permanent provider. Two opt-in standard-library adapters and offline tests are implemented. [M1.4 CI](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39475593959) passed 45 tests. The initial [live smoke](backend/benchmarks/m1.4-live-smoke-results.md) failed. The [follow-up diagnostic](backend/benchmarks/m1.4-connectivity-diagnostic.md) restored Groq minimal access with a descriptive User-Agent; Gemini generation still timed out or returned 503. The paired comparison is gated; no model-quality winner or candidate verification is claimed.
+M1.9 Groq-only contract repair and 16-case Phase 1C compatibility comparison are completed; the [final full CI](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39803289084) passed 85 tests without skips after Gemini active code/workflows were removed. Review the [master blueprint](planning/master-implementation-blueprint.md) and [VM/Discord setup plan](development/oracle-vm-discord-handoff.md). The VM and Discord are not deployed by this documentation. M2.0 Configuration and Pricing AI requires a separate implementation approval. Historical M1.3–M1.8 decisions and experiments remain in the roadmap and linked reports.
 
 ## Workshop 2 result — LangGraph implementation design direction
 
@@ -83,24 +82,13 @@ Workshop 3 subsequently inspected the pinned Phase 1C interfaces and recorded it
 
 W3.1–W3.8 are approved directions in the [decision log](planning/decision-log.md); Workshop 3 is closed at that level. The broad Workshop 4 is replaced by the focused [M1 contract and integration specification](architecture/m1-contract-and-integration-spec.md). Ali approved two pinned checkouts and a sealed, versioned reader bundle with checked candidate rereads on 19 October 2026. The exact Phase 1C pin, alternatives, compatibility gaps, acceptance tests and implementation sequence are recorded there. A conditional 12+8 candidate cannot be called verified under the pinned Phase 1C interface. Subsequent separate approvals authorized bounded M1.0–M1.3 coding; no Phase 1C merge/edit, paid model or VM change was authorized.
 
-## Implemented M1 boundaries
+## Implemented M1 boundaries and current handoff
 
-- [M1.0–M1.3 backend evidence](backend/README.md): pinned read-only
-  reader, sealed bundle, sequential original-only LangGraph, six distinct
-  deterministic result mappings from **one** Phase 1C aggregate decision,
-  PostgreSQL checkpoint resume, M1.2 bounded investigation tools and access
-  ledger, and M1.3 conditional offline Fulfillment interface with CI tests.
-- [Roadmap](planning/implementation-roadmap.md): remaining fixed-interface
-  gaps and later separately approved Fulfillment investigation/candidate work.
+- [Living master blueprint](planning/master-implementation-blueprint.md): six responsibilities, LangGraph lifecycle, fixed/AI authority, candidate/review contracts, evaluation tiers, Next.js plan and remaining approval gates.
+- [Backend evidence](backend/README.md): read-only exact Phase 1C pin, sealed bundle, six **deterministic responsibility mappings from one aggregate decision**, PostgreSQL restart, three Fulfillment tools, typed claims and narrow binding candidate verification. Only Fulfillment has live AI reasoning; do not call the other five AI agents implemented.
+- [M1.4 historical Groq/Gemini experiment](backend/benchmarks/m1.4-gated-smoke-results.md) remains for reproducibility. Gemini is **discontinued** as an active development LLM; Groq `openai/gpt-oss-120b` is the provisional runtime provider, not a proven quality winner.
+- [M1.8 pilot](evaluation/m1.8-measured-results.md) recorded four malformed candidate outputs. [M1.9 results](evaluation/m1.9-contract-and-output-results.md) document the Groq-only prompt repair, read-only two-checkout compatibility measurement, 89-test PostgreSQL CI and two more live trials: one abstention, one incorrect 11+18 candidate rejected by the pinned verifier. There is no demonstrated AI discovery improvement over the fixed baseline.
+- [Roadmap](planning/implementation-roadmap.md) records M2.0 Configuration/Pricing and M2.1 Credit/Policy/Routing as **proposed, unapproved implementation**. The conditional 20-unit 12+8 supplier-offer path is not binding verified.
+- [Oracle VM, OpenCode 2, Kimaki/Discord guide](development/oracle-vm-discord-handoff.md) is prepared for review. No VM/Discord deployment or M2.0 coding follows from it automatically.
 
-M1.3 exercises a structured offline model double; it is not a live LLM.
-Its proposals stay unverified. No candidate verification/loop, live model
-call, frontend or VM deployment was implemented. Configuration is the first
-graph specialist result; Phase 1C's aggregate function calculates the fixed
-domains together.
-
-**M1.4 gated smoke:** [Actual measurements](backend/benchmarks/m1.4-gated-smoke-results.md) show one Groq Fulfillment finding with three authorized tool calls and an accepted offer citation. Gemini's capability gate did not pass; its Fulfillment case and all paired repetitions remained unrun. Groq may be used provisionally for bounded development, subject to Ali's decision; no permanent provider choice is recorded.
-
-## M1.5–M1.6 measured Fulfillment boundary
-
-Groq `openai/gpt-oss-120b` is the approved **provisional development provider**; Gemini remains optional for future comparison, with no permanent reasoning-quality winner. M1.5 found critical semantic-scope failures even with valid JSON and citations. M1.6 now emits [five typed evidence-scoped claims](architecture/m1.6-claim-contract.md), validates them against fixed Phase 1C findings or actual authorized tool returns, audits every rejection and renders review text only from accepted claims. [Measured M1.6 results](evaluation/m1.6-results.md): 63 passing CI tests including PostgreSQL restart; one controlled Groq R03 trial rejected a broad absence claim while retaining one direct source observation. The fixed deal result did not change. No alternative was verified and no further specialist or M1.7 is authorized.
+Continue with a focused user approval of the VM setup and the later M2.0 scope, while keeping the Phase 1C pin and human approval boundaries intact.

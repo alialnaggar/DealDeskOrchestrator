@@ -4,3 +4,7 @@
 *.secrets
 phase-2-implementation/backend/benchmarks/results/
 
+# Local Python environment and bytecode
+.venv/
+__pycache__/
+*.pyc
