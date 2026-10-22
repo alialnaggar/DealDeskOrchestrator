@@ -36,6 +36,36 @@ def keys_in(value):
 
 
 class EvaluationAuthoringTests(unittest.TestCase):
+    def test_case_020_business_choice_is_bound_to_pinned_source_not_an_answer(self):
+        index = json.loads((OUTPUT_DIR / "provisional_packet_index.json").read_text())
+        choice = json.loads((OUTPUT_DIR / "reviews/case_020_business_choice.json").read_text())
+        inputs, manifest = build_from_files()
+        row = next(row for row in index["cases"] if row["case_id"] == "EVAL-PREP-020")
+        self.assertEqual(choice["source_definition_sha256"], manifest["inputs_sha256"])
+        self.assertEqual(choice["source_definition_sha256"], index["source_definition_sha256"])
+        self.assertEqual((choice["packet_sha256"], choice["provider_file_sha256"]),
+                         (row["packet_sha256"], row["provider_file_sha256"]))
+        self.assertEqual(choice["decision_status"],
+                         "selected_business_interpretation_not_accepted_case_answer")
+        self.assertEqual(choice["gate_for_review"], "needs_commitment")
+        self.assertIs(choice["accepted_case_answer"], False)
+        self.assertIs(choice["answer_key_agent_visible"], False)
+        self.assertEqual(choice["independently_reviewed_answers"], 0)
+        self.assertIs(choice["ready_for_generation"], False)
+        case = next(c for c in inputs["cases"] if c["case_id"] == choice["case_id"])
+        tables = case["tables"]
+        self.assertEqual((tables["deals"][0]["requested_delivery_date"],
+                          tables["deal_lines"][0]["quantity"]), ("2026-09-11", 4))
+        offer = tables["supplier_items"][0]
+        self.assertEqual((offer["supplier_item_id"], offer["lead_days_min"],
+                          offer["lead_days_mode"], offer["lead_days_max"]),
+                         ("EVAL36-020-OFFER", 2, 4, 6))
+        self.assertTrue(offer["is_active"])
+        test_dates = {row["capacity_date"] for row in tables["production_capacity"]
+                      if row["capability_code"] == "test" and row["available_capacity_hours"] > 0}
+        self.assertIn("2026-09-08", test_dates)
+        self.assertNotIn("2026-09-10", test_dates)
+
     def test_service_cases_have_an_explicit_condition_for_the_submitted_region(self):
         inputs, manifest = build_from_files()
         intent = {row["case_id"]: row["archetype_id"] for row in manifest["cases"]}
