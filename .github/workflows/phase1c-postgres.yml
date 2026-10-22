@@ -462,5 +462,44 @@ jobs:
             /tmp/phase1c_v2_author_assisted_review.json
             /tmp/phase1c_v2_author_assisted_validation.json
           if-no-files-found: error
+      - name: Reconcile model-assisted diagnostic corrections without answer acceptance
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          from phase1c_evaluation_review import apply_review_amendments, render, validate_review_workspace
+
+          root = Path('../evaluation')
+          original_bytes = (root / 'reviews/model_review_v2_draft.json').read_bytes()
+          pin = hashlib.sha256(original_bytes).hexdigest()
+          index = json.loads((root / 'provisional_packet_index.json').read_text())
+          original = json.loads(original_bytes)
+          author = json.loads((root / 'reviews/v2_author_amendments.json').read_text())
+          codex = json.loads((root / 'reviews/v2_codex_diagnostic_corrections.json').read_text())
+          assert author['source_review_sha256'] == codex['source_review_sha256'] == pin
+          author_ids = {row['case_id'] for row in author['cases']}
+          codex_ids = {row['case_id'] for row in codex['cases']}
+          assert len(author_ids) == 6 and len(codex_ids) == 22 and author_ids.isdisjoint(codex_ids)
+          combined = apply_review_amendments(original, index, author, source_review_sha256=pin)
+          combined = apply_review_amendments(combined, index, codex, source_review_sha256=pin)
+          report = validate_review_workspace(combined, index, packet_directory='/tmp/phase1c_evaluation_packets')
+          assert report == {'errors': [], 'pending_cases': 0, 'complete_draft_cases': 36, 'independently_reviewed_answers': 0}
+          by_id = {row['case_id']: row for row in combined['cases']}
+          assert all(by_id[cid]['reviewer']['method'] == 'model_assisted' for cid in author_ids | codex_ids)
+          assert all(by_id[cid]['reviewer']['method'] == 'model' for cid in set(by_id) - author_ids - codex_ids)
+          assert all('cancelled receipt' not in ' '.join(by_id[f'EVAL-PREP-{n:03d}']['overall']['human_actions']) for n in (9, 10))
+          assert all('no executable approval route' in by_id[cid]['findings']['Approval']['rationale'].lower() for cid in codex_ids)
+          Path('/tmp/phase1c_v2_combined_diagnostic.json').write_text(render(combined))
+          Path('/tmp/phase1c_v2_combined_diagnostic_validation.json').write_text(render(report))
+          PY
+      - name: Preserve reviewer-only combined diagnostic and validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-v2-combined-diagnostic
+          path: |
+            /tmp/phase1c_v2_combined_diagnostic.json
+            /tmp/phase1c_v2_combined_diagnostic_validation.json
+          if-no-files-found: error
 
 
