@@ -53,3 +53,7 @@ Ali selected the conditional modal route as sufficient for a **proposed** `needs
 ## First 12-case review aid — 22 October 2026
 
 The [source-first 001–012 review aid](v2_batch_001_012_review.md) checks each pinned packet/provider pair, commercial arithmetic, supply state and indicative route, then separately identifies three saved-draft wording issues for reviewer adjudication. It is Codex model-assisted analysis, not an independently accepted answer key. Keep the blank workspace and source packets first in the review order; accepted answers remain **0/36**.
+
+## Second 12-case review aid — 22 October 2026
+
+The [source-first 013–024 review aid](v2_batch_013_024_review.md) checks buildable component/operation evidence, stale workshop observations, the competing 019/020 routes and separate digital provider proof before comparing preserved drafts. Case 020's selected modal interpretation remains a reviewer-only business choice, not an accepted answer. This is Codex model-assisted review material; source packets and the blank workspace precede it in the reviewer workflow. **0/36 accepted**.
