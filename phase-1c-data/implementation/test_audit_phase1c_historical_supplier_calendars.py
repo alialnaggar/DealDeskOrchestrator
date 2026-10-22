@@ -31,7 +31,7 @@ class HistoricalCalendarCoverageTests(unittest.TestCase):
         self.assertEqual((result["offers_with_typed_calendar"],
                           result["offers_with_complete_min_mode_max"],
                           result["offers_supporting_dated_estimate_fields"]), (0, 0, 0))
-        self.assertTrue(result["calendar_review_open"])
+        self.assertTrue(result["historical_dated_offer_gap"])
 
     def test_all_historical_modal_offers_stay_undated_even_with_a_calendar(self):
         source = json.loads(self.raw)
