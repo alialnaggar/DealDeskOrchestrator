@@ -3,6 +3,7 @@
 from collections import Counter
 from pathlib import Path
 import json
+import re
 
 import yaml
 
@@ -19,6 +20,38 @@ MODES = {
     "scheduled_service": "scheduled_service",
     "component": "component",
 }
+
+V2_CLONE = re.compile(
+    r"INSERT INTO products \(([^)]+)\) SELECT '([^']+)', product_code, "
+    r"'([^']+)', product_name, category, product_type, attributes_json, "
+    r"list_price, standard_cost, billing_model, unit_of_measure, is_active, "
+    r"is_sellable, fulfillment_mode, stock_uom FROM products WHERE "
+    r"product_id='([^']+)' AND catalog_version='([^']+)';"
+)
+V2_COLUMNS = ("product_id, product_code, catalog_version, product_name, category, "
+              "product_type, attributes_json, list_price, standard_cost, billing_model, "
+              "unit_of_measure, is_active, is_sellable, fulfillment_mode, stock_uom")
+
+
+def audit_v2_attribute_clones(sql):
+    """Require the isolated V2 dependency pair to inherit V1 attributes verbatim."""
+    rows = [line for line in sql.splitlines() if line.startswith("INSERT INTO products ")]
+    expected = {f"SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-{n:03d}"
+                for n in (4, 5)}
+    matched = set()
+    for row in rows:
+        match = V2_CLONE.fullmatch(row)
+        if not match:
+            raise ValueError("V2 product clone no longer preserves the V1 attributes and columns")
+        columns, target, version, source, source_version = match.groups()
+        if (columns != V2_COLUMNS or source not in expected or source in matched or
+                target != source + "-V2" or version != "CATALOGUE_2026_V2" or
+                source_version != "CATALOGUE_2026_V1"):
+            raise ValueError("V2 dependency clone identity or source scope differs")
+        matched.add(source)
+    if matched != expected:
+        raise ValueError("V2 dependency must clone exactly two V1 product attribute rows")
+    return len(matched)
 
 
 def audit(portfolio, contract, fit_draft):
@@ -74,5 +107,7 @@ if __name__ == "__main__":
     contract = yaml.safe_load((HERE / "phase1c_data_contract.yaml").read_text())
     fit_draft = json.loads((HERE / "phase1c_technical_fit_draft.json").read_text())
     result = audit(portfolio, contract, fit_draft)
+    result["v2_attribute_clones"] = audit_v2_attribute_clones(
+        (HERE / "phase1c_dependency_pilot.sql").read_text())
     print(json.dumps(result, indent=2))
     raise SystemExit(bool(result["errors"]))
