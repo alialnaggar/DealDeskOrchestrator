@@ -24,6 +24,12 @@ def _sha(path):
     return sha256(Path(path).read_bytes()).hexdigest()
 
 
+def _decision_digest(decision):
+    """Compare actual six-domain values, not only shape and aggregate gate."""
+    return sha256(json.dumps(decision["specialists"], default=str,
+                             sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
 def _shape(value):
     if isinstance(value, dict):
         return {str(key): _shape(item) for key, item in sorted(value.items(),
@@ -54,6 +60,7 @@ def _worker(checkout):
                          ("run", "deal", "lines", "facts", "rules", "supplier_offers")}),
                        "source_digest": reader_input_digest(bundle),
                        "business_status": decision["status"],
+                       "specialist_digest": _decision_digest(decision),
                        "specialist_shape": _shape(decision["specialists"]),
                        "availability": [x["status"] for x in decision["specialists"]["availability"]],
                        "approval": decision["specialists"]["approval_routing"],
@@ -72,10 +79,13 @@ def _worker(checkout):
                 verify_run_correlation(candidate, original, checked)
                 decision = assemble_deal_decision(checked)
                 trace = checked["candidate_trace"]
+                original_decision = assemble_deal_decision(original)
                 rows[label] = {"source_digest": reader_input_digest(original),
-                               "original_status": assemble_deal_decision(original)["status"],
+                               "original_status": original_decision["status"],
+                               "original_specialist_digest": _decision_digest(original_decision),
                                "candidate_supply_status": trace["assessment"]["status"],
                                "candidate_business_status": decision["status"],
+                               "candidate_specialist_digest": _decision_digest(decision),
                                "candidate_source_digest": trace["source_input_digest"],
                                "candidate_input_digest": trace["candidate_input_digest"],
                                "candidate_slices": [(str(s.quantity), s.arrival_date.isoformat(),

@@ -223,6 +223,39 @@ class PinnedEvaluationCases(unittest.TestCase):
                 "reviewer_package": {"original": {"deal_id": case.ids()["D"]}}},
                 baseline, provider="offline_double", model="scripted", prompt_version="none")
 
+    def test_m19_live_overcount_is_fixed_rejected_and_reviewer_sees_no_supported_candidate(self):
+        # Reproduce the one observed B05 live proposal as scripted untrusted input.
+        # The model submitted 11 + 18 for an 18-unit original. Returned IDs
+        # alone do not make its quantities or source-to-slice claims valid.
+        case = next(item for item in CASES if item.case_id == "B05")
+        raw = {"line_id": case.ids()["L"], "delivery_slices": [
+            {"quantity": "11", "delivery_date": "2026-09-02",
+             "source_refs": ["inventory:" + case.ids()["INV"]]},
+            {"quantity": "18", "delivery_date": "2026-09-11",
+             "source_refs": ["inventory:" + case.ids()["INV"],
+                             "inbound_supply:" + case.ids()["IN"]]}],
+            "tradeoff_code": TRADEOFF}
+        model = OfflineModelDouble((
+            {"type": "tool", "tool": "inspect_fulfillment_paths",
+             "arguments": {"line_id": case.ids()["L"]}},
+            {"type": "contribution", "value": {"schema_version": "3",
+             "kind": "binding_proposal", "payload": raw}}))
+        graph = build_original_graph(self.adapter, self.connect, InMemorySaver())
+        config = {"configurable": {"thread_id": "M19-OVERCOUNT-B05"}}
+        state = run_original_investigate_and_review(graph, config, self.adapter, model,
+            assessment_id="M19-OVERCOUNT", run_id=case.run_id)
+        self.assertEqual(state["candidate_status"], "fixed_rejected")
+        self.assertEqual(state["review_status"], "needs_revision")
+        self.assertEqual(state["reviewer_package"]["original"]["deal_id"], case.ids()["D"])
+        item = state["reviewer_package"]["candidates"][0]
+        self.assertEqual(item["verification_outcome"], "not_confirmed_by_fixed_verifier")
+        self.assertFalse(item["routing"]["eligible_for_ordinary_routing"])
+        self.assertIsNone(item["fixed_supply_status"])
+        self.assertEqual([x["quantity"] for x in item["proposed_slices"]], ["11", "18"])
+        self.assertEqual(state["ai_fulfillment_result"]["contribution"]["verification"],
+                         "unverified")
+        self.assertEqual(sum(bool(x.get("counted")) for x in state["tool_access_ledger"]), 1)
+
     def test_exploratory_early_dates_are_assessed_by_pinned_verifier(self):
         # Post-pilot diagnostic: normalize only the rejected decimal syntax to
         # whole units. This is not a model success or an accepted AI candidate.
