@@ -19,6 +19,7 @@ from . import model_attempts
 GROQ_MODEL = "openai/gpt-oss-120b"
 GEMINI_MODEL = "gemini-3.8-flash"
 PROMPT_VERSION = "m16-fulfillment-claims-v1"
+BINDING_PROMPT_SUFFIX = "-m17-binding-optin-m19-wholeunits-v1"
 MAX_OUTPUT_TOKENS = 2048
 MAX_PROMPT_BYTES = 20000
 MAX_MODEL_TURNS = 6
@@ -102,7 +103,8 @@ FINAL_SCHEMA = {"type": "object", "properties": {
 BINDING_FINAL_SCHEMA = deepcopy(FINAL_SCHEMA)
 BINDING_FINAL_SCHEMA["properties"]["kind"]["enum"].append("binding_proposal")
 BINDING_FINAL_SCHEMA["properties"]["delivery_slices"] = {"type": "array", "items": {
-    "type": "object", "properties": {"quantity": {"type": "string"},
+    "type": "object", "properties": {"quantity": {"type": "string", "description":
+        "Positive whole-unit ASCII digit string, for example '8' or '12'. Never '8.000', '8.0', a fraction, or a JSON number."},
         "delivery_date": {"type": "string"},
         "source_refs": {"type": "array", "items": {"type": "string"}}},
     "required": ["quantity", "delivery_date", "source_refs"],
@@ -174,10 +176,16 @@ def _prompt(input, observations, *, enable_binding_proposals=False):
             "Each slice must cite returned inventory or inbound_supply source_refs; never use "
             "supplier_offer as a confirmed source. The pinned Phase 1C verifier may reject "
             "quantities, dates or customer constraints. Use tradeoff_code "
-            "partial_delivery_requires_customer_acceptance. If no binding path supports "
+            "partial_delivery_requires_customer_acceptance. For binding_proposal, each "
+            "quantity must be a positive whole-unit string of ASCII digits only: write '8' "
+            "and '2', never '8.000', '8.0', 8, a rounded fraction or a unit with a suffix. "
+            "Copy dates and source_refs exactly as supported by returned binding paths; "
+            "do not attach an inbound source to a stock-only early slice or invent a date. "
+            "If exact whole units or source-to-slice support are uncertain, abstain or report "
+            "a bounded finding. If no binding path supports "
             "a suggestion, report bounded findings or abstain. "
             if enable_binding_proposals else "")
-    return (PROMPT_VERSION + ("-m17-binding-optin" if enable_binding_proposals else "") +
+    return (PROMPT_VERSION + (BINDING_PROMPT_SUFFIX if enable_binding_proposals else "") +
             ". You investigate a fulfillment shortage. Only tool responses are citable; "
             "their returned_refs are source-category:source-id. Supplier offers are conditional, "
             "never confirmed. An empty bounded pool does not prove no supply exists. "

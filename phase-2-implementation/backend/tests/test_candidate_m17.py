@@ -72,6 +72,13 @@ class BindingContractTests(unittest.TestCase):
         self.assertEqual(result["verification"], "unverified")
         self.assertEqual([s["quantity"] for s in result["delivery_slices"]], ["8", "2"])
 
+    def test_whole_unit_output_contract_rejects_decimal_and_fractional_strings(self):
+        for raw in ("8.000", "8.0", "8.5", 8, "8 units", "８"):
+            with self.subTest(raw=raw), self.assertRaises(ValueError):
+                validate_binding_proposal(proposal(early=raw), fake_input(), ledger())
+        self.assertEqual(validate_binding_proposal(proposal(early="8"), fake_input(),
+                                                   ledger())["delivery_slices"][0]["quantity"], "8")
+
     def test_offer_or_unseen_source_cannot_be_labeled_binding(self):
         for bad in (proposal(source="not-returned"),
                     {**proposal(), "delivery_slices": [proposal()["delivery_slices"][0],

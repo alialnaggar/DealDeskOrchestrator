@@ -18,7 +18,8 @@ import psycopg
 from .checkpoint import thesis_checkpointer
 from .evaluation_m18 import capture_trial, pinned_baseline, structural_flags
 from .investigation_graph import run_original_investigate_and_review
-from .live_models import GROQ_MODEL, PROMPT_VERSION, LiveInvestigationModel
+from .live_models import (GROQ_MODEL, PROMPT_VERSION, BINDING_PROMPT_SUFFIX,
+                          LiveInvestigationModel)
 from .orchestrator import build_original_graph
 from .phase1c_adapter import Phase1CAdapter
 
@@ -87,7 +88,7 @@ def run_one(case_id: str, trial: int, output: Path) -> dict:
         state = graph.get_state(config).values
     observation = capture_trial(case_id, state, baseline,
                                 provider="groq", model=GROQ_MODEL,
-                                prompt_version=PROMPT_VERSION + "-m17-binding-optin")
+                                prompt_version=PROMPT_VERSION + BINDING_PROMPT_SUFFIX)
     observation["trial"] = trial
     observation["started_at_utc"] = started.isoformat()
     observation["elapsed_ms"] = round((monotonic() - before) * 1000)

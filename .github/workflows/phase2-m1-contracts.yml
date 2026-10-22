@@ -54,6 +54,13 @@ jobs:
           ref: 90c0bc8e285ee69262c7db826b786096a77ad004
           path: phase1c-pinned
           persist-credentials: false
+      - name: Check out separately observed Phase 1C development snapshot for compatibility only
+        uses: actions/checkout@v6
+        with:
+          repository: alialnaggar/DealDeskOrchestrator
+          ref: 963d217991afa78c8273386f83a13e7de3b87cc2
+          path: phase1c-development-m19
+          persist-credentials: false
       - name: Verify Phase 1C source identity
         run: test "$(git -C phase1c-pinned rev-parse HEAD)" = '90c0bc8e285ee69262c7db826b786096a77ad004'
       - name: Install locked Phase 2 and compatible Phase 1C dependencies
@@ -76,3 +83,16 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f /tmp/phase2_m1_compiled_rules.sql
       - name: Run pinned reader, graph, bounded tool, offline AI and PostgreSQL restart tests
         run: python -m unittest discover -s phase-2-implementation/backend/tests -p 'test_*.py' -v
+      - name: Compare two Phase 1C contracts without changing the production pin
+        run: |
+          test "$(git -C phase1c-development-m19 rev-parse HEAD)" = '963d217991afa78c8273386f83a13e7de3b87cc2'
+          python -m dealdesk_phase2.compat_m19 \
+            --pinned phase1c-pinned --development phase1c-development-m19 \
+            --output phase-2-implementation/backend/benchmarks/results/m19-compatibility.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m19-disposable-compatibility
+          path: phase-2-implementation/backend/benchmarks/results/m19-compatibility.json
+          if-no-files-found: ignore
+          retention-days: 7

@@ -10,7 +10,8 @@ from uuid import UUID
 from langgraph.checkpoint.memory import InMemorySaver
 
 from dealdesk_phase2.live_models import (LiveInvestigationModel, ProviderError, _post,
-                                         _canonical_final, BINDING_FINAL_SCHEMA, FINAL_SCHEMA)
+                                         _canonical_final, _prompt, BINDING_PROMPT_SUFFIX,
+                                         BINDING_FINAL_SCHEMA, FINAL_SCHEMA)
 from dealdesk_phase2.investigation_graph import run_original_then_investigate
 from dealdesk_phase2.orchestrator import build_original_graph
 from dealdesk_phase2.phase1c_adapter import Phase1CAdapter
@@ -39,6 +40,27 @@ class LiveModelTests(TestCase):
         self.assertEqual(BINDING_FINAL_SCHEMA["properties"]["kind"]["enum"][-1],
                          "binding_proposal")
         self.assertNotIn("binding_proposal", FINAL_SCHEMA["properties"]["kind"]["enum"])
+
+    def test_m19_binding_guidance_preserves_raw_quantities_for_strict_validation(self):
+        from test_candidate_m17 import fake_input
+
+        prompt = _prompt(fake_input(), (), enable_binding_proposals=True)
+        self.assertIn(BINDING_PROMPT_SUFFIX, prompt)
+        self.assertIn("never '8.000', '8.0', 8", prompt)
+        self.assertIn("source-to-slice support", prompt)
+        self.assertNotIn(BINDING_PROMPT_SUFFIX, _prompt(fake_input(), ()))
+        quantity_schema = BINDING_FINAL_SCHEMA["properties"]["delivery_slices"]["items"]["properties"]["quantity"]
+        self.assertEqual(quantity_schema["type"], "string")
+        self.assertIn("Never '8.000'", quantity_schema["description"])
+        # The adapter must not repair the model's raw output behind the audit's back.
+        raw = {**final(), "kind": "binding_proposal", "tradeoff_code":
+               "partial_delivery_requires_customer_acceptance",
+               "delivery_slices": [{"quantity": "8.000", "delivery_date": "2026-09-04",
+                                    "source_refs": ["inventory:STOCK"]},
+                                   {"quantity": "2", "delivery_date": "2026-09-08",
+                                    "source_refs": ["inbound_supply:IN"]}], "claims": []}
+        mapped = _canonical_final(raw)
+        self.assertEqual(mapped["value"]["payload"]["delivery_slices"][0]["quantity"], "8.000")
 
     def test_live_request_uses_descriptive_api_client_identity(self):
         from io import BytesIO
