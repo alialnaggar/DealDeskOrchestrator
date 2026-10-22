@@ -80,3 +80,7 @@ python phase1c_evaluation_acceptance.py --intake /private/dispositions.json --re
 ```
 
 The report counts **recorded attestations only**. It never certifies business correctness or independent expertise and cannot turn existing model/author drafts into human source-first reviews. A source or reviewer file change invalidates its hash binding. Do not score an agent or alter the release flag based on structural counts. The current reviewer workspace is blank; **0/36 accepted**, `ready_for_generation=false`, PR #1 draft.
+
+## Model-assisted diagnostic use — 22 October 2026
+
+Ali chose to use the existing Codex analysis for development diagnostics rather than personally adjudicate every case in chat. The [36-case reconciliation](v2_model_assisted_diagnostic_reconciliation.md) puts the three source-first aids into one case-pair index and records draft wording errors, the 019/020 route difference, hard-block routing and attribution questions. It is **not** an independent answer key. Its proposed gates may guide qualitative discrepancy investigation, but may not be counted as correct labels or used for an agent accuracy score. The reviewer-only workspace and intake remain separate and unaccepted at **0/36**. A future scored subset needs separately adjudicated findings for those exact cases, with assistance disclosed. The runtime-output mark and final release audit remain open; `ready_for_generation=false`, PR #1 draft.
