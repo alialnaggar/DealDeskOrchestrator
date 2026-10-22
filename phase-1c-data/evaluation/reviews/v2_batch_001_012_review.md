@@ -1,6 +1,6 @@
 # V2 cases 001–012: source-first review aid — 22 October 2026
 
-**Status:** model-assisted primary analysis for an accountable reviewer; **0/12 accepted here, 0/36 accepted overall**. This is neither an answer key nor an agent score. Keep it outside agent-visible inputs. It does not replace the blank reviewer workspace or the independently recorded six-responsibility review.
+**Status:** Codex model-assisted analysis for an accountable reviewer; **0/12 accepted here, 0/36 accepted overall**. This is neither an answer key nor an agent score. Keep it outside agent-visible inputs. It does not replace the blank reviewer workspace or the independently recorded six-responsibility review.
 
 ## Source and method
 
