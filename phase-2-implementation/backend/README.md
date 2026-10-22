@@ -206,29 +206,25 @@ forbids partial delivery: the offline double reports a cited finding without
 proposing a split. The synthetic 20-unit 12+8 proposal test is explicitly
 unverified; the pinned Phase 1C interface cannot verify its mixed path.
 
-## M1.4 opt-in Groq/Gemini comparison
+## Historical M1.4 comparison; active Groq-only runtime
 
-`live_models.py` implements two narrowly scoped standard-library HTTP adapters
-behind the M1.3 `InvestigationModel` protocol. Groq uses
-`openai/gpt-oss-120b`; Gemini uses `gemini-3.8-flash`. Each requests at most
-one local tool at a time and uses a separate structured final request. Runtime
-validation, authorized M1.2 execution and original/fixed results remain
-unchanged. `model_attempts.py` records a sanitized reservation and completion
-in the existing PostgreSQL checkpoint. Completed requests replay without a
-second provider call; an interrupted reservation stops safely. No API key,
-raw provider response or raw request body is checkpointed.
+M1.4 compared the two providers experimentally. The [method](benchmarks/m1.4-method.md),
+[initial failures](benchmarks/m1.4-live-smoke-results.md),
+[diagnostic](benchmarks/m1.4-connectivity-diagnostic.md) and
+[gated smoke](benchmarks/m1.4-gated-smoke-results.md) are preserved as historical
+thesis evidence. They do not establish a quality winner. Ali subsequently
+discontinued Gemini as a development LLM. The experimental Gemini adapter,
+provider-selection CLI, diagnostic runner, Gemini-only offline tests, and old
+paired live workflows are removed from active code. The historical reports are
+not rerun or rewritten.
 
-The [M1.4 benchmark protocol](benchmarks/m1.4-method.md) describes the
-two actual pinned cases, repeated-trial limitation, quotas, metrics, opt-in
-runner and critical failures. Routine CI uses patched HTTP responses only;
-it never reads credentials or makes live API calls. [Live smoke results](benchmarks/m1.4-live-smoke-results.md) now record two
-failed eligible requests per provider: Groq HTTP 403 and Gemini HTTP 503.
-The original fixed results remain intact. No successful inference, paired
-benchmark or provider-quality conclusion has been measured.
-
-The [M1.4 connectivity diagnostic](benchmarks/m1.4-connectivity-diagnostic.md) verified Groq minimal access after a descriptive User-Agent change and identified a Gemini `responseSchema` field rejected by `generateContent`. The Gemini schema projection now omits `additionalProperties` while local validation remains strict. Live Gemini structured output and tool calling remain unverified because generation timed out or returned 503. No paired Fulfillment result or provider selection is claimed.
-
-The [gated M1.4 smoke](benchmarks/m1.4-gated-smoke-results.md) exercised the actual pinned conditional-offer fixture. Groq completed one evidence-cited finding without a proposal; Gemini's structured and tool probes did not pass, so its eligible smoke was skipped. No candidate was generated or deterministically verified. The existing offline and PostgreSQL CI passed 49 tests.
+`live_models.py` now supports Groq `openai/gpt-oss-120b` only. Its sole
+credential is `GROQ_API_KEY`; routine CI uses patched responses without any
+secret or live call. `model_attempts.py` checkpoints sanitized requests and
+outcomes; completed responses replay without duplicate calls, and interrupted
+reservations stop safely. The M1.8/M1.9 opt-in one-trial workflow is Groq-only
+and requires separate case-specific authorization before a future live run.
+No permanent provider or paid billing has been selected.
 
 ## M1.5–M1.6 status
 

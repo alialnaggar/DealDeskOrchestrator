@@ -80,7 +80,7 @@ def run_one(case_id: str, trial: int, output: Path) -> dict:
     with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:
         graph = build_original_graph(adapter, factory, saver)
         config = {"configurable": {"thread_id": assessment}}
-        model = LiveInvestigationModel("groq", graph, config,
+        model = LiveInvestigationModel(graph, config,
                                        pace_seconds=12, enable_binding_proposals=True)
         state = run_original_investigate_and_review(
             graph, config, adapter, model, assessment_id=assessment, run_id=case.run_id)

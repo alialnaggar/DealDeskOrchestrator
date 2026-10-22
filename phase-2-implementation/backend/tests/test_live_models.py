@@ -84,9 +84,9 @@ class LiveModelTests(TestCase):
         self.graph = build_original_graph(self.adapter, None, self.saver)
         self.config = {"configurable": {"thread_id": self.id()}}
 
-    def run_model(self, provider, responses):
-        model = LiveInvestigationModel(provider, self.graph, self.config)
-        with patch.dict(os.environ, {"GROQ_API_KEY": "test-secret", "GEMINI_API_KEY": "test-secret"}), \
+    def run_model(self, responses):
+        model = LiveInvestigationModel(self.graph, self.config)
+        with patch.dict(os.environ, {"GROQ_API_KEY": "test-secret"}), \
              patch("dealdesk_phase2.live_models._post", side_effect=responses) as request:
             result = run_original_then_investigate(self.graph, self.config, self.adapter,
                 model, assessment_id=self.id(), run_id=RUN)
@@ -101,7 +101,7 @@ class LiveModelTests(TestCase):
                  "choices": [{"message": {"content": "READY"}}]}
         ending = {"model": "openai/gpt-oss-120b", "usage": {},
                   "choices": [{"message": {"content": json.dumps(final())}}]}
-        state, request = self.run_model("groq", [tool, ready, ending])
+        state, request = self.run_model([tool, ready, ending])
         self.assertEqual(request.call_count, 3)
         self.assertEqual(state["ai_fulfillment_result"]["execution"], "completed")
         self.assertEqual(state["ai_fulfillment_result"]["contribution"]["kind"],
@@ -112,27 +112,11 @@ class LiveModelTests(TestCase):
         self.assertNotIn("test-secret", str(ledger))
         self.assertEqual(state["specialist_results"]["fulfillment"]["execution"], "completed")
 
-    def test_gemini_function_call_then_structured_final(self):
-        tool = {"modelVersion": "gemini-3.8-flash", "usageMetadata": {
-                "promptTokenCount": 31, "candidatesTokenCount": 8},
-                "candidates": [{"content": {"parts": [{"functionCall": {
-                    "name": "inspect_line_supply", "args": {"line_id": "L1"}}}]}}]}
-        ready = {"candidates": [{"content": {"parts": [{"text": "READY"}]}}]}
-        ending = {"candidates": [{"content": {"parts": [
-                  {"text": json.dumps(final())}]}}]}
-        state, request = self.run_model("gemini", [tool, ready, ending])
-        self.assertEqual(state["ai_fulfillment_result"]["execution"], "completed")
-        self.assertEqual(request.call_count, 3)
-        self.assertEqual(sum(bool(x["counted"]) for x in state["tool_access_ledger"]), 1)
-        schema = request.call_args_list[-1].args[3]["generationConfig"]["responseSchema"]
-        self.assertNotIn("additionalProperties", json.dumps(schema))
-        self.assertEqual(set(schema["required"]), set(schema["properties"]))
-
     def test_unsupported_citation_and_fabricated_confirmation_are_rejected(self):
         ready = {"choices": [{"message": {"content": "READY"}}]}
         ending = {"choices": [{"message": {"content": json.dumps(final(
                   citations=("supplier_offer:unseen",)))}}]}
-        result, _ = self.run_model("groq", [ready, ending])
+        result, _ = self.run_model([ready, ending])
         self.assertEqual(result["ai_fulfillment_result"]["error"], "unsupported_citation")
         self.assertEqual(result["review_status"], "needs_revision")
         self.setUp()
@@ -140,19 +124,19 @@ class LiveModelTests(TestCase):
         falsified["kind"] = "proposal"
         falsified["delivery_slices"] = [{"quantity": "20", "delivery_date": "2026-09-04",
                                          "commitment_claim": "confirmed"}]
-        result, _ = self.run_model("groq", [ready, {"choices": [{"message": {
+        result, _ = self.run_model([ready, {"choices": [{"message": {
             "content": json.dumps(falsified)}}]}])
         self.assertEqual(result["ai_fulfillment_result"]["error"], "malformed_contribution")
 
     def test_quota_and_missing_key_keep_fixed_result(self):
-        result, _ = self.run_model("groq", [ProviderError("http_429")])
+        result, _ = self.run_model([ProviderError("http_429")])
         self.assertEqual(result["ai_fulfillment_result"]["execution"], "error")
         self.assertEqual(result["model_attempt_ledger"][-1]["error_code"], "http_429")
         self.assertEqual(result["specialist_results"]["fulfillment"]["execution"], "completed")
         self.setUp()
         with patch.dict(os.environ, {"GROQ_API_KEY": ""}):
             result = run_original_then_investigate(self.graph, self.config, self.adapter,
-                LiveInvestigationModel("groq", self.graph, self.config),
+                LiveInvestigationModel(self.graph, self.config),
                 assessment_id=self.id(), run_id=RUN)
         self.assertEqual(result["ai_fulfillment_result"]["execution"], "error")
         self.assertNotIn("model_attempt_ledger", result)
@@ -166,7 +150,7 @@ class LiveModelTests(TestCase):
                 action = self.wrapped.next_action(input, observations)
                 if not observations: raise KeyboardInterrupt("after response checkpoint")
                 return action
-        model = LiveInvestigationModel("groq", self.graph, self.config)
+        model = LiveInvestigationModel(self.graph, self.config)
         with patch.dict(os.environ, {"GROQ_API_KEY": "test-secret"}), \
              patch("dealdesk_phase2.live_models._post", return_value=first) as request:
             with self.assertRaises(KeyboardInterrupt):
@@ -174,7 +158,7 @@ class LiveModelTests(TestCase):
                     InterruptAfterFirst(model), assessment_id=self.id(), run_id=RUN)
             self.assertEqual(request.call_count, 1)
         restarted = build_original_graph(self.adapter, None, self.saver)
-        model = LiveInvestigationModel("groq", restarted, self.config)
+        model = LiveInvestigationModel(restarted, self.config)
         ready = {"choices": [{"message": {"content": "READY"}}]}
         ending = {"choices": [{"message": {"content": json.dumps(final())}}]}
         with patch.dict(os.environ, {"GROQ_API_KEY": "test-secret"}), \
@@ -186,7 +170,7 @@ class LiveModelTests(TestCase):
         self.assertEqual(result["ai_fulfillment_result"]["execution"], "completed")
 
     def test_interrupted_reservation_does_not_auto_repeat(self):
-        model = LiveInvestigationModel("groq", self.graph, self.config)
+        model = LiveInvestigationModel(self.graph, self.config)
         with patch.dict(os.environ, {"GROQ_API_KEY": "test-secret"}), \
              patch("dealdesk_phase2.live_models._post", side_effect=KeyboardInterrupt):
             with self.assertRaises(KeyboardInterrupt):
@@ -196,7 +180,7 @@ class LiveModelTests(TestCase):
         with patch.dict(os.environ, {"GROQ_API_KEY": "test-secret"}), \
              patch("dealdesk_phase2.live_models._post") as request:
             result = run_original_then_investigate(restarted, self.config, self.adapter,
-                LiveInvestigationModel("groq", restarted, self.config),
+                LiveInvestigationModel(restarted, self.config),
                 assessment_id=self.id(), run_id=RUN)
         self.assertEqual(request.call_count, 0)
         self.assertEqual(result["ai_fulfillment_result"]["execution"], "error")
@@ -235,7 +219,7 @@ class PinnedLiveReplayTests(TestCase):
                  patch("dealdesk_phase2.live_models._post", return_value=tool_response):
                 with self.assertRaises(KeyboardInterrupt):
                     run_original_then_investigate(graph, config, adapter,
-                        AfterCompletedDecision(LiveInvestigationModel("groq", graph, config)),
+                        AfterCompletedDecision(LiveInvestigationModel(graph, config)),
                         assessment_id=assessment, run_id=run)
             self.assertEqual(len([x for x in graph.get_state(config).values["model_attempt_ledger"]
                                   if x["status"] == "completed"]), 1)
@@ -249,7 +233,7 @@ class PinnedLiveReplayTests(TestCase):
             with patch.dict(os.environ, {"GROQ_API_KEY": "test-secret"}), \
                  patch("dealdesk_phase2.live_models._post", side_effect=[ready, ending]) as request:
                 result = run_original_then_investigate(graph, config, adapter,
-                    LiveInvestigationModel("groq", graph, config),
+                    LiveInvestigationModel(graph, config),
                     assessment_id=assessment, run_id=run)
             self.assertEqual(request.call_count, 2)
             self.assertEqual(result["ai_fulfillment_result"]["execution"], "completed")

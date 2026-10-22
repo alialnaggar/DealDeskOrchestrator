@@ -1,7 +1,7 @@
-"""Opt-in Groq/Gemini REST adapters for the M1.3 investigation protocol.
+"""Opt-in Groq REST adapter for the M1.3 investigation protocol.
 
 Only model-selected local function calls cross into M1.2's trusted adapter.
-No provider has database access. Both use a separate structured final turn.
+The model has no database access. A separate turn returns structured output.
 """
 
 from dataclasses import asdict
@@ -17,7 +17,6 @@ from . import model_attempts
 
 
 GROQ_MODEL = "openai/gpt-oss-120b"
-GEMINI_MODEL = "gemini-3.8-flash"
 PROMPT_VERSION = "m16-fulfillment-claims-v1"
 BINDING_PROMPT_SUFFIX = "-m17-binding-optin-m19-wholeunits-v2"
 MAX_OUTPUT_TOKENS = 2048
@@ -153,20 +152,6 @@ def _canonical_final(raw):
             "payload": {field: raw[field] for field in fields}}}
 
 
-def _gemini_schema(value):
-    """Project the strict local schema onto generateContent's supported fields.
-
-    Its responseSchema rejects additionalProperties; _canonical_final and the
-    specialist contract still reject unexpected model fields after generation.
-    """
-    if isinstance(value, dict):
-        return {key: _gemini_schema(item) for key, item in value.items()
-                if key != "additionalProperties"}
-    if isinstance(value, list):
-        return [_gemini_schema(item) for item in value]
-    return value
-
-
 def _prompt(input, observations, *, enable_binding_proposals=False):
     safe = {key: value for key, value in asdict(input).items()
             if key not in ("assessment_id", "phase1c_run_id", "subject_id",
@@ -212,27 +197,22 @@ def _prompt(input, observations, *, enable_binding_proposals=False):
 
 
 class LiveInvestigationModel:
-    def __init__(self, provider: str, graph, config, *, pace_seconds: float = 0,
+    def __init__(self, graph, config, *, pace_seconds: float = 0,
                  enable_binding_proposals: bool = False):
-        if provider not in ("groq", "gemini"):
-            raise ValueError("Unknown benchmark provider")
-        self.provider = provider
-        self.model = GROQ_MODEL if provider == "groq" else GEMINI_MODEL
+        self.provider = "groq"
+        self.model = GROQ_MODEL
         self.graph, self.config = graph, config
         self.pace_seconds = pace_seconds
         self.enable_binding_proposals = enable_binding_proposals
         self._last_sent = None
 
     def _request(self, input, step: int, phase: str, body: dict):
-        key_name = "GROQ_API_KEY" if self.provider == "groq" else "GEMINI_API_KEY"
-        key = os.environ.get(key_name)
+        key = os.environ.get("GROQ_API_KEY")
         if not key:
             raise ProviderError("missing_credential")
-        url = ("https://api.groq.com/openai/v1/chat/completions" if self.provider == "groq"
-               else "https://generativelanguage.googleapis.com/v1beta/models/"
-                    + self.model + ":generateContent")
-        header = "Authorization" if self.provider == "groq" else "x-goog-api-key"
-        auth = "Bearer " + key if self.provider == "groq" else key
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        header = "Authorization"
+        auth = "Bearer " + key
         digest = sha256(_json(body).encode()).hexdigest()
         attempt_id = sha256(f"{input.assessment_id}:{input.bundle_sha256}:"
                             f"{self.provider}:{self.model}:{step}:{phase}".encode()).hexdigest()
@@ -266,74 +246,40 @@ class LiveInvestigationModel:
             raise ProviderError("model_turn_budget_exhausted")
         prompt = _prompt(input, observations,
                          enable_binding_proposals=self.enable_binding_proposals)
-        if self.provider == "groq":
-            tools = [{"type": "function", "function": {"name": name,
-                      "description": "Read only pinned Fulfillment evidence",
-                      "parameters": TOOL_PARAMETERS[name]}}
-                     for name in input.permitted_tools]
-            decision = {"model": self.model, "temperature": 0, "max_completion_tokens": 1024,
-                        "parallel_tool_calls": False, "tool_choice": "auto", "tools": tools,
-                        "messages": [{"role": "system", "content": "Choose at most one local tool or say READY."},
-                                     {"role": "user", "content": prompt}]}
-        else:
-            declarations = [{"name": name, "description": "Read only pinned Fulfillment evidence",
-                             "parameters": TOOL_PARAMETERS[name]}
-                            for name in input.permitted_tools]
-            decision = {"contents": [{"role": "user", "parts": [{"text": prompt}]}],
-                        "tools": [{"functionDeclarations": declarations}],
-                        "toolConfig": {"functionCallingConfig": {"mode": "AUTO"}},
-                        "generationConfig": {"temperature": 0, "maxOutputTokens": 1024}}
+        tools = [{"type": "function", "function": {"name": name,
+                  "description": "Read only pinned Fulfillment evidence",
+                  "parameters": TOOL_PARAMETERS[name]}}
+                 for name in input.permitted_tools]
+        decision = {"model": self.model, "temperature": 0, "max_completion_tokens": 1024,
+                    "parallel_tool_calls": False, "tool_choice": "auto", "tools": tools,
+                    "messages": [{"role": "system", "content": "Choose at most one local tool or say READY."},
+                                 {"role": "user", "content": prompt}]}
         first = self._request(input, step, "decision", decision)
         if first["type"] == "tool":
             return first
         final_prompt = prompt + "\nReturn the final JSON under the specified schema now; no tool call."
-        if self.provider == "groq":
-            final = {"model": self.model, "temperature": 0,
-                     "max_completion_tokens": MAX_OUTPUT_TOKENS,
-                     "messages": [{"role": "system", "content": "Output the evidence-limited JSON assessment."},
-                                  {"role": "user", "content": final_prompt}],
-                     "response_format": {"type": "json_schema", "json_schema": {
-                         "name": "fulfillment_contribution", "strict": True,
-                         "schema": BINDING_FINAL_SCHEMA if self.enable_binding_proposals else FINAL_SCHEMA}}}
-        else:
-            final = {"contents": [{"role": "user", "parts": [{"text": final_prompt}]}],
-                     "generationConfig": {"temperature": 0,
-                         "maxOutputTokens": MAX_OUTPUT_TOKENS,
-                         "responseMimeType": "application/json", "responseSchema": _gemini_schema(
-                             BINDING_FINAL_SCHEMA if self.enable_binding_proposals else FINAL_SCHEMA)}}
+        final = {"model": self.model, "temperature": 0,
+                 "max_completion_tokens": MAX_OUTPUT_TOKENS,
+                 "messages": [{"role": "system", "content": "Output the evidence-limited JSON assessment."},
+                              {"role": "user", "content": final_prompt}],
+                 "response_format": {"type": "json_schema", "json_schema": {
+                     "name": "fulfillment_contribution", "strict": True,
+                     "schema": BINDING_FINAL_SCHEMA if self.enable_binding_proposals else FINAL_SCHEMA}}}
         return self._request(input, step, "final", final)
 
     def _parse(self, response: dict, phase: str):
-        if self.provider == "groq":
-            choice = response["choices"][0]["message"]
-            calls = choice.get("tool_calls") or []
-            if phase == "decision" and calls:
-                if len(calls) != 1:
-                    raise ProviderError("multiple_tool_calls")
-                function = calls[0]["function"]
-                action = {"type": "tool", "tool": function["name"],
-                          "arguments": json.loads(function["arguments"])}
-            elif phase == "decision":
-                action = {"type": "ready"}
-            else:
-                action = _canonical_final(json.loads(choice["content"]))
-            usage = response.get("usage") or {}
-            return action, {"input_tokens": usage.get("prompt_tokens"),
-                            "output_tokens": usage.get("completion_tokens")}, response.get("model")
-        candidate = response["candidates"][0]
-        parts = candidate["content"]["parts"]
-        calls = [p["functionCall"] for p in parts if "functionCall" in p]
+        choice = response["choices"][0]["message"]
+        calls = choice.get("tool_calls") or []
         if phase == "decision" and calls:
             if len(calls) != 1:
                 raise ProviderError("multiple_tool_calls")
-            action = {"type": "tool", "tool": calls[0]["name"],
-                      "arguments": calls[0].get("args", {})}
+            function = calls[0]["function"]
+            action = {"type": "tool", "tool": function["name"],
+                      "arguments": json.loads(function["arguments"])}
         elif phase == "decision":
             action = {"type": "ready"}
         else:
-            action = _canonical_final(json.loads("".join(p.get("text", "") for p in parts)))
-        usage = response.get("usageMetadata") or {}
-        return action, {"input_tokens": usage.get("promptTokenCount"),
-                        "output_tokens": usage.get("candidatesTokenCount"),
-                        "thinking_tokens": usage.get("thoughtsTokenCount"),
-                        "total_tokens": usage.get("totalTokenCount")}, response.get("modelVersion")
+            action = _canonical_final(json.loads(choice["content"]))
+        usage = response.get("usage") or {}
+        return action, {"input_tokens": usage.get("prompt_tokens"),
+                        "output_tokens": usage.get("completion_tokens")}, response.get("model")
