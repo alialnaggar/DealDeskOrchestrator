@@ -391,6 +391,11 @@ jobs:
           name: phase1c-review-workspace-validation
           path: /tmp/phase1c_review_workspace_validation.json
           if-no-files-found: error
+      - name: Check reviewer-only human disposition intake
+        run: |
+          python -m unittest -v test_phase1c_evaluation_acceptance
+          python phase1c_evaluation_acceptance.py --check-empty > /tmp/phase1c_acceptance_intake_validation.json
+          python -m json.tool /tmp/phase1c_acceptance_intake_validation.json
       - name: Validate separate model review drafts against pinned facts
         run: |
           python phase1c_evaluation_review.py --index ../evaluation/archive/v1/provisional_packet_index.json --review-file ../evaluation/reviews/model_review_draft.json --packet-directory /tmp/phase1c_evaluation_packets_v1 > /tmp/phase1c_model_review_validation.json
