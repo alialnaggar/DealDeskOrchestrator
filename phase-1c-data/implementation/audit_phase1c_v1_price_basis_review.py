@@ -1,6 +1,6 @@
 """Produce a source-only V1 price/cost provenance ledger for field review.
 
-The separate review convention is proposed, never injected into source inputs.
+The selected fictional convention is recorded separately from pinned source inputs.
 """
 
 from collections import Counter
@@ -26,7 +26,9 @@ HISTORICAL_DEAL = re.compile(
 def audit(portfolio, costs, config, contract, review, historical_sql):
     version = portfolio["catalog_version"]
     if (review["catalog_version"] != version or review["currency"] != config["currency"]
-            or review["status"] != "proposed_synthetic_convention_for_review_not_calibration_freeze"
+            or review["status"] != "approved_bounded_synthetic_v1_convention_not_calibration_release"
+            or review["decision"] != "Ali selected bounded synthetic V1 convention on 22 October 2026; this does not approve market comparability, historical price validity or evaluation answers."
+            or review["quote_arithmetic_basis"] != "Fictional tax-exclusive list price and standard cost per stored product unit; no freight or tax adjustment is included in catalogue margin arithmetic."
             or review["ready_for_generation"] is not False):
         raise ValueError("review scope, currency or provisional status differs")
     expected, _ = expected_rows(portfolio, costs, config, contract)
@@ -74,7 +76,7 @@ def audit(portfolio, costs, config, contract, review, historical_sql):
     dates = [datetime.fromisoformat(submitted).date() for _, submitted in historical]
     calibrated = date.fromisoformat(str(config["product_catalogue"]["metadata"]["calibrated_on"]))
     return {
-        "basis": "source_only_review_ledger_not_a_released_price_contract",
+        "basis": "source_only_bounded_synthetic_v1_convention_not_market_calibration",
         "review_status": review["status"], "catalog_version": version,
         "currency": review["currency"], "catalogue_calibrated_on": str(
             config["product_catalogue"]["metadata"]["calibrated_on"]),
@@ -90,7 +92,7 @@ def audit(portfolio, costs, config, contract, review, historical_sql):
         "sellable_unit_mismatches": len(mismatched),
         "sku_observation_dates_recorded": 0,
         "sku_price_effective_intervals_recorded": 0,
-        "tax_basis_for_v1": "proposed_synthetic_tax_exclusive_not_yet_dispositioned",
+        "tax_basis_for_v1": "approved_fictional_tax_exclusive_per_stored_unit",
         "rows": rows, "accepted_evaluation_answers": 0,
         "ready_for_generation": False,
     }
