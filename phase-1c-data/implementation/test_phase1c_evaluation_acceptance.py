@@ -8,7 +8,8 @@ import tempfile
 import unittest
 
 from phase1c_evaluation_review import build_review_workspace, digest, render, EVALUATION, RESPONSIBILITIES
-from phase1c_evaluation_acceptance import empty_intake, bind_source_review, validate_intake
+from phase1c_evaluation_acceptance import (empty_intake, bind_source_review,
+                                           check_v2_index, validate_intake)
 
 
 class AcceptanceIntakeTests(unittest.TestCase):
@@ -66,11 +67,27 @@ class AcceptanceIntakeTests(unittest.TestCase):
         if not index_path.exists():
             index_path = Path(__file__).resolve().parent / "provisional_packet_index.json"
         index = json.loads(index_path.read_text())
+        check_v2_index(index)
         report = validate_intake(empty_intake(index), index)
         self.assertEqual(report, {"errors": [], "pending_cases": 36,
             "reviewed_pending_cases": 0,
             "recorded_acceptances": 0, "recorded_rejections": 0,
             "independence_or_correctness_certified": False})
+
+    def test_intake_cli_index_pin_rejects_coherent_unapproved_version(self):
+        index_path = EVALUATION / "provisional_packet_index.json"
+        if not index_path.exists():
+            index_path = Path(__file__).resolve().parent / "provisional_packet_index.json"
+        index = json.loads(index_path.read_text())
+        check_v2_index(index)
+        changed = deepcopy(index)
+        changed["cases"][0]["packet_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "differs from pinned v2"):
+            check_v2_index(changed)
+        changed = deepcopy(index)
+        changed["source_definition_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "differs from pinned v2"):
+            check_v2_index(changed)
 
     def test_binding_human_review_is_pending_not_acceptance(self):
         data = render(self.review()).encode()
