@@ -39,3 +39,9 @@ The source-only audit currently reports exact arithmetic for all 36 cases, provi
 ## Boundary and next decision
 
 Case 020's modal-route proposal remains a **primary-author/model-assisted proposal**, not accepted merely because work continued. Ali's explicit choice on whether this specific conditional route is enough for a proposed `needs_commitment` gate would settle one business interpretation for review; it would not accept the six findings automatically. The other 35 cases also require substantive case-level verification. Six field marks, two catalogue calibration reviews and `ready_for_generation=false` remain open. PR #1 stays draft.
+
+## Input replay gate — 22 October 2026
+
+The current v2 source definitions and pinned packet index are unchanged. `test_phase1c_evaluation_cases.py` now prepares all 36 case packets, 36 separate provider files and the index twice through separate PostgreSQL connections on the clean, dedicated evaluation database, rolling back every case and each import. It verifies the pinned source-definition and per-case hashes in each pass, checks the 73 output filenames, and compares all file bytes across passes. Both passes require no development/historical or cross-case operational rows, no committed deal rows after export, and no answer-bearing keys. This is a reproducibility gate for the **existing v2 input version**; it neither creates a v3 nor rebinds the preserved original/author-assisted drafts.
+
+After the full PostgreSQL CI pass, v2 can be treated as the pinned input version for the current bounded synthetic scope. If any source fact or approved business convention changes, create a new version and redo the hashes and case review. The separate reviewer answer workspace remains blank with **0/36 accepted**; case 020 is unresolved and the final data release remains blocked by independent findings and runtime evidence.
