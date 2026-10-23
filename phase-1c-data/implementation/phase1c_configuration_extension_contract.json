@@ -6,5 +6,6 @@
   ],
   "deal_ids": ["EVALCFG-003-DEAL"],
   "generated_test_deal_ids": [],
+  "allowed_dataset_types": ["generated_test", "evaluation"],
   "rule_id": "EVALCFG-003-REQUIRES-ADDON"
 }
