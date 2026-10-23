@@ -1,0 +1,10 @@
+{
+  "catalog_version": "CATALOGUE_2026_V2",
+  "product_ids": [
+    "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-004-V2",
+    "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-005-V2"
+  ],
+  "deal_ids": ["EVALCFG-003-DEAL"],
+  "generated_test_deal_ids": [],
+  "rule_id": "EVALCFG-003-REQUIRES-ADDON"
+}
