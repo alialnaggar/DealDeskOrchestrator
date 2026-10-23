@@ -393,6 +393,20 @@ jobs:
             phase-1c-data/evaluation/configuration-extension/v1/authoring_manifest.json
             /tmp/phase1c_configuration_packets
           if-no-files-found: error
+      - name: Keep supplemental preflight cases out of six-specialist review
+        run: |
+          PHASE1C_CONFIGURATION_PACKETS=/tmp/phase1c_configuration_packets python -m unittest -v test_phase1c_configuration_review_scope
+          python phase1c_configuration_review_scope.py --packet-directory /tmp/phase1c_configuration_packets --candidate-index-output /tmp/phase1c_configuration_candidate_index.json --blank-review-output /tmp/phase1c_configuration_blank_review.json > /tmp/phase1c_configuration_review_scope.json
+          python -m json.tool /tmp/phase1c_configuration_review_scope.json
+      - name: Preserve blank Configuration review scope, without answers
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-configuration-review-scope
+          path: |
+            /tmp/phase1c_configuration_review_scope.json
+            /tmp/phase1c_configuration_candidate_index.json
+            /tmp/phase1c_configuration_blank_review.json
+          if-no-files-found: error
       - name: Audit configuration coverage of pinned v2 inputs without assigning answers
         run: |
           python -m unittest -v test_audit_phase1c_evaluation_configuration_coverage
