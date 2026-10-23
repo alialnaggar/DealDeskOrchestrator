@@ -380,6 +380,31 @@ jobs:
           name: phase1c-provisional-evaluation-inputs
           path: /tmp/phase1c_evaluation_packets
           if-no-files-found: error
+      - name: Audit configuration coverage of pinned v2 inputs without assigning answers
+        run: |
+          python -m unittest -v test_audit_phase1c_evaluation_configuration_coverage
+          python audit_phase1c_evaluation_configuration_coverage.py --index ../evaluation/provisional_packet_index.json --packet-directory /tmp/phase1c_evaluation_packets > /tmp/phase1c_v2_configuration_coverage.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/phase1c_v2_configuration_coverage.json').read_text())
+          assert report['input_index_sha256'] == '7deac5b7a9337a49e3a64b60ca99cd1c0118bb9cfa61ea9abe73b3cacfa444dc'
+          assert report['verified_packet_provider_hashes'] == 72
+          assert report['case_count'] == report['line_count'] == len(report['single_line_cases']) == 36
+          assert report['inactive_or_unsellable_cases'] == []
+          assert report['undeclared_selected_option_cases'] == []
+          assert report['make_to_order_without_matching_bom_cases'] == []
+          assert report['nonempty_configuration_cases'] == [f'EVAL-PREP-{i:03d}' for i in range(13, 27)]
+          assert report['active_compatibility_rule_types'] == ['installation_eligibility']
+          assert report['explicit_ineligible_region_cases'] == ['EVAL-PREP-029', 'EVAL-PREP-030']
+          assert report['independently_reviewed_answers'] == 0
+          PY
+      - name: Preserve source-only v2 configuration coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-v2-configuration-coverage
+          path: /tmp/phase1c_v2_configuration_coverage.json
+          if-no-files-found: error
       - name: Check reviewer-only draft workspace boundary
         run: |
           python -m unittest -v test_phase1c_evaluation_review
