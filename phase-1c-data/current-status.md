@@ -44,3 +44,7 @@ Continue the runtime-output evidence and independent case-level evaluation revie
 ## Completion sequence
 
 The [ordered data completion plan](implementation/phase1c_data_completion_plan.md) defines eight steps and their pass criteria, including which calibration/field/runtime work can proceed in parallel. The release flag remains false until its final audit; this page remains the short status snapshot.
+
+## 23 October 2026 — integrated pre-release inventory
+
+`implementation/audit_phase1c_pre_release_gates.py` checks the pinned v2 input index, the 100-case development exclusion registry, the supplemental Configuration index, the six targeted field-ledger entries and the two documented bounded calibration evidence reviews. It reports five scoped field dispositions and the open `agent_execution_log.output_json` mark; the supplemental V2 dependency release scope, case 020 findings, accepted-answer intake, genuine specialist output and final clean rebuild/release audit remain pending. The script does not infer independent answer acceptance from a model draft or certify the correctness of a documented disposition. CI runs it after the PostgreSQL source and review checks and preserves the JSON report. `ready_for_generation=false`; original v2 0/36 accepted, supplemental candidate 0/1. PR #1 remains draft.
