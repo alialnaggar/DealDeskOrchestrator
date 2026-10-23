@@ -382,7 +382,7 @@ jobs:
           if-no-files-found: error
       - name: Replay supplemental Configuration inputs without answer labels
         run: |
-          python render_phase1c_configuration_extension.py
+          python render_phase1c_configuration_extension.py --check
           EVALUATION_DATABASE_URL=postgresql://postgres:phase1c_ci_only@localhost:5432/deal_desk_evaluation_inputs PHASE1C_CONFIGURATION_PACKETS=/tmp/phase1c_configuration_packets python -m unittest -v test_phase1c_configuration_extension
       - name: Preserve supplemental Configuration source and reader packets
         uses: actions/upload-artifact@v4
