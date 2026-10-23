@@ -118,7 +118,7 @@ def validate_rows(rows, contract, *, trusted_deal_evidence=None):
         version = row.get("catalog_version", baseline_version)
         if version != baseline_version and not (
                 version == extension_version and deal_id in extension_deals and
-                row["dataset_type"] == "generated_test"):
+                row["dataset_type"] in extension.get("allowed_dataset_types", ["generated_test"])):
             errors.append(f"deals.{deal_id}: unlisted catalogue extension")
         for kind, column in (("deal_terms", "terms_json"), ("requirements", "requirements_json"),
                              ("evidence_refs", "evidence_refs_json")):
