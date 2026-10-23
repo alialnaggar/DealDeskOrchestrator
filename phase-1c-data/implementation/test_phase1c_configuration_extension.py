@@ -25,7 +25,7 @@ class ConfigurationExtensionSources(unittest.TestCase):
         self.assertEqual(len(inputs['cases']), 3)
         self.assertEqual(manifest['independently_reviewed_answers'], 0)
         self.assertEqual([case['case_id'] for case in inputs['cases']],
-                         ['EVAL-CONFIG-001', 'EVAL-CONFIG-002', 'EVAL-CONFIG-003'])
+                         ['EVAL-PREP-037', 'EVAL-PREP-038', 'EVAL-PREP-039'])
         self.assertEqual([case['tables']['deal_lines'][0]['configuration_json']['selected_options']
                           for case in inputs['cases'][:2]], [['unsupported'], ['standard', 'alternate']])
         self.assertEqual(len({case['tables']['deal_runs'][0]['run_id'] for case in inputs['cases']}), 3)
@@ -48,7 +48,7 @@ class ConfigurationExtensionDatabase(unittest.TestCase):
             two = self.export(inputs, manifest, second_path)
             self.assertEqual(one, two)
             expected = {'packet_index.json'} | {
-                f'EVAL-CONFIG-{i:03d}{suffix}.json' for i in (1, 2, 3) for suffix in ('', '-provider')}
+                f'EVAL-PREP-{i:03d}{suffix}.json' for i in (37, 38, 39) for suffix in ('', '-provider')}
             self.assertEqual({p.name for p in first_path.iterdir()}, expected)
             self.assertEqual({p.name for p in second_path.iterdir()}, expected)
             self.assertEqual({name: (first_path / name).read_bytes() for name in expected},
@@ -97,7 +97,7 @@ class ConfigurationExtensionDatabase(unittest.TestCase):
                     conn.execute('SET CONSTRAINTS ALL IMMEDIATE')
                     errors = validate_rows(load_rows(conn), row_contract)['errors']
                     line_id = tables['deal_lines'][0]['deal_line_id']
-                    if case['case_id'] in ('EVAL-CONFIG-001', 'EVAL-CONFIG-002'):
+                    if case['case_id'] in ('EVAL-PREP-037', 'EVAL-PREP-038'):
                         self.assertEqual(errors, [
                             f'deal_lines.{line_id}: make-to-order selected option must be one offered code',
                             f'deal_lines.{line_id}: selected BOM missing or ambiguous'])
@@ -127,11 +127,11 @@ class ConfigurationExtensionDatabase(unittest.TestCase):
                     line = packet['payload']['source_rows']['lines'][0]
                     selected = line['configuration_json'].get('selected_options', [])
                     offered = line['attributes_json'].get('offered_options', [])
-                    if case['case_id'] == 'EVAL-CONFIG-001':
+                    if case['case_id'] == 'EVAL-PREP-037':
                         self.assertFalse(all(item in offered for item in selected))
-                    elif case['case_id'] == 'EVAL-CONFIG-002':
+                    elif case['case_id'] == 'EVAL-PREP-038':
                         self.assertTrue(all(item in offered for item in selected))
-                    if case['case_id'] in ('EVAL-CONFIG-001', 'EVAL-CONFIG-002'):
+                    if case['case_id'] in ('EVAL-PREP-037', 'EVAL-PREP-038'):
                         self.assertEqual(packet['payload']['source_rows']['bom'], [])
                     else:
                         facts = bundle['facts']['compatibility']
