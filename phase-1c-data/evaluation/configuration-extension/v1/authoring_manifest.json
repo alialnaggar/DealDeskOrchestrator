@@ -1,0 +1,38 @@
+{
+  "authored_input_cases": 3,
+  "base_source_definition_sha256": "1b7e0dffb3eaae8ee7c7e4bcd82aba0d55da11321198ce8c54e1581fae6740cc",
+  "cases": [
+    {
+      "case_id": "EVAL-PREP-037",
+      "derived_from": "EVAL-PREP-013",
+      "independent_answer_review": "pending",
+      "source_condition": "option_not_offered",
+      "source_review": "pending"
+    },
+    {
+      "case_id": "EVAL-PREP-038",
+      "derived_from": "EVAL-PREP-014",
+      "independent_answer_review": "pending",
+      "source_condition": "multiple_offered_options_selected",
+      "source_review": "pending"
+    },
+    {
+      "case_id": "EVAL-PREP-039",
+      "derived_from": "EVAL-PREP-001",
+      "independent_answer_review": "pending",
+      "source_condition": "missing_required_product",
+      "source_review": "pending"
+    }
+  ],
+  "extension_id": "configuration-v1",
+  "generator_fingerprint_sha256": "283e5512cc42fc8529eadcbde505f7e20dff8ae55e94cde5e3356c397575e912",
+  "independently_reviewed_answers": 0,
+  "inputs_sha256": "2e3a4dc2bf25e1df4b1d79f93b73ba98b79adfb5b71de983c1c659192eaf9d7e",
+  "limitations": [
+    "Derived from existing v2 build cases; no statistical independence claim",
+    "The two selected-option submissions intentionally fail typed-row validation",
+    "Two selected-option preflight failures and one missing-product dependency; not full Configuration breadth"
+  ],
+  "schema_version": 1,
+  "status": "supplemental_source_inputs_not_answers"
+}
