@@ -18,7 +18,7 @@ HERE = Path(__file__).resolve().parent
 OUTPUT = HERE.parent / 'evaluation' / 'configuration-extension' / 'v1'
 BASE_SHA = '1b7e0dffb3eaae8ee7c7e4bcd82aba0d55da11321198ce8c54e1581fae6740cc'
 V2 = 'CATALOGUE_2026_V2'
-SOURCE = 'SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-001-V2'
+SOURCE = 'SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-004-V2'
 TARGET = 'SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-005-V2'
 
 
@@ -39,6 +39,8 @@ def build():
         'generator_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         'extension_master_sha256': hashlib.sha256(
             (HERE / 'phase1c_configuration_extension_master.sql').read_bytes()).hexdigest(),
+        'extension_contract_sha256': hashlib.sha256(
+            (HERE / 'phase1c_configuration_extension_contract.json').read_bytes()).hexdigest(),
         'contract_sha256': hashlib.sha256(canonical(base['business_contract']).encode()).hexdigest(),
     }).encode()).hexdigest()
     cases, intent = [], []
@@ -67,6 +69,7 @@ def build():
     tables['deals'][0]['deal_name'] = 'Synthetic missing-dependency extension 003'
     tables['deals'][0]['catalog_version'] = V2
     tables['deal_lines'][0]['product_id'] = SOURCE
+    tables['deal_lines'][0]['quoted_unit_price'] = '1542.30'
     tables['inventory'][0]['product_id'] = SOURCE
     run = tables['deal_runs'][0]
     run['run_id'] = '00000000-0000-4000-8000-000000370003'
@@ -85,6 +88,8 @@ def build():
                    'independent_answer_review': 'pending'})
     inputs = {'schema_version': 1, 'extension_id': 'configuration-v1',
               'base_evaluation_input_version': 2, 'base_source_definition_sha256': BASE_SHA,
+              'extension_contract_sha256': hashlib.sha256(
+                  (HERE / 'phase1c_configuration_extension_contract.json').read_bytes()).hexdigest(),
               'business_contract': base['business_contract'], 'cases': cases}
     manifest = {'schema_version': 1, 'status': 'supplemental_source_inputs_not_answers',
                 'extension_id': 'configuration-v1', 'base_source_definition_sha256': BASE_SHA,
