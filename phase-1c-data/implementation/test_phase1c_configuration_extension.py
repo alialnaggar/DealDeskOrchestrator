@@ -68,6 +68,9 @@ class ConfigurationExtensionDatabase(unittest.TestCase):
         development = json.loads((HERE / 'phase1c_development_source_exclusions.json').read_text())
         historical = json.loads((HERE / 'phase1c_historical_source_exclusions.json').read_text())
         contract = inputs['business_contract']
+        row_contract = yaml.safe_load((HERE / 'phase1c_data_contract.yaml').read_text())
+        row_contract['catalogue_extensions']['dependency_pilot'] = json.loads(
+            (HERE / 'phase1c_configuration_extension_contract.json').read_text())
         index_rows = []
         with psycopg.connect(os.environ['EVALUATION_DATABASE_URL']) as conn:
             conn.execute('SET search_path TO deal_desk, public')
@@ -92,8 +95,7 @@ class ConfigurationExtensionDatabase(unittest.TestCase):
                             conn.execute(statement, [Jsonb(v) if isinstance(v, (dict, list)) else v
                                                      for v in row.values()])
                     conn.execute('SET CONSTRAINTS ALL IMMEDIATE')
-                    errors = validate_rows(load_rows(conn), yaml.safe_load(
-                        (HERE / 'phase1c_data_contract.yaml').read_text()))['errors']
+                    errors = validate_rows(load_rows(conn), row_contract)['errors']
                     line_id = tables['deal_lines'][0]['deal_line_id']
                     if case['case_id'] in ('EVAL-CONFIG-001', 'EVAL-CONFIG-002'):
                         self.assertEqual(errors, [
