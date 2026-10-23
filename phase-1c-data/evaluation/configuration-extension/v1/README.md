@@ -1,0 +1,15 @@
+# Supplemental Configuration evaluation inputs — version 1
+
+These are three **provisional source inputs** at IDs 037–039, separate from the unchanged pinned 36-case v2 cohort. They reuse selected base case facts under new IDs and expose additional Configuration failure shapes. They are not statistically independent samples, accepted answers, or an agent score. The original v2 source-definition SHA-256 remains `1b7e0dffb3eaae8ee7c7e4bcd82aba0d55da11321198ce8c54e1581fae6740cc`.
+
+| Case | Derived from | Source condition | Validation boundary |
+| --- | --- | --- | --- |
+| 037 | v2 013 | Selected make-to-order option `unsupported`, not offered by the product; no matching active BOM. | Typed-row preflight rejects the submitted configuration; retain its source packet for diagnostic review, not a six-specialist accepted answer. |
+| 038 | v2 014 | Both individually offered options selected together, but the submitted combination has no matching active BOM. | Typed-row preflight rejects the multiple-option selection and missing BOM; this does not establish specialist behavior. |
+| 039 | v2 001 | V2 business laptop with an active `requires_product` rule for a missing V2 add-on. | Scoped extension row validation passes; the reader reports one failed Configuration compatibility fact. A reviewer still must judge the complete deal. |
+
+The [source definitions](source_cases.json), [reviewer-only lineage](authoring_manifest.json) and [packet index](packet_index.json) have separate hashes. `render_phase1c_configuration_extension.py --check` reproduces the two source files from the unchanged v2 definition and the versioned [master copies](../../../implementation/phase1c_configuration_extension_master.sql) and [contract allowance](../../../implementation/phase1c_configuration_extension_contract.json). The allowance permits the exact V2 product/deal/rule IDs and `evaluation` dataset type only for this isolated extension test; the original dependency pilot's default remains `generated_test`. PostgreSQL CI imports each case alone, checks the expected preflight result, reads the source facts twice, and compares exact packet/provider/index bytes across two connections against the pinned index. It writes no answer labels.
+
+Cases 037–038 are valuable input rejection tests but should **not** be counted as six-specialist accuracy cases unless a separately specified evaluation protocol explicitly scores preflight rejection. Case 039 can be considered for a source-first six-responsibility human review. No model output, rule-only outcome or authoring purpose in this folder is an accepted expected answer. The original 36 remain at **0/36 accepted**; these three have **0/3 accepted**. Keep answers outside agent-visible inputs and `ready_for_generation=false`.
+
+The existing compatibility field disposition covered V1 regional rules and a development-only V2 dependency. This supplemental V2 evaluation rule is **outside that bounded first-release claim** until the field review and release scope explicitly include it. No supplier promise, stock reservation, deal approval or delivery commitment follows from these inputs.
