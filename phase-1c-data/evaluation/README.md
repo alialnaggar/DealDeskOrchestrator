@@ -217,3 +217,7 @@ The source-only audit now exposes exact active regional eligibility for schedule
 ## Substantive-review handoff — 15 October 2026
 
 The [v2 review handoff](reviews/v2_review_handoff.md) gives a pinned 18-pair queue covering all 36 cases, with source-fact prompts, reviewer order, provenance requirements and the still-open case 020 decision. It deliberately contains no accepted gates or agent-visible answer file. The model and primary-author views remain separately identified; 0/36 accepted answers, six field marks, two calibration reviews and `ready_for_generation=false`.
+
+## Supplemental Configuration source inputs — 23 October 2026
+
+The [separate version-1 extension](configuration-extension/v1/README.md) adds source IDs 037–039 without editing the 36 pinned v2 cases or their hashes. Two are deliberately invalid submitted-option shapes detected at typed-row preflight; one is an isolated V2 missing-add-on rule that passes row validation and appears as a failed compatibility fact in the reader. The lineage, scoped V2 master/contract allowance, exact source definitions and packet/provider hashes are pinned separately and checked with two-connection PostgreSQL replay. This closes a measured **coverage gap in source examples**, not independent answer review or specialist accuracy. The extension is outside the existing bounded compatibility field disposition until its release scope is reviewed. Original answers remain 0/36; extension answers 0/3; `ready_for_generation=false`.
