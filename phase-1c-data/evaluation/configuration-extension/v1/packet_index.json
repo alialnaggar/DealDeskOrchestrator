@@ -1,0 +1,26 @@
+{
+  "base_source_definition_sha256": "1b7e0dffb3eaae8ee7c7e4bcd82aba0d55da11321198ce8c54e1581fae6740cc",
+  "business_contract_sha256": "6e6990f014e061acd61039bdc128af753fc0116d4c1e7d60dafcdfb2108f7971",
+  "cases": [
+    {
+      "case_id": "EVAL-PREP-037",
+      "packet_sha256": "3508dd584b0b41eeca18f18f806587bb7f00bc7cc05e428574533eceb4187d70",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    {
+      "case_id": "EVAL-PREP-038",
+      "packet_sha256": "8a27506a538f7c99340c8fef54ebace37fbfc38c69b135f585cc4de76bb37231",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    {
+      "case_id": "EVAL-PREP-039",
+      "packet_sha256": "83f65e17b9bfddee6bd32f76742678f3bf60c8e4ffea94d2d3d6479f717b2b99",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    }
+  ],
+  "extension_id": "configuration-v1",
+  "independently_reviewed_answers": 0,
+  "input_case_count": 3,
+  "schema_version": 1,
+  "source_definition_sha256": "2e3a4dc2bf25e1df4b1d79f93b73ba98b79adfb5b71de983c1c659192eaf9d7e"
+}
