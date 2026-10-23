@@ -50,7 +50,7 @@ def build():
     ):
         source = next(case for case in base['cases'] if case['case_id'] == f'EVAL-PREP-{base_number:03d}')
         case = remap(deepcopy(source), f'EVAL36-{base_number:03d}', f'EVALCFG-{number:03d}')
-        case['case_id'] = f'EVAL-CONFIG-{number:03d}'
+        case['case_id'] = f'EVAL-PREP-{36 + number:03d}'
         tables = case['tables']
         line = tables['deal_lines'][0]
         line['configuration_json'] = {'selected_options': selected_options}
@@ -64,7 +64,7 @@ def build():
                        'independent_answer_review': 'pending'})
     source = next(case for case in base['cases'] if case['case_id'] == 'EVAL-PREP-001')
     case = remap(deepcopy(source), 'EVAL36-001', 'EVALCFG-003')
-    case['case_id'] = 'EVAL-CONFIG-003'
+    case['case_id'] = 'EVAL-PREP-039'
     tables = case['tables']
     tables['deals'][0]['deal_name'] = 'Synthetic missing-dependency extension 003'
     tables['deals'][0]['catalog_version'] = V2
