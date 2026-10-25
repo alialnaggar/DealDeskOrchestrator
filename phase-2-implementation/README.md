@@ -70,6 +70,8 @@ Before changing, replacing, removing or materially expanding an agreed technolog
 
 ## Immediate next action
 
+The bounded Fulfillment correction prototype is implemented and locally validated against isolated PostgreSQL, with [design and test limitations](architecture/fulfillment-correction-prototype.md). The final local suite passed 98 tests without skips; full GitHub Actions CI has **not** run. Do not infer live-model improvement or treat this as a released milestone. M2.0 remains a separate gate.
+
 M1.9 Groq-only contract repair and 16-case Phase 1C compatibility comparison are completed; the [final full CI](https://github.com/alialnaggar/DealDeskOrchestrator/actions/runs/39803289084) passed 85 tests without skips after Gemini active code/workflows were removed. Review the [master blueprint](planning/master-implementation-blueprint.md) and [VM/Discord setup plan](development/oracle-vm-discord-handoff.md). The VM and Discord are not deployed by this documentation. M2.0 Configuration and Pricing AI requires a separate implementation approval. Historical M1.3–M1.8 decisions and experiments remain in the roadmap and linked reports.
 
 ## Workshop 2 result — LangGraph implementation design direction

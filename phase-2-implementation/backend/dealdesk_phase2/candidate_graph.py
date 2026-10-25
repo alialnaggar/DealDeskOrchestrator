@@ -52,9 +52,17 @@ def _record(state):
 
 
 def _update(state, record, event):
-    return {"candidate_records": {record["candidate_id"]: record},
-            "candidate_status": record["status"],
-            "trace": [*state["trace"], event]}
+    update = {"candidate_records": {record["candidate_id"]: record},
+             "candidate_status": record["status"],
+             "trace": [*state["trace"], event]}
+    correction = state.get("fulfillment_correction", {})
+    if (len(correction.get("attempts", [])) == 2 and record["status"] in
+            ("fixed_checked", "fixed_rejected", "evidence_mismatch", "technical_error")):
+        update["fulfillment_correction"] = {**correction, "attempts": [
+            correction["attempts"][0], {**correction["attempts"][1],
+                                         "candidate_status": record["status"],
+                                         "fixed_supply_status": record.get("fixed_supply_status")} ]}
+    return update
 
 
 def _package(state, record=None):
@@ -105,6 +113,15 @@ def _package(state, record=None):
                 "roles_available_from_fixed_interface") else None,
             "roles_status": "fixed_interface" if routing.get(
                 "roles_available_from_fixed_interface") else "unavailable_from_fixed_interface"}
+    correction = state.get("fulfillment_correction", {})
+    correction_summary = None
+    if correction.get("failure") or len(correction.get("attempts", [])) > 1:
+        correction_summary = {"version": correction["version"],
+            "status": correction["status"],
+            "first_failure_code": correction.get("failure", {}).get("code"),
+            "attempts": [{"ordinal": item["ordinal"], "status": item["status"],
+                          "candidate_status": item.get("candidate_status")}
+                         for item in correction["attempts"]]}
     return {"version": "m1.7-review-v1", "assessment_id": state["assessment_id"],
         "bundle_sha256": state.get("context", {}).get("bundle_sha256"),
         "original": original, "candidates": [item] if item else [],
@@ -118,6 +135,7 @@ def _package(state, record=None):
                                        if claim.get("type") == "candidate_idea"]
                                       if contribution.get("schema_version") == "2" else []),
         "audit_rejection_count": len(state.get("ai_claim_audit", [])),
+        "fulfillment_correction": correction_summary,
         "reviewer_action": "Human review required; no approval, reservation or delivery promise"}
 
 

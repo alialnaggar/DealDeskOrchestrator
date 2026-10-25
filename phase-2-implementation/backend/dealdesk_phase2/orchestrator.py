@@ -19,8 +19,8 @@ def initial_state(assessment_id: str, run_id: UUID) -> AssessmentStateV1:
             "phase1c_run_id": str(run_id), "subject_kind": "original",
             "specialist_results": {}, "trace": [], "stop_reason": None,
             "review_status": "pending", "tool_access_ledger": [],
-            "investigation_status": "not_started", "candidate_records": {},
-            "candidate_status": "not_started"}
+             "investigation_status": "not_started", "candidate_records": {},
+             "candidate_status": "not_started", "fulfillment_correction": {}}
 
 
 def _decision(state: AssessmentStateV1) -> dict:
@@ -136,4 +136,6 @@ def build_original_graph(adapter: Phase1CAdapter, connection_factory, checkpoint
     builder.add_conditional_edges("finish", candidate_or_end,
                                   {"candidate": candidate_start, "end": END})
     builder.add_edge(candidate_end, END)
-    return builder.compile(checkpointer=checkpointer, interrupt_after=list(interrupt_after))
+    graph = builder.compile(checkpointer=checkpointer, interrupt_after=list(interrupt_after))
+    graph.phase2_connection_factory = connection_factory
+    return graph

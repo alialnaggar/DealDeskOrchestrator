@@ -267,6 +267,24 @@ class LiveInvestigationModel:
                      "schema": BINDING_FINAL_SCHEMA if self.enable_binding_proposals else FINAL_SCHEMA}}}
         return self._request(input, step, "final", final)
 
+    def revise(self, input, observations, feedback: dict, rejected: dict) -> dict:
+        """One final JSON request to the SAME provider/model; no tools enabled."""
+        if not self.enable_binding_proposals:
+            raise ProviderError("binding_revision_not_enabled")
+        prompt = (_prompt(input, observations, enable_binding_proposals=True) +
+                  "\nPrevious unverified binding proposal (rejected): " + _json(rejected) +
+                  "\nTrusted validation feedback: " + _json(feedback) +
+                  "\nDo not treat feedback as a verified schedule. Return fresh JSON or abstain.")
+        body = {"model": self.model, "temperature": 0,
+                "max_completion_tokens": MAX_OUTPUT_TOKENS,
+                "messages": [{"role": "system", "content":
+                              "Return one revised, evidence-limited JSON Fulfillment contribution. No tools."},
+                             {"role": "user", "content": prompt}],
+                "response_format": {"type": "json_schema", "json_schema": {
+                    "name": "fulfillment_correction_v1", "strict": True,
+                    "schema": BINDING_FINAL_SCHEMA}}}
+        return self._request(input, "correction-v1", "final", body)
+
     def _parse(self, response: dict, phase: str):
         choice = response["choices"][0]["message"]
         calls = choice.get("tool_calls") or []

@@ -256,6 +256,38 @@ class PinnedEvaluationCases(unittest.TestCase):
                          "unverified")
         self.assertEqual(sum(bool(x.get("counted")) for x in state["tool_access_ledger"]), 1)
 
+    def test_overcount_correction_is_separate_offline_prototype_not_historical_trial(self):
+        case = next(item for item in CASES if item.case_id == "B05")
+        source = {"line_id": case.ids()["L"], "tradeoff_code": TRADEOFF,
+            "delivery_slices": [
+                {"quantity": "11", "delivery_date": "2026-09-02",
+                 "source_refs": ["inventory:" + case.ids()["INV"]]},
+                {"quantity": "18", "delivery_date": "2026-09-11",
+                 "source_refs": ["inventory:" + case.ids()["INV"],
+                                 "inbound_supply:" + case.ids()["IN"]]}]}
+        revised = {**source, "delivery_slices": [source["delivery_slices"][0],
+            {"quantity": "7", "delivery_date": "2026-09-11",
+             "source_refs": ["inbound_supply:" + case.ids()["IN"]]}]}
+        wrap = lambda value: {"type": "contribution", "value": {
+            "schema_version": "3", "kind": "binding_proposal", "payload": value}}
+        graph = build_original_graph(self.adapter, self.connect, InMemorySaver())
+        config = {"configurable": {"thread_id": "CORR-OFFLINE-B05"}}
+        state = run_original_investigate_and_review(graph, config, self.adapter,
+            OfflineModelDouble(({"type": "tool", "tool": "inspect_fulfillment_paths",
+                                "arguments": {"line_id": case.ids()["L"]}}, wrap(source)),
+                               revision=wrap(revised)),
+            assessment_id="CORR-OFFLINE-B05", run_id=case.run_id)
+        correction = state["fulfillment_correction"]
+        self.assertEqual(correction["failure"]["code"], "quantity_sum_mismatch")
+        self.assertEqual(correction["feedback"]["proposed_total"], "29")
+        self.assertEqual([s["quantity"] for s in correction["attempts"][0]["raw"]["payload"][
+            "delivery_slices"]], ["11", "18"])
+        self.assertEqual(len(state["candidate_records"]), 1)
+        self.assertEqual(state["candidate_status"], "fixed_checked")
+        self.assertNotEqual(state["reviewer_package"]["candidates"][0]["fixed_business_status"],
+                            "approval_required")
+        self.assertEqual(sum(bool(x.get("counted")) for x in state["tool_access_ledger"]), 1)
+
     def test_exploratory_early_dates_are_assessed_by_pinned_verifier(self):
         # Post-pilot diagnostic: normalize only the rejected decimal syntax to
         # whole units. This is not a model success or an accepted AI candidate.

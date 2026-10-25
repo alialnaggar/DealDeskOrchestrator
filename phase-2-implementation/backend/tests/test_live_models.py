@@ -186,6 +186,40 @@ class LiveModelTests(TestCase):
         self.assertEqual(result["ai_fulfillment_result"]["execution"], "error")
         self.assertEqual(result["model_attempt_ledger"][-1]["status"], "reserved")
 
+    def test_same_provider_revision_uses_new_checkpointed_request_without_tools(self):
+        from dealdesk_phase2.orchestrator import initial_state
+        from dealdesk_phase2.graph_state import pinned_from_state
+        from dealdesk_phase2.fulfillment_agent import eligible_line, restricted_input
+
+        self.graph.invoke(initial_state(self.id(), RUN), self.config)
+        state = self.graph.get_state(self.config).values
+        pinned = pinned_from_state(state)
+        selected, _ = eligible_line(state, self.adapter.validate_pinned_context(pinned))
+        input = restricted_input(pinned.context, self.adapter.validate_pinned_context(pinned),
+                                 selected, 11)
+        model = LiveInvestigationModel(self.graph, self.config,
+                                       enable_binding_proposals=True)
+        raw = {**final(), "kind": "binding_proposal", "tradeoff_code":
+            "partial_delivery_requires_customer_acceptance",
+            "delivery_slices": [{"quantity": "8", "delivery_date": "2026-09-04",
+                                 "source_refs": ["inventory:S1"]},
+                                {"quantity": "2", "delivery_date": "2026-09-08",
+                                 "source_refs": ["inbound_supply:I1"]}], "claims": []}
+        response = {"model": model.model, "usage": {},
+                    "choices": [{"message": {"content": json.dumps(raw)}}]}
+        feedback = {"version": "fulfillment-correction-v1", "constraint_code": "quantity_format"}
+        rejected = {"schema_version": "3", "kind": "binding_proposal", "payload": {}}
+        with patch.dict(os.environ, {"GROQ_API_KEY": "test-secret"}), \
+             patch("dealdesk_phase2.live_models._post", return_value=response) as send:
+            first = model.revise(input, (), feedback, rejected)
+            again = model.revise(input, (), feedback, rejected)
+        self.assertEqual(first, again)
+        self.assertEqual(send.call_count, 1)
+        self.assertEqual(first["value"]["schema_version"], "3")
+        ledger = self.graph.get_state(self.config).values["model_attempt_ledger"]
+        self.assertEqual([x["status"] for x in ledger], ["reserved", "completed"])
+        self.assertEqual(len({x["attempt_id"] for x in ledger}), 1)
+
 
 @__import__("unittest").skipUnless(all(os.environ.get(k) for k in
     ("DATABASE_URL", "CHECKPOINT_DATABASE_URL", "DEALDESK_PHASE1C_CHECKOUT")),

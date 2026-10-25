@@ -278,6 +278,64 @@ class PinnedBindingCandidateTests(unittest.TestCase):
                          "unknown_or_unavailable")
         self.assertNotEqual(decision["status"], "approval_required")
 
+    def test_format_rejection_revised_by_model_then_fully_fixed_checked(self):
+        config = {"configurable": {"thread_id": "CORR-M17-FORMAT"}}
+        first = contribution(proposal(early="8.000"))
+        revision = contribution(proposal())
+        with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(self.adapter, self.connect, saver)
+            state = run_original_investigate_and_review(graph, config, self.adapter,
+                OfflineModelDouble((tool(), first), revision=revision),
+                assessment_id="CORR-M17-FORMAT", run_id=RUN)
+            audit = state["fulfillment_correction"]
+            self.assertEqual(audit["failure"]["code"], "quantity_format")
+            self.assertEqual(audit["attempts"][0]["raw"], first["value"])
+            self.assertEqual(audit["attempts"][1]["raw"], revision["value"])
+            self.assertEqual(state["candidate_status"], "fixed_checked")
+            self.assertEqual(len(state["candidate_records"]), 1)
+            self.assertEqual(state["reviewer_package"]["candidates"][0][
+                "verification_outcome"], "binding_supply_supported_unreserved")
+            self.assertEqual(state["review_status"], "needs_revision")
+            self.assertEqual(sum(bool(e.get("counted")) for e in state["tool_access_ledger"]), 1)
+            # The original fixed reader legitimately reports Decimal('8.000')
+            # for available units. Only the rejected *model proposal* must
+            # stay out of the published candidate and correction summary.
+            self.assertEqual(state["reviewer_package"]["candidates"][0][
+                "proposed_slices"][0]["quantity"], "8")
+            self.assertNotIn("8.000", str(state["reviewer_package"]["fulfillment_correction"]))
+        with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(self.adapter, self.connect, saver)
+            resumed = run_original_investigate_and_review(graph, config, self.adapter,
+                OfflineModelDouble((), revision=None), assessment_id="CORR-M17-FORMAT", run_id=RUN)
+            self.assertEqual(resumed, state)
+
+    def test_interrupted_revision_reservation_is_terminal_on_postgres_restart(self):
+        class Interrupted(OfflineModelDouble):
+            def revise(self, *args):
+                raise KeyboardInterrupt("simulate interrupted remote request")
+
+        config = {"configurable": {"thread_id": "CORR-M17-INTERRUPTED"}}
+        with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(self.adapter, self.connect, saver)
+            with self.assertRaises(KeyboardInterrupt):
+                run_original_then_investigate(graph, config, self.adapter,
+                    Interrupted((tool(), contribution(proposal(early="8.000"))),
+                                revision=contribution()),
+                    assessment_id="CORR-M17-INTERRUPTED", run_id=RUN,
+                    connection_factory=self.connect)
+            self.assertEqual(graph.get_state(config).values["fulfillment_correction"]["status"],
+                             "reserved")
+        with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(self.adapter, self.connect, saver)
+            result = run_original_investigate_and_review(graph, config, self.adapter,
+                Interrupted((), revision=contribution()),
+                assessment_id="CORR-M17-INTERRUPTED", run_id=RUN)
+            self.assertEqual(result["fulfillment_correction"]["status"], "uncertain_terminal")
+            self.assertEqual(result["investigation_status"], "error")
+            self.assertEqual(result["candidate_records"], {})
+            self.assertEqual(result["review_status"], "needs_revision")
+            self.assertEqual(result["reviewer_package"]["candidates"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

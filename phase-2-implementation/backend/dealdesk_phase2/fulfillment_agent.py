@@ -86,16 +86,26 @@ class InvestigationModel(Protocol):
     def next_action(self, input: FulfillmentInputV1,
                     observations: tuple[dict, ...]) -> dict: ...
 
+    def revise(self, input: FulfillmentInputV1, observations: tuple[dict, ...],
+               feedback: dict, rejected: dict) -> dict: ...
+
 
 class OfflineModelDouble:
     """Deterministic script for offline tests; no provider connection."""
 
-    def __init__(self, actions: tuple[dict, ...]):
+    def __init__(self, actions: tuple[dict, ...], *, revision: dict | None = None):
         self.actions = actions
+        self.revision = revision
 
     def next_action(self, input: FulfillmentInputV1,
                     observations: tuple[dict, ...]) -> dict:
         return self.actions[len(observations)]
+
+    def revise(self, input: FulfillmentInputV1, observations: tuple[dict, ...],
+               feedback: dict, rejected: dict) -> dict:
+        if self.revision is None:
+            raise RuntimeError("No scripted revision")
+        return self.revision
 
 
 def _decimal(value) -> Decimal | None:

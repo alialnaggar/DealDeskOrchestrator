@@ -5,6 +5,7 @@ from decimal import Decimal
 import os
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 from uuid import UUID
 
 from langgraph.checkpoint.memory import InMemorySaver
@@ -129,6 +130,120 @@ class OfflineInvestigationTests(unittest.TestCase):
         falsely_confirmed["value"]["payload"]["delivery_slices"][1]["commitment_claim"] = "confirmed"
         rejected = self.run_with(_tool(), falsely_confirmed)
         self.assertEqual(rejected["ai_fulfillment_result"]["error"], "malformed_contribution")
+
+    def test_one_checkpointed_format_revision_does_not_reset_tool_or_model_turns(self):
+        # Control-flow double only: source validity is independently covered by
+        # pinned PostgreSQL tests, never inferred from this mocked validator.
+        def binding(quantity):
+            return {"type": "contribution", "value": {"schema_version": "3",
+                "kind": "binding_proposal", "payload": {"line_id": "L1",
+                "tradeoff_code": "partial_delivery_requires_customer_acceptance",
+                "delivery_slices": [
+                    {"quantity": quantity, "delivery_date": "2026-09-04",
+                     "source_refs": ["inventory:S1"]},
+                    {"quantity": "8", "delivery_date": "2026-09-17",
+                     "source_refs": ["inbound_supply:I1"]}]}}}
+
+        first, revision = binding("12.000"), binding("12")
+        model = OfflineModelDouble((
+            {"type": "tool", "tool": "inspect_fulfillment_paths",
+             "arguments": {"line_id": "L1"}}, first), revision=revision)
+        def validate(payload, *_):
+            if payload["delivery_slices"][0]["quantity"] == "12.000":
+                raise ValueError("Binding slice requires a positive whole quantity")
+            return {**payload, "version": "m1.7-binding-v1", "verification": "unverified"}
+        with patch("dealdesk_phase2.fulfillment_agent.validate_from_graph",
+                   side_effect=validate), \
+             patch("dealdesk_phase2.fulfillment_correction.validate_from_graph",
+                   side_effect=lambda payload, *_: payload):
+            state = run_original_then_investigate(self.graph, self.config, self.adapter,
+                model, assessment_id=self.id(), run_id=RUN,
+                connection_factory=lambda: None)
+        correction = state["fulfillment_correction"]
+        self.assertEqual(correction["status"], "completed")
+        self.assertEqual(correction["failure"]["code"], "quantity_format")
+        self.assertEqual([x["ordinal"] for x in correction["attempts"]], [1, 2])
+        self.assertEqual(correction["attempts"][0]["raw"], first["value"])
+        self.assertEqual(correction["attempts"][1]["raw"], revision["value"])
+        self.assertEqual(correction["feedback"]["remaining_model_turns"], 4)
+        self.assertEqual(sum(bool(e.get("counted")) for e in state["tool_access_ledger"]), 1)
+        self.assertEqual(state["ai_fulfillment_result"]["contribution"]["verification"],
+                         "unverified")
+
+    def test_abstention_and_forged_citation_never_call_revision(self):
+        class NoRevision(OfflineModelDouble):
+            def revise(self, *args):
+                raise AssertionError("Terminal outcome must not request a revision")
+
+        abstention = {"type": "contribution", "value": {"schema_version": "2",
+            "kind": "abstention", "payload": {"line_id": "L1", "claims": [], "notes": {}}}}
+        state = run_original_then_investigate(self.graph, self.config, self.adapter,
+            NoRevision((abstention,), revision=abstention),
+            assessment_id=self.id(), run_id=RUN, connection_factory=lambda: None)
+        self.assertEqual(state["ai_fulfillment_result"]["contribution"]["kind"], "abstention")
+        self.assertEqual(state["fulfillment_correction"]["status"], "terminal")
+
+        self.setUp()
+        state = run_original_then_investigate(self.graph, self.config, self.adapter,
+            NoRevision((_tool(), _proposal(["inventory:FORGED"])), revision=abstention),
+            assessment_id=self.id(), run_id=RUN, connection_factory=lambda: None)
+        self.assertEqual(state["ai_fulfillment_result"]["error"], "unsupported_citation")
+        self.assertEqual(state["fulfillment_correction"]["status"], "terminal")
+
+    def test_exhausted_shared_model_turns_cannot_start_revision(self):
+        class NoRevision(OfflineModelDouble):
+            def revise(self, *args):
+                raise AssertionError("A seventh model turn is forbidden")
+
+        malformed = {"type": "contribution", "value": {"schema_version": "3",
+            "kind": "binding_proposal", "payload": {"line_id": "L1",
+            "tradeoff_code": "partial_delivery_requires_customer_acceptance",
+            "delivery_slices": [
+                {"quantity": "12.000", "delivery_date": "2026-09-04",
+                 "source_refs": ["inventory:S1"]},
+                {"quantity": "8", "delivery_date": "2026-09-17",
+                 "source_refs": ["inbound_supply:I1"]}]}}}
+        state = run_original_then_investigate(self.graph, self.config, self.adapter,
+            NoRevision(tuple({"type": "tool", "tool": "inspect_line_supply",
+                              "arguments": {"line_id": "L1"}} for _ in range(5)) +
+                       (malformed,), revision=malformed),
+            assessment_id=self.id(), run_id=RUN, connection_factory=lambda: None)
+        self.assertEqual(state["fulfillment_correction"]["attempts"][0]["model_turns"], 6)
+        self.assertEqual(state["fulfillment_correction"]["status"], "terminal")
+        self.assertEqual(sum(bool(e.get("counted")) for e in state["tool_access_ledger"]), 5)
+
+    def test_interrupted_revision_is_terminal_without_resending_after_restart(self):
+        class Interrupted(OfflineModelDouble):
+            def revise(self, *args):
+                raise KeyboardInterrupt("request may have been sent")
+
+        malformed = {"type": "contribution", "value": {"schema_version": "3",
+            "kind": "binding_proposal", "payload": {"line_id": "L1",
+            "tradeoff_code": "partial_delivery_requires_customer_acceptance",
+            "delivery_slices": [
+                {"quantity": "12.000", "delivery_date": "2026-09-04",
+                 "source_refs": ["inventory:S1"]},
+                {"quantity": "8", "delivery_date": "2026-09-17",
+                 "source_refs": ["inbound_supply:I1"]}]}}}
+        with patch("dealdesk_phase2.fulfillment_agent.validate_from_graph",
+                   side_effect=ValueError("Binding slice requires a positive whole quantity")), \
+             patch("dealdesk_phase2.fulfillment_correction.validate_from_graph",
+                   return_value={}):
+            with self.assertRaises(KeyboardInterrupt):
+                run_original_then_investigate(self.graph, self.config, self.adapter,
+                    Interrupted(({"type": "tool", "tool": "inspect_fulfillment_paths",
+                                  "arguments": {"line_id": "L1"}}, malformed), revision=malformed),
+                    assessment_id=self.id(), run_id=RUN, connection_factory=lambda: None)
+        self.assertEqual(self.graph.get_state(self.config).values["fulfillment_correction"][
+            "status"], "reserved")
+        restarted = build_original_graph(self.adapter, None, self.saver)
+        state = run_original_then_investigate(restarted, self.config, self.adapter,
+            Interrupted((), revision=malformed), assessment_id=self.id(), run_id=RUN,
+            connection_factory=lambda: None)
+        self.assertEqual(state["fulfillment_correction"]["status"], "uncertain_terminal")
+        self.assertEqual(state["investigation_status"], "error")
+        self.assertEqual(state["ai_fulfillment_result"]["error"], "correction_outcome_uncertain")
+        self.assertEqual(sum(bool(e.get("counted")) for e in state["tool_access_ledger"]), 1)
 
     def test_unauthorized_tool_and_model_timeout_preserve_fixed_results(self):
         denied = self.run_with(_tool("OTHER"), _proposal())

@@ -54,6 +54,8 @@ class AssessmentStateV1(TypedDict, total=False):
     candidate_records: dict[str, dict]
     candidate_status: str
     reviewer_package: dict
+    # Additive, original-subject correction attempt and reservation audit.
+    fulfillment_correction: dict
 
 
 def context_to_record(context: RunContextV1) -> dict:
