@@ -34,20 +34,35 @@ def _json(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
-def _post(url: str, key: str, header: str, body: dict) -> dict:
+def _post(url: str, key: str, header: str, body: dict, *, timeout_seconds: int = 30,
+          classify_transport: bool = False) -> dict:
+    if type(timeout_seconds) is not int or not 1 <= timeout_seconds <= 60:
+        raise ProviderError("invalid_request_timeout")
     payload = _json(body).encode("utf-8")
     if len(payload) > MAX_PROMPT_BYTES:
         raise ProviderError("request_too_large")
     request = Request(url, payload, {"Content-Type": "application/json", header: key,
                                       "User-Agent": "DealDeskOrchestrator-thesis-M1.4/1.0"}, method="POST")
     try:
-        with urlopen(request, timeout=30) as response:
+        with urlopen(request, timeout=timeout_seconds) as response:
             return json.load(response)
     except HTTPError as exc:
         # Error bodies can echo request content and must not enter logs/checkpoints.
         raise ProviderError("http_" + str(exc.code)) from None
-    except (URLError, TimeoutError, OSError):
-        raise ProviderError("transport_failure") from None
+    except (URLError, TimeoutError, OSError) as exc:
+        # Opt-in structural diagnostics only; never record exception text, URL,
+        # headers, or a potentially sensitive provider error body.
+        reason = exc.reason if isinstance(exc, URLError) else exc
+        if classify_transport and isinstance(reason, TimeoutError):
+            code = "transport_timeout"
+        elif classify_transport and isinstance(reason, (
+                ConnectionResetError, ConnectionAbortedError, BrokenPipeError)):
+            code = "transport_connection_lost"
+        elif classify_transport and isinstance(exc, URLError):
+            code = "transport_network_error"
+        else:
+            code = "transport_failure"
+        raise ProviderError(code) from None
     except (ValueError, TypeError):
         raise ProviderError("invalid_provider_json") from None
 
@@ -197,6 +212,9 @@ def _prompt(input, observations, *, enable_binding_proposals=False):
 
 
 class LiveInvestigationModel:
+    request_timeout_seconds = 30
+    classify_transport = False
+
     def __init__(self, graph, config, *, pace_seconds: float = 0,
                  enable_binding_proposals: bool = False):
         self.provider = "groq"
@@ -207,12 +225,13 @@ class LiveInvestigationModel:
         self._last_sent = None
 
     def _request(self, input, step: int, phase: str, body: dict):
-        key = os.environ.get("GROQ_API_KEY")
+        key = os.environ.get(self.credential_env)
         if not key:
             raise ProviderError("missing_credential")
-        url = "https://api.groq.com/openai/v1/chat/completions"
-        header = "Authorization"
-        auth = "Bearer " + key
+        url = self.endpoint
+        header = self.auth_header
+        auth = self.auth_value(key)
+        body = self.provider_body(body)
         digest = sha256(_json(body).encode()).hexdigest()
         attempt_id = sha256(f"{input.assessment_id}:{input.bundle_sha256}:"
                             f"{self.provider}:{self.model}:{step}:{phase}".encode()).hexdigest()
@@ -221,24 +240,50 @@ class LiveInvestigationModel:
         if prior:
             return prior["action"]
         start = monotonic()
+        response = None
         try:
             if self._last_sent is not None and self.pace_seconds:
                 sleep(max(0, self.pace_seconds - (monotonic() - self._last_sent)))
             self._last_sent = monotonic()
-            response = _post(url, auth, header, body)
+            response = _post(url, auth, header, body,
+                             timeout_seconds=self.request_timeout_seconds,
+                             classify_transport=self.classify_transport)
             action, usage, response_model = self._parse(response, phase)
             model_attempts.complete(self.graph, self.config, input, attempt_id,
                                     status="completed", action=action, usage=usage,
                                     response_model=response_model,
+                                    provider_diagnostic=self.provider_diagnostic(response, phase),
                                     latency_ms=round((monotonic() - start) * 1000))
             return action
         except Exception as exc:
             code = exc.code if isinstance(exc, ProviderError) else "invalid_provider_response"
             model_attempts.complete(self.graph, self.config, input, attempt_id,
-                                    status="error", action=None, usage={}, error_code=code,
+                                    status="error", action=None,
+                                    usage=self.error_usage(response), error_code=code,
                                     response_model=None,
+                                    provider_diagnostic=self.provider_diagnostic(response, phase),
                                     latency_ms=round((monotonic() - start) * 1000))
             raise ProviderError(code) from None
+
+    credential_env = "GROQ_API_KEY"
+    endpoint = "https://api.groq.com/openai/v1/chat/completions"
+    auth_header = "Authorization"
+
+    def auth_value(self, key: str) -> str:
+        return "Bearer " + key
+
+    def provider_body(self, body: dict) -> dict:
+        return body
+
+    def provider_diagnostic(self, response: dict | None, phase: str) -> dict | None:
+        return None
+
+    def error_usage(self, response: dict | None) -> dict:
+        return {}
+
+    def decision_prompt(self, input, observations, full_prompt: str) -> str:
+        """Groq retains the original full decision and final guidance."""
+        return full_prompt
 
     def next_action(self, input, observations):
         step = len(observations)
@@ -253,7 +298,8 @@ class LiveInvestigationModel:
         decision = {"model": self.model, "temperature": 0, "max_completion_tokens": 1024,
                     "parallel_tool_calls": False, "tool_choice": "auto", "tools": tools,
                     "messages": [{"role": "system", "content": "Choose at most one local tool or say READY."},
-                                 {"role": "user", "content": prompt}]}
+                                 {"role": "user", "content": self.decision_prompt(
+                                     input, observations, prompt)}]}
         first = self._request(input, step, "decision", decision)
         if first["type"] == "tool":
             return first

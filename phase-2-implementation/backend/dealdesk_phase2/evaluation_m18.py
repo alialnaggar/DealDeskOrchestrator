@@ -119,6 +119,8 @@ def capture_trial(case_id: str, state: dict, baseline: dict, *, provider: str,
             "provider": x.get("provider"), "model": x.get("model"),
             "status": x.get("status"), "usage": x.get("usage"),
             "latency_ms": x.get("latency_ms"), "error_code": x.get("error_code"),
+            **({"provider_diagnostic": x["provider_diagnostic"]}
+               if "provider_diagnostic" in x else {}),
             "response_model": x.get("response_model"),
             "prompt_digest": x.get("prompt_digest"),
             "started_at": x.get("started_at"), "finished_at": x.get("finished_at")}

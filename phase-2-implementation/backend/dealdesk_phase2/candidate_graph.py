@@ -41,6 +41,12 @@ def _proposal(state, adapter):
         input, state.get("tool_access_ledger", []))
     if checked != raw:
         raise EvidenceMismatch("Persisted binding proposal changed after validation")
+    if state.get("hybrid_investigation_start"):
+        from .hybrid_contracts import strict_binding
+        if strict_binding({"line_id": raw["line_id"], "delivery_slices": raw["delivery_slices"],
+                           "tradeoff_code": raw["tradeoff_code"]}, input,
+                          state.get("tool_access_ledger", [])) != checked:
+            raise EvidenceMismatch("Hybrid proposal changed at candidate handoff")
     return pinned, checked
 
 
@@ -165,6 +171,11 @@ def add_candidate_nodes(builder, adapter, connection_factory):
             trace = checked.get("candidate_trace", {})
             if trace.get("candidate_id") != record["candidate_id"]:
                 raise EvidenceMismatch("Fixed candidate trace has a different identity")
+            if state.get("hybrid_investigation_start") and trace.get("assessment", {}).get(
+                    "status") == "supply_supported_unreserved":
+                from .hybrid_contracts import verified_source_slices
+                verified_source_slices({"line_id": proposal["line_id"],
+                                       "delivery_slices": proposal["delivery_slices"]}, checked)
             raw, digest, _ = seal(decision)
             record = {**record, "status": "fixed_checked",
                 "fixed_supply_status": trace["assessment"]["status"],

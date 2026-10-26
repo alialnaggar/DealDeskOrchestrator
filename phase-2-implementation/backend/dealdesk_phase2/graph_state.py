@@ -56,6 +56,10 @@ class AssessmentStateV1(TypedDict, total=False):
     reviewer_package: dict
     # Additive, original-subject correction attempt and reservation audit.
     fulfillment_correction: dict
+    # Opt-in adaptive hybrid state. Existing iterative nodes ignore these keys.
+    hybrid_investigation_start: dict
+    hybrid_evidence_pack: dict
+    hybrid_execution: dict
 
 
 def context_to_record(context: RunContextV1) -> dict:

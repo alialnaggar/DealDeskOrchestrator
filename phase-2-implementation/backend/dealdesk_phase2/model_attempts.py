@@ -40,7 +40,8 @@ def reserve(graph, config, input, attempt_id: str, provider: str, model: str,
 
 def complete(graph, config, input, attempt_id: str, *, status: str,
              action: dict | None, usage: dict, latency_ms: int,
-             response_model: str | None, error_code: str | None = None):
+             response_model: str | None, error_code: str | None = None,
+             provider_diagnostic: dict | None = None):
     ledger = list(_state(graph, config, input).get("model_attempt_ledger", []))
     prior = next((x for x in ledger if x["attempt_id"] == attempt_id), None)
     if prior is None or prior["status"] != "reserved":
@@ -48,5 +49,7 @@ def complete(graph, config, input, attempt_id: str, *, status: str,
     ledger.append({**prior, "status": status, "action": action,
                    "usage": usage, "latency_ms": latency_ms,
                    "response_model": response_model, "error_code": error_code,
+                   **({"provider_diagnostic": provider_diagnostic}
+                      if provider_diagnostic is not None else {}),
                    "finished_at": datetime.now(timezone.utc).isoformat()})
     graph.update_state(config, {"model_attempt_ledger": ledger}, as_node="finish")
