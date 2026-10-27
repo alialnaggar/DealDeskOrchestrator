@@ -11,7 +11,7 @@ import json
 import os
 from time import monotonic, sleep
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
 from . import model_attempts
 
@@ -34,8 +34,13 @@ def _json(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
+class _NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
+
+
 def _post(url: str, key: str, header: str, body: dict, *, timeout_seconds: int = 30,
-          classify_transport: bool = False) -> dict:
+          classify_transport: bool = False, reject_redirects: bool = False) -> dict:
     if type(timeout_seconds) is not int or not 1 <= timeout_seconds <= 60:
         raise ProviderError("invalid_request_timeout")
     payload = _json(body).encode("utf-8")
@@ -44,10 +49,16 @@ def _post(url: str, key: str, header: str, body: dict, *, timeout_seconds: int =
     request = Request(url, payload, {"Content-Type": "application/json", header: key,
                                       "User-Agent": "DealDeskOrchestrator-thesis-M1.4/1.0"}, method="POST")
     try:
-        with urlopen(request, timeout=timeout_seconds) as response:
+        # The hosted hybrid may not forward Authorization to a redirected URL.
+        client = build_opener(_NoRedirect()).open if reject_redirects else urlopen
+        with client(request, timeout=timeout_seconds) as response:
             return json.load(response)
     except HTTPError as exc:
         # Error bodies can echo request content and must not enter logs/checkpoints.
+        # Preserve the historical adapter's error lifetime; only the new
+        # hybrid no-redirect path owns and closes its failed response here.
+        if reject_redirects:
+            exc.close()
         raise ProviderError("http_" + str(exc.code)) from None
     except (URLError, TimeoutError, OSError) as exc:
         # Opt-in structural diagnostics only; never record exception text, URL,

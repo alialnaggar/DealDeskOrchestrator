@@ -213,11 +213,14 @@ def build_hybrid_graph(original, config, adapter, factory, model, directory, pac
             return fail(record, HybridContractError("model_turn_budget_exhausted"))
         request = {"pack_sha256": pack["pack_sha256"], "observations": record[
             "observations"], "ordinal": ordinal, "policy_version": record["policy_version"]}
+        send = lambda: model.decide(pack["model_input"], tuple(record["observations"]))
         if hasattr(model, "wire_adapter"):
             request = model.request_decision(pack["model_input"], tuple(record["observations"]))
+            # Send precisely the serialized body whose size/hash was checked.
+            # Rebuilding it in decide() could diverge across two invocations.
+            send = lambda: model._take(request)
         raw, record = _send(original, config, directory, record, "decision", ordinal,
-                            request, lambda: model.decide(pack["model_input"],
-                                                          tuple(record["observations"])))
+                            request, send)
         try:
             parsed = (model.wire_adapter.parse_decision(raw, input.line_id, input.permitted_tools)
                       if hasattr(model, "wire_adapter") else raw)
@@ -250,12 +253,13 @@ def build_hybrid_graph(original, config, adapter, factory, model, directory, pac
                    "observations_sha256": sha256(_canonical(record[
                        "observations"]).encode()).hexdigest(),
                    "ordinal": ordinal, "policy_version": record["policy_version"]}
+        send = lambda: model.submit(action, pack["model_input"], tuple(record["observations"]))
         if hasattr(model, "wire_adapter"):
             request = model.request_final(action, pack["model_input"],
                                           tuple(record["observations"]))
+            send = lambda: model._take(request)
         raw, record = _send(original, config, directory, record, "final", ordinal,
-                            request, lambda: model.submit(action, pack["model_input"],
-                                                          tuple(record["observations"])))
+                            request, send)
         try:
             parsed = (model.wire_adapter.parse_final(raw, action)
                       if hasattr(model, "wire_adapter") else raw)
@@ -311,12 +315,14 @@ def build_hybrid_graph(original, config, adapter, factory, model, directory, pac
         request = {"pack_sha256": pack["pack_sha256"], "feedback": feedback,
                    "policy_version": record["policy_version"], "allowed": [
                        "submit_proposal", "abstain"]}
+        send = lambda: model.revision_intent(feedback, pack["model_input"],
+                                              tuple(record["observations"]))
         if hasattr(model, "wire_adapter"):
             request = model.request_revision_intent(feedback, pack["model_input"],
                                                      tuple(record["observations"]))
+            send = lambda: model._take(request)
         raw, record = _send(original, config, directory, record, "revision_intent", 0,
-            request, lambda: model.revision_intent(feedback, pack["model_input"],
-                                                   tuple(record["observations"])))
+            request, send)
         try:
             parsed = (model.wire_adapter.parse_decision(raw, input.line_id, ())
                       if hasattr(model, "wire_adapter") else raw)
@@ -335,12 +341,14 @@ def build_hybrid_graph(original, config, adapter, factory, model, directory, pac
                    "observations_sha256": sha256(_canonical(record[
                        "observations"]).encode()).hexdigest(),
                    "policy_version": record["policy_version"]}
+        send = lambda: model.revise(record["revision_intent"], feedback, pack["model_input"],
+                                    tuple(record["observations"]))
         if hasattr(model, "wire_adapter"):
             request = model.request_revision(record["revision_intent"], feedback,
                                              pack["model_input"], tuple(record["observations"]))
+            send = lambda: model._take(request)
         raw, record = _send(original, config, directory, record, "revision", 0,
-            request, lambda: model.revise(record["revision_intent"], feedback, pack["model_input"],
-                                          tuple(record["observations"])))
+            request, send)
         try:
             parsed = (model.wire_adapter.parse_final(raw, record["revision_intent"])
                       if hasattr(model, "wire_adapter") else raw)

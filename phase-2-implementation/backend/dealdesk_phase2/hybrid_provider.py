@@ -251,5 +251,5 @@ class GroqHybridTransportModel(OfflineGroqWireDouble):
             raise ProviderError("missing_credential")
         self.requests.append(body)
         return _post("https://api.groq.com/openai/v1/chat/completions",
-                     "Bearer " + key, "Authorization", body,
-                     timeout_seconds=30, classify_transport=True)
+                      "Bearer " + key, "Authorization", body,
+                      timeout_seconds=30, classify_transport=True, reject_redirects=True)

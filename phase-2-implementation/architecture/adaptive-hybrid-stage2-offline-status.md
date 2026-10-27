@@ -53,3 +53,23 @@ there was no hybrid inference request. Do not retry inference or substitute a
 coding-agent credential. The owner must provision a valid Groq free-tier key
 through the existing private local credential handoff and confirm access with
 the sanitized metadata diagnostic before the B01-only smoke.
+
+**27 October offline increment:** `groq_preflight.py` makes one read-only,
+no-redirect, bounded metadata GET only when a locally well-formed credential
+is available; it distinguishes 401 authentication, 403 authorization, 404
+endpoint, 429 rate-limit, absent model, invalid/oversize metadata and
+transport categories without logging keys, headers or response bodies. Local
+structural inspection of the previous private key found one line, no whitespace
+alteration or duplication and a single Bearer header at the call site; this
+does not establish provider validity or rule out an otherwise plausible
+truncation. The rejected smoke-only credential file was unlinked, with the
+owner-controlled hidden-prompt re-entry script preserved. **Do not retry the
+rejected key.** Hybrid wire requests are now built exactly once: the bytes
+whose length and digest are reserved are the body passed to the transport.
+Hybrid POSTs reject redirects; the iterative comparator retains its previous
+transport behavior. No provider request was made during this increment.
+The final fresh isolated PostgreSQL regression ran **192 tests: 185 passed,
+seven optional saved-Gemma-checkpoint diagnostics skipped**, with no failures.
+Offline Groq tests cover sanitized 401/403/404/429, metadata/response errors,
+redirect refusal, uncertain sends, duplicate owners, one-build request digests
+and exhausted/missing token usage; they are not hosted quality evidence.

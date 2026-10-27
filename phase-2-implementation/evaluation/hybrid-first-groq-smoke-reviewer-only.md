@@ -91,15 +91,21 @@ responses fail closed. Groq documentation describes these features for this
 model (structured outputs and local tool calling); tests with scripted wire
 JSON are **not** evidence of this account's live behavior. The very first
 authorized B01 request must stop on API parameter/schema rejection or model
- response mismatch; no silent schema downgrade.
+response mismatch; no silent schema downgrade.
 
 **Credential gate:** The process requires `GROQ_API_KEY`, not a coding-model
 subscription or a Gemini key. The private VM launcher loads it from a 0600
-owner-controlled local file into the child process only; this shell's environment
-does not contain it. A one-shot read-only `/openai/v1/models` request via that
-launcher returned 401 on 26 October. Do not print, commit, inspect or send the
-key to chat; a valid replacement must be supplied by the owner through a trusted
-local channel. Re-run only the sanitized metadata check first. On any non-200
-or unavailable requested model, stop with no inference; only after success
-reconfirm fresh checkpoint/receipt DBs, B01 source hashes, account quota/free
-tier and the above limits before running the one authorized B01 assessment.
+owner-controlled local file into the child process only. The rejected file
+was reset on 27 October; do not retry that key. For a **different valid key**
+already owned by Ali, the one owner action is to run
+`python3 /tmp/opencode/dealdesk-hybrid-b01-smoke-prep/supply_existing_groq_key.py`
+in a trusted interactive VM terminal and enter it at the hidden prompt.
+Never send the key in chat, a command-line argument or a repository file.
+The runner first uses `groq_preflight.check_model_access`: one sanitized,
+bounded, no-redirect metadata GET. 401, 403, 404, 429, model absence and
+transport/JSON failures stop with no inference; there is no retry or fallback.
+After successful metadata access, reconfirm the disposable B01 source hashes,
+empty checkpoint/receipt directory, single-worker ownership, account free
+tier/quota and the above three-request ceiling before the one approved B01
+assessment. Offline original eligibility and fixture hash checks were
+reconfirmed after credential reset; **no live inference has been performed**.

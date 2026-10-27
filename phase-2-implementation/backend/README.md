@@ -243,3 +243,21 @@ handoff; the original-only runner remains compatible. The live adapter has
 an explicit `enable_binding_proposals=True` opt-in; routine CI uses offline
 model doubles. See [methodology](../evaluation/m1.7-binding-candidate-methodology.md).
 
+## Opt-in adaptive hybrid and B01 credential gate (27 October 2026)
+
+The separate `hybrid_offline.py` LangGraph path records one counted restricted
+prefetch, explicit inspection/submit intent, strict final, bounded revision
+offline, pinned Phase 1C candidate checks and an isolated human review package.
+It is **not** selected for ordinary deals. The hosted evaluation entrypoint
+requires explicit authorization; B01 alone is the currently requested smoke
+case. See the [offline status](../architecture/adaptive-hybrid-stage2-offline-status.md)
+and [reviewer-only manifest](../evaluation/hybrid-first-groq-smoke-reviewer-only.md).
+
+`groq_preflight.py` has a sanitized one-GET metadata gate; no model or provider
+account access is implied by offline tests. The previously rejected Groq key
+was reset from the private smoke launcher. Ali must supply a different valid
+key through the owner-only hidden prompt described in the manifest. Never
+include the key, private launcher, PostgreSQL files or audit artifacts in Git.
+The fresh isolated PostgreSQL fixture/checkpoint regression ran 192 tests:
+185 passed, seven optional saved-checkpoint diagnostics skipped. CI is separate
+from this local check and the hosted smoke. No hybrid inference has been sent.

@@ -3,6 +3,7 @@
 import json
 import unittest
 from unittest.mock import patch
+from urllib.error import HTTPError
 
 from langgraph.checkpoint.memory import InMemorySaver
 
@@ -84,6 +85,29 @@ class WireTests(unittest.TestCase):
                              wire_call("abstain", {}))
             self.assertNotIn("tools", double.requests[1])
 
+    def test_reserved_wire_is_sent_without_rebuilding_or_changing_digest(self):
+        from hashlib import sha256
+        from dealdesk_phase2.hybrid_pack import _canonical
+        from dealdesk_phase2.hybrid_offline import run_hybrid_offline
+        import tempfile
+        from pathlib import Path
+
+        assessment = "HYBRID-ONE-BUILD-OFFLINE"
+        graph = build_original_graph(InvestigationAdapter(), None, InMemorySaver())
+        config = {"configurable": {"thread_id": assessment}}
+        double = OfflineGroqWireDouble([wire_call("abstain", {}), wire_final("abstain", {
+            "reason_code": "model_uncertainty", "scope": "L1", "missing_evidence": []})])
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory, patch.object(
+                double, "request_decision", wraps=double.request_decision) as decision_build, patch.object(
+                double, "request_final", wraps=double.request_final) as final_build:
+            state = run_hybrid_offline(graph, config, InvestigationAdapter(), None, double,
+                assessment_id=assessment, run_id=RUN, reservation_dir=Path(directory))
+        self.assertEqual((decision_build.call_count, final_build.call_count), (1, 1))
+        self.assertEqual([sha256(_canonical(body).encode()).hexdigest()
+                          for body in double.requests],
+                         [attempt["request_sha256"] for attempt in state["hybrid_execution"][
+                             "attempts"]])
+
     def test_evaluation_gate_blocks_transport_before_any_checkpoint_or_network(self):
         import tempfile
         from pathlib import Path
@@ -111,6 +135,93 @@ class WireTests(unittest.TestCase):
             self.assertEqual(model.decide({"line_id": "L1"}, ()), response)
         self.assertEqual(mocked.call_count, 1)
         self.assertEqual(mocked.call_args.args[3], model.requests[0])
+
+    def test_hosted_http_statuses_are_sanitized_and_never_read_error_body(self):
+        from unittest.mock import Mock
+        from dealdesk_phase2.live_models import ProviderError
+
+        for status in (401, 403, 404, 429):
+            with self.subTest(status=status):
+                body = Mock()
+                body.read.side_effect = AssertionError("no provider error body")
+                error = HTTPError("https://example.invalid", status, "private error",
+                                  {"Authorization": "private"}, body)
+                with patch.dict("os.environ", {"GROQ_API_KEY": "gsk_" + "x" * 48}), patch(
+                        "dealdesk_phase2.live_models.build_opener") as opener:
+                    opener.return_value.open.side_effect = error
+                    with self.assertRaisesRegex(ProviderError, "http_" + str(status)):
+                        GroqHybridTransportModel().decide({"line_id": "L1"}, ())
+                opener.assert_called_once()
+                post = opener.return_value.open
+                post.assert_called_once()
+                self.assertEqual(post.call_args.args[0].get_header("Authorization"),
+                                 "Bearer gsk_" + "x" * 48)
+                body.read.assert_not_called()
+
+    def test_hybrid_transport_rejects_redirect_instead_of_forwarding_key(self):
+        from dealdesk_phase2.live_models import ProviderError
+        from unittest.mock import Mock
+
+        body = Mock()
+        redirect = HTTPError("https://api.groq.com/openai/v1/chat/completions", 302,
+                             "redirect", {"Location": "https://example.invalid"}, body)
+        with patch.dict("os.environ", {"GROQ_API_KEY": "gsk_" + "x" * 48}), patch(
+                "dealdesk_phase2.live_models.build_opener") as opener:
+            opener.return_value.open.side_effect = redirect
+            with self.assertRaisesRegex(ProviderError, "http_302"):
+                GroqHybridTransportModel().decide({"line_id": "L1"}, ())
+        self.assertEqual(opener.return_value.open.call_count, 1)
+        body.read.assert_not_called()
+
+    def test_hosted_401_reserves_one_attempt_and_never_retries(self):
+        import tempfile
+        from pathlib import Path
+        from dealdesk_phase2.hybrid_offline import run_hybrid_evaluation
+        from dealdesk_phase2.live_models import ProviderError
+
+        adapter = InvestigationAdapter()
+        graph = build_original_graph(adapter, None, InMemorySaver())
+        config = {"configurable": {"thread_id": "HYBRID-HTTP-401-OFFLINE"}}
+        model = GroqHybridTransportModel()
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory, patch.object(
+                model, "_take", side_effect=ProviderError("http_401")) as sender:
+            with self.assertRaisesRegex(ProviderError, "http_401"):
+                run_hybrid_evaluation(graph, config, adapter, None, model,
+                    assessment_id="HYBRID-HTTP-401-OFFLINE", run_id=RUN,
+                    reservation_dir=Path(directory), authorized=True)
+            self.assertEqual(sender.call_count, 1)
+            with self.assertRaisesRegex(HybridContractError, "hybrid_send_outcome_uncertain"):
+                run_hybrid_evaluation(graph, config, adapter, None, model,
+                    assessment_id="HYBRID-HTTP-401-OFFLINE", run_id=RUN,
+                    reservation_dir=Path(directory), authorized=True)
+            self.assertEqual(sender.call_count, 1)
+
+    def test_hosted_usage_missing_or_over_cap_stops_after_saved_raw(self):
+        import tempfile
+        from pathlib import Path
+        from dealdesk_phase2.hybrid_offline import run_hybrid_evaluation
+
+        for raw in (wire_call("abstain", {}),
+                    {**wire_call("abstain", {}), "usage": {"completion_tokens": 513}}):
+            with self.subTest(usage=raw.get("usage")), tempfile.TemporaryDirectory(
+                    dir="/tmp/opencode") as directory:
+                adapter = InvestigationAdapter()
+                graph = build_original_graph(adapter, None, InMemorySaver())
+                config = {"configurable": {"thread_id": "HYBRID-USAGE-" + str(len(raw))}}
+                model = GroqHybridTransportModel()
+                with patch.object(model, "_take", return_value=raw) as sender:
+                    with self.assertRaisesRegex(HybridContractError, "hosted_usage_unverifiable"):
+                        run_hybrid_evaluation(graph, config, adapter, None, model,
+                            assessment_id=config["configurable"]["thread_id"], run_id=RUN,
+                            reservation_dir=Path(directory), authorized=True)
+                    self.assertEqual(sender.call_count, 1)
+                    self.assertEqual(graph.get_state(config).values[
+                        "hybrid_execution"]["attempts"][0]["raw"], raw)
+                    with self.assertRaisesRegex(HybridContractError, "hosted_usage_unverifiable"):
+                        run_hybrid_evaluation(graph, config, adapter, None, model,
+                            assessment_id=config["configurable"]["thread_id"], run_id=RUN,
+                            reservation_dir=Path(directory), authorized=True)
+                    sender.assert_called_once()
 
     def test_hosted_hard_cap_stops_second_inspection_before_third_send(self):
         import tempfile
