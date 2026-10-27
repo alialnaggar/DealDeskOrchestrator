@@ -16,9 +16,9 @@ SPECIALIST_TOOLS = {
     "pricing": frozenset(("inspect_pricing_line",)),
     "fulfillment": frozenset(("inspect_line_supply", "inspect_fulfillment_paths",
                               "inspect_evidence_record")),
-    "credit": frozenset(),
-    "policy": frozenset(),
-    "approval_routing": frozenset(),
+    "credit": frozenset(("inspect_customer_credit_evidence",)),
+    "policy": frozenset(("inspect_fixed_policy_hits",)),
+    "approval_routing": frozenset(("inspect_fixed_route",)),
 }
 SOURCE_FIELDS = {
     "inventory": ("inventory", "inventory_id"),

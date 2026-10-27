@@ -171,3 +171,31 @@ Ali discontinued Gemini as an active development provider (TG2). The [Groq-only 
 **Step 5 — M2.1 Credit, Policy and Approval Routing AI**, then six-responsibility end-to-end evaluation and later Next.js reviewer UI, each with its own contracts, accepted source-first cases and separate scope/technology approval. Keep Credit and Policy distinct, unresolved blockers visible and human approval exclusive.
 
 The Phase 1C production pin remains exactly `90c0bc8e285ee69262c7db826b786096a77ad004`; its draft PR #1, rules and writing development runtime are outside this work. An approved sequence is not permission to change the VM, make paid OpenAI API calls, write agent code or begin M2.0 in this documentation task.
+
+## M2.0 stopped Pricing investigation and first M2.1 offline slice — 27 October 2026
+
+Ali approved one fresh B01 Configuration/Pricing Groq assessment at
+`9e70046`. The [sanitized result](../evaluation/m20-configuration-pricing-hosted-result.md)
+records Configuration's one authorized inspection and five exact observations;
+Pricing inspected its authorized line but Groq returned HTTP 400 on the
+paired second turn, and the assessment stopped without replay. The
+[offline wire diagnosis](../evaluation/m20-pricing-http400-offline-diagnosis.md)
+reconstructed both reserved second-turn request hashes, native call-ID
+pairing, schemas and limits; **no precise provider rejection cause is known**.
+No transport fix or new hosted attempt is justified without more evidence.
+
+The [M2.1 original-only offline method](../evaluation/m21-credit-policy-routing-offline-methodology.md)
+implements scoped Credit, Policy and Approval Routing evidence investigations
+and deterministic-result isolation with scripted doubles and PostgreSQL
+restart. Credit/Policy/Route are separate AI results, not another fixed rule
+engine. Only fixed-hit Policy rules and fixed-returned Routing roles can be
+cited; withheld roles and rule-by-rule prerequisites are unavailable. No
+candidate-subject or hosted M2.1 execution is enabled. Continue with a
+source-reviewed nonempty AR/payment fixture, rule/prerequisite and role
+visibility boundaries, typed candidate isolation, then integrated six-agent
+offline cases before considering any hosted Week 3 proposal. Private CI
+status must be reported as unverified unless actually observed.
+
+Fresh local Phase 1C-pinned PostgreSQL regression for this increment passed
+**244 tests (seven skips)** across seven isolated databases. This is not a
+measured multi-specialist accuracy result; GitHub Actions status is unverified.

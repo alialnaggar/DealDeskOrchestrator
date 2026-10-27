@@ -66,6 +66,10 @@ class AssessmentStateV1(TypedDict, total=False):
     m20_review: dict
     m20_hosted_owner: dict
     m20_hosted_base_tokens: int
+    # M2.1 original-only offline AI observations; never replace fixed results.
+    m21_ai_results: dict[str, dict]
+    m21_model_attempts: list[dict]
+    m21_review: dict
 
 
 def context_to_record(context: RunContextV1) -> dict:

@@ -9,16 +9,27 @@ Phase 1C source and human-only approval boundary remain unchanged. The
 separate disposable M2.0 business/checkpoint databases so its tests do not
 silently skip; no hosted model is invoked by the test suite.
 
-**Hosted-validation preparation (no inference):** The
-[bounded two-case proposal](../evaluation/m20-bounded-hosted-validation-proposal.md)
-documents fresh source identities, per-provider ceilings, evidence gates and
-the explicit authorization required before a Groq POST. `m20_groq.py` is an
-opt-in native-tool adapter for the existing Groq model. `run_m20_evaluation`
-rejects unapproved or wrongly scoped models; tests patch transport and use
-real permissioned PostgreSQL evidence. Groq has **not** accepted these new
-Configuration/Pricing tool schemas in a live request. Fulfillment's existing
-hosted gate disables correction and its real end-to-end outcome remains
-unverified.
+**M2.0 hosted results (historical approvals spent):** The
+[completed B05 Fulfillment result](../evaluation/m20-groq-wire-continuation-hosted-result.md)
+passed fixed candidate verification but did not approve, reserve or promise
+delivery. The later [B01 Configuration/Pricing result](../evaluation/m20-configuration-pricing-hosted-result.md)
+accepted Configuration's native two-turn investigation; Pricing's native
+inspection returned but its paired follow-up stopped at HTTP 400. The
+[offline structural diagnosis](../evaluation/m20-pricing-http400-offline-diagnosis.md)
+found no demonstrated transport root cause. Both assessment identities are
+spent. `m20_groq.py` remains an opt-in native-tool adapter, not authorization
+for new inference or automatic retry. Offline tests mock all provider calls.
+
+**M2.1 original-only offline extension:**
+[`m21_specialists.py`](dealdesk_phase2/m21_specialists.py) defines three
+separate typed Credit, Policy and Routing observations, one read-only
+same-subject/pinned projection per specialist and scripted-model LangGraph
+continuation. The existing fixed Phase 1C results retain business authority.
+The [scope, adversarial cases and gaps](../evaluation/m21-credit-policy-routing-offline-methodology.md)
+are documented; no M2.1 hosted or candidate investigation exists. For the
+full suite, follow the same two-checkout CI setup below and supply distinct
+`M20_DATABASE_URL` and `M20_CHECKPOINT_DATABASE_URL` disposable databases:
+M2.1 tests reuse these isolated fixture connections, without sending inference.
 
 **B05 second-turn wire diagnostic:** The authorized hosted attempt stopped
 after one successful native inspection and a second-request HTTP 400. The
