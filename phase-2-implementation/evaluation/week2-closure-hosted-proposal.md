@@ -1,5 +1,12 @@
 # Proposed fresh B01 Week 2 Configuration/Pricing validation — NO authorization
 
+**Status update:** Ali explicitly authorized the exact manifest and bounds.
+The [first preflight stopped without any request](week2-closure-hosted-preflight-blocked.md)
+because `GROQ_API_KEY` was unavailable in the execution environment. The
+immutable manifest below retains its original `proposal_not_authorized`
+status as part of the approved digest; this text records the later approval
+and stop without rewriting that identity. **Do not infer that a run occurred.**
+
 **Not executed.** This is a request for Ali's explicit, separate approval,
 not a continuation of the [permanently stopped B01 assessment](m20-configuration-pricing-hosted-result.md).
 Do not run it, reuse the old identity, read private provider responses, or
