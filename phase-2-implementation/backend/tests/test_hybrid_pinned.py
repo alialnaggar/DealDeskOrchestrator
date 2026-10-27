@@ -12,6 +12,7 @@ from dealdesk_phase2.fulfillment_tools import FulfillmentTools
 from dealdesk_phase2.hybrid_contracts import strict_binding, verified_source_slices
 from dealdesk_phase2.hybrid_pack import prepare_pack
 from dealdesk_phase2.hybrid_offline import run_hybrid_offline
+from dealdesk_phase2.hybrid_evaluation import capture_hybrid, summarize_hybrid
 from dealdesk_phase2.hybrid_contracts import ACTION_VERSION
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from dealdesk_phase2.phase1c_adapter import Phase1CAdapter, EvidenceMismatch
@@ -29,6 +30,44 @@ except ImportError:
     "DATABASE_URL", "CHECKPOINT_DATABASE_URL", "DEALDESK_PHASE1C_CHECKOUT")),
     "Pinned PostgreSQL fixture and checkpoint required")
 class PinnedHybridEvidenceTests(unittest.TestCase):
+    def test_adverse_case_abstention_and_fixed_gate_exclusion(self):
+        from test_hybrid_offline import Scripted
+        adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
+        connect = lambda: psycopg.connect(os.environ["DATABASE_URL"])
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory:
+            with thesis_checkpointer(os.environ["CHECKPOINT_DATABASE_URL"]) as saver:
+                graph = build_original_graph(adapter, connect, saver)
+                for name in ("B05", "N01"):
+                    case = next(x for x in CASES if x.case_id == name)
+                    assessment = "HYBRID-ADVERSE-" + name
+                    line = case.ids()["L"]
+                    model = Scripted([{"version": ACTION_VERSION, "kind": "inspect",
+                        "tool_name": "inspect_fulfillment_paths", "arguments": {"line_id": line},
+                        "purpose_code": "check_dated_path"},
+                        {"version": ACTION_VERSION, "kind": "abstain"}],
+                        {"version": ACTION_VERSION, "kind": "abstain", "payload": {
+                            "reason_code": "model_uncertainty", "scope": line,
+                            "missing_evidence": []}})
+                    config = {"configurable": {"thread_id": assessment}}
+                    state = run_hybrid_offline(graph, config, adapter, connect, model,
+                        assessment_id=assessment, run_id=case.run_id,
+                        reservation_dir=Path(directory))
+                    self.assertEqual(state["candidate_records"], {})
+                    self.assertEqual(state["candidate_status"], "not_started")
+                    self.assertEqual(state["reviewer_package"]["ai_contribution"], "abstention")
+                    self.assertEqual(capture_hybrid(state)["contribution_kind"], "abstention")
+                    self.assertEqual(capture_hybrid(graph.get_state(config).values),
+                                     capture_hybrid(state))
+                excluded = next(x for x in CASES if x.case_id == "N02")
+                assessment = "HYBRID-EXCLUDED-N02"
+                config = {"configurable": {"thread_id": assessment}}
+                graph.invoke(initial_state(assessment, excluded.run_id), config)
+                with self.assertRaisesRegex(ValueError, "ineligible"):
+                    run_hybrid_offline(graph, config, adapter, connect,
+                        Scripted([], {}), assessment_id=assessment, run_id=excluded.run_id,
+                        reservation_dir=Path(directory))
+                self.assertNotIn("hybrid_execution", graph.get_state(config).values)
+
     def test_mocked_hosted_b01_budget_receipts_raw_and_reviewer_handoff(self):
         from test_hybrid_provider import wire_call, wire_final
         from dealdesk_phase2.hybrid_offline import run_hybrid_evaluation
@@ -84,6 +123,16 @@ class PinnedHybridEvidenceTests(unittest.TestCase):
                 self.assertLessEqual(max(len(json.dumps(body,
                     sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode())
                     for body in model.requests), 8192)
+                captured = capture_hybrid(state)
+                self.assertTrue(captured["fixed_checked_candidate"])
+                self.assertEqual(captured["raw_citation_access"]["returned"], 2)
+                self.assertEqual(captured["tokens"], {"prompt": 900, "completion": 257})
+                self.assertEqual(captured["model_selected_evidence_tools"], 1)
+                self.assertEqual(summarize_hybrid([captured])["attempted_cases"], 1)
+                reread = graph.get_state(config).values
+                self.assertEqual(capture_hybrid(reread), captured)
+                with self.assertRaises(EvidenceMismatch):
+                    capture_hybrid(reread, baseline={"run_id": "wrong"})
 
     def test_groq_wire_double_b01_full_handoff_without_hosted_call(self):
         from test_hybrid_provider import wire_call, wire_final
@@ -316,6 +365,11 @@ class PinnedHybridEvidenceTests(unittest.TestCase):
                 self.assertEqual(sum(bool(x.get("counted")) for x in state[
                     "tool_access_ledger"]), 2)
                 self.assertEqual(model.finals, 1)
+                captured = capture_hybrid(state)
+                self.assertTrue(captured["fixed_checked_candidate"])
+                self.assertEqual(captured["attempt_stages"], ["decision", "decision", "final"])
+                self.assertIsNone(captured["tokens"])
+                self.assertEqual(captured["raw_citation_access"], None)
 
     def test_model_selected_path_required_and_pinned_option_cites_exact_slice(self):
         case = next(x for x in CASES if x.case_id == "B01")

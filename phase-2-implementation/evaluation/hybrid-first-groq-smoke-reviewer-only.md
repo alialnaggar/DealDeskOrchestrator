@@ -1,7 +1,9 @@
 # First hosted hybrid smoke — reviewer-only manifest (not a model input)
 
-**Status (26 October): B01-only smoke requested, but credential precheck returned
-HTTP 401; zero hosted hybrid inference requests made.** Do not load
+**Status (27 October): the replacement credential passed authenticated metadata
+preflight; B01 alone was attempted and stopped after two hosted inference
+requests with no verified candidate.** Earlier rejected-key 401 was a separate
+preflight with zero inference requests. Do not load
 this file, any linked answer sheet, deterministic discovery output or baseline
 schedule into the model input, system prompt, tool results or Groq request.
 The model receives only the restricted pinned input, counted prefetch and

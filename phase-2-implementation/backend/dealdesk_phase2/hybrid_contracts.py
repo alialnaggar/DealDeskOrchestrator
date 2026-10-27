@@ -19,6 +19,23 @@ _TOOLS = frozenset(("inspect_line_supply", "inspect_fulfillment_paths",
                     "inspect_evidence_record"))
 
 
+def has_complete_binding_paths(observations: tuple[dict, ...] | list[dict], line_id: str) -> bool:
+    """Submission prerequisite, not a claim of dated quantity or delivery support.
+
+    Only a completed, untruncated authorized paths observation can open the
+    binding-proposal channel. The final candidate still needs the returned-ref
+    ledger, exact pinned Phase 1C verification and human acceptance.
+    """
+    return any(isinstance(item, dict) and item.get("tool") == "inspect_fulfillment_paths"
+               and item.get("execution") == "completed"
+               and item.get("evidence") == "eligible_binding"
+               and item.get("more_in_sealed_pool") is False
+               and isinstance(item.get("findings"), dict)
+               and item["findings"].get("line_id") == line_id
+               and bool(item["findings"].get("binding_options"))
+               for item in observations)
+
+
 def canonical_quantity(value: object) -> bool:
     return isinstance(value, str) and len(value) <= 12 and bool(_WHOLE.fullmatch(value))
 

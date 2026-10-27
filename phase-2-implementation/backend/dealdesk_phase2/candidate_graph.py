@@ -128,6 +128,15 @@ def _package(state, record=None):
             "attempts": [{"ordinal": item["ordinal"], "status": item["status"],
                           "candidate_status": item.get("candidate_status")}
                          for item in correction["attempts"]]}
+    # Raw rejected hybrid responses remain private in the checkpoint. Expose
+    # only counts/codes in the reviewer projection, never model prose or JSON.
+    hybrid = state.get("hybrid_execution", {}) if state.get(
+        "hybrid_investigation_start") else {}
+    rejected = hybrid.get("rejections", [])
+    hybrid_audit = {"rejection_count": len(rejected), "rejection_codes": [
+        item.get("code") or item.get("reason", "unknown") for item in rejected]}
+    if hybrid and not rejected and hybrid.get("result", {}).get("execution") == "error":
+        hybrid_audit["execution_error"] = hybrid["result"].get("error")
     return {"version": "m1.7-review-v1", "assessment_id": state["assessment_id"],
         "bundle_sha256": state.get("context", {}).get("bundle_sha256"),
         "original": original, "candidates": [item] if item else [],
@@ -140,7 +149,8 @@ def _package(state, record=None):
         "unverified_planning_ideas": ([claim for claim in ai_payload.get("validated_claims", [])
                                        if claim.get("type") == "candidate_idea"]
                                       if contribution.get("schema_version") == "2" else []),
-        "audit_rejection_count": len(state.get("ai_claim_audit", [])),
+        "audit_rejection_count": len(state.get("ai_claim_audit", [])) + len(rejected),
+        **({"hybrid_audit": hybrid_audit} if hybrid else {}),
         "fulfillment_correction": correction_summary,
         "reviewer_action": "Human review required; no approval, reservation or delivery promise"}
 

@@ -37,6 +37,7 @@ class WireTests(unittest.TestCase):
         body = self.adapter.decision_request(self.input, ())
         self.assertEqual(body["tool_choice"], "required")
         self.assertFalse(body["parallel_tool_calls"])
+        self.assertNotIn("submit_proposal", [x["function"]["name"] for x in body["tools"]])
         self.assertNotIn("READY", body["messages"][0]["content"].replace("Never return READY", ""))
         for invalid in ({"choices": [{"finish_reason": "stop", "message": {"content": "READY"}}]},
                         {"choices": [{"finish_reason": "tool_calls", "message": {
@@ -47,9 +48,61 @@ class WireTests(unittest.TestCase):
         intent = self.adapter.parse_decision(wire_call("submit_proposal", {
             "submission_kind": "binding_partial_delivery"}), "L1", self.tools)
         self.assertEqual(intent["kind"], "submit_proposal")
-        request = self.adapter.final_request(intent, self.input, ())
+        with self.assertRaisesRegex(HybridContractError, "binding_paths_required"):
+            self.adapter.final_request(intent, self.input, ())
+        observations = ({"tool": "inspect_fulfillment_paths", "execution": "completed",
+            "evidence": "eligible_binding", "more_in_sealed_pool": False,
+            "findings": {"line_id": "L1", "binding_options": [{"arrival": "2026-09-03"}]}},)
+        body = self.adapter.decision_request(self.input, observations)
+        self.assertIn("submit_proposal", [x["function"]["name"] for x in body["tools"]])
+        request = self.adapter.final_request(intent, self.input, observations)
         self.assertNotIn("tools", request)
         self.assertTrue(request["response_format"]["json_schema"]["strict"])
+        self.assertEqual(request["response_format"]["json_schema"]["schema"][
+            "properties"]["payload"]["properties"]["tradeoff_code"]["enum"],
+            ["partial_delivery_requires_customer_acceptance"])
+        self.assertIn("inventory:<id>", request["response_format"]["json_schema"][
+            "schema"]["properties"]["payload"]["properties"]["delivery_slices"][
+                "items"]["properties"]["source_refs"]["items"]["description"])
+
+    def test_incomplete_or_wrong_line_paths_do_not_enable_proposal(self):
+        for status, more, line, options in (("eligible_binding", True, "L1", [{}]),
+                                            ("eligible_binding", False, "L2", [{}]),
+                                            ("unsupported_capability", False, "L1", [{}]),
+                                            ("stale_evidence", False, "L1", [{}]),
+                                            ("conditional", False, "L1", [{}]),
+                                            ("eligible_binding", False, "L1", [])):
+            with self.subTest(status=status, more=more, line=line, options=options):
+                observed = ({"tool": "inspect_fulfillment_paths", "execution": "completed",
+                    "evidence": status, "more_in_sealed_pool": more,
+                    "findings": {"line_id": line, "binding_options": options}},)
+                body = self.adapter.decision_request(self.input, observed)
+                self.assertNotIn("submit_proposal", [x["function"]["name"]
+                                  for x in body["tools"]])
+
+    def test_observed_early_submission_stops_before_structured_final(self):
+        import tempfile
+        from pathlib import Path
+        from dealdesk_phase2.hybrid_offline import run_hybrid_offline
+
+        graph = build_original_graph(InvestigationAdapter(), None, InMemorySaver())
+        config = {"configurable": {"thread_id": "HYBRID-EARLY-SUBMISSION"}}
+        double = OfflineGroqWireDouble([wire_call("submit_proposal", {
+            "submission_kind": "binding_partial_delivery"})])
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory:
+            state = run_hybrid_offline(graph, config, InvestigationAdapter(), None, double,
+                assessment_id="HYBRID-EARLY-SUBMISSION", run_id=RUN,
+                reservation_dir=Path(directory))
+        self.assertEqual([x["stage"] for x in state["hybrid_execution"]["attempts"]],
+                         ["decision"])
+        self.assertEqual(state["investigation_status"], "error")
+        self.assertEqual(state["candidate_status"], "not_started")
+        self.assertEqual(state["hybrid_execution"]["rejections"][0]["code"],
+                         "binding_paths_required")
+        self.assertEqual(state["reviewer_package"]["audit_rejection_count"], 1)
+        self.assertEqual(state["reviewer_package"]["hybrid_audit"]["rejection_codes"],
+                         ["binding_paths_required"])
+        self.assertNotIn("raw", str(state["reviewer_package"]["hybrid_audit"]))
 
     def test_wrong_kind_extra_calls_and_invalid_json_rejected(self):
         intent = {"version": ACTION_VERSION, "kind": "abstain"}

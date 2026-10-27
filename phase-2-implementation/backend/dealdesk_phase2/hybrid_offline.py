@@ -7,6 +7,7 @@ and checkpoints are separate from the unchanged iterative comparator.
 from datetime import date
 from hashlib import sha256
 from pathlib import Path
+from time import monotonic
 from typing import TypedDict
 from uuid import UUID
 
@@ -17,7 +18,7 @@ from .fulfillment_agent import runtime_envelope, validate_contribution
 from .fulfillment_tools import FulfillmentTools
 from .graph_state import pinned_from_state
 from .hybrid_contracts import (HybridContractError, decision, final, strict_binding,
-                               verified_source_slices)
+                               has_complete_binding_paths, verified_source_slices)
 from .hybrid_pack import _canonical, prepare_pack
 from .hybrid_revision import feedback_for
 from .hybrid_send_reservation import (attempt_path, claim_and_call, exclusive_owner,
@@ -70,7 +71,8 @@ def _send(graph, config, directory, record, stage, ordinal, request, callback):
                 or sum(x["max_completion_tokens"] for x in previous) + request[
                     "max_completion_tokens"] > budget["max_output_tokens"]):
             raise HybridContractError("hosted_request_budget_exhausted")
-    digest = sha256(_canonical(request).encode()).hexdigest()
+    serialized = _canonical(request).encode()
+    digest = sha256(serialized).hexdigest()
     path = attempt_path(directory, assessment_id=record["assessment_id"],
                         start_digest=record["start_sha256"], stage=stage, ordinal=ordinal)
     returned = False
@@ -92,12 +94,15 @@ def _send(graph, config, directory, record, stage, ordinal, request, callback):
     record = {**record, "pending": {"stage": stage, "ordinal": ordinal,
                                       "request_sha256": digest}}
     _save(graph, config, record)
+    started = monotonic()
     raw = claim_and_call(directory, assessment_id=record["assessment_id"],
                          start_digest=record["start_sha256"], stage=stage,
                          ordinal=ordinal, request_digest=digest,
                          send=lambda: _bounded(callback()))
     record = {**record, "pending": None, "attempts": [*record["attempts"],
               {"stage": stage, "ordinal": ordinal, "request_sha256": digest, "raw": raw,
+               "request_bytes": len(serialized),
+               "latency_ms": round((monotonic() - started) * 1000),
                "max_completion_tokens": request["max_completion_tokens"] if record.get(
                    "hosted_budget") is not None else None}]}
     _save(graph, config, record)
@@ -225,6 +230,9 @@ def build_hybrid_graph(original, config, adapter, factory, model, directory, pac
             parsed = (model.wire_adapter.parse_decision(raw, input.line_id, input.permitted_tools)
                       if hasattr(model, "wire_adapter") else raw)
             action = decision(parsed, line_id=input.line_id, permitted_tools=input.permitted_tools)
+            if (action["kind"] == "submit_proposal" and not has_complete_binding_paths(
+                    record["observations"], input.line_id)):
+                raise HybridContractError("binding_paths_required")
         except ValueError as exc:
             return fail(record, exc, raw)
         return transition(record, "inspection" if action["kind"] == "inspect" else "final",

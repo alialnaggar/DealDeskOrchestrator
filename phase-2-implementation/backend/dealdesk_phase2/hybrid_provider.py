@@ -8,7 +8,9 @@ from copy import deepcopy
 from typing import Protocol
 import json
 
-from .hybrid_contracts import ACTION_VERSION, HybridContractError, decision, final
+from .candidate_contract import TRADEOFF
+from .hybrid_contracts import (ACTION_VERSION, HybridContractError, decision, final,
+                               has_complete_binding_paths)
 from .live_models import CLAIM_SCHEMA, GROQ_MODEL, TOOL_PARAMETERS
 
 
@@ -55,11 +57,15 @@ def _json_payload(message):
 def _schema(kind):
     if kind == "submit_proposal":
         payload = {"type": "object", "properties": {
-            "line_id": {"type": "string"}, "tradeoff_code": {"type": "string"},
+            "line_id": {"type": "string"}, "tradeoff_code": {"type": "string",
+                "enum": [TRADEOFF]},
             "delivery_slices": {"type": "array", "items": {"type": "object",
-                "properties": {"quantity": {"type": "string"},
-                    "delivery_date": {"type": "string"}, "source_refs": {
-                        "type": "array", "items": {"type": "string"}}},
+                "properties": {"quantity": {"type": "string", "description":
+                        "Canonical positive whole-unit ASCII text (no leading zero)."},
+                    "delivery_date": {"type": "string", "description":
+                        "Canonical YYYY-MM-DD proposed customer delivery date, not source arrival."},
+                    "source_refs": {"type": "array", "items": {"type": "string",
+                        "description": "Exact returned reference: inventory:<id> or inbound_supply:<id>."}}},
                 "required": ["quantity", "delivery_date", "source_refs"],
                 "additionalProperties": False}}},
             "required": ["line_id", "tradeoff_code", "delivery_slices"],
@@ -90,6 +96,7 @@ class GroqHybridAdapter:
 
     def decision_request(self, input, observations):
         tools = []
+        proposal_ready = has_complete_binding_paths(observations, input["line_id"])
         for name in input["permitted_tools"]:
             parameters = deepcopy(TOOL_PARAMETERS[name])
             parameters["properties"]["purpose_code"] = {"type": "string", "enum": [
@@ -99,6 +106,8 @@ class GroqHybridAdapter:
             tools.append({"type": "function", "function": {"name": name,
                 "description": "Read scoped pinned evidence only", "parameters": parameters}})
         for name in ("submit_proposal", "submit_finding", "abstain"):
+            if name == "submit_proposal" and not proposal_ready:
+                continue
             parameters = {"type": "object", "properties": {}, "required": [],
                           "additionalProperties": False}
             if name == "submit_proposal":
@@ -113,7 +122,10 @@ class GroqHybridAdapter:
             "messages": [{"role": "system", "content":
                 WIRE_VERSION + ". Choose exactly one authorized function. Never return READY. "
                 "Only returned records may be cited; supplier offers are not confirmed. "
-                "A submit call is intent only; it carries no proposed answer."},
+                "A submit call is intent only; it carries no proposed answer. "
+                "To propose binding partial delivery, first inspect_fulfillment_paths; "
+                "without a complete eligible_binding path, use a scoped finding or abstain. "
+                "An inspected source ID alone never proves its dated slice support."},
                 {"role": "user", "content": json.dumps({"input": input,
                     "observations": observations}, sort_keys=True, default=list)}]}
 
@@ -122,11 +134,24 @@ class GroqHybridAdapter:
             raise HybridContractError("invalid_submission_intent")
         if feedback is not None and intent["kind"] != "submit_proposal":
             raise HybridContractError("invalid_revision_intent")
+        if (intent["kind"] == "submit_proposal" and
+                not has_complete_binding_paths(observations, input["line_id"])):
+            raise HybridContractError("binding_paths_required")
+        domain_instruction = ("For a proposed binding partial delivery, provide exactly two "
+            "slices with positive canonical whole-unit quantity strings, canonical customer "
+            "delivery dates and exact category:id source_refs actually returned by the "
+            "authorized binding-path inspection. Use tradeoff_code " + TRADEOFF + ". "
+            "The proposed quantities must account for the submitted line without changing "
+            "the original. An option's arrival may precede a proposed customer date; "
+            "do not assume equal dates. Do not cite supplier offers as binding. "
+            "Fixed verification, not your text, decides cumulative dated supply. "
+            if intent["kind"] == "submit_proposal" else "")
         return {"model": self.model, "temperature": 0, "max_completion_tokens": 2048,
             "messages": [{"role": "system", "content": WIRE_VERSION +
                 ". Return only the structured final for the saved intent. No tools, "
                 "no approval, stock reservation or delivery promise. Proposals must use "
-                "canonical whole-unit ASCII quantities; Phase 1C alone verifies supply."},
+                "canonical whole-unit ASCII quantities; Phase 1C alone verifies supply. "
+                + domain_instruction},
                 {"role": "user", "content": json.dumps({"input": input,
                     "observations": observations, "intent": intent,
                     "feedback": feedback}, sort_keys=True, default=list)}],
