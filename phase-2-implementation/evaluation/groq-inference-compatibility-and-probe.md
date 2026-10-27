@@ -1,5 +1,9 @@
 # Groq inference compatibility — offline finding and small probe proposal
 
+**Post-probe update:** Ali separately authorized the isolated two-stage probe;
+both stages passed. See the [sanitized result](groq-contract-probe-result.md).
+That authorization is spent; the original B01 rejection remains unexplained.
+
 **27 October 2026; no hosted inference authorized by this document.** The
 historical B01 and replacement B01 assessment identities, pending sends,
 receipts, checkpoints and journals remain closed. The replacement's
@@ -22,13 +26,15 @@ system/user text messages. Its final strict-JSON turn was never sent.
 | Structured final | [Structured outputs](https://console.groq.com/docs/structured-outputs) lists GPT-OSS 120B for `json_schema`, `strict:true`; all object properties must be required with `additionalProperties:false`. Offline recursion verifies that the existing final schema satisfies these structural requirements. Decision and final are separate turns: B01 had tools but no response format; final would have a strict schema but no tools. | No hosted final request occurred; acceptance and semantic quality remain untested. |
 
 **Conclusion:** No particular field is demonstrably incompatible with the
-official contract. The two HTTP 400s used the same serialized B01 wire under
-different authorized identities; a systematic request-level incompatibility
-is plausible, not established. Changing the production adapter, business
-contract, model or 512 cap by guess would create a third untested wire and
-obscure diagnosis. None is changed in this milestone. Offline request-shape
-tests now protect the documented fields and strict-schema structure; a
-separate *offline-only* builder prepares minimal provider-contract probes.
+official contract. The two stopped B01 attempts used the same serialized wire
+under different authorized identities; the replacement returned HTTP 400,
+while the first attempt's exact error classification was not saved. A
+systematic request-level incompatibility is plausible, not established.
+Changing the production adapter, business contract, model or 512 cap by guess
+would create a third untested wire and obscure diagnosis. None is changed in
+this milestone. Offline request-shape tests now protect the documented fields
+and strict-schema structure; a separate *offline-only* builder prepares minimal
+provider-contract probes.
 
 **Offline gate:** focused contract/provider tests passed; a new isolated
 PostgreSQL 16 cluster with independently loaded pinned synthetic/reference
