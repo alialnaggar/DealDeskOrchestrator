@@ -77,6 +77,26 @@ class ExclusiveHybridSendTests(unittest.TestCase):
         self.assertFalse(verify_receipt(path, start_digest=START, stage="decision",
                                         ordinal=0, request_digest=WIRE))
 
+    def test_sanitized_provider_failure_is_durable_and_cannot_be_replayed(self):
+        from dealdesk_phase2.live_models import ProviderError
+        with self.assertRaisesRegex(ProviderError, "http_429"):
+            self.invoke(lambda: (_ for _ in ()).throw(ProviderError("http_429")))
+        path, events = self.audit()
+        self.assertEqual(events[1]["code"], "http_429")
+        self.assertGreaterEqual(events[1]["elapsed_ms"], 0)
+        self.assertFalse(verify_receipt(path, start_digest=START, stage="decision",
+                                        ordinal=0, request_digest=WIRE))
+        with self.assertRaises(FileExistsError):
+            self.invoke(lambda: self.fail("resend"))
+        for bad in ({**events[1], "code": "private error token"},
+                    {**events[1], "elapsed_ms": -1},
+                    {**events[1], "returned_at_utc": "forged"}):
+            with self.subTest(bad=bad):
+                path.write_text("\n".join(json.dumps(x) for x in (events[0], bad)) + "\n")
+                with self.assertRaisesRegex(HybridContractError, "send_receipt_invalid"):
+                    verify_receipt(path, start_digest=START, stage="decision",
+                                   ordinal=0, request_digest=WIRE)
+
     def test_directory_and_receipt_owner_are_verified(self):
         import os
 
@@ -102,7 +122,12 @@ class ExclusiveHybridSendTests(unittest.TestCase):
                         sender = Mock(side_effect=failure("unknown provider state"))
                         with self.assertRaises(failure):
                             self.invoke(sender)
-                        self.assertEqual([x["event"] for x in self.audit()[1]], ["reserved"])
+                        path, events = self.audit()
+                        self.assertEqual([x["event"] for x in events], ["reserved", "failed"])
+                        self.assertEqual(events[1]["code"], "send_failure_unknown")
+                        self.assertFalse(verify_receipt(path, start_digest=START,
+                            stage="decision", ordinal=0, request_digest=WIRE))
+                        self.assertNotIn("unknown provider state", path.read_text())
                         with self.assertRaises(FileExistsError):
                             self.invoke(sender)
                         sender.assert_called_once_with()

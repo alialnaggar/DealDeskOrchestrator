@@ -109,6 +109,26 @@ class CampaignTests(unittest.TestCase):
             run_campaign(self.dir, authorized=True, approved_digest=campaign_digest(),
                 execute_case=uncertain, assess_control=control)
 
+    def test_provider_failure_code_saved_without_private_message_or_advancing(self):
+        from dealdesk_phase2.live_models import ProviderError
+        def reject(case, *_):
+            self.calls.append(case)
+            raise ProviderError("http_429")
+        with self.assertRaisesRegex(ProviderError, "http_429"):
+            run_campaign(self.dir, authorized=True, approved_digest=campaign_digest(),
+                         execute_case=reject, assess_control=control)
+        self.assertEqual(self.calls, ["B01"])
+        self.assertEqual(self.events()[-1], {"event": "campaign_stopped",
+                                               "case_id": "B01", "code": "http_429"})
+
+    def test_malformed_model_result_has_bounded_campaign_code(self):
+        from dealdesk_phase2.hybrid_contracts import HybridContractError
+        with self.assertRaisesRegex(HybridContractError, "invalid_groq_response"):
+            run_campaign(self.dir, authorized=True, approved_digest=campaign_digest(),
+                execute_case=lambda *_: (_ for _ in ()).throw(
+                    HybridContractError("invalid_groq_response")), assess_control=control)
+        self.assertEqual(self.events()[-1]["code"], "invalid_groq_response")
+
     def test_missing_usage_and_unsafe_adverse_candidate_stop(self):
         for result, code in ((eligible("B01", usage=False), "usage_unverifiable"),
                              (eligible("B01", requests=4), "case_receipt_invalid"),

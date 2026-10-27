@@ -12,8 +12,38 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
+from time import monotonic
 
 from .hybrid_contracts import HybridContractError
+from .live_models import ProviderError
+
+
+def sanitized_failure_code(exc: BaseException) -> str:
+    """Allow only fixed provider categories; never persist exception text."""
+    if isinstance(exc, ProviderError):
+        code = exc.code
+        if (type(code) is str and (code in {
+                "transport_timeout", "transport_connection_lost",
+                "transport_connection_failure", "transport_network_error",
+                "transport_protocol_failure", "transport_failure",
+                "invalid_provider_json", "invalid_provider_response",
+                "provider_response_oversize", "provider_http_unknown",
+                "invalid_request_timeout", "request_too_large", "missing_credential"}
+                or len(code) == 8 and code.startswith("http_")
+                and code[5:].isdigit() and 100 <= int(code[5:]) <= 599)):
+            return code
+        return "provider_failure_unknown"
+    return "send_failure_unknown"
+
+
+def _valid_failure(event):
+    if (set(event) != {"event", "code", "elapsed_ms"} or event["event"] != "failed"
+            or type(event["elapsed_ms"]) is not int or event["elapsed_ms"] < 0):
+        return False
+    code = event["code"]
+    return (type(code) is str and
+            (sanitized_failure_code(ProviderError(code)) == code
+             or code == "send_failure_unknown"))
 
 
 @contextmanager
@@ -91,12 +121,13 @@ def verify_receipt(path: Path, *, start_digest: str, stage: str,
                 or events[0]["start_sha256"] != start_digest
                 or events[0]["request_sha256"] != request_digest
                 or not isinstance(events[0]["reserved_at_utc"], str)
-                or len(events) == 2 and (not isinstance(events[1], dict)
-                    or set(events[1]) != {"event", "returned_at_utc"}
-                    or events[1]["event"] != "returned"
-                    or not isinstance(events[1]["returned_at_utc"], str))):
+                 or len(events) == 2 and (not isinstance(events[1], dict)
+                     or not ((set(events[1]) == {"event", "returned_at_utc"}
+                              and events[1]["event"] == "returned"
+                              and isinstance(events[1]["returned_at_utc"], str))
+                             or _valid_failure(events[1])))):
             raise HybridContractError("send_receipt_invalid")
-        return len(events) == 2
+        return len(events) == 2 and events[1]["event"] == "returned"
     except (UnicodeError, ValueError, TypeError):
         raise HybridContractError("send_receipt_invalid") from None
     finally:
@@ -129,7 +160,13 @@ def claim_and_call(directory: Path, *, assessment_id: str, start_digest: str,
             os.close(dfd)
         # No exception handler with a retry. A transport error or an unexpected
         # crash leaves a terminal reservation, not permission to send again.
-        result = send()
+        started = monotonic()
+        try:
+            result = send()
+        except BaseException as exc:
+            _append(fd, {"event": "failed", "code": sanitized_failure_code(exc),
+                         "elapsed_ms": max(0, round((monotonic() - started) * 1000))})
+            raise
         _append(fd, {"event": "returned", "returned_at_utc":
                      datetime.now(timezone.utc).isoformat()})
         return result

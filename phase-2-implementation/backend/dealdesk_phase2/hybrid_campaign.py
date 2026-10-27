@@ -15,7 +15,10 @@ from pathlib import Path
 import stat
 
 from .hybrid_offline import HOSTED_BUDGET
+from .hybrid_contracts import HybridContractError
 from .hybrid_pack import _canonical
+from .hybrid_send_reservation import sanitized_failure_code
+from .live_models import ProviderError
 
 
 CAMPAIGN_VERSION = "hybrid-groq-campaign-v1"
@@ -44,6 +47,26 @@ def campaign_digest():
 
 class CampaignStop(RuntimeError):
     """A safety or identity gate prevents advancing to any further case."""
+
+
+def _stop_code(exc):
+    if isinstance(exc, ProviderError):
+        return sanitized_failure_code(exc)
+    if isinstance(exc, HybridContractError) and str(exc) in {
+            "invalid_groq_response", "invalid_groq_json", "invalid_groq_action",
+            "invalid_groq_final", "raw_response_invalid", "raw_response_oversize"}:
+        return str(exc)
+    if isinstance(exc, CampaignStop):
+        code = str(exc)
+        if code in {"case_receipt_invalid", "control_model_invocation_or_gate_changed",
+                    "case_safety_outcome", "usage_unverifiable",
+                    "assessment_identity_reused", "reported_token_threshold_exceeded",
+                    "repeated_contained_model_failures", "aggregate_budget_exhausted",
+                    "campaign_checkpoint_source_changed", "control_eligibility_or_source_changed"}:
+            return code
+        return "campaign_stop_unknown"
+    return (type(exc).__name__ if type(exc) in (TimeoutError, KeyboardInterrupt)
+            else "execution_failure_unknown")
 
 
 def _private_directory(directory):
@@ -211,8 +234,7 @@ def run_campaign(directory: Path, *, authorized: bool, approved_digest: str,
                     raise CampaignStop("repeated_contained_model_failures")
             except BaseException as exc:
                 _append(fd, {"event": "campaign_stopped", "case_id": case_id,
-                             "code": (str(exc) if isinstance(exc, CampaignStop)
-                                      else type(exc).__name__)})
+                             "code": _stop_code(exc)})
                 raise
         _append(fd, {"event": "campaign_completed", "cases": len(completed),
                      "requests": requests, "output_ceilings": output,

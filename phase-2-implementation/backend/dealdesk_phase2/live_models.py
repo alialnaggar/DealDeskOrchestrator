@@ -9,6 +9,9 @@ from copy import deepcopy
 from hashlib import sha256
 import json
 import os
+import http.client
+import socket
+import ssl
 from time import monotonic, sleep
 from urllib.error import HTTPError, URLError
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
@@ -52,23 +55,44 @@ def _post(url: str, key: str, header: str, body: dict, *, timeout_seconds: int =
         # The hosted hybrid may not forward Authorization to a redirected URL.
         client = build_opener(_NoRedirect()).open if reject_redirects else urlopen
         with client(request, timeout=timeout_seconds) as response:
-            return json.load(response)
+            if not classify_transport:
+                return json.load(response)
+            # Bound untrusted response bytes before decoding. Partial/truncated
+            # bodies are never a successful model response.
+            raw = response.read(16385)
+            if len(raw) > 16384:
+                raise ProviderError("provider_response_oversize")
+            try:
+                value = json.loads(raw)
+            except (ValueError, UnicodeError):
+                raise ProviderError("invalid_provider_json") from None
+            if classify_transport and not isinstance(value, dict):
+                raise ProviderError("invalid_provider_response")
+            return value
     except HTTPError as exc:
         # Error bodies can echo request content and must not enter logs/checkpoints.
         # Preserve the historical adapter's error lifetime; only the new
         # hybrid no-redirect path owns and closes its failed response here.
         if reject_redirects:
             exc.close()
-        raise ProviderError("http_" + str(exc.code)) from None
+        status = exc.code
+        if type(status) is not int or not 100 <= status <= 599:
+            raise ProviderError("provider_http_unknown") from None
+        raise ProviderError("http_" + str(status)) from None
     except (URLError, TimeoutError, OSError) as exc:
         # Opt-in structural diagnostics only; never record exception text, URL,
         # headers, or a potentially sensitive provider error body.
         reason = exc.reason if isinstance(exc, URLError) else exc
-        if classify_transport and isinstance(reason, TimeoutError):
+        if classify_transport and isinstance(reason, (TimeoutError, socket.timeout)):
             code = "transport_timeout"
         elif classify_transport and isinstance(reason, (
                 ConnectionResetError, ConnectionAbortedError, BrokenPipeError)):
             code = "transport_connection_lost"
+        elif classify_transport and isinstance(reason, (ssl.SSLError, http.client.HTTPException)):
+            code = "transport_protocol_failure"
+        elif classify_transport and isinstance(reason, (ConnectionRefusedError, ConnectionError,
+                                                       socket.gaierror)):
+            code = "transport_connection_failure"
         elif classify_transport and isinstance(exc, URLError):
             code = "transport_network_error"
         else:
@@ -76,6 +100,8 @@ def _post(url: str, key: str, header: str, body: dict, *, timeout_seconds: int =
         raise ProviderError(code) from None
     except (ValueError, TypeError):
         raise ProviderError("invalid_provider_json") from None
+    except (http.client.HTTPException, ssl.SSLError):
+        raise ProviderError("transport_protocol_failure") from None
 
 
 TOOL_PARAMETERS = {

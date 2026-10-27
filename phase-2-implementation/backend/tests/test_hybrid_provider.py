@@ -1,6 +1,9 @@
 """Groq wire serialization is offline, strict, and separate from iterative."""
 
 import json
+import http.client
+from io import BytesIO
+from urllib.error import URLError
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
@@ -210,6 +213,38 @@ class WireTests(unittest.TestCase):
                 self.assertEqual(post.call_args.args[0].get_header("Authorization"),
                                  "Bearer gsk_" + "x" * 48)
                 body.read.assert_not_called()
+
+    def test_hosted_fault_categories_and_partial_response_are_sanitized(self):
+        from dealdesk_phase2.live_models import _post, ProviderError
+        key = "private-token"
+        for failure, code in ((URLError(TimeoutError(key)), "transport_timeout"),
+                              (ConnectionResetError(key), "transport_connection_lost"),
+                              (URLError(ConnectionRefusedError(key)), "transport_connection_failure"),
+                              (http.client.IncompleteRead(b'{"private":', 12),
+                               "transport_protocol_failure")):
+            with self.subTest(code=code), patch("dealdesk_phase2.live_models.build_opener") as opener:
+                opener.return_value.open.side_effect = failure
+                with self.assertRaises(ProviderError) as caught:
+                    _post("https://api.groq.com/openai/v1/chat/completions", key,
+                          "Authorization", {}, classify_transport=True, reject_redirects=True)
+                self.assertEqual(str(caught.exception), code)
+                self.assertNotIn(key, str(caught.exception))
+
+        class Response:
+            def __init__(self, data): self.data = BytesIO(data)
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def read(self, size): return self.data.read(size)
+
+        for data, code in ((b'{"choices":', "invalid_provider_json"),
+                           (b'null', "invalid_provider_response"),
+                           (b'x' * 16385, "provider_response_oversize")):
+            with self.subTest(code=code), patch("dealdesk_phase2.live_models.build_opener") as opener:
+                opener.return_value.open.return_value = Response(data)
+                with self.assertRaises(ProviderError) as caught:
+                    _post("https://api.groq.com/openai/v1/chat/completions", key,
+                          "Authorization", {}, classify_transport=True, reject_redirects=True)
+                self.assertEqual(str(caught.exception), code)
 
     def test_hybrid_transport_rejects_redirect_instead_of_forwarding_key(self):
         from dealdesk_phase2.live_models import ProviderError
