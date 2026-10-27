@@ -1,13 +1,15 @@
-"""Opt-in offline M2.0 Configuration and Pricing investigations.
+"""Opt-in M2.0 Configuration and Pricing investigations.
 
 Fixed original/candidate checks remain authoritative. This module offers no
-hosted transport, SQL, substitutions, repricing, approval or free-text claims.
+SQL, substitutions, repricing, approval or free-text claims. Hosted transport
+is separately gated in m20_groq; the default entrypoint remains offline-only.
 The short LangGraph continuation checkpoints each AI result in the original
 graph without altering its six deterministic results or comparator.
 """
 
 from copy import deepcopy
 from hashlib import sha256
+from pathlib import Path
 from time import monotonic
 from typing import Literal, Protocol, TypedDict
 
@@ -16,6 +18,8 @@ from langgraph.graph import END, START, StateGraph
 from .fulfillment_tools import _json
 from .graph_state import pinned_from_state
 from .hybrid_pack import _canonical
+from .hybrid_send_reservation import exclusive_owner
+from .live_models import ProviderError
 from .phase1c_adapter import EvidenceMismatch
 from .tool_ledger import complete, entries, reserve
 from .tool_permissions import AuthorizationDenied, TrustedToolScope
@@ -30,6 +34,7 @@ MAX_MODEL_OUTPUT_BYTES = 8192
 MAX_OBSERVATION_BYTES = 16384
 TOOLS = {"configuration": "inspect_configuration_line",
          "pricing": "inspect_pricing_line"}
+_HOSTED_CAPABILITY = object()
 
 
 class M20Model(Protocol):
@@ -205,7 +210,7 @@ def _validate_claims(action, observations, specialist):
     return claims
 
 
-def _one(original, config, adapter, specialist, model):
+def _one(original, config, adapter, specialist, model, *, hosted=False):
     state = original.get_state(config).values
     pinned = pinned_from_state(state)
     pool = adapter.validate_pinned_context(pinned)
@@ -216,8 +221,12 @@ def _one(original, config, adapter, specialist, model):
     if specialist in previous:
         if ({k: previous[specialist].get(k) for k in identity} != identity
                 or previous[specialist].get("model") != model.model
+                or previous[specialist].get("provider") != model.provider
+                or previous[specialist].get("prompt_version") != VERSION
                 or previous[specialist].get("version") != VERSION):
             raise EvidenceMismatch("M2.0 completed AI identity changed")
+        if hosted and previous[specialist]["execution"] == "error":
+            raise EvidenceMismatch("M2.0 hosted error cannot resume sends")
         return
     if (specialist == "pricing" and "configuration" not in previous):
         raise EvidenceMismatch("M2.0 Configuration AI prerequisite missing")
@@ -252,8 +261,16 @@ def _one(original, config, adapter, specialist, model):
     try:
         for ordinal in range(MAX_TURNS):
             attempts = list(original.get_state(config).values.get("m20_model_attempts", []))
+            if hosted and len([item for item in attempts if item["status"] == "reserved"]) >= 6:
+                raise EvidenceMismatch("M2.0 hosted aggregate request budget exhausted")
+            request_digest = None
+            if hosted:
+                request = model.prepare_request(input, tuple(observations))
+                request_digest = sha256(_canonical(request).encode()).hexdigest()
+                model.pending_request_digest = request_digest
             marker = {**identity, "version": VERSION, "ordinal": ordinal, "model": model.model,
-                      "provider": model.provider, "prompt_version": VERSION}
+                      "provider": model.provider, "prompt_version": VERSION,
+                      **({"request_sha256": request_digest} if hosted else {})}
             if any(all(item.get(k) == v for k, v in marker.items()) for item in attempts):
                 raise EvidenceMismatch("M2.0 prior model attempt uncertain; never resend")
             original.update_state(config, {"m20_model_attempts": [*attempts,
@@ -269,7 +286,8 @@ def _one(original, config, adapter, specialist, model):
                 {**marker, "status": "returned", "action_kind": action.get("kind") if isinstance(
                     action, dict) and action.get("kind") in ("inspect", "finding", "abstain") else "invalid",
                     "elapsed_ms": max(0, round((monotonic() - started) * 1000)),
-                    "cost_usd": None}]},
+                    "cost_usd": None,
+                    "usage": dict(model.last_usage) if hosted else None}]},
                 as_node="finish")
             if not isinstance(action, dict):
                 raise ValueError("m20_malformed_action")
@@ -311,6 +329,8 @@ def _one(original, config, adapter, specialist, model):
     except (ValueError, EvidenceMismatch, TypeError, KeyError) as exc:
         status, reason = "error", ("evidence_identity" if isinstance(exc, EvidenceMismatch)
                                     else "invalid_model_or_tool_output")
+    except ProviderError as exc:
+        status, reason = "error", "provider_" + exc.code
     except Exception:
         status, reason = "error", "model_or_tool_failure"
     latest = original.get_state(config).values
@@ -321,18 +341,41 @@ def _one(original, config, adapter, specialist, model):
     original.update_state(config, {"m20_ai_results": {**latest.get("m20_ai_results", {}),
                             specialist: result}, "trace": [*latest["trace"],
                             "m20_" + specialist + ":" + status]}, as_node="finish")
+    if hosted and status == "error":
+        # Do not send Pricing after an uncertain, malformed or denied hosted turn.
+        from .candidate_graph import original_only_package
+        fresh = original.get_state(config).values
+        package = fresh.get("reviewer_package") or original_only_package(fresh)
+        if "m20_ai" not in package:
+            original.update_state(config, {"reviewer_package": {**package,
+                "m20_ai": {
+                    "version": VERSION, "execution": "stopped",
+                    "specialist": specialist, "reason": reason,
+                    "validated_claims": [], "authority": "Fixed original; human review only"}}},
+                as_node="finish")
+        raise EvidenceMismatch("M2.0 hosted investigation stopped; fixed review retained")
 
 
-def build_m20_graph(original, config, adapter, models):
-    """Configuration then Pricing AI; only opt-in offline doubles are accepted."""
-    if (set(models) != set(TOOLS) or any(getattr(m, "provider", None) != "offline_double"
+def build_m20_graph(original, config, adapter, models, *, _capability=None):
+    """Configuration then Pricing AI; offline unless given the private hosted gate."""
+    if set(models) != set(TOOLS):
+        raise ValueError("M2.0 two specialist models required")
+    hosted = _capability is _HOSTED_CAPABILITY
+    if _capability is not None and not hosted:
+        raise ValueError("M2.0 hosted capability not available")
+    if hosted:
+        from .m20_groq import GroqM20Model
+        if any(type(models[name]) is not GroqM20Model or models[name].specialist != name
+               for name in TOOLS):
+            raise ValueError("M2.0 hosted models must be exact scoped Groq adapters")
+    elif any(getattr(m, "provider", None) != "offline_double"
             or getattr(m, "offline_only", False) is not True or not isinstance(
-                getattr(m, "model", None), str) for m in models.values())):
+                getattr(m, "model", None), str) for m in models.values()):
         raise ValueError("M2.0 offline models required")
     builder = StateGraph(M20State)
     def node(name):
         def run(_):
-            _one(original, config, adapter, name, models[name])
+            _one(original, config, adapter, name, models[name], hosted=hosted)
             return {"current": name}
         return run
     for name in TOOLS:
@@ -360,11 +403,12 @@ def build_m20_graph(original, config, adapter, models):
                 "reviewer_package"] and state["reviewer_package"]["m20_ai"] != review:
             raise EvidenceMismatch("M2.0 reviewer package differs from validated claims")
         if state.get("m20_review") is None:
-            update = {"m20_review": review}
-            if state.get("reviewer_package") is not None:
-                if "m20_ai" in state["reviewer_package"]:
-                    raise EvidenceMismatch("M2.0 reviewer output already exists")
-                update["reviewer_package"] = {**state["reviewer_package"], "m20_ai": review}
+            from .candidate_graph import original_only_package
+            package = state.get("reviewer_package") or original_only_package(state)
+            if "m20_ai" in package:
+                raise EvidenceMismatch("M2.0 reviewer output already exists")
+            update = {"m20_review": review,
+                      "reviewer_package": {**package, "m20_ai": review}}
             original.update_state(config, update, as_node="finish")
         return {"current": "handoff"}
     builder.add_node("handoff", handoff)
@@ -377,6 +421,12 @@ def build_m20_graph(original, config, adapter, models):
 
 def run_m20_offline(original, config, adapter, models):
     """Post-original graph continuation; never invokes a provider or a candidate."""
+    _validate_m20_start(original, config, adapter)
+    build_m20_graph(original, config, adapter, models).invoke({"current": "start"})
+    return original.get_state(config).values
+
+
+def _validate_m20_start(original, config, adapter):
     snapshot = original.get_state(config)
     state = snapshot.values
     pinned = pinned_from_state(state)
@@ -384,5 +434,42 @@ def run_m20_offline(original, config, adapter, models):
     if (snapshot.next or state.get("stop_reason") or set(state.get("specialist_results", {})) != {
             "configuration", "pricing", "fulfillment", "credit", "policy", "approval_routing"}):
         raise EvidenceMismatch("M2.0 requires completed fixed original")
-    build_m20_graph(original, config, adapter, models).invoke({"current": "start"})
+
+
+def run_m20_evaluation(original, config, adapter, models, *, authorized=False,
+                       reservation_dir: Path | None = None):
+    """Explicit opt-in hosted gate; no credentials or network before authorization."""
+    if authorized is not True:
+        raise ValueError("M2.0 hosted evaluation not authorized")
+    from .m20_groq import GroqM20Model
+    from .groq_preflight import credential_shape
+    import os
+    if (set(models) != set(TOOLS) or any(type(models[name]) is not GroqM20Model
+            or models[name].specialist != name for name in TOOLS)):
+        raise ValueError("M2.0 hosted evaluation requires scoped Groq models")
+    if credential_shape(os.environ.get("GROQ_API_KEY")) != "credential_shape_ok":
+        raise ValueError("M2.0 Groq credential unavailable")
+    _validate_m20_start(original, config, adapter)
+    if not isinstance(reservation_dir, Path):
+        raise ValueError("M2.0 durable hosted owner directory required")
+    state = original.get_state(config).values
+    with exclusive_owner(reservation_dir, state["assessment_id"]):
+        owner = {"path": str(reservation_dir.resolve(strict=True)),
+                 "device": reservation_dir.stat().st_dev,
+                 "inode": reservation_dir.stat().st_ino}
+        fresh = original.get_state(config).values
+        if (fresh.get("m20_hosted_owner") not in (None, owner)
+                or fresh.get("m20_hosted_owner") is None and (
+                    fresh.get("m20_model_attempts") or fresh.get("m20_ai_results"))):
+            raise EvidenceMismatch("M2.0 hosted owner or attempt identity changed")
+        if fresh.get("m20_hosted_owner") is None:
+            original.update_state(config, {"m20_hosted_owner": owner}, as_node="finish")
+        if any(item.get("provider") != "groq" for item in original.get_state(config).values.get(
+                "m20_ai_results", {}).values()):
+            raise EvidenceMismatch("M2.0 cannot switch a completed offline assessment to hosted")
+        if any(item.get("provider") != "groq" for item in original.get_state(config).values.get(
+                "m20_model_attempts", [])):
+            raise EvidenceMismatch("M2.0 cannot adopt offline model attempts")
+        build_m20_graph(original, config, adapter, models,
+                        _capability=_HOSTED_CAPABILITY).invoke({"current": "start"})
     return original.get_state(config).values

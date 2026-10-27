@@ -9,6 +9,17 @@ Phase 1C source and human-only approval boundary remain unchanged. The
 separate disposable M2.0 business/checkpoint databases so its tests do not
 silently skip; no hosted model is invoked by the test suite.
 
+**Hosted-validation preparation (no inference):** The
+[bounded two-case proposal](../evaluation/m20-bounded-hosted-validation-proposal.md)
+documents fresh source identities, per-provider ceilings, evidence gates and
+the explicit authorization required before a Groq POST. `m20_groq.py` is an
+opt-in native-tool adapter for the existing Groq model. `run_m20_evaluation`
+rejects unapproved or wrongly scoped models; tests patch transport and use
+real permissioned PostgreSQL evidence. Groq has **not** accepted these new
+Configuration/Pricing tool schemas in a live request. Fulfillment's existing
+hosted gate disables correction and its real end-to-end outcome remains
+unverified.
+
 **Status:** Implemented and tested against Phase 1C commit
 `90c0bc8e285ee69262c7db826b786096a77ad004`. This is a read-only
 integration foundation, not a LangGraph graph or an AI specialist.

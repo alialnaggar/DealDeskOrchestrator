@@ -1,0 +1,20 @@
+{
+  "version": "m20-hosted-authorization-proposal-v1",
+  "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
+  "model": "openai/gpt-oss-120b",
+  "order": ["B05-fulfillment", "B01-configuration-pricing"],
+  "cases": {
+    "B05-fulfillment": {
+      "assessment_id": "M20-HOSTED-B05-32f5323c-da07-4881-a2ee-122d0ae1803c",
+      "run_id": "00000000-0000-4000-8000-000000018005",
+      "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+      "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd"
+    },
+    "B01-configuration-pricing": {
+      "assessment_id": "M20-HOSTED-B01-3243d2f1-4c75-4f99-8aaa-5798c1725627",
+      "run_id": "00000000-0000-4000-8000-000000018001",
+      "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+      "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4"
+    }
+  }
+}

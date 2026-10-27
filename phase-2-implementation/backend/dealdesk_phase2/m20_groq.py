@@ -1,0 +1,139 @@
+"""Dormant Groq wire for M2.0; only run_m20_evaluation may activate it.
+
+The provider sees selected lines and returned tool observations, never SQL,
+reviewer answer keys, credentials or a business-approval instruction.
+"""
+
+import json
+import os
+from hashlib import sha256
+
+from .hybrid_pack import _canonical
+from .live_models import GROQ_MODEL, ProviderError, _post
+from .m20_specialists import TOOLS, VERSION
+
+
+WIRE_VERSION = "m20-groq-native-tools-v1"
+MAX_REQUEST_BYTES = 8192
+MAX_RESPONSE_BYTES = 16384
+MAX_COMPLETION_TOKENS = 512
+MAX_PROMPT_TOKENS = 4096
+
+
+def request_body(input, observations):
+    specialist = input["specialist"]
+    if specialist not in TOOLS or input["permitted_tool"] != TOOLS[specialist]:
+        raise ValueError("m20_groq_tool_identity")
+    tools = [{"type": "function", "function": {"name": TOOLS[specialist],
+        "description": "Inspect one authorized original-deal line in the frozen evidence pool.",
+        "parameters": {"type": "object", "properties": {"line_id": {"type": "string"}},
+                       "required": ["line_id"], "additionalProperties": False}}},
+        {"type": "function", "function": {"name": "submit_finding",
+        "description": "Report only exact fields actually returned by this specialist's inspection.",
+        "parameters": {"type": "object", "properties": {
+            "claims": {"type": "array", "items": {"type": "object", "properties": {
+                "ref": {"type": "string"}, "field": {"type": "string"},
+                "value_json": {"type": "string", "description":
+                    "The exact JSON serialization of the returned value; e.g. true or \"21.000\". No rounding."}},
+                "required": ["ref", "field", "value_json"], "additionalProperties": False}},
+            "uncertainty_reasons": {"type": "array", "items": {"type": "string"}}},
+            "required": ["claims", "uncertainty_reasons"], "additionalProperties": False}}},
+        {"type": "function", "function": {"name": "abstain",
+        "description": "Stop if exact evidence or a safe conclusion is unavailable.",
+        "parameters": {"type": "object", "properties": {"reason_code": {"type": "string",
+            "enum": ["insufficient_evidence", "model_uncertainty", "unsupported_capability"]}},
+            "required": ["reason_code"], "additionalProperties": False}}}]
+    body = {"model": GROQ_MODEL, "temperature": 0, "max_completion_tokens": MAX_COMPLETION_TOKENS,
+        "parallel_tool_calls": False, "tool_choice": "required", "tools": tools,
+        "messages": [{"role": "system", "content": WIRE_VERSION + " " + VERSION +
+            ". You are the " + specialist + " evidence investigator, not a rule engine. "
+            "First inspect the applicable line. Cite only returned fields verbatim. "
+            "Do not infer validity, clearance or approval from a field; never invent facts, "
+            "change a deal, calculate a new margin, waive policy or promise delivery. "
+            "If the evidence is incomplete or a finding cannot be grounded, abstain. "
+            "Choose exactly one function per response. No free-text final answer."},
+            {"role": "user", "content": _canonical({"input": input,
+                "observations": observations})}]}
+    if len(_canonical(body).encode()) > MAX_REQUEST_BYTES:
+        raise ValueError("m20_groq_request_oversize")
+    return body
+
+
+def parse_response(response, input):
+    """Convert one native tool call to the exact trusted M2.0 action shape."""
+    try:
+        if (type(response) is not dict or len(response["choices"]) != 1 or
+                response["choices"][0]["finish_reason"] != "tool_calls"):
+            raise ValueError()
+        message = response["choices"][0]["message"]
+        calls = message["tool_calls"]
+        if message.get("content") not in (None, "") or len(calls) != 1:
+            raise ValueError()
+        name = calls[0]["function"]["name"]
+        args = json.loads(calls[0]["function"]["arguments"])
+        if type(args) is not dict:
+            raise ValueError()
+        if name == input["permitted_tool"] and set(args) == {"line_id"}:
+            return {"kind": "inspect", "tool": name, "line_id": args["line_id"]}
+        if name == "abstain" and set(args) == {"reason_code"}:
+            return {"kind": "abstain", **args}
+        if name == "submit_finding" and set(args) == {"claims", "uncertainty_reasons"}:
+            if type(args["claims"]) is not list or len(args["claims"]) > 6:
+                raise ValueError()
+            claims = []
+            for claim in args["claims"]:
+                if (type(claim) is not dict or set(claim) != {"ref", "field", "value_json"}
+                        or type(claim["value_json"]) is not str
+                        or len(claim["value_json"].encode()) > 1024):
+                    raise ValueError()
+                claims.append({"ref": claim["ref"], "field": claim["field"],
+                               "value": json.loads(claim["value_json"])})
+            return {"kind": "finding", "claims": claims,
+                    "uncertainty_reasons": args["uncertainty_reasons"]}
+    except (KeyError, TypeError, ValueError, IndexError, UnicodeError):
+        pass
+    raise ValueError("m20_groq_invalid_response") from None
+
+
+class GroqM20Model:
+    provider = "groq"
+    model = GROQ_MODEL
+    offline_only = False
+    wire_version = WIRE_VERSION
+
+    def __init__(self, specialist):
+        if specialist not in TOOLS:
+            raise ValueError("m20_groq_invalid_specialist")
+        self.specialist = specialist
+        self.last_usage = None
+        self.pending_request_digest = None
+
+    def prepare_request(self, input, observations):
+        if input["specialist"] != self.specialist:
+            raise ValueError("m20_groq_wrong_specialist")
+        return request_body(input, observations)
+
+    def next_action(self, input, observations):
+        if input["specialist"] != self.specialist:
+            raise ValueError("m20_groq_wrong_specialist")
+        body = self.prepare_request(input, observations)
+        if (self.pending_request_digest is not None and
+                sha256(_canonical(body).encode()).hexdigest() != self.pending_request_digest):
+            raise ValueError("m20_groq_request_identity_changed")
+        self.last_usage = None
+        key = os.environ.get("GROQ_API_KEY")
+        if not key:
+            raise ProviderError("missing_credential")
+        response = _post("https://api.groq.com/openai/v1/chat/completions",
+            "Bearer " + key, "Authorization", body, timeout_seconds=30,
+            classify_transport=True, reject_redirects=True)
+        if len(_canonical(response).encode()) > MAX_RESPONSE_BYTES:
+            raise ProviderError("provider_response_oversize")
+        usage = response.get("usage")
+        if (type(usage) is not dict or any(type(usage.get(k)) is not int or usage[k] < 0
+                for k in ("prompt_tokens", "completion_tokens"))
+                or usage["prompt_tokens"] > MAX_PROMPT_TOKENS
+                or usage["completion_tokens"] > MAX_COMPLETION_TOKENS):
+            raise ProviderError("hosted_usage_unverifiable")
+        self.last_usage = {k: usage[k] for k in ("prompt_tokens", "completion_tokens")}
+        return parse_response(response, input)

@@ -45,7 +45,9 @@ not rewritten. Pricing AI skips if *fixed* Configuration is not valid or
 fixed Pricing did not run; Configuration AI itself may abstain/error without
 falsifying the fixed result. The opt-in continuation holds its own
 `m20_ai_results`, append-only `m20_model_attempts` and `m20_review` checkpoint
-fields. When a reviewer package exists, the only addition is `m20_ai`:
+fields. For a completed original without a prior reviewer package, the
+existing original-only package builder now supplies a human handoff; otherwise
+the only reviewer-package addition is `m20_ai`:
 validated observed fields, status, fixed review status and withheld route;
 no model prose or approval decision. A resumed completed run does not call a
 model or charge tools again; a reserved model call interrupted before a
