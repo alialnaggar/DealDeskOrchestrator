@@ -19,35 +19,96 @@ from .checkpoint import thesis_checkpointer
 from .fulfillment_agent import eligible_line
 from .graph_state import pinned_from_state
 from .hybrid_campaign import (CASE_ORDER, CONTROLS, ELIGIBLE, IDENTITIES_SHA256,
-                              CONTAINED_MODEL_ERRORS,
-                              CampaignStop, CaseReceipt, campaign_digest, run_campaign)
+                               REPLACEMENT_IDENTITIES_SHA256, CASE_LOCAL_CODES,
+                               CONTAINED_MODEL_ERRORS, CampaignStop, CaseReceipt,
+                               CaseLocalFailure, campaign_digest, replacement_digest,
+                               run_campaign)
 from .hybrid_evaluation import capture_hybrid, summarize_hybrid
 from .hybrid_offline import HOSTED_BUDGET, run_hybrid_evaluation
 from .hybrid_pack import _canonical
 from .hybrid_provider import GroqHybridTransportModel
+from .hybrid_send_reservation import attempt_path, verify_receipt
+from .live_models import ProviderError
 from .orchestrator import build_original_graph, initial_state
 from .phase1c_adapter import Phase1CAdapter
 
 
-def load_identities(path: Path) -> dict:
+def load_identities(path: Path, *, replacement: bool = False) -> dict:
     """Reviewer-only exact source identities; never embed answers in agent input."""
     raw = path.read_bytes()
     if len(raw) > 8192:
         raise CampaignStop("campaign_identity_manifest_oversize")
     data = json.loads(raw)
-    if (sha256(_canonical(data).encode()).hexdigest() != IDENTITIES_SHA256
+    if (sha256(_canonical(data).encode()).hexdigest() != (
+            REPLACEMENT_IDENTITIES_SHA256 if replacement else IDENTITIES_SHA256)
             or set(data) != {"version", "case_order", "cases"}
-            or data["version"] != "hybrid-groq-campaign-identities-v1"
+            or data["version"] != ("hybrid-groq-replacement-identities-v1" if replacement
+                                   else "hybrid-groq-campaign-identities-v1")
             or tuple(data["case_order"]) != CASE_ORDER
             or set(data["cases"]) != set(CASE_ORDER)):
         raise CampaignStop("campaign_identity_manifest_changed")
-    for item in data["cases"].values():
-        if (set(item) != {"run_id", "bundle_sha256", "source_input_digest"}
+    for case, item in data["cases"].items():
+        if (set(item) != ({"run_id", "bundle_sha256", "source_input_digest",
+                          "assessment_id"} if replacement else
+                         {"run_id", "bundle_sha256", "source_input_digest"})
                 or len(item["bundle_sha256"]) != 64
                 or len(item["source_input_digest"]) != 64):
             raise CampaignStop("campaign_identity_manifest_invalid")
         UUID(item["run_id"])
+        if replacement:
+            prefix = "HYBRID-REPLACEMENT-" + case + "-"
+            if not item["assessment_id"].startswith(prefix):
+                raise CampaignStop("campaign_identity_manifest_invalid")
+            UUID(item["assessment_id"][len(prefix):])
+    if replacement and len({x["assessment_id"] for x in data["cases"].values()}) != len(CASE_ORDER):
+        raise CampaignStop("campaign_identity_manifest_invalid")
     return data["cases"]
+
+
+def _attest_case_local(graph, config, directory, row, code):
+    """Only an exact, failed, non-replayable send on an intact case may be skipped."""
+    state = graph.get_state(config).values
+    run, context = state.get("hybrid_execution", {}), state.get("context", {})
+    assessment = row["assessment_id"]
+    pending = run.get("pending") if isinstance(run, dict) else None
+    if (not isinstance(context, dict) or not isinstance(pending, dict)
+            or code not in CASE_LOCAL_CODES
+            or state.get("assessment_id") != assessment
+            or context.get("assessment_id") != assessment
+            or run.get("assessment_id") != assessment
+            or str(state.get("phase1c_run_id")) != row["run_id"]
+            or context.get("bundle_sha256") != row["bundle_sha256"]
+            or context.get("source_input_digest") != row["source_input_digest"]
+            or run.get("hosted_budget") != HOSTED_BUDGET
+            or pending.get("stage") not in ("decision", "final")
+            or type(pending.get("ordinal")) is not int
+            or len(run.get("attempts", [])) >= HOSTED_BUDGET["max_requests"]
+            or set(state.get("specialist_results", {})) != {
+                "configuration", "pricing", "fulfillment", "credit", "policy",
+                "approval_routing"}
+            or state.get("candidate_records") or state.get("candidate_status") != "not_started"):
+        raise CampaignStop("case_local_attestation_failed")
+    path = attempt_path(directory, assessment_id=assessment,
+        start_digest=run["start_sha256"], stage=pending["stage"],
+        ordinal=pending["ordinal"])
+    if not path.is_file() or verify_receipt(path, start_digest=run["start_sha256"],
+            stage=pending["stage"], ordinal=pending["ordinal"],
+            request_digest=pending["request_sha256"]):
+        raise CampaignStop("case_local_attestation_failed")
+    # A reserved-only receipt cannot prove the provider failure subtype.
+    # The failed marker is fsynced by the send owner before it raises.
+    events = [json.loads(line) for line in path.read_text().splitlines()]
+    if len(events) != 2 or events[1].get("event") != "failed" or events[1].get("code") != code:
+        raise CampaignStop("case_local_attestation_failed")
+    known = 0
+    attempts = run["attempts"]
+    for item in attempts:
+        usage = item.get("raw", {}).get("usage", {})
+        if (not isinstance(usage, dict) or any(type(usage.get(k)) is not int or
+                usage[k] < 0 for k in ("prompt_tokens", "completion_tokens"))):
+            raise CampaignStop("case_local_attestation_failed")
+        known += usage["prompt_tokens"] + usage["completion_tokens"]
+    return known, len(attempts)
 
 
 def inspect_sources(adapter, connect_for_case, identities):
@@ -97,7 +158,8 @@ def execute_authorized_campaign(*, authorized: bool, approved_digest: str,
                                 identities_path: Path, pinned_checkout: Path,
                                 fixture_database: str, reference_database: str,
                                 checkpoint_database: str,
-                                reservation_directory: Path) -> dict:
+                                 reservation_directory: Path,
+                                 replacement: bool = False) -> dict:
     """Call only after explicit approval of the exact case set and manifest digest.
 
     Do not use a historical B01 checkpoint or receipts. The caller must run the
@@ -106,11 +168,12 @@ def execute_authorized_campaign(*, authorized: bool, approved_digest: str,
     make an unapproved metadata request itself. All sends use Groq's existing
     three-request per-case reserved boundary and no-retry policy.
     """
-    if authorized is not True or approved_digest != campaign_digest():
+    if (authorized is not True or type(replacement) is not bool or approved_digest != (
+            replacement_digest() if replacement else campaign_digest())):
         raise CampaignStop("campaign_not_authorized")
     if not os.environ.get("GROQ_API_KEY"):
         raise CampaignStop("credential_unavailable")
-    identities = load_identities(identities_path)
+    identities = load_identities(identities_path, replacement=replacement)
     _check_databases(fixture_database, reference_database, checkpoint_database)
     adapter = Phase1CAdapter(pinned_checkout)
     def connect_for_case(case_id):
@@ -127,14 +190,23 @@ def execute_authorized_campaign(*, authorized: bool, approved_digest: str,
             if (remaining_requests < HOSTED_BUDGET["max_requests"]
                     or remaining_output < HOSTED_BUDGET["max_output_tokens"]):
                 raise CampaignStop("aggregate_budget_exhausted")
-            assessment = "HYBRID-CAMPAIGN-" + case_id + "-" + str(uuid4())
+            assessment = (identities[case_id]["assessment_id"] if replacement else
+                          "HYBRID-CAMPAIGN-" + case_id + "-" + str(uuid4()))
             model = GroqHybridTransportModel()
             config = {"configurable": {"thread_id": assessment}}
             connect = connect_for_case(case_id)
             graph = build_original_graph(adapter, connect, saver)
-            state = run_hybrid_evaluation(graph, config, adapter, connect, model,
-                assessment_id=assessment, run_id=UUID(identities[case_id]["run_id"]),
-                reservation_dir=reservation_directory, authorized=True)
+            try:
+                state = run_hybrid_evaluation(graph, config, adapter, connect, model,
+                    assessment_id=assessment, run_id=UUID(identities[case_id]["run_id"]),
+                    reservation_dir=reservation_directory, authorized=True)
+            except ProviderError as exc:
+                if replacement and exc.code in CASE_LOCAL_CODES:
+                    known, completed = _attest_case_local(graph, config,
+                        reservation_directory, identities[case_id], exc.code)
+                    raise CaseLocalFailure(case_id, assessment, exc.code,
+                                           known, completed) from None
+                raise
             observed = capture_hybrid(state)
             if (observed["bundle_sha256"] != identities[case_id]["bundle_sha256"]
                     or observed["source_input_digest"] != identities[case_id][
@@ -171,7 +243,8 @@ def execute_authorized_campaign(*, authorized: bool, approved_digest: str,
                 contained_error)
 
         def assess_control(case_id):
-            assessment = "HYBRID-CAMPAIGN-CONTROL-" + case_id + "-" + str(uuid4())
+            assessment = (identities[case_id]["assessment_id"] if replacement else
+                          "HYBRID-CAMPAIGN-CONTROL-" + case_id + "-" + str(uuid4()))
             config = {"configurable": {"thread_id": assessment}}
             graph = build_original_graph(adapter, connect_for_case(case_id), saver)
             state = graph.invoke(initial_state(assessment, UUID(identities[
@@ -188,12 +261,14 @@ def execute_authorized_campaign(*, authorized: bool, approved_digest: str,
 
         return run_campaign(reservation_directory, authorized=authorized,
             approved_digest=approved_digest, execute_case=execute_case,
-            assess_control=assess_control)
+            assess_control=assess_control, replacement=replacement,
+            assessments=({case: row["assessment_id"] for case, row in identities.items()}
+                         if replacement else None))
 
 
 def report_saved_campaign(*, journal_path: Path, checkpoint_database: str,
-                          identities_path: Path, pinned_checkout: Path, fixture_database: str,
-                          reference_database: str) -> dict:
+                           identities_path: Path, pinned_checkout: Path, fixture_database: str,
+                           reference_database: str, replacement: bool = False) -> dict:
     """Read-only reporting from saved checkpoints; never sends a model request."""
     st = journal_path.lstat()
     if (not stat.S_ISREG(st.st_mode) or st.st_uid != os.geteuid()
@@ -201,13 +276,21 @@ def report_saved_campaign(*, journal_path: Path, checkpoint_database: str,
             or st.st_size > 65536):
         raise CampaignStop("campaign_report_journal_invalid")
     events = [json.loads(line) for line in journal_path.read_text().splitlines()]
+    digest = replacement_digest() if replacement else campaign_digest()
     if (not events or events[0].get("event") != "start"
-            or events[0].get("digest") != campaign_digest()):
+            or events[0].get("digest") != digest):
         raise CampaignStop("campaign_report_identity_changed")
     complete = [item for item in events if item.get("event") == "case_completed"]
-    if [item.get("case_id") for item in complete] != list(CASE_ORDER[:len(complete)]):
+    failed = [item for item in events if item.get("event") == "case_failed"]
+    outcomes = [x for x in events if x.get("event") in ("case_completed", "case_failed")]
+    reserved = [x for x in events if x.get("event") == "case_reserved"]
+    if (failed and not replacement or len(failed) > 2
+            or [x.get("case_id") for x in reserved] != list(CASE_ORDER[:len(reserved)])
+            or [x.get("case_id") for x in outcomes] != list(CASE_ORDER[:len(outcomes)])
+            or len(reserved) < len(outcomes) or len(reserved) - len(outcomes) > 1):
         raise CampaignStop("campaign_report_order_changed")
-    identities = load_identities(identities_path)
+    outstanding = reserved[-1]["case_id"] if len(reserved) > len(outcomes) else None
+    identities = load_identities(identities_path, replacement=replacement)
     adapter = Phase1CAdapter(pinned_checkout)
     observations = []
     with thesis_checkpointer(checkpoint_database) as saver:
@@ -224,15 +307,45 @@ def report_saved_campaign(*, journal_path: Path, checkpoint_database: str,
                     or observed["candidate_status"] != item["candidate_status"]
                     or observed["bundle_sha256"] != identities[case_id]["bundle_sha256"]
                     or observed["source_input_digest"] != identities[case_id][
-                        "source_input_digest"]):
+                        "source_input_digest"]
+                    or replacement and observed["assessment_id"] != identities[
+                        case_id]["assessment_id"]):
                 raise CampaignStop("campaign_report_checkpoint_changed")
             observations.append({"case_id": case_id, **observed})
+        for item in failed:
+            case = item["case_id"]
+            if (item.get("assessment_id") != identities[case]["assessment_id"]
+                    or item.get("code") not in CASE_LOCAL_CODES
+                    or item.get("reserved_requests") != HOSTED_BUDGET["max_requests"]
+                    or item.get("reserved_output_ceilings") != HOSTED_BUDGET["max_output_tokens"]
+                    or item.get("reported_usage") != "incomplete"):
+                raise CampaignStop("campaign_report_failed_case_invalid")
+            dsn = reference_database if case == "R03" else fixture_database
+            graph = build_original_graph(adapter, lambda: psycopg.connect(dsn), saver)
+            known, completed = _attest_case_local(graph,
+                {"configurable": {"thread_id": item["assessment_id"]}},
+                journal_path.parent, identities[case], item["code"])
+            if (item.get("reported_tokens_known") != known
+                    or item.get("completed_requests") != completed):
+                raise CampaignStop("campaign_report_failed_case_invalid")
     reserved_eligible = sum(item.get("event") == "case_reserved" and
                             item.get("case_id") in ELIGIBLE for item in events)
-    return {"version": "hybrid-campaign-report-v1", "digest": campaign_digest(),
+    return {"version": ("hybrid-campaign-report-v2" if replacement else
+                        "hybrid-campaign-report-v1"), "digest": digest,
         "complete": events[-1].get("event") == "campaign_completed",
         "started_eligible_cases": reserved_eligible,
-        "unreconciled_started_eligible_cases": reserved_eligible - len(observations),
+        "unreconciled_started_eligible_cases": (reserved_eligible - len(observations)
+            - (len(failed) if replacement else 0)),
+        **({"case_local_failures": failed,
+            "outstanding_case_reservation": outstanding,
+            "reserved_request_slots": (sum(x.get("attempted_requests", 0) for x in complete)
+                + (len(failed) + int(outstanding in ELIGIBLE))
+                  * HOSTED_BUDGET["max_requests"]),
+            "minimum_attempted_requests": (sum(x.get("attempted_requests", 0)
+                for x in complete) + sum(x["completed_requests"] + 1 for x in failed)),
+            "reserved_output_ceilings": (sum(x.get("output_ceilings", 0) for x in complete)
+                + (len(failed) + int(outstanding in ELIGIBLE))
+                  * HOSTED_BUDGET["max_output_tokens"])} if replacement else {}),
         "stopped_case": (events[-1].get("case_id")
                          if events[-1].get("event") == "campaign_stopped" else None),
         "control_cases_checked": sum(item["case_id"] in CONTROLS for item in complete),

@@ -1,0 +1,16 @@
+{
+  "version": "hybrid-groq-replacement-identities-v1",
+  "case_order": ["B01", "B02", "B03", "B04", "B05", "N01", "R03", "N02", "N03", "N04"],
+  "cases": {
+    "B01": {"assessment_id": "HYBRID-REPLACEMENT-B01-4cf91223-e301-4aaa-b94f-f7988298f9bd", "run_id": "00000000-0000-4000-8000-000000018001", "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526", "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4"},
+    "B02": {"assessment_id": "HYBRID-REPLACEMENT-B02-70f527d9-4167-48c9-92d3-ad2331c8e7e3", "run_id": "00000000-0000-4000-8000-000000018002", "bundle_sha256": "d842b1b3beeaa785fe762be81faa30216d8651a3797119545779080688f64608", "source_input_digest": "b661c429592e6a3dd45d7d40a93fdbff830a0f10344799778738465517822233"},
+    "B03": {"assessment_id": "HYBRID-REPLACEMENT-B03-ea0ac6e3-0b87-44d4-8b91-d43f178c0b9d", "run_id": "00000000-0000-4000-8000-000000018003", "bundle_sha256": "b45914a8b946e0a356e796117a801088e2b510b12bb66d92bed87dae8c001df7", "source_input_digest": "4ca57be824a18ba60ff4701446eaa8e576224d5ddd8d5b23016452523854e518"},
+    "B04": {"assessment_id": "HYBRID-REPLACEMENT-B04-6fe305a1-136d-483c-ac57-95d3198eb389", "run_id": "00000000-0000-4000-8000-000000018004", "bundle_sha256": "5329949d3a4bdd434427d143577093740a93732c29fec24ed3ef5a2199e4cbd8", "source_input_digest": "b1f3c33065cdb1567e940b0a643f1028e518a2860358972c75b209d30cd491f3"},
+    "B05": {"assessment_id": "HYBRID-REPLACEMENT-B05-61dc5bc6-635a-4a76-a1f8-1380dc0a8f3f", "run_id": "00000000-0000-4000-8000-000000018005", "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008", "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd"},
+    "N01": {"assessment_id": "HYBRID-REPLACEMENT-N01-24e4474a-6c49-4d3f-a6c8-f2948f3cd47f", "run_id": "00000000-0000-4000-8000-000000018101", "bundle_sha256": "49c07a3e48660fc656f244648ead414a5d95b0cce91b15ffe5b3bf3e226bc4e5", "source_input_digest": "30eec02f45047467736e4378eb9b764e4fe28b0c39e5a66aa408a8a945ba2edd"},
+    "R03": {"assessment_id": "HYBRID-REPLACEMENT-R03-f1a2e564-0e58-4bc1-8658-d4b9cbc1b62c", "run_id": "00000000-0000-4000-8000-000000030001", "bundle_sha256": "057951350658013a82a35463e28ccc734079c988931b7bebc93ab00d0ce64699", "source_input_digest": "dda896a00658a83df25d4807ecec439657be3ae11c1f8bb6e86d613fbb1738db"},
+    "N02": {"assessment_id": "HYBRID-REPLACEMENT-N02-c75a39a8-630f-4fae-8f5a-2a549de65099", "run_id": "00000000-0000-4000-8000-000000018102", "bundle_sha256": "44cdcc1416fae86cd8c2b853288567170edc2ca78afe7eb8f15cae3f2c4a5a3c", "source_input_digest": "630aa7b2a2fc0d8a8eea7afdcb4ffe31c7bd142cbc4e7392e39f51813a2c49fd"},
+    "N03": {"assessment_id": "HYBRID-REPLACEMENT-N03-818c7e1a-f48f-43b7-8592-e4079e9da5dc", "run_id": "00000000-0000-4000-8000-000000018103", "bundle_sha256": "a176ad55e465ea91c66ed5d10d814ee694368f96ee4268ea0021aaff465a8148", "source_input_digest": "6f9918c9e5192a22eb254980dd603a9d842969fdde04039eea8a8bbbbc575a06"},
+    "N04": {"assessment_id": "HYBRID-REPLACEMENT-N04-c08dcd30-87f3-42bf-a1da-3a02841b22bc", "run_id": "00000000-0000-4000-8000-000000018104", "bundle_sha256": "f73cc52513fb8c3959d6811924b336228a97500ba68a410f6b65679b4e2b43ec", "source_input_digest": "975bbcef1650d3918001a0d0b0fe1d6b8b001ba40563dad84a487c7c28d547d8"}
+  }
+}

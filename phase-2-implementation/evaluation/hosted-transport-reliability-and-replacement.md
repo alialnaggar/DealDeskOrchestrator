@@ -91,6 +91,11 @@ separate from the preserved historical B01 cluster.
 
 ## Replacement proposal — not executable or authorized
 
+**Superseded for authorization by the separately frozen
+[replacement proposal](hybrid-groq-replacement-authorization.md).** The
+historical investigation above and first preparation sketch remain intact;
+use the newer manifest/digest and tested case-local policy for any approval.
+
 Keep the ten ordered cases **B01–B05, N01, R03, N02–N04** on separate fresh
 synthetic, reference and checkpoint databases. The frozen source hashes in
 [`hybrid-groq-campaign-identities.json`](hybrid-groq-campaign-identities.json)

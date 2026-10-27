@@ -30,6 +30,12 @@ MAX_REQUESTS = len(ELIGIBLE) * HOSTED_BUDGET["max_requests"]  # 21
 MAX_OUTPUT_CEILINGS = len(ELIGIBLE) * HOSTED_BUDGET["max_output_tokens"]  # 14,336
 MAX_REPORTED_TOTAL_TOKENS = 60000  # observed usage stop threshold, not a billing ceiling
 IDENTITIES_SHA256 = "a2dd38337c5d4a446c83143caacd2c8decef64d5ddd49191818df2145d0018ce"
+REPLACEMENT_VERSION = "hybrid-groq-replacement-v1"
+REPLACEMENT_IDENTITIES_SHA256 = "a1a431778efd694055e4d7f04b5f5d7bfb150f76dcd15579b2720179ad62653d"
+CASE_LOCAL_CODES = frozenset(("transport_timeout", "transport_connection_lost",
+                              "transport_protocol_failure", "invalid_provider_json",
+                              "provider_response_oversize"))
+MAX_CASE_LOCAL_FAILURES = 1
 CONTAINED_MODEL_ERRORS = frozenset(("hybrid_rejected:invalid_binding_shape",
                                     "hybrid_rejected:binding_paths_required"))
 
@@ -45,8 +51,30 @@ def campaign_digest():
         "max_reported_total_tokens": MAX_REPORTED_TOTAL_TOKENS}).encode()).hexdigest()
 
 
+def replacement_digest():
+    """Distinct authorization; the historical campaign digest never changes."""
+    return sha256(_canonical({"version": REPLACEMENT_VERSION, "model": MODEL,
+        "eligible": ELIGIBLE, "controls": CONTROLS, "per_case_budget": HOSTED_BUDGET,
+        "identities_sha256": REPLACEMENT_IDENTITIES_SHA256,
+        "contained_errors": sorted(CONTAINED_MODEL_ERRORS),
+        "contained_failure_stop_count": 2, "case_local_codes": sorted(CASE_LOCAL_CODES),
+        "max_case_local_failures": MAX_CASE_LOCAL_FAILURES,
+        "failed_case_reservation": "full_per_case_budget",
+        "max_requests": MAX_REQUESTS, "max_output_ceilings": MAX_OUTPUT_CEILINGS,
+        "max_reported_total_tokens": MAX_REPORTED_TOTAL_TOKENS}).encode()).hexdigest()
+
+
 class CampaignStop(RuntimeError):
     """A safety or identity gate prevents advancing to any further case."""
+
+
+class CaseLocalFailure(RuntimeError):
+    """Raised only after verifying the exact failed send receipt and checkpoint."""
+    def __init__(self, case_id: str, assessment_id: str, code: str,
+                 known_tokens: int = 0, completed_requests: int = 0):
+        self.case_id, self.assessment_id, self.code = case_id, assessment_id, code
+        self.known_tokens, self.completed_requests = known_tokens, completed_requests
+        super().__init__("case_local_failure")
 
 
 def _stop_code(exc):
@@ -62,7 +90,8 @@ def _stop_code(exc):
                     "case_safety_outcome", "usage_unverifiable",
                     "assessment_identity_reused", "reported_token_threshold_exceeded",
                     "repeated_contained_model_failures", "aggregate_budget_exhausted",
-                    "campaign_checkpoint_source_changed", "control_eligibility_or_source_changed"}:
+                    "campaign_checkpoint_source_changed", "control_eligibility_or_source_changed",
+                    "case_local_failure_invalid", "repeated_case_local_failures"}:
             return code
         return "campaign_stop_unknown"
     return (type(exc).__name__ if type(exc) in (TimeoutError, KeyboardInterrupt)
@@ -155,18 +184,30 @@ def _validate_receipt(case_id, result, remaining_requests, remaining_output):
 
 
 def run_campaign(directory: Path, *, authorized: bool, approved_digest: str,
-                 execute_case, assess_control) -> dict:
+                 execute_case, assess_control, replacement: bool = False,
+                 assessments: dict | None = None) -> dict:
     """No live transport here; callbacks must enforce pinned source and send gates.
 
-    A failed or interrupted case permanently stops this campaign identity.
+    Historical campaigns stop on any failed case. Replacement campaigns may
+    skip one attested case-local failure; neither campaign ever resumes.
     Nothing in this function turns a failed proposal into a business approval.
     """
-    if authorized is not True or approved_digest != campaign_digest():
+    digest = replacement_digest() if replacement is True else campaign_digest()
+    if (authorized is not True or approved_digest != digest
+            or type(replacement) is not bool):
+        raise CampaignStop("campaign_not_authorized")
+    if replacement:
+        if (not isinstance(assessments, dict) or set(assessments) != set(CASE_ORDER)
+                or any(not isinstance(x, str) or not x.startswith(
+                    "HYBRID-REPLACEMENT-" + case + "-") for case, x in assessments.items())
+                or len(set(assessments.values())) != len(CASE_ORDER)):
+            raise CampaignStop("replacement_assessments_invalid")
+    elif assessments is not None:
         raise CampaignStop("campaign_not_authorized")
     if not callable(execute_case) or not callable(assess_control):
         raise CampaignStop("campaign_callbacks_missing")
     _private_directory(directory)
-    path = directory / ("hybrid-campaign-" + campaign_digest() + ".audit.jsonl")
+    path = directory / ("hybrid-campaign-" + digest + ".audit.jsonl")
     if path.exists() or path.is_symlink():
         raise CampaignStop("campaign_already_started")
     if any(directory.iterdir()):
@@ -187,14 +228,15 @@ def run_campaign(directory: Path, *, authorized: bool, approved_digest: str,
         if st.st_size:
             # No reuse, resume or second campaign behind a process crash.
             raise CampaignStop("campaign_already_started")
-        _append(fd, {"event": "start", "digest": campaign_digest(),
+        _append(fd, {"event": "start", "digest": digest,
                      "cases": CASE_ORDER, "model": MODEL})
         dfd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
         try:
             os.fsync(dfd)
         finally:
             os.close(dfd)
-        requests, output, reported, contained_failures = 0, 0, 0, 0
+        requests, output, reported, contained_failures, case_failures = 0, 0, 0, 0, 0
+        minimum_attempted = 0
         completed = []
         for case_id in CASE_ORDER:
             _append(fd, {"event": "case_reserved", "case_id": case_id})
@@ -204,9 +246,12 @@ def run_campaign(directory: Path, *, authorized: bool, approved_digest: str,
                           if case_id in ELIGIBLE else assess_control(case_id))
                 _validate_receipt(case_id, result, MAX_REQUESTS - requests,
                                   MAX_OUTPUT_CEILINGS - output)
+                if replacement and result.assessment_id != assessments[case_id]:
+                    raise CampaignStop("replacement_assessments_invalid")
                 if result.assessment_id in {item.assessment_id for item in completed}:
                     raise CampaignStop("assessment_identity_reused")
                 requests += result.attempted_requests
+                minimum_attempted += result.attempted_requests
                 output += result.output_ceilings
                 if result.contained_error:
                     contained_failures += 1
@@ -232,15 +277,57 @@ def run_campaign(directory: Path, *, authorized: bool, approved_digest: str,
                 completed.append(result)
                 if contained_failures >= 2:
                     raise CampaignStop("repeated_contained_model_failures")
+            except CaseLocalFailure as exc:
+                if (not replacement or case_id not in ELIGIBLE or exc.case_id != case_id
+                        or exc.assessment_id != assessments[case_id]
+                        or exc.code not in CASE_LOCAL_CODES
+                        or type(exc.known_tokens) is not int or exc.known_tokens < 0
+                        or type(exc.completed_requests) is not int
+                        or not 0 <= exc.completed_requests < HOSTED_BUDGET["max_requests"]
+                        or MAX_REQUESTS - requests < HOSTED_BUDGET["max_requests"]
+                        or MAX_OUTPUT_CEILINGS - output < HOSTED_BUDGET["max_output_tokens"]):
+                    _append(fd, {"event": "campaign_stopped", "case_id": case_id,
+                                 "code": "case_local_failure_invalid"})
+                    raise CampaignStop("case_local_failure_invalid") from None
+                # Unknown provider usage cannot be claimed as zero. Charge the
+                # entire case allocation before starting any unrelated case.
+                requests += HOSTED_BUDGET["max_requests"]
+                minimum_attempted += exc.completed_requests + 1
+                output += HOSTED_BUDGET["max_output_tokens"]
+                reported += exc.known_tokens
+                case_failures += 1
+                _append(fd, {"event": "case_failed", "case_id": case_id,
+                    "assessment_id": exc.assessment_id, "code": exc.code,
+                    "completed_requests": exc.completed_requests,
+                    "reported_tokens_known": exc.known_tokens,
+                    "reserved_requests": HOSTED_BUDGET["max_requests"],
+                    "reserved_output_ceilings": HOSTED_BUDGET["max_output_tokens"],
+                    "reported_usage": "incomplete"})
+                if reported > MAX_REPORTED_TOTAL_TOKENS:
+                    _append(fd, {"event": "campaign_stopped", "case_id": case_id,
+                                 "code": "reported_token_threshold_exceeded"})
+                    raise CampaignStop("reported_token_threshold_exceeded") from None
+                if case_failures >= MAX_CASE_LOCAL_FAILURES + 1:
+                    _append(fd, {"event": "campaign_stopped", "case_id": case_id,
+                                 "code": "repeated_case_local_failures"})
+                    raise CampaignStop("repeated_case_local_failures") from None
+                continue
             except BaseException as exc:
                 _append(fd, {"event": "campaign_stopped", "case_id": case_id,
                              "code": _stop_code(exc)})
                 raise
-        _append(fd, {"event": "campaign_completed", "cases": len(completed),
-                     "requests": requests, "output_ceilings": output,
-                     "reported_tokens": reported, "contained_failures": contained_failures})
-        return {"digest": campaign_digest(), "cases": len(completed),
-                "requests": requests, "output_ceilings": output,
-                "reported_tokens": reported}
+        summary = {"cases": len(completed), "requests": requests,
+                   "output_ceilings": output, "reported_tokens": reported}
+        _append(fd, {"event": "campaign_completed", **summary,
+                     "contained_failures": contained_failures,
+                     **({"case_local_failures": case_failures,
+                         "reserved_request_slots": requests,
+                         "minimum_attempted_requests": minimum_attempted}
+                        if replacement else {})})
+        return {"digest": digest, **summary,
+                **({"case_local_failures": case_failures,
+                    "reserved_request_slots": requests,
+                    "minimum_attempted_requests": minimum_attempted}
+                   if replacement else {})}
     finally:
         os.close(fd)
