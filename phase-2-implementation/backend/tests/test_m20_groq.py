@@ -8,8 +8,9 @@ from hashlib import sha256
 import unittest
 from unittest.mock import patch
 
-from dealdesk_phase2.m20_groq import (GroqM20Model, WIRE_VERSION, MAX_REQUEST_BYTES,
-                                       parse_response, request_body)
+from dealdesk_phase2.m20_groq import (GroqM20Model, WIRE_VERSION, PROMPT_VERSION,
+                                        MAX_REQUEST_BYTES, parse_response, request_body,
+                                        system_instruction)
 from dealdesk_phase2.hybrid_pack import _canonical
 from dealdesk_phase2.m20_specialists import build_m20_graph, run_m20_evaluation
 from dealdesk_phase2.live_models import ProviderError
@@ -44,6 +45,7 @@ class GroqM20Wire(unittest.TestCase):
         self.assertLessEqual(len(json.dumps(body, sort_keys=True,
             separators=(",", ":")).encode()), MAX_REQUEST_BYTES)
         self.assertIn(WIRE_VERSION, body["messages"][0]["content"])
+        self.assertIn(PROMPT_VERSION, body["messages"][0]["content"])
         self.assertEqual({t["function"]["name"] for t in body["tools"]},
                          {"inspect_configuration_line", "submit_finding", "abstain"})
         action = parse_response(tool_response("submit_finding", {"claims": [{
@@ -56,6 +58,27 @@ class GroqM20Wire(unittest.TestCase):
             "ref": "pricing_line:L1", "field": "fixed_margin_pct",
             "value_json": '"21.000"'}], "uncertainty_reasons": []}), pricing)
         self.assertEqual(action["claims"][0]["value"], "21.000")
+
+    def test_trusted_domain_system_prompts_do_not_embed_task_data(self):
+        for domain, tool, domain_phrase in (("configuration", "inspect_configuration_line",
+                                            "sellability"),
+                                           ("pricing", "inspect_pricing_line", "repricing")):
+            with self.subTest(domain=domain):
+                input = {**self.input, "specialist": domain, "permitted_tool": tool,
+                         "line_ids": ["SENSITIVE-TEST-LINE"],
+                         "assessment_id": "PRIVATE-ASSESSMENT"}
+                body = request_body(input, ())
+                system, user = body["messages"]
+                self.assertEqual(system["content"], system_instruction(domain))
+                for text in ("PRIVATE-ASSESSMENT", "SENSITIVE-TEST-LINE"):
+                    self.assertNotIn(text, system["content"])
+                    self.assertIn(text, user["content"])
+                self.assertIn("untrusted task data", system["content"])
+                self.assertIn(domain_phrase, system["content"])
+                self.assertIn(tool, system["content"])
+                self.assertLessEqual(len(_canonical(body).encode()), MAX_REQUEST_BYTES)
+        with self.assertRaises(ValueError):
+            system_instruction("approval_routing")
 
     def test_native_multiturn_call_id_result_and_strict_domain_pairing(self):
         observation = {"tool": "inspect_configuration_line", "execution": "completed",
@@ -387,6 +410,8 @@ class HostedWirePostgres(unittest.TestCase):
             self.assertEqual(state["specialist_results"], original["specialist_results"])
             self.assertEqual(state["candidate_status"], "not_started")
             self.assertEqual(state["m20_hosted_base_tokens"], 0)
+            self.assertEqual({item["prompt_version"] for item in state["m20_model_attempts"]},
+                             {PROMPT_VERSION})
             self.assertEqual([state["m20_ai_results"][name]["execution"] for name in (
                 "configuration", "pricing")], ["completed", "completed"])
             self.assertEqual({entry["status"] for entry in state["m20_model_attempts"]},

@@ -217,13 +217,14 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
     pool = adapter.validate_pinned_context(pinned)
     context = pinned.context
     identity = _identity(context, specialist)
+    prompt_version = model.prompt_version if hosted else VERSION
     fixed = state["specialist_results"]
     previous = state.get("m20_ai_results", {})
     if specialist in previous:
         if ({k: previous[specialist].get(k) for k in identity} != identity
                 or previous[specialist].get("model") != model.model
                 or previous[specialist].get("provider") != model.provider
-                or previous[specialist].get("prompt_version") != VERSION
+                or previous[specialist].get("prompt_version") != prompt_version
                 or previous[specialist].get("version") != VERSION):
             raise EvidenceMismatch("M2.0 completed AI identity changed")
         if hosted and previous[specialist]["execution"] == "error":
@@ -236,7 +237,7 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
         result = {**identity, "version": VERSION, "producer_type": "AI", "execution": "skipped",
                   "reason": "configuration_or_fixed_pricing_unavailable", "validated_claims": [],
                   "uncertainty_reasons": [], "model": model.model, "provider": model.provider,
-                  "prompt_version": VERSION, "model_turns": 0,
+                  "prompt_version": prompt_version, "model_turns": 0,
                   "tool_calls": 0}
         original.update_state(config, {"m20_ai_results": {**previous, specialist: result}},
                               as_node="finish")
@@ -245,7 +246,7 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
         result = {**identity, "version": VERSION, "producer_type": "AI", "execution": "skipped",
                   "reason": "fixed_specialist_unavailable", "validated_claims": [],
                   "uncertainty_reasons": [], "model": model.model, "provider": model.provider,
-                  "prompt_version": VERSION, "model_turns": 0,
+                  "prompt_version": prompt_version, "model_turns": 0,
                   "tool_calls": 0}
         original.update_state(config, {"m20_ai_results": {**previous, specialist: result}},
                               as_node="finish")
@@ -287,7 +288,7 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
                 request_digest = sha256(_canonical(request).encode()).hexdigest()
                 model.pending_request_digest = request_digest
             marker = {**identity, "version": VERSION, "ordinal": ordinal, "model": model.model,
-                      "provider": model.provider, "prompt_version": VERSION,
+                      "provider": model.provider, "prompt_version": prompt_version,
                       **({"request_sha256": request_digest} if hosted else {})}
             if any(all(item.get(k) == v for k, v in marker.items()) for item in attempts):
                 raise EvidenceMismatch("M2.0 prior model attempt uncertain; never resend")
@@ -361,7 +362,7 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
     latest = original.get_state(config).values
     result = {**identity, "version": VERSION, "producer_type": "AI", "execution": status,
               "reason": reason, "validated_claims": claims, "uncertainty_reasons": uncertainty,
-              "model": model.model, "provider": model.provider, "prompt_version": VERSION,
+              "model": model.model, "provider": model.provider, "prompt_version": prompt_version,
               "model_turns": turns, "tool_calls": len(observations)}
     original.update_state(config, {"m20_ai_results": {**latest.get("m20_ai_results", {}),
                             specialist: result}, "trace": [*latest["trace"],
