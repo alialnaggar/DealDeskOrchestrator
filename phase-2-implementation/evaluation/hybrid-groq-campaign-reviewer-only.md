@@ -1,6 +1,8 @@
 # Adaptive-hybrid Groq campaign — reviewer-only authorization manifest
 
-**Status:** prepared offline, not authorized for inference. This document and
+**Historical plan:** approved for one bounded inference campaign, then stopped
+on B01's first reserved send; see the [saved result](hybrid-groq-campaign-stopped-result.md).
+It is **not** authorization to retry or resume. This document and
 `hybrid-groq-campaign-identities.json` are NEVER model input. Source-first
 expectations below are developer/supervisor-reviewed for synthetic cases,
 provisional for reference R03, and **not** externally accepted ground truth.
