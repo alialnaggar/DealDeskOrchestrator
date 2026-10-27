@@ -1,5 +1,8 @@
 # Fresh B06 five-tool Fulfillment decision — offline gate, no hosted send
 
+**Post-gate update:** Ali separately authorized one B06 decision POST. See the
+[sanitized result](groq-b06-decision-only-result.md); the authorization is spent.
+
 **27 October 2026.** The completed [two-stage provider probe](groq-contract-probe-result.md)
 establishes plain chat and one harmless local tool call, not compatibility of
 the actual Fulfillment decision wire. This follow-up **constructed and
