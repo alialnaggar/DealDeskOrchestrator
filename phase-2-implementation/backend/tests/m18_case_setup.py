@@ -55,7 +55,7 @@ CASES = (
 )
 
 
-def install_disposable_cases(connection):
+def install_disposable_cases(connection, cases=CASES):
     """Write only to CI's disposable business database, never to Phase 1C files.
 
     Copy master attributes from the pinned reference row, with a distinct
@@ -69,7 +69,7 @@ def install_disposable_cases(connection):
         found = connection.execute("SELECT count(*) FROM deal_desk.deals WHERE deal_id LIKE 'M18-D-%'").fetchone()[0]
         if found:
             raise RuntimeError("M1.8 case database is not fresh; refusing duplicate or mixed sources")
-        for case in CASES:
+        for case in cases:
             ids = case.ids()
             connection.execute("""INSERT INTO deal_desk.customers
                 (customer_id, customer_code, customer_name, size_segment, strategic_account,
