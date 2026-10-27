@@ -96,8 +96,8 @@ response mismatch; no silent schema downgrade.
 **Credential gate:** The process requires `GROQ_API_KEY`, not a coding-model
 subscription or a Gemini key. The private VM launcher loads it from a 0600
 owner-controlled local file into the child process only. The rejected file
-was reset on 27 October; do not retry that key. For a **different valid key**
-already owned by Ali, the one owner action is to run
+was reset during the 26–27 October handoff; do not retry that key. For a
+**different valid key** already owned by Ali, the one owner action is to run
 `python3 /tmp/opencode/dealdesk-hybrid-b01-smoke-prep/supply_existing_groq_key.py`
 in a trusted interactive VM terminal and enter it at the hidden prompt.
 Never send the key in chat, a command-line argument or a repository file.
