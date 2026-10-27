@@ -65,6 +65,7 @@ class AssessmentStateV1(TypedDict, total=False):
     m20_model_attempts: list[dict]
     m20_review: dict
     m20_hosted_owner: dict
+    m20_hosted_base_tokens: int
 
 
 def context_to_record(context: RunContextV1) -> dict:

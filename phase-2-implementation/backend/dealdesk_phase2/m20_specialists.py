@@ -35,6 +35,7 @@ MAX_OBSERVATION_BYTES = 16384
 TOOLS = {"configuration": "inspect_configuration_line",
          "pricing": "inspect_pricing_line"}
 _HOSTED_CAPABILITY = object()
+HOSTED_REPORTED_TOKEN_STOP = 24000
 
 
 class M20Model(Protocol):
@@ -263,6 +264,10 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
             attempts = list(original.get_state(config).values.get("m20_model_attempts", []))
             if hosted and len([item for item in attempts if item["status"] == "reserved"]) >= 6:
                 raise EvidenceMismatch("M2.0 hosted aggregate request budget exhausted")
+            if hosted and original.get_state(config).values["m20_hosted_base_tokens"] + sum(
+                    item["usage"]["prompt_tokens"] + item["usage"]["completion_tokens"]
+                    for item in attempts if item["status"] == "returned") >= HOSTED_REPORTED_TOKEN_STOP:
+                raise EvidenceMismatch("M2.0 hosted reported token stop reached")
             request_digest = None
             if hosted:
                 request = model.prepare_request(input, tuple(observations))
@@ -289,6 +294,11 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
                     "cost_usd": None,
                     "usage": dict(model.last_usage) if hosted else None}]},
                 as_node="finish")
+            if hosted and original.get_state(config).values["m20_hosted_base_tokens"] + sum(
+                    item["usage"]["prompt_tokens"] + item["usage"]["completion_tokens"]
+                    for item in original.get_state(config).values["m20_model_attempts"]
+                    if item["status"] == "returned") >= HOSTED_REPORTED_TOKEN_STOP:
+                raise EvidenceMismatch("M2.0 hosted reported token stop reached")
             if not isinstance(action, dict):
                 raise ValueError("m20_malformed_action")
             if action.get("kind") == "inspect":
@@ -437,10 +447,13 @@ def _validate_m20_start(original, config, adapter):
 
 
 def run_m20_evaluation(original, config, adapter, models, *, authorized=False,
-                       reservation_dir: Path | None = None):
+                       reservation_dir: Path | None = None, prior_reported_tokens: int = 0):
     """Explicit opt-in hosted gate; no credentials or network before authorization."""
     if authorized is not True:
         raise ValueError("M2.0 hosted evaluation not authorized")
+    if (type(prior_reported_tokens) is not int or not 0 <= prior_reported_tokens <
+            HOSTED_REPORTED_TOKEN_STOP):
+        raise ValueError("M2.0 hosted reported token gate reached")
     from .m20_groq import GroqM20Model
     from .groq_preflight import credential_shape
     import os
@@ -460,10 +473,13 @@ def run_m20_evaluation(original, config, adapter, models, *, authorized=False,
         fresh = original.get_state(config).values
         if (fresh.get("m20_hosted_owner") not in (None, owner)
                 or fresh.get("m20_hosted_owner") is None and (
-                    fresh.get("m20_model_attempts") or fresh.get("m20_ai_results"))):
+                    fresh.get("m20_model_attempts") or fresh.get("m20_ai_results"))
+                or fresh.get("m20_hosted_base_tokens") not in (None, prior_reported_tokens)):
             raise EvidenceMismatch("M2.0 hosted owner or attempt identity changed")
         if fresh.get("m20_hosted_owner") is None:
-            original.update_state(config, {"m20_hosted_owner": owner}, as_node="finish")
+            original.update_state(config, {"m20_hosted_owner": owner,
+                                         "m20_hosted_base_tokens": prior_reported_tokens},
+                                  as_node="finish")
         if any(item.get("provider") != "groq" for item in original.get_state(config).values.get(
                 "m20_ai_results", {}).values()):
             raise EvidenceMismatch("M2.0 cannot switch a completed offline assessment to hosted")

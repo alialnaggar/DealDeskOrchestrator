@@ -98,6 +98,9 @@ class GroqM20Wire(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_m20_graph(None, {}, None, {name: GroqM20Model(name) for name in (
                 "configuration", "pricing")})
+        with self.assertRaisesRegex(ValueError, "reported token gate reached"):
+            run_m20_evaluation(None, {}, None, {name: GroqM20Model(name) for name in (
+                "configuration", "pricing")}, authorized=True, prior_reported_tokens=24000)
 
 
 @unittest.skipUnless(psycopg and all(os.getenv(k) for k in (
@@ -151,6 +154,7 @@ class HostedWirePostgres(unittest.TestCase):
             self.assertEqual(len(requests), 4)
             self.assertEqual(state["specialist_results"], original["specialist_results"])
             self.assertEqual(state["candidate_status"], "not_started")
+            self.assertEqual(state["m20_hosted_base_tokens"], 0)
             self.assertEqual([state["m20_ai_results"][name]["execution"] for name in (
                 "configuration", "pricing")], ["completed", "completed"])
             self.assertEqual({entry["status"] for entry in state["m20_model_attempts"]},
