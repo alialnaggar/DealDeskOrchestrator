@@ -15,6 +15,8 @@ from .live_models import CLAIM_SCHEMA, GROQ_MODEL, TOOL_PARAMETERS
 
 
 WIRE_VERSION = "hybrid-groq-wire-v1"
+# Audit identity for the existing trusted text; the provider body is unchanged.
+PROMPT_VERSION = "hybrid-fulfillment-system-v1"
 
 
 class HybridWireAdapter(Protocol):
@@ -93,6 +95,7 @@ class GroqHybridAdapter:
     provider = "groq"
     model = GROQ_MODEL
     wire_version = WIRE_VERSION
+    prompt_version = PROMPT_VERSION
 
     def decision_request(self, input, observations, *, prior_call=None, tool_result=None):
         tools = []
@@ -220,6 +223,7 @@ class OfflineGroqWireDouble:
     provider = "offline_double"
     offline_only = True
     model = "groq-wire-double-v1"
+    prompt_version = PROMPT_VERSION
 
     def __init__(self, responses, adapter=None):
         self.responses = list(responses)

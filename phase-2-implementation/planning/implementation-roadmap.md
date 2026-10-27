@@ -174,6 +174,14 @@ The Phase 1C production pin remains exactly `90c0bc8e285ee69262c7db826b786096a77
 
 ## M2.0 stopped Pricing investigation and first M2.1 offline slice — 27 October 2026
 
+The [Week 2 closure matrix](../evaluation/week2-closure-audit.md) distinguishes
+completed offline behavior from the unresolved hosted Pricing acceptance and
+broader Phase 2 integration. An [offline iterative Fulfillment prompt-hierarchy
+cleanup](../evaluation/week2-fulfillment-iterative-prompt-cleanup.md) moves
+trusted instructions into the system role without changing the approved
+business/tool contracts. The fresh B01 [hosted proposal](../evaluation/week2-closure-hosted-proposal.md)
+remains **unauthorized**: no new inference is implied by this roadmap entry.
+
 Ali approved one fresh B01 Configuration/Pricing Groq assessment at
 `9e70046`. The [sanitized result](../evaluation/m20-configuration-pricing-hosted-result.md)
 records Configuration's one authorized inspection and five exact observations;

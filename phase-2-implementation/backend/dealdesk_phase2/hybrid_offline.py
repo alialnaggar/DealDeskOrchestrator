@@ -480,6 +480,9 @@ def _run_hybrid(graph, config, adapter, factory, model, *, assessment_id: str,
         if record and (record.get("version") != RUN_VERSION
                        or record.get("assessment_id") != assessment_id
                        or record.get("model") != model.model
+                       or (record.get("prompt_version") != getattr(model, "prompt_version", None)
+                           and not (record.get("phase") == "terminal"
+                                    and "prompt_version" not in record))
                        or record.get("reservation_directory") != reservation_identity
                        or record.get("policy_version") != policy_version
                        or record.get("hosted_budget") != (HOSTED_BUDGET if model.provider == "groq" else None)):
@@ -510,7 +513,8 @@ def _run_hybrid(graph, config, adapter, factory, model, *, assessment_id: str,
         if not record:
             record = {"version": RUN_VERSION, "assessment_id": assessment_id,
                       "start_sha256": pack["start_sha256"], "pack_sha256": pack["pack_sha256"],
-                      "model": model.model, "policy_version": policy_version, "phase": "decision",
+                      "model": model.model, "prompt_version": getattr(model, "prompt_version", None),
+                      "policy_version": policy_version, "phase": "decision",
                       "reservation_directory": reservation_identity,
                       **({"hosted_budget": dict(HOSTED_BUDGET)} if model.provider == "groq" else {}),
                       "decision_count": 0, "attempts": [], "rejections": [],

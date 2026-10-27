@@ -77,6 +77,17 @@ class OfflineHybridTests(unittest.TestCase):
         self.assertEqual(sum(bool(x.get("counted")) for x in state["tool_access_ledger"]), 1)
         self.assertEqual([x["stage"] for x in state["hybrid_execution"]["attempts"]],
                          ["decision", "final"])
+        self.assertIsNone(state["hybrid_execution"]["prompt_version"])
+        self.assertEqual(self.run_model(model)["reviewer_package"], state["reviewer_package"])
+        self.assertEqual((model.decisions, model.finals), (1, 1))
+        model.prompt_version = "changed-system-instruction"
+        with self.assertRaises(EvidenceMismatch):
+            self.run_model(model)
+        # Old terminal checkpoints had no prompt label; reading them is safe,
+        # but they must never be resumed for a new send under a new label.
+        legacy = dict(state["hybrid_execution"])
+        legacy.pop("prompt_version")
+        self.graph.update_state(self.config, {"hybrid_execution": legacy}, as_node="finish")
         self.assertEqual(self.run_model(model)["reviewer_package"], state["reviewer_package"])
         self.assertEqual((model.decisions, model.finals), (1, 1))
 

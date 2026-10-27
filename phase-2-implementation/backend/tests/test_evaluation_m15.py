@@ -139,7 +139,7 @@ class SourceFirstSyntheticTests(unittest.TestCase):
                                 "status": "late_alternative"}}
         input = restricted_input(pinned.context, pool, selected, 12)
         prompt = _prompt(input, ())
-        self.assertEqual(PROMPT_VERSION, "m16-fulfillment-claims-v1")
+        self.assertEqual(PROMPT_VERSION, "m16-fulfillment-claims-v2-system")
         self.assertIn("selected reader pool", prompt)
         self.assertIn("never claim globally", prompt)
         self.assertIn("Do not speculate", prompt)

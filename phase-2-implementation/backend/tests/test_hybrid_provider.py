@@ -12,7 +12,8 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from dealdesk_phase2.hybrid_contracts import ACTION_VERSION, HybridContractError
 from dealdesk_phase2.hybrid_provider import (GroqHybridAdapter, OfflineGroqWireDouble,
-                                            GroqHybridTransportModel)
+                                             GroqHybridTransportModel, PROMPT_VERSION,
+                                             WIRE_VERSION)
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from test_investigation_graph import InvestigationAdapter, RUN
 
@@ -39,6 +40,9 @@ class WireTests(unittest.TestCase):
 
     def test_explicit_native_intent_and_no_ready_transition(self):
         body = self.adapter.decision_request(self.input, ())
+        self.assertEqual(self.adapter.prompt_version, PROMPT_VERSION)
+        self.assertNotEqual(PROMPT_VERSION, WIRE_VERSION)
+        self.assertEqual(OfflineGroqWireDouble([]).prompt_version, PROMPT_VERSION)
         self.assertEqual(body["tool_choice"], "required")
         self.assertFalse(body["parallel_tool_calls"])
         self.assertNotIn("submit_proposal", [x["function"]["name"] for x in body["tools"]])

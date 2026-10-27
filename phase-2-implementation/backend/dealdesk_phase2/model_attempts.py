@@ -17,20 +17,22 @@ def _state(graph, config, input):
 
 
 def reserve(graph, config, input, attempt_id: str, provider: str, model: str,
-            prompt_digest: str) -> dict | None:
+            prompt_digest: str, *, prompt_version: str | None = None) -> dict | None:
     state = _state(graph, config, input)
     ledger = list(state.get("model_attempt_ledger", []))
     if any((x["provider"], x["model"]) != (provider, model) for x in ledger):
         raise EvidenceMismatch("Investigation provider/model cannot change on restart")
     prior = next((x for x in reversed(ledger) if x["attempt_id"] == attempt_id), None)
     if prior:
-        if (prior["provider"], prior["model"], prior["prompt_digest"]) != (provider, model, prompt_digest):
+        if ((prior["provider"], prior["model"], prior["prompt_digest"],
+             prior.get("prompt_version")) != (provider, model, prompt_digest, prompt_version)):
             raise EvidenceMismatch("Model replay request changed")
         if prior["status"] != "completed":
             raise RuntimeError("Interrupted model request is not retried automatically")
         return prior
     ledger.append({"attempt_id": attempt_id, "provider": provider, "model": model,
-                   "prompt_digest": prompt_digest, "assessment_id": input.assessment_id,
+                   "prompt_digest": prompt_digest, "prompt_version": prompt_version,
+                   "assessment_id": input.assessment_id,
                    "subject_id": input.subject_id, "bundle_sha256": input.bundle_sha256,
                    "started_at": datetime.now(timezone.utc).isoformat(),
                    "status": "reserved"})
