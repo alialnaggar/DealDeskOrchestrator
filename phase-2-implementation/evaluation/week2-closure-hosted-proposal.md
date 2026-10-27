@@ -6,6 +6,9 @@ because `GROQ_API_KEY` was unavailable in the execution environment. The
 immutable manifest below retains its original `proposal_not_authorized`
 status as part of the approved digest; this text records the later approval
 and stop without rewriting that identity. **Do not infer that a run occurred.**
+After the local ignored key was configured, a second source-first preflight
+passed but the [single Groq metadata GET returned HTTP 401](week2-closure-hosted-authentication-result.md).
+No inference POST occurred; do not retry that known-invalid credential.
 
 **Not executed.** This is a request for Ali's explicit, separate approval,
 not a continuation of the [permanently stopped B01 assessment](m20-configuration-pricing-hosted-result.md).

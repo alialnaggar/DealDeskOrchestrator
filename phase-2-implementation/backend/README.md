@@ -247,6 +247,24 @@ unverified; the pinned Phase 1C interface cannot verify its mixed path.
 
 ## Historical M1.4 comparison; active Groq-only runtime
 
+**Local credential loading for opt-in, authorized development:** The root
+`.gitignore` already excludes nested `.env` files. Keep the current checkout's
+`phase-2-implementation/backend/.env` owner-only (`0600`) and containing just
+`GROQ_API_KEY=<value>`. The existing opt-in test runner reads `GROQ_API_KEY`
+from its process environment; no hosted runner auto-loads credentials in
+routine CI. From the project root, launch an *existing* command through the
+strict standard-library loader:
+
+```sh
+PYTHONPATH=phase-2-implementation/backend python -m dealdesk_phase2.local_env -- python -c 'import os; from dealdesk_phase2.groq_preflight import credential_shape; print(credential_shape(os.environ.get("GROQ_API_KEY")))'
+```
+
+This loader reads only the key, checks file ownership/mode and shape, and
+passes it to its child without printing it. A successful local shape check is
+not proof of Groq access: the [authorized Week 2 metadata gate](../evaluation/week2-closure-hosted-authentication-result.md)
+returned HTTP 401 before any inference POST. Do not run any hosted campaign
+without its separate assessment approval, fresh source preflight and budget.
+
 M1.4 compared the two providers experimentally. The [method](benchmarks/m1.4-method.md),
 [initial failures](benchmarks/m1.4-live-smoke-results.md),
 [diagnostic](benchmarks/m1.4-connectivity-diagnostic.md) and
