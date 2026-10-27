@@ -36,6 +36,7 @@ jobs:
       PGDATABASE: deal_desk_m1_test
       DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m1_test
       CHECKPOINT_DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m1_checkpoint
+      REFERENCE_DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_campaign_reference
       DEALDESK_PHASE1C_CHECKOUT: ${{ github.workspace }}/phase1c-pinned
       PYTHONPATH: phase-2-implementation/backend
     steps:
@@ -71,16 +72,26 @@ jobs:
           python -m pip check
       - name: Create a separate disposable checkpoint database
         run: createdb deal_desk_m1_checkpoint
+      - name: Create isolated original reference fixture for campaign safety tests
+        run: createdb deal_desk_campaign_reference
       - name: Apply pinned Phase 1C schema in disposable test database
         run: psql -X -v ON_ERROR_STOP=1 -f phase1c-pinned/phase-1c-data/implementation/schema.sql
+      - name: Apply identical pinned schema to the isolated reference fixture
+        run: psql -X -v ON_ERROR_STOP=1 -d deal_desk_campaign_reference -f phase1c-pinned/phase-1c-data/implementation/schema.sql
       - name: Load actual pinned Phase 1C reference rows
         working-directory: phase1c-pinned/phase-1c-data/implementation
+        run: python -c 'from test_phase1c_reader import load_fixture_rows; load_fixture_rows()'
+      - name: Load original reference rows independently, before synthetic cases
+        working-directory: phase1c-pinned/phase-1c-data/implementation
+        env:
+          PGDATABASE: deal_desk_campaign_reference
         run: python -c 'from test_phase1c_reader import load_fixture_rows; load_fixture_rows()'
       - name: Load the pinned compiled commercial rules
         working-directory: phase1c-pinned/phase-1c-data/implementation
         run: |
           python compile_phase1c_policy.py --output /tmp/phase2_m1_compiled_rules.sql
           psql -X -v ON_ERROR_STOP=1 -f /tmp/phase2_m1_compiled_rules.sql
+          psql -X -v ON_ERROR_STOP=1 -d deal_desk_campaign_reference -f /tmp/phase2_m1_compiled_rules.sql
       - name: Run pinned reader, graph, bounded tool, offline AI and PostgreSQL restart tests
         run: python -m unittest discover -s phase-2-implementation/backend/tests -p 'test_*.py' -v
       - name: Compare two Phase 1C contracts without changing the production pin

@@ -64,6 +64,13 @@ Actions for this increment has not yet been observed.
 
 ## Next representative hosted gate (proposal, **not authorization**)
 
+**Updated preparation:** the [ten-case reviewer-only campaign manifest](hybrid-groq-campaign-reviewer-only.md)
+supersedes the six-case budget proposed below. It adds the separately pinned
+R03 conditional-offer control and N02–N04 fixed-only controls, uses separate
+reference and synthetic fixture databases to preserve both source identities,
+and specifies an aggregate 21-request limit. The historical six-case proposal
+below was never approved and is retained as planning history.
+
 After independent review of fixture source identities and the offline report,
 request case-specific approval for one pass of five source-reviewed eligible
 binding cases B01–B05 and the eligible adverse N01, **at most six assessments**,
