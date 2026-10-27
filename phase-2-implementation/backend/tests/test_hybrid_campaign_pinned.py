@@ -58,7 +58,7 @@ class PinnedCampaignTests(unittest.TestCase):
             self.assertLessEqual(len(json.dumps(body, sort_keys=True, separators=(",", ":"),
                                             ensure_ascii=False).encode()), 8192)
             self.assertNotIn("source_reviewed_answer", str(body))
-            data = json.loads(body["messages"][-1]["content"])
+            data = json.loads(body["messages"][1]["content"])
             line = data["input"]["line_id"]
             case = next((name for name in schedules if line.endswith(name)),
                         "N01" if line.endswith("N01") else "R03")
@@ -66,8 +66,9 @@ class PinnedCampaignTests(unittest.TestCase):
             if "tools" in body:
                 if case in schedules:
                     response = (wire_call("inspect_fulfillment_paths", {
-                        "line_id": line, "purpose_code": "check_dated_path"})
-                        if len(data["observations"]) == 1 else
+                        "line_id": line, "purpose_code": "check_dated_path"},
+                        call_id="call_mock_" + case)
+                        if len(body["messages"]) == 2 else
                         wire_call("submit_proposal", {
                             "submission_kind": "binding_partial_delivery"}))
                 else:

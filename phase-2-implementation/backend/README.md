@@ -20,6 +20,14 @@ Configuration/Pricing tool schemas in a live request. Fulfillment's existing
 hosted gate disables correction and its real end-to-end outcome remains
 unverified.
 
+**B05 second-turn wire diagnostic:** The authorized hosted attempt stopped
+after one successful native inspection and a second-request HTTP 400. The
+[offline diagnosis and new, unauthorized continuation proposal](../evaluation/m20-groq-second-turn-offline-diagnostic.md)
+document the missing assistant-call/tool-result pairing in the saved second
+request and the corrected hosted decision wire. The old B05 reservation
+must never be replayed; the new wire has passed mocked-HTTP pinned PostgreSQL
+tests, **not** a new Groq inference call.
+
 **Status:** Implemented and tested against Phase 1C commit
 `90c0bc8e285ee69262c7db826b786096a77ad004`. This is a read-only
 integration foundation, not a LangGraph graph or an AI specialist.

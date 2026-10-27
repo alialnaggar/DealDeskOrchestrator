@@ -1,12 +1,16 @@
 """Offline Fulfillment revision, fixed candidate and M2.0 AI on one pinned run."""
 
 import os
+import json
 from pathlib import Path
 import tempfile
 import unittest
 
 from dealdesk_phase2.hybrid_offline import run_hybrid_offline
-from dealdesk_phase2.hybrid_provider import OfflineGroqWireDouble
+from dealdesk_phase2.hybrid_offline import run_hybrid_evaluation
+from dealdesk_phase2.hybrid_provider import OfflineGroqWireDouble, GroqHybridTransportModel
+from dealdesk_phase2.hybrid_contracts import HybridContractError
+from dealdesk_phase2.live_models import ProviderError
 from dealdesk_phase2.m20_specialists import run_m20_offline
 from dealdesk_phase2.orchestrator import build_original_graph
 from dealdesk_phase2.phase1c_adapter import Phase1CAdapter
@@ -24,6 +28,116 @@ except ImportError:
     "M20_E2E_DATABASE_URL", "M20_E2E_CHECKPOINT_URL", "DEALDESK_PHASE1C_CHECKOUT")),
     "Fresh pinned Fulfillment/M2.0 integration databases required")
 class FullOfflineIntegration(unittest.TestCase):
+    def test_hosted_native_second_turn_fixed_candidate_restart_and_failed_send_no_replay(self):
+        """Mock HTTP only: fresh B05 fixture, pinned verifier, durable receipts."""
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        from dealdesk_phase2.hybrid_pack import _canonical
+        from hashlib import sha256
+
+        case = next(x for x in CASES if x.case_id == "B05")
+        ids = case.ids()
+        adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
+        connection = lambda: psycopg.connect(os.environ["M20_E2E_DATABASE_URL"])
+        with connection() as conn:
+            if conn.execute("SELECT count(*) FROM deal_desk.deals WHERE deal_id LIKE 'M18-D-%'").fetchone()[0] == 0:
+                install_disposable_cases(conn)
+        inspection = wire_call("inspect_fulfillment_paths", {"line_id": ids["L"],
+            "purpose_code": "check_dated_path"}, call_id="call_offline_b05")
+        intent = wire_call("submit_proposal", {"submission_kind": "binding_partial_delivery"},
+                           call_id="call_offline_intent")
+        proposal = wire_final("submit_proposal", {"line_id": ids["L"],
+            "tradeoff_code": "partial_delivery_requires_customer_acceptance",
+            "delivery_slices": [
+                {"quantity": "11", "delivery_date": "2026-09-02",
+                 "source_refs": ["inventory:" + ids["INV"]]},
+                {"quantity": "7", "delivery_date": "2026-09-11",
+                 "source_refs": ["inbound_supply:" + ids["IN"]]}]})
+        for response in (inspection, intent, proposal):
+            response["usage"] = {"prompt_tokens": 400, "completion_tokens": 100}
+
+        assessment = "M20-HOSTED-WIRE-FIXED-B05-OFFLINE"
+        config = {"configurable": {"thread_id": assessment}}
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory:
+            receipt_dir = Path(directory)
+            sent = []
+            responses = iter((inspection, intent, proposal))
+            def mock_http(body):
+                sent.append(body)
+                self.assertLessEqual(len(_canonical(body).encode()), 8192)
+                return next(responses)
+            with thesis_checkpointer(os.environ["M20_E2E_CHECKPOINT_URL"]) as saver:
+                graph = build_original_graph(adapter, connection, saver)
+                model = GroqHybridTransportModel()
+                from unittest.mock import patch
+                with patch.object(model, "_take", side_effect=mock_http):
+                    state = run_hybrid_evaluation(graph, config, adapter, connection, model,
+                        assessment_id=assessment, run_id=case.run_id,
+                        reservation_dir=receipt_dir, authorized=True)
+                self.assertEqual([x["role"] for x in sent[1]["messages"]],
+                                 ["system", "user", "assistant", "tool"])
+                self.assertEqual(sent[1]["messages"][2]["tool_calls"][0]["id"],
+                                 sent[1]["messages"][3]["tool_call_id"])
+                self.assertEqual(sent[1]["messages"][3]["name"], "inspect_fulfillment_paths")
+                self.assertEqual(len(json.loads(sent[1]["messages"][1]["content"])[
+                    "observations"]), 1)
+                self.assertEqual([sha256(_canonical(body).encode()).hexdigest()
+                                  for body in sent], [attempt["request_sha256"] for attempt in
+                    state["hybrid_execution"]["attempts"]])
+                self.assertNotIn("tools", sent[2])
+                self.assertTrue(sent[2]["response_format"]["json_schema"]["strict"])
+                self.assertEqual(state["candidate_status"], "fixed_checked")
+                checked = next(iter(state["candidate_records"].values()))
+                self.assertEqual(checked["fixed_supply_status"], "supply_supported_unreserved")
+                self.assertEqual(len(checked["specialist_results"]), 6)
+                self.assertEqual(state["reviewer_package"]["candidates"][0][
+                    "customer_acceptance"], "pending")
+                self.assertEqual(state["reviewer_package"]["reviewer_action"],
+                                 "Human review required; no approval, reservation or delivery promise")
+            with thesis_checkpointer(os.environ["M20_E2E_CHECKPOINT_URL"]) as saver:
+                graph = build_original_graph(adapter, connection, saver)
+                model = GroqHybridTransportModel()
+                with patch.object(model, "_take", side_effect=AssertionError("no replay")) as send:
+                    replay = run_hybrid_evaluation(graph, config, adapter, connection, model,
+                        assessment_id=assessment, run_id=case.run_id,
+                        reservation_dir=receipt_dir, authorized=True)
+                send.assert_not_called()
+                self.assertEqual(replay["candidate_records"], state["candidate_records"])
+
+            assessment = "M20-HOSTED-WIRE-FAIL-B05-OFFLINE"
+            config = {"configurable": {"thread_id": assessment}}
+            with thesis_checkpointer(os.environ["M20_E2E_CHECKPOINT_URL"]) as saver:
+                graph = build_original_graph(adapter, connection, saver)
+                model = GroqHybridTransportModel()
+                sent = []
+                def fail_second(body):
+                    sent.append(body)
+                    if len(sent) == 1:
+                        return inspection
+                    raise ProviderError("http_400")
+                with patch.object(model, "_take", side_effect=fail_second):
+                    with self.assertRaisesRegex(ProviderError, "http_400"):
+                        run_hybrid_evaluation(graph, config, adapter, connection, model,
+                            assessment_id=assessment, run_id=case.run_id,
+                            reservation_dir=receipt_dir, authorized=True)
+                self.assertEqual(len(sent), 2)
+                self.assertEqual([x["role"] for x in sent[1]["messages"]],
+                                 ["system", "user", "assistant", "tool"])
+                pending = graph.get_state(config).values["hybrid_execution"]
+                self.assertEqual(pending["pending"]["request_sha256"],
+                                 sha256(_canonical(sent[1]).encode()).hexdigest())
+                self.assertEqual(len(pending["attempts"]), 1)
+                self.assertEqual(graph.get_state(config).values["candidate_status"], "not_started")
+            with thesis_checkpointer(os.environ["M20_E2E_CHECKPOINT_URL"]) as saver:
+                graph = build_original_graph(adapter, connection, saver)
+                model = GroqHybridTransportModel()
+                with patch.object(model, "_take", side_effect=AssertionError("failed replay")) as send:
+                    with self.assertRaisesRegex(HybridContractError,
+                                                "hybrid_send_outcome_uncertain"):
+                        run_hybrid_evaluation(graph, config, adapter, connection, model,
+                            assessment_id=assessment, run_id=case.run_id,
+                            reservation_dir=receipt_dir, authorized=True)
+                send.assert_not_called()
+
     def test_corrected_hybrid_final_evidence_fixed_candidate_then_separate_m20_ai(self):
         from dealdesk_phase2.checkpoint import thesis_checkpointer
         case = next(x for x in CASES if x.case_id == "B05")

@@ -170,7 +170,7 @@ class PinnedReplacementTests(unittest.TestCase):
             self.assertLessEqual(len(json.dumps(body, sort_keys=True, separators=(",", ":"),
                                              ensure_ascii=False).encode()), 8192)
             self.assertNotIn("source_reviewed_answer", str(body))
-            data = json.loads(body["messages"][-1]["content"])
+            data = json.loads(body["messages"][1]["content"])
             line = data["input"]["line_id"]
             case = next((x for x in ("B01", "B02", "B03", "B04", "B05", "N01", "R03")
                          if line.endswith(x)), None)
@@ -180,7 +180,8 @@ class PinnedReplacementTests(unittest.TestCase):
             if "tools" in body:
                 if case in schedules:
                     response = (wire_call("inspect_fulfillment_paths", {"line_id": line,
-                        "purpose_code": "check_dated_path"}) if len(data["observations"]) == 1
+                        "purpose_code": "check_dated_path"}, call_id="call_mock_" + case)
+                        if len(body["messages"]) == 2
                         else wire_call("submit_proposal", {
                             "submission_kind": "binding_partial_delivery"}))
                 else:

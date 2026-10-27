@@ -220,7 +220,29 @@ def build_hybrid_graph(original, config, adapter, factory, model, directory, pac
             "observations"], "ordinal": ordinal, "policy_version": record["policy_version"]}
         send = lambda: model.decide(pack["model_input"], tuple(record["observations"]))
         if hasattr(model, "wire_adapter"):
-            request = model.request_decision(pack["model_input"], tuple(record["observations"]))
+            followup = {}
+            if record.get("hosted_budget") is not None and ordinal:
+                # The original tool call and its authorized result must be
+                # paired in the provider conversation, not flattened into a
+                # new user turn. Validate saved evidence before reserving.
+                previous = [item for item in record["attempts"] if item["stage"] == "decision"
+                            and item["ordinal"] == ordinal - 1]
+                try:
+                    call = previous[0]["raw"]["choices"][0]["message"]["tool_calls"][0]
+                    observation = record["observations"][ordinal]
+                    if (len(previous) != 1 or record["action"]["kind"] != "inspect"
+                            or call["function"]["name"] != record["action"]["tool_name"]
+                            or len(record["observations"]) != ordinal + 1
+                            or observation not in [item.get("result") for item in entries(
+                                original, config, input.assessment_id, input.bundle_sha256)
+                                if item.get("status") == "completed" and item.get("tool") ==
+                                record["action"]["tool_name"]]):
+                        raise ValueError()
+                except (IndexError, KeyError, TypeError, ValueError):
+                    raise HybridContractError("invalid_groq_tool_exchange") from None
+                followup = {"prior_call": call, "tool_result": observation}
+            request = model.request_decision(pack["model_input"], tuple(record["observations"]),
+                                             **followup)
             # Send precisely the serialized body whose size/hash was checked.
             # Rebuilding it in decide() could diverge across two invocations.
             send = lambda: model._take(request)

@@ -79,7 +79,7 @@ class PinnedHybridEvidenceTests(unittest.TestCase):
         adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
         connect = lambda: psycopg.connect(os.environ["DATABASE_URL"])
         responses = [wire_call("inspect_fulfillment_paths", {"line_id": ids["L"],
-                     "purpose_code": "check_dated_path"}),
+                     "purpose_code": "check_dated_path"}, call_id="call_b01_mock_1"),
                      wire_call("submit_proposal", {"submission_kind": "binding_partial_delivery"}),
                      wire_final("submit_proposal", {"line_id": ids["L"],
                          "tradeoff_code": "partial_delivery_requires_customer_acceptance",

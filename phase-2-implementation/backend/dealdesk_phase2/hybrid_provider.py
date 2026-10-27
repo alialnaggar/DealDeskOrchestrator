@@ -94,7 +94,7 @@ class GroqHybridAdapter:
     model = GROQ_MODEL
     wire_version = WIRE_VERSION
 
-    def decision_request(self, input, observations):
+    def decision_request(self, input, observations, *, prior_call=None, tool_result=None):
         tools = []
         proposal_ready = has_complete_binding_paths(observations, input["line_id"])
         for name in input["permitted_tools"]:
@@ -117,9 +117,13 @@ class GroqHybridAdapter:
             tools.append({"type": "function", "function": {"name": name,
                 "description": "Record explicit submission intent; final is separate",
                 "parameters": parameters}})
-        return {"model": self.model, "temperature": 0, "max_completion_tokens": 1024,
-            "parallel_tool_calls": False, "tool_choice": "required", "tools": tools,
-            "messages": [{"role": "system", "content":
+        if (prior_call is None) != (tool_result is None):
+            raise HybridContractError("incomplete_groq_tool_exchange")
+        # A continuation must present the assistant's original call followed
+        # immediately by the result with the SAME provider-issued call ID.
+        # Do not duplicate the result in the initial user message.
+        initial_observations = observations[:1] if prior_call is not None else observations
+        messages = [{"role": "system", "content":
                 WIRE_VERSION + ". Choose exactly one authorized function. Never return READY. "
                 "Only returned records may be cited; supplier offers are not confirmed. "
                 "A submit call is intent only; it carries no proposed answer. "
@@ -127,7 +131,31 @@ class GroqHybridAdapter:
                 "without a complete eligible_binding path, use a scoped finding or abstain. "
                 "An inspected source ID alone never proves its dated slice support."},
                 {"role": "user", "content": json.dumps({"input": input,
-                    "observations": observations}, sort_keys=True, default=list)}]}
+                    "observations": initial_observations}, sort_keys=True, default=list)}]
+        if prior_call is not None:
+            try:
+                call_id, name, arguments = (prior_call["id"], prior_call["function"]["name"],
+                                            prior_call["function"]["arguments"])
+                if (prior_call["type"] != "function" or type(call_id) is not str
+                        or not 0 < len(call_id) <= 128 or type(name) is not str
+                        or name not in input["permitted_tools"]
+                        or type(arguments) is not str or len(arguments.encode()) > 2048
+                        or not isinstance(json.loads(arguments), dict)
+                        or len(observations) != 2 or observations[1] != tool_result
+                        or not isinstance(tool_result, dict)
+                        or tool_result.get("tool") != name
+                        or tool_result.get("execution") != "completed"):
+                    raise ValueError()
+            except (KeyError, TypeError, ValueError, UnicodeError):
+                raise HybridContractError("invalid_groq_tool_exchange") from None
+            messages.extend([{"role": "assistant", "content": None,
+                "tool_calls": [{"id": call_id, "type": "function",
+                                "function": {"name": name, "arguments": arguments}}]},
+                {"role": "tool", "tool_call_id": call_id, "name": name,
+                 "content": json.dumps(tool_result, sort_keys=True, default=list)}])
+        return {"model": self.model, "temperature": 0, "max_completion_tokens": 1024,
+            "parallel_tool_calls": False, "tool_choice": "required", "tools": tools,
+            "messages": messages}
 
     def final_request(self, intent, input, observations, feedback=None):
         if intent.get("kind") not in ("submit_proposal", "submit_finding", "abstain"):
@@ -205,10 +233,10 @@ class OfflineGroqWireDouble:
             raise HybridContractError("offline_wire_exhausted")
         return self.responses.pop(0)
 
-    def request_decision(self, input, observations):
+    def request_decision(self, input, observations, *, prior_call=None, tool_result=None):
         return self.adapter.decision_request({**input, "permitted_tools": (
             "inspect_line_supply", "inspect_fulfillment_paths", "inspect_evidence_record")},
-            observations)
+            observations, prior_call=prior_call, tool_result=tool_result)
 
     def decide(self, input, observations):
         return self._take(self.request_decision(input, observations))
@@ -251,8 +279,9 @@ class GroqHybridTransportModel(OfflineGroqWireDouble):
         self.model = self.adapter.model
 
     # Only the separately gated hosted smoke uses these smaller ceilings.
-    def request_decision(self, input, observations):
-        body = super().request_decision(input, observations)
+    def request_decision(self, input, observations, *, prior_call=None, tool_result=None):
+        body = super().request_decision(input, observations, prior_call=prior_call,
+                                        tool_result=tool_result)
         body["max_completion_tokens"] = 512
         return body
 

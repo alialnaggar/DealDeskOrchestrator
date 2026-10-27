@@ -17,9 +17,10 @@ from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from test_investigation_graph import InvestigationAdapter, RUN
 
 
-def wire_call(name, args):
+def wire_call(name, args, *, call_id=None):
     return {"choices": [{"finish_reason": "tool_calls", "message": {"content": None,
-        "tool_calls": [{"type": "function", "function": {"name": name,
+        "tool_calls": [{**({"id": call_id} if call_id is not None else {}),
+                        "type": "function", "function": {"name": name,
                           "arguments": json.dumps(args)}}]}}]}
 
 
@@ -118,6 +119,33 @@ class WireTests(unittest.TestCase):
         with self.assertRaises(HybridContractError):
             self.adapter.parse_decision(wire_call("inspect_fulfillment_paths", {
                 "line_id": "other", "purpose_code": "check_dated_path"}), "L1", self.tools)
+
+    def test_native_followup_pairs_original_call_id_with_authorized_result(self):
+        observation = {"tool": "inspect_fulfillment_paths", "execution": "completed",
+                       "returned_refs": ["inventory:synthetic"], "findings": {"line_id": "L1"}}
+        call = wire_call("inspect_fulfillment_paths", {"line_id": "L1",
+            "purpose_code": "check_dated_path"}, call_id="call_offline_1")["choices"][0][
+            "message"]["tool_calls"][0]
+        body = GroqHybridTransportModel().request_decision({"line_id": "L1"},
+            ({"tool": "inspect_line_supply", "execution": "completed"}, observation),
+            prior_call=call, tool_result=observation)
+        messages = body["messages"]
+        self.assertEqual([message["role"] for message in messages],
+                         ["system", "user", "assistant", "tool"])
+        self.assertEqual(messages[2]["tool_calls"][0]["id"], messages[3]["tool_call_id"])
+        self.assertEqual(messages[3]["name"], "inspect_fulfillment_paths")
+        self.assertEqual(json.loads(messages[3]["content"]), observation)
+        self.assertEqual(len(json.loads(messages[1]["content"])["observations"]), 1)
+        self.assertNotIn("response_format", body)
+        self.assertFalse(body["parallel_tool_calls"])
+        for bad_call, bad_result in (({**call, "id": ""}, observation),
+                                     (call, {**observation, "tool": "inspect_evidence_record"}),
+                                     ({**call, "type": "other"}, observation)):
+            with self.subTest(call=bad_call, result=bad_result), self.assertRaises(
+                    HybridContractError):
+                GroqHybridTransportModel().request_decision({"line_id": "L1"},
+                    ({"tool": "inspect_line_supply"}, observation),
+                    prior_call=bad_call, tool_result=bad_result)
 
     def test_wire_double_enters_offline_graph_no_transport(self):
         from dealdesk_phase2.hybrid_offline import run_hybrid_offline
@@ -323,7 +351,7 @@ class WireTests(unittest.TestCase):
         config = {"configurable": {"thread_id": assessment}}
         model = GroqHybridTransportModel()
         inspection = wire_call("inspect_fulfillment_paths", {"line_id": "L1",
-            "purpose_code": "check_dated_path"})
+            "purpose_code": "check_dated_path"}, call_id="call_offline_first")
         inspection["usage"] = {"completion_tokens": 100, "prompt_tokens": 300}
         responses = iter((inspection, inspection))
         with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory, patch.object(
@@ -337,6 +365,31 @@ class WireTests(unittest.TestCase):
             self.assertEqual(len(state["hybrid_execution"]["attempts"]), 2)
             self.assertEqual(state["reviewer_package"]["candidates"], [])
 
+    def test_hosted_missing_tool_call_id_stops_before_second_reservation(self):
+        from dealdesk_phase2.hybrid_offline import run_hybrid_evaluation
+        import tempfile
+        from pathlib import Path
+
+        adapter = InvestigationAdapter()
+        graph = build_original_graph(adapter, None, InMemorySaver())
+        model = GroqHybridTransportModel()
+        first = wire_call("inspect_fulfillment_paths", {"line_id": "L1",
+            "purpose_code": "check_dated_path"})
+        first["usage"] = {"prompt_tokens": 300, "completion_tokens": 100}
+        assessment = "HYBRID-MISSING-TOOL-ID-OFFLINE"
+        config = {"configurable": {"thread_id": assessment}}
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory, patch.object(
+                model, "_take", side_effect=[first, AssertionError("second send")]) as sender:
+            with self.assertRaisesRegex(HybridContractError, "invalid_groq_tool_exchange"):
+                run_hybrid_evaluation(graph, config, adapter, None, model,
+                    assessment_id=assessment, run_id=RUN,
+                    reservation_dir=Path(directory), authorized=True)
+            sender.assert_called_once()
+            record = graph.get_state(config).values["hybrid_execution"]
+            self.assertEqual(len(record["attempts"]), 1)
+            self.assertIsNone(record["pending"])
+            self.assertEqual(len(list(Path(directory).glob("*.hybrid.audit.jsonl"))), 2)
+
     def test_hosted_request_bytes_checked_before_receipt_and_send(self):
         import tempfile
         from pathlib import Path
@@ -347,8 +400,8 @@ class WireTests(unittest.TestCase):
         model = GroqHybridTransportModel()
         original = model.request_decision
 
-        def oversized(input, observations):
-            body = original(input, observations)
+        def oversized(input, observations, **kwargs):
+            body = original(input, observations, **kwargs)
             body["messages"][0]["content"] += "x" * 8192
             return body
 

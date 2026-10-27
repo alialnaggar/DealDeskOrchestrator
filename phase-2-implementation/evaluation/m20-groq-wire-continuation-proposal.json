@@ -1,0 +1,15 @@
+{
+  "version": "m20-b05-wire-continuation-proposal-v1",
+  "status": "proposal_not_authorized",
+  "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
+  "model": "openai/gpt-oss-120b",
+  "case": "B05-fulfillment",
+  "assessment_id": "M20-WIRE-CONTINUATION-B05-6c63a9e3-fec9-4d97-8c80-2cb1c9dcf476",
+  "run_id": "00000000-0000-4000-8000-000000018005",
+  "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+  "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+  "maximum_sequential_posts": 3,
+  "maximum_configured_output_tokens": 2048,
+  "maximum_request_bytes_each": 8192,
+  "reported_total_token_post_send_stop": 8000
+}
