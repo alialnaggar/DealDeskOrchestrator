@@ -60,6 +60,10 @@ class AssessmentStateV1(TypedDict, total=False):
     hybrid_investigation_start: dict
     hybrid_evidence_pack: dict
     hybrid_execution: dict
+    # Opt-in M2.0 original-subject AI investigations; fixed slots stay unchanged.
+    m20_ai_results: dict[str, dict]
+    m20_model_attempts: list[dict]
+    m20_review: dict
 
 
 def context_to_record(context: RunContextV1) -> dict:

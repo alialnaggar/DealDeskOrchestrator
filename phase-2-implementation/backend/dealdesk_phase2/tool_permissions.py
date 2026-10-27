@@ -12,8 +12,8 @@ MAX_RECORDS = 25
 MAX_CALLS = 12
 FORWARD_DAYS = 30
 SPECIALIST_TOOLS = {
-    "configuration": frozenset(),
-    "pricing": frozenset(),
+    "configuration": frozenset(("inspect_configuration_line",)),
+    "pricing": frozenset(("inspect_pricing_line",)),
     "fulfillment": frozenset(("inspect_line_supply", "inspect_fulfillment_paths",
                               "inspect_evidence_record")),
     "credit": frozenset(),

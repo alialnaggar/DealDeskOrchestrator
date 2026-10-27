@@ -1,5 +1,14 @@
 # M1.0 — Pinned reader and replay boundary
 
+**M2.0 offline continuation:** See the
+[Configuration/Pricing methodology and limitations](../evaluation/m20-configuration-pricing-offline-methodology.md)
+for the opt-in post-original LangGraph, separate read-only tools, corrected
+mock Fulfillment candidate, fixed checks and reviewer handoff. The pinned
+Phase 1C source and human-only approval boundary remain unchanged. The
+[CI workflow](../../.github/workflows/phase2-m1-contracts.yml) provisions
+separate disposable M2.0 business/checkpoint databases so its tests do not
+silently skip; no hosted model is invoked by the test suite.
+
 **Status:** Implemented and tested against Phase 1C commit
 `90c0bc8e285ee69262c7db826b786096a77ad004`. This is a read-only
 integration foundation, not a LangGraph graph or an AI specialist.
