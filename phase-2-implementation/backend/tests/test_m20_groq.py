@@ -80,6 +80,32 @@ class GroqM20Wire(unittest.TestCase):
         with self.assertRaises(ValueError):
             request_body(self.input, (observation,))
 
+    def test_pricing_and_configuration_followups_have_identical_contract_shape(self):
+        shapes = []
+        for specialist in ("configuration", "pricing"):
+            name = "inspect_" + specialist + "_line"
+            observation = {"tool": name, "execution": "completed", "records": [{
+                "ref": "product:P" if specialist == "configuration" else "pricing_line:L1",
+                "fields": {"is_sellable": True} if specialist == "configuration" else {
+                    "fixed_margin_pct": "22.22222222222222222222222222"}}],
+                "returned_refs": ["product:P" if specialist == "configuration" else
+                                  "pricing_line:L1"]}
+            input = {**self.input, "specialist": specialist, "permitted_tool": name}
+            call = {"id": "call_native_123", "name": name,
+                    "arguments": json.dumps({"line_id": "L1"})}
+            body = request_body(input, (observation,), exchanges=(call,))
+            self.assertLessEqual(len(_canonical(body).encode()), MAX_REQUEST_BYTES)
+            messages = body["messages"]
+            self.assertEqual(messages[-2]["tool_calls"][0]["id"],
+                             messages[-1]["tool_call_id"])
+            self.assertEqual(json.loads(messages[-1]["content"]), observation)
+            self.assertEqual(body["max_completion_tokens"], 512)
+            self.assertEqual(body["tool_choice"], "required")
+            self.assertIs(body["parallel_tool_calls"], False)
+            shapes.append((sorted(body), [m["role"] for m in messages],
+                [t["function"]["name"] for t in body["tools"]][1:]))
+        self.assertEqual(shapes[0], shapes[1])
+
     def test_fail_closed_on_malformed_parallel_wrong_domain_and_prose(self):
         valid = tool_response("inspect_configuration_line", {"line_id": "L1"})
         for response in ({**valid, "choices": [{**valid["choices"][0],
@@ -130,6 +156,68 @@ class GroqM20Wire(unittest.TestCase):
     "M20_DATABASE_URL", "M20_CHECKPOINT_DATABASE_URL", "DEALDESK_PHASE1C_CHECKOUT")),
     "Isolated M2.0 PostgreSQL business and checkpoint databases required")
 class HostedWirePostgres(unittest.TestCase):
+    def test_pricing_second_turn_http_400_stops_and_never_replays(self):
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        database = os.environ["M20_DATABASE_URL"]
+        adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
+        connect = lambda: psycopg.connect(database)
+        with connect() as conn:
+            if conn.execute("SELECT count(*) FROM deal_desk.deals WHERE deal_id LIKE 'M18-D-%'").fetchone()[0] == 0:
+                install_disposable_cases(conn)
+        case = next(x for x in CASES if x.case_id == "B01")
+        config = {"configurable": {"thread_id": "M20-PRICING-400-NEW-OFFLINE-ID"}}
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory:
+            with thesis_checkpointer(os.environ["M20_CHECKPOINT_DATABASE_URL"]) as saver:
+                graph = build_original_graph(adapter, connect, saver)
+                original = graph.invoke(initial_state(config["configurable"]["thread_id"],
+                                                      case.run_id), config)
+                sent = []
+                def fake_post(url, key, header, body, **kwargs):
+                    sent.append(body)
+                    domain = json.loads(body["messages"][1]["content"])["input"]["specialist"]
+                    if len(body["messages"]) == 2:
+                        return tool_response("inspect_" + domain + "_line",
+                            {"line_id": case.ids()["L"]}, call_id="call_" + domain)
+                    self.assertEqual([m["role"] for m in body["messages"]],
+                                     ["system", "user", "assistant", "tool"])
+                    self.assertEqual(body["messages"][2]["tool_calls"][0]["id"],
+                                     body["messages"][3]["tool_call_id"])
+                    if domain == "pricing":
+                        raise ProviderError("http_400")
+                    row = json.loads(body["messages"][3]["content"])["records"][0]
+                    return tool_response("submit_finding", {"claims": [{
+                        "ref": row["ref"], "field": "is_sellable",
+                        "value_json": json.dumps(row["fields"]["is_sellable"])}],
+                        "uncertainty_reasons": []})
+                with patch.dict(os.environ, {"GROQ_API_KEY": "gsk_" + "x" * 47}), patch(
+                        "dealdesk_phase2.m20_groq._post", side_effect=fake_post) as sender:
+                    with self.assertRaises(EvidenceMismatch):
+                        run_m20_evaluation(graph, config, adapter, {name: GroqM20Model(name)
+                            for name in ("configuration", "pricing")}, authorized=True,
+                            reservation_dir=Path(directory))
+                    self.assertEqual(sender.call_count, 4)
+                state = graph.get_state(config).values
+                self.assertEqual(state["specialist_results"], original["specialist_results"])
+                self.assertEqual(state["candidate_status"], "not_started")
+                self.assertEqual(state["m20_ai_results"]["configuration"]["execution"], "completed")
+                self.assertEqual(state["m20_ai_results"]["pricing"]["reason"], "provider_http_400")
+                self.assertIsNone(state.get("m20_review"))
+                self.assertEqual(state["reviewer_package"]["m20_ai"]["execution"], "stopped")
+                self.assertEqual([x["status"] for x in state["m20_model_attempts"][-3:]],
+                                 ["reserved", "returned", "reserved"])
+                self.assertLessEqual(max(len(_canonical(body).encode()) for body in sent),
+                                     MAX_REQUEST_BYTES)
+            with thesis_checkpointer(os.environ["M20_CHECKPOINT_DATABASE_URL"]) as saver:
+                graph = build_original_graph(adapter, connect, saver)
+                with patch.dict(os.environ, {"GROQ_API_KEY": "gsk_" + "x" * 47}), patch(
+                        "dealdesk_phase2.m20_groq._post", side_effect=AssertionError(
+                            "forbidden replay")) as sender:
+                    with self.assertRaises(EvidenceMismatch):
+                        run_m20_evaluation(graph, config, adapter, {name: GroqM20Model(name)
+                            for name in ("configuration", "pricing")}, authorized=True,
+                            reservation_dir=Path(directory))
+                    sender.assert_not_called()
+
     def test_second_turn_http_400_stops_without_pricing_or_restart_send(self):
         from dealdesk_phase2.checkpoint import thesis_checkpointer
         database = os.environ["M20_DATABASE_URL"]
