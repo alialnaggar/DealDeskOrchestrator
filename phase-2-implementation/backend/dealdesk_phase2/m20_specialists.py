@@ -270,6 +270,19 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
                 raise EvidenceMismatch("M2.0 hosted reported token stop reached")
             request_digest = None
             if hosted:
+                completed = [event["result"] for event in entries(original, config,
+                    context.assessment_id, context.bundle_sha256) if event.get("status") == "completed"
+                    and event.get("identity", {}).get("specialist") == specialist
+                    and event.get("identity", {}).get("source_input_digest") == context.source_input_digest
+                    and event.get("identity", {}).get("subject_id") == context.original_deal_id
+                    and event.get("tool") == TOOLS[specialist]]
+                prior_calls = [item["tool_call"] for item in attempts
+                    if item.get("specialist") == specialist and item["status"] == "returned"
+                    and item.get("action_kind") == "inspect" and "tool_call" in item]
+                if (len(prior_calls) != len(observations) or any(observation not in completed
+                        for observation in observations)):
+                    raise EvidenceMismatch("M2.0 hosted tool exchange differs from completed ledger")
+                model.previous_calls = tuple(prior_calls)
                 request = model.prepare_request(input, tuple(observations))
                 request_digest = sha256(_canonical(request).encode()).hexdigest()
                 model.pending_request_digest = request_digest
@@ -290,9 +303,11 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
             original.update_state(config, {"m20_model_attempts": [*attempts,
                 {**marker, "status": "returned", "action_kind": action.get("kind") if isinstance(
                     action, dict) and action.get("kind") in ("inspect", "finding", "abstain") else "invalid",
-                    "elapsed_ms": max(0, round((monotonic() - started) * 1000)),
-                    "cost_usd": None,
-                    "usage": dict(model.last_usage) if hosted else None}]},
+                     "elapsed_ms": max(0, round((monotonic() - started) * 1000)),
+                     "cost_usd": None,
+                     **({"tool_call": dict(model.last_tool_call)} if hosted and
+                        model.last_tool_call is not None else {}),
+                     "usage": dict(model.last_usage) if hosted else None}]},
                 as_node="finish")
             if hosted and original.get_state(config).values["m20_hosted_base_tokens"] + sum(
                     item["usage"]["prompt_tokens"] + item["usage"]["completion_tokens"]

@@ -20,7 +20,7 @@ MAX_COMPLETION_TOKENS = 512
 MAX_PROMPT_TOKENS = 4096
 
 
-def request_body(input, observations):
+def request_body(input, observations, *, exchanges=()):
     specialist = input["specialist"]
     if specialist not in TOOLS or input["permitted_tool"] != TOOLS[specialist]:
         raise ValueError("m20_groq_tool_identity")
@@ -43,17 +43,37 @@ def request_body(input, observations):
         "parameters": {"type": "object", "properties": {"reason_code": {"type": "string",
             "enum": ["insufficient_evidence", "model_uncertainty", "unsupported_capability"]}},
             "required": ["reason_code"], "additionalProperties": False}}}]
+    if len(exchanges) != len(observations):
+        raise ValueError("m20_groq_unpaired_observation")
+    messages = [{"role": "system", "content": WIRE_VERSION + " " + VERSION +
+        ". You are the " + specialist + " evidence investigator, not a rule engine. "
+        "First inspect the applicable line. Cite only returned fields verbatim. "
+        "Do not infer validity, clearance or approval from a field; never invent facts, "
+        "change a deal, calculate a new margin, waive policy or promise delivery. "
+        "If the evidence is incomplete or a finding cannot be grounded, abstain. "
+        "Choose exactly one function per response. No free-text final answer."},
+        {"role": "user", "content": _canonical({"input": input, "observations": ()})}]
+    for call, observation in zip(exchanges, observations):
+        try:
+            call_id, name, arguments = call["id"], call["name"], call["arguments"]
+            if (set(call) != {"id", "name", "arguments"} or type(call_id) is not str
+                    or not 0 < len(call_id) <= 128 or type(name) is not str
+                    or name != TOOLS[specialist] or type(arguments) is not str
+                    or len(arguments.encode()) > 1024 or type(json.loads(arguments)) is not dict
+                    or set(json.loads(arguments)) != {"line_id"}
+                    or json.loads(arguments)["line_id"] not in input["line_ids"]
+                    or type(observation) is not dict or observation.get("tool") != name
+                    or observation.get("execution") != "completed"):
+                raise ValueError()
+        except (KeyError, TypeError, ValueError, UnicodeError):
+            raise ValueError("m20_groq_invalid_tool_exchange") from None
+        messages.extend([{"role": "assistant", "content": None, "tool_calls": [{
+            "id": call_id, "type": "function", "function": {"name": name,
+                "arguments": arguments}}]}, {"role": "tool", "tool_call_id": call_id,
+            "name": name, "content": _canonical(observation)}])
     body = {"model": GROQ_MODEL, "temperature": 0, "max_completion_tokens": MAX_COMPLETION_TOKENS,
         "parallel_tool_calls": False, "tool_choice": "required", "tools": tools,
-        "messages": [{"role": "system", "content": WIRE_VERSION + " " + VERSION +
-            ". You are the " + specialist + " evidence investigator, not a rule engine. "
-            "First inspect the applicable line. Cite only returned fields verbatim. "
-            "Do not infer validity, clearance or approval from a field; never invent facts, "
-            "change a deal, calculate a new margin, waive policy or promise delivery. "
-            "If the evidence is incomplete or a finding cannot be grounded, abstain. "
-            "Choose exactly one function per response. No free-text final answer."},
-            {"role": "user", "content": _canonical({"input": input,
-                "observations": observations})}]}
+        "messages": messages}
     if len(_canonical(body).encode()) > MAX_REQUEST_BYTES:
         raise ValueError("m20_groq_request_oversize")
     return body
@@ -107,11 +127,13 @@ class GroqM20Model:
         self.specialist = specialist
         self.last_usage = None
         self.pending_request_digest = None
+        self.previous_calls = ()
+        self.last_tool_call = None
 
     def prepare_request(self, input, observations):
         if input["specialist"] != self.specialist:
             raise ValueError("m20_groq_wrong_specialist")
-        return request_body(input, observations)
+        return request_body(input, observations, exchanges=self.previous_calls)
 
     def next_action(self, input, observations):
         if input["specialist"] != self.specialist:
@@ -121,6 +143,7 @@ class GroqM20Model:
                 sha256(_canonical(body).encode()).hexdigest() != self.pending_request_digest):
             raise ValueError("m20_groq_request_identity_changed")
         self.last_usage = None
+        self.last_tool_call = None
         key = os.environ.get("GROQ_API_KEY")
         if not key:
             raise ProviderError("missing_credential")
@@ -136,4 +159,15 @@ class GroqM20Model:
                 or usage["completion_tokens"] > MAX_COMPLETION_TOKENS):
             raise ProviderError("hosted_usage_unverifiable")
         self.last_usage = {k: usage[k] for k in ("prompt_tokens", "completion_tokens")}
-        return parse_response(response, input)
+        action = parse_response(response, input)
+        call = response["choices"][0]["message"]["tool_calls"][0]
+        if (type(call.get("id")) is not str or not 0 < len(call["id"]) <= 128
+                or call.get("type") != "function"):
+            raise ValueError("m20_groq_missing_tool_call_id")
+        if action["kind"] == "inspect":
+            arguments = call["function"]["arguments"]
+            if type(arguments) is not str or len(arguments.encode()) > 1024:
+                raise ValueError("m20_groq_oversize_inspection_descriptor")
+            self.last_tool_call = {"id": call["id"], "name": call["function"]["name"],
+                                   "arguments": arguments}
+        return action

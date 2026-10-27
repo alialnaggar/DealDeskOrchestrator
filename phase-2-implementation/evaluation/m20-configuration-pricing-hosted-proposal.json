@@ -1,0 +1,16 @@
+{
+  "version": "m20-config-pricing-hosted-proposal-v1",
+  "status": "proposal_not_authorized",
+  "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
+  "model": "openai/gpt-oss-120b",
+  "case": "B01-configuration-then-pricing",
+  "assessment_id": "M20-HOSTED-SPECIALISTS-B01-f9530345-979c-41ba-b6c6-9ec426059696",
+  "run_id": "00000000-0000-4000-8000-000000018001",
+  "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+  "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+  "order": ["configuration", "pricing"],
+  "maximum_sequential_posts": 6,
+  "maximum_configured_output_tokens": 3072,
+  "maximum_request_bytes_each": 8192,
+  "reported_total_token_post_send_stop": 24000
+}

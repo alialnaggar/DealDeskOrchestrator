@@ -23,9 +23,9 @@ except ImportError:
     psycopg = None
 
 
-def tool_response(name, arguments, *, usage=None):
+def tool_response(name, arguments, *, usage=None, call_id="call_offline_test"):
     return {"choices": [{"finish_reason": "tool_calls", "message": {
-        "content": None, "tool_calls": [{"type": "function", "function": {
+        "content": None, "tool_calls": [{"id": call_id, "type": "function", "function": {
             "name": name, "arguments": json.dumps(arguments)}}]}}],
         "usage": usage or {"prompt_tokens": 300, "completion_tokens": 60}}
 
@@ -56,6 +56,29 @@ class GroqM20Wire(unittest.TestCase):
             "ref": "pricing_line:L1", "field": "fixed_margin_pct",
             "value_json": '"21.000"'}], "uncertainty_reasons": []}), pricing)
         self.assertEqual(action["claims"][0]["value"], "21.000")
+
+    def test_native_multiturn_call_id_result_and_strict_domain_pairing(self):
+        observation = {"tool": "inspect_configuration_line", "execution": "completed",
+            "records": [{"ref": "product:P", "fields": {"is_sellable": True}}],
+            "returned_refs": ["product:P"]}
+        call = {"id": "call_one", "name": "inspect_configuration_line",
+                "arguments": json.dumps({"line_id": "L1"})}
+        body = request_body(self.input, (observation,), exchanges=(call,))
+        self.assertEqual([m["role"] for m in body["messages"]],
+                         ["system", "user", "assistant", "tool"])
+        self.assertEqual(body["messages"][2]["tool_calls"][0]["id"],
+                         body["messages"][3]["tool_call_id"])
+        self.assertEqual(json.loads(body["messages"][3]["content"]), observation)
+        self.assertEqual(json.loads(body["messages"][1]["content"])["observations"], [])
+        self.assertNotIn("response_format", body)
+        self.assertLessEqual(len(_canonical(body).encode()), MAX_REQUEST_BYTES)
+        for bad_call, bad_observation in (({**call, "id": ""}, observation),
+                                          (call, {**observation, "tool": "inspect_pricing_line"}),
+                                          ({**call, "arguments": '{"line_id":"OTHER"}'}, observation)):
+            with self.subTest(call=bad_call), self.assertRaises(ValueError):
+                request_body(self.input, (bad_observation,), exchanges=(bad_call,))
+        with self.assertRaises(ValueError):
+            request_body(self.input, (observation,))
 
     def test_fail_closed_on_malformed_parallel_wrong_domain_and_prose(self):
         valid = tool_response("inspect_configuration_line", {"line_id": "L1"})
@@ -107,6 +130,121 @@ class GroqM20Wire(unittest.TestCase):
     "M20_DATABASE_URL", "M20_CHECKPOINT_DATABASE_URL", "DEALDESK_PHASE1C_CHECKOUT")),
     "Isolated M2.0 PostgreSQL business and checkpoint databases required")
 class HostedWirePostgres(unittest.TestCase):
+    def test_second_turn_http_400_stops_without_pricing_or_restart_send(self):
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        database = os.environ["M20_DATABASE_URL"]
+        adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
+        connect = lambda: psycopg.connect(database)
+        with connect() as conn:
+            if conn.execute("SELECT count(*) FROM deal_desk.deals WHERE deal_id LIKE 'M18-D-%'").fetchone()[0] == 0:
+                install_disposable_cases(conn)
+        case = next(x for x in CASES if x.case_id == "B01")
+        config = {"configurable": {"thread_id": "M20-WIRE-HTTP400-B01-OFFLINE"}}
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory:
+            with thesis_checkpointer(os.environ["M20_CHECKPOINT_DATABASE_URL"]) as saver:
+                graph = build_original_graph(adapter, connect, saver)
+                original = graph.invoke(initial_state(config["configurable"]["thread_id"],
+                                                      case.run_id), config)
+                requests = []
+                def fake_post(url, key, header, body, **kwargs):
+                    requests.append(body)
+                    if len(requests) == 1:
+                        return tool_response("inspect_configuration_line", {"line_id": case.ids()["L"]},
+                                             call_id="call_configuration")
+                    self.assertEqual([x["role"] for x in body["messages"]],
+                                     ["system", "user", "assistant", "tool"])
+                    raise ProviderError("http_400")
+                with patch.dict(os.environ, {"GROQ_API_KEY": "gsk_" + "x" * 47}), patch(
+                        "dealdesk_phase2.m20_groq._post", side_effect=fake_post) as sender:
+                    with self.assertRaises(EvidenceMismatch):
+                        run_m20_evaluation(graph, config, adapter, {name: GroqM20Model(name)
+                            for name in ("configuration", "pricing")}, authorized=True,
+                            reservation_dir=Path(directory))
+                    self.assertEqual(sender.call_count, 2)
+                state = graph.get_state(config).values
+                self.assertEqual(state["specialist_results"], original["specialist_results"])
+                self.assertEqual(state["m20_ai_results"]["configuration"]["reason"],
+                                 "provider_http_400")
+                self.assertNotIn("pricing", state["m20_ai_results"])
+                self.assertEqual(state["reviewer_package"]["m20_ai"]["execution"], "stopped")
+                self.assertEqual(len([x for x in state["m20_model_attempts"] if x[
+                    "status"] == "reserved"]), 2)
+            with thesis_checkpointer(os.environ["M20_CHECKPOINT_DATABASE_URL"]) as saver:
+                graph = build_original_graph(adapter, connect, saver)
+                with patch.dict(os.environ, {"GROQ_API_KEY": "gsk_" + "x" * 47}), patch(
+                        "dealdesk_phase2.m20_groq._post", side_effect=AssertionError(
+                            "no replay")) as sender:
+                    with self.assertRaises(EvidenceMismatch):
+                        run_m20_evaluation(graph, config, adapter, {name: GroqM20Model(name)
+                            for name in ("configuration", "pricing")}, authorized=True,
+                            reservation_dir=Path(directory))
+                    sender.assert_not_called()
+
+    def test_missing_information_abstention_keeps_fixed_results_and_handoff(self):
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        database = os.environ["M20_DATABASE_URL"]
+        adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
+        connect = lambda: psycopg.connect(database)
+        with connect() as conn:
+            if conn.execute("SELECT count(*) FROM deal_desk.deals WHERE deal_id LIKE 'M18-D-%'").fetchone()[0] == 0:
+                install_disposable_cases(conn)
+        case = next(x for x in CASES if x.case_id == "B01")
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory, thesis_checkpointer(
+                os.environ["M20_CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(adapter, connect, saver)
+            config = {"configurable": {"thread_id": "M20-WIRE-ABSTAIN-B01-OFFLINE"}}
+            original = graph.invoke(initial_state(config["configurable"]["thread_id"], case.run_id),
+                                    config)
+            sends = []
+            def fake_post(url, key, header, body, **kwargs):
+                sends.append(body)
+                domain = json.loads(body["messages"][1]["content"])["input"]["specialist"]
+                if len(body["messages"]) == 2:
+                    return tool_response("inspect_" + domain + "_line", {"line_id": case.ids()["L"]},
+                                         call_id="call_" + domain)
+                self.assertEqual(body["messages"][2]["tool_calls"][0]["id"],
+                                 body["messages"][3]["tool_call_id"])
+                return tool_response("abstain", {"reason_code": "insufficient_evidence"})
+            with patch.dict(os.environ, {"GROQ_API_KEY": "gsk_" + "x" * 47}), patch(
+                    "dealdesk_phase2.m20_groq._post", side_effect=fake_post):
+                state = run_m20_evaluation(graph, config, adapter, {name: GroqM20Model(name)
+                    for name in ("configuration", "pricing")}, authorized=True,
+                    reservation_dir=Path(directory))
+            self.assertEqual(len(sends), 4)
+            self.assertEqual(state["specialist_results"], original["specialist_results"])
+            self.assertEqual(state["candidate_status"], "not_started")
+            for domain in ("configuration", "pricing"):
+                self.assertEqual(state["m20_ai_results"][domain]["execution"], "abstained")
+                self.assertEqual(state["m20_review"]["specialists"][domain]["validated_claims"], [])
+            self.assertEqual(state["reviewer_package"]["m20_ai"], state["m20_review"])
+
+    def test_missing_provider_tool_id_stops_before_followup_or_pricing(self):
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        database = os.environ["M20_DATABASE_URL"]
+        adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
+        connect = lambda: psycopg.connect(database)
+        with connect() as conn:
+            if conn.execute("SELECT count(*) FROM deal_desk.deals WHERE deal_id LIKE 'M18-D-%'").fetchone()[0] == 0:
+                install_disposable_cases(conn)
+        case = next(x for x in CASES if x.case_id == "B01")
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory, thesis_checkpointer(
+                os.environ["M20_CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(adapter, connect, saver)
+            config = {"configurable": {"thread_id": "M20-WIRE-NO-ID-B01-OFFLINE"}}
+            graph.invoke(initial_state(config["configurable"]["thread_id"], case.run_id), config)
+            with patch.dict(os.environ, {"GROQ_API_KEY": "gsk_" + "x" * 47}), patch(
+                    "dealdesk_phase2.m20_groq._post", return_value=tool_response(
+                        "inspect_configuration_line", {"line_id": case.ids()["L"]},
+                        call_id="")) as sender:
+                with self.assertRaises(EvidenceMismatch):
+                    run_m20_evaluation(graph, config, adapter, {name: GroqM20Model(name)
+                        for name in ("configuration", "pricing")}, authorized=True,
+                        reservation_dir=Path(directory))
+                sender.assert_called_once()
+            self.assertEqual(graph.get_state(config).values["m20_ai_results"][
+                "configuration"]["execution"], "error")
+            self.assertNotIn("pricing", graph.get_state(config).values["m20_ai_results"])
+
     def test_explicit_gate_real_tool_mocked_transport_restart_and_bad_claim_stop(self):
         from dealdesk_phase2.checkpoint import thesis_checkpointer
         directory = tempfile.TemporaryDirectory(dir="/tmp/opencode")
@@ -138,11 +276,15 @@ class HostedWirePostgres(unittest.TestCase):
                 requests.append(body)
                 input = json.loads(body["messages"][1]["content"])
                 specialist = input["input"]["specialist"]
-                observations = input["observations"]
-                if not observations:
+                if len(body["messages"]) == 2:
                     return tool_response("inspect_" + specialist + "_line", {
-                        "line_id": input["input"]["line_ids"][0]})
-                row = observations[0]["records"][0]
+                        "line_id": input["input"]["line_ids"][0]},
+                        call_id="call_" + specialist)
+                self.assertEqual([m["role"] for m in body["messages"]],
+                                 ["system", "user", "assistant", "tool"])
+                self.assertEqual(body["messages"][2]["tool_calls"][0]["id"],
+                                 body["messages"][3]["tool_call_id"])
+                row = json.loads(body["messages"][-1]["content"])["records"][0]
                 field = "is_sellable" if specialist == "configuration" else "fixed_margin_pct"
                 return tool_response("submit_finding", {"claims": [{"ref": row["ref"],
                     "field": field, "value_json": json.dumps(row["fields"][field])}],
@@ -152,6 +294,8 @@ class HostedWirePostgres(unittest.TestCase):
                 state = run_m20_evaluation(graph, config, adapter, models(), authorized=True,
                                            reservation_dir=receipt_dir)
             self.assertEqual(len(requests), 4)
+            self.assertLessEqual(max(len(_canonical(request).encode()) for request in requests),
+                                 MAX_REQUEST_BYTES)
             self.assertEqual(state["specialist_results"], original["specialist_results"])
             self.assertEqual(state["candidate_status"], "not_started")
             self.assertEqual(state["m20_hosted_base_tokens"], 0)
@@ -188,7 +332,7 @@ class HostedWirePostgres(unittest.TestCase):
             graph.invoke(initial_state(assessment, case.run_id), config)
             def bad_post(url, key, header, body, **kwargs):
                 input = json.loads(body["messages"][1]["content"])
-                if not input["observations"]:
+                if len(body["messages"]) == 2:
                     return tool_response("inspect_configuration_line", {"line_id": case.ids()["L"]})
                 return tool_response("submit_finding", {"claims": [{"ref": "product:FORGED",
                     "field": "is_sellable", "value_json": "true"}],
