@@ -510,10 +510,23 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
                 "reported_total_token_post_send_stop": HOSTED_REPORTED_TOKEN_STOP,
                 "maximum_inspections_per_specialist": 1}.items())
             or type(manifest.get("cases")) is not list or len(manifest["cases"]) != 1
+            or type(manifest["cases"][0]) is not dict
             or set(manifest["cases"][0]) != {"case_id", "assessment_id", "run_id",
                 "bundle_sha256", "source_input_digest", "as_of_at", "data_snapshot_ref"}
             or manifest["cases"][0]["case_id"] not in (
                 "B01", "B05", "N03", "CREDIT-LIMIT", "POLICY-CLAUSE")
+            or type(manifest.get("execution_context")) is not dict
+            or set(manifest["execution_context"]) != {"fixture_database",
+                "checkpoint_database", "owner_directory", "fresh_databases_required"}
+            or manifest["execution_context"]["fresh_databases_required"] is not True
+            or any(type(manifest["execution_context"][key]) is not str
+                or not manifest["execution_context"][key]
+                for key in ("fixture_database", "checkpoint_database", "owner_directory"))
+            or not Path(manifest["execution_context"]["owner_directory"]).is_absolute()
+            or os.path.normpath(manifest["execution_context"]["owner_directory"])
+                != manifest["execution_context"]["owner_directory"]
+            or manifest["execution_context"]["fixture_database"] == manifest[
+                "execution_context"]["checkpoint_database"]
             or set(manifest) != {"version", "status", "phase1c_pin", "model", "provider",
                 "credential_env_selection", "prompt_version", "wire_version", "order",
                 "m21_contract_version", "permission_version", "allowed_tools",
@@ -521,7 +534,7 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
                 "maximum_posts_per_specialist", "maximum_posts_per_case",
                 "maximum_posts_total", "maximum_completion_tokens_per_post",
                 "maximum_serialized_request_bytes_per_post", "reported_total_token_post_send_stop",
-                "cases"}):
+                "cases", "execution_context"}):
         raise ValueError("M2.1 hosted manifest or approved hash mismatch")
     if (set(models) != set(TOOLS) or any(type(models[name]) is not GroqM21Model
             or models[name].specialist != name for name in TOOLS)):
@@ -545,7 +558,11 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
                 "CREDIT-LIMIT": "CONFLICT-DEAL-13",
                 "POLICY-CLAUSE": "CONFLICT-DEAL-15"}[case["case_id"]]):
         raise EvidenceMismatch("M2.1 hosted pinned source/manifest identity changed")
-    if not isinstance(owner_dir, Path):
+    if (not isinstance(owner_dir, Path) or not owner_dir.is_absolute()
+            or owner_dir.is_symlink() or str(owner_dir) != manifest[
+                "execution_context"]["owner_directory"]
+            or str(owner_dir.resolve(strict=True)) != manifest[
+                "execution_context"]["owner_directory"]):
         raise ValueError("M2.1 durable owner directory required")
     with exclusive_owner(owner_dir, ctx.assessment_id):
         # Approval is an owner-supplied, private durable artifact, NOT derived

@@ -49,6 +49,21 @@ def digest(data):
     return sha256(_canonical(data).encode()).hexdigest()
 
 
+class M21AuthorizedStatusManifest(unittest.TestCase):
+    def test_checked_in_authorized_status_is_not_an_approval_record(self):
+        candidate = json.loads(Path("phase-2-implementation/evaluation/"
+            "week3-hosted-b01-authorization-candidate.json").read_text())
+        self.assertEqual(digest(candidate),
+            "6b4597c3c6969c12b419300952d77a24d7d579d9fcd72693b07df1b0824553aa")
+        self.assertEqual(candidate["status"], "authorized_one_case")
+        self.assertEqual(len(candidate["cases"]), 1)
+        self.assertEqual(candidate["maximum_posts_total"], 6)
+        self.assertEqual(candidate["maximum_completion_tokens_per_post"], 512)
+        self.assertEqual(candidate["maximum_serialized_request_bytes_per_post"], 8192)
+        self.assertEqual(candidate["reported_total_token_post_send_stop"], 24000)
+        self.assertEqual(candidate["execution_context"]["fresh_databases_required"], True)
+
+
 @unittest.skipUnless(psycopg and all(os.getenv(k) for k in (
     "M20_DATABASE_URL", "M20_CHECKPOINT_DATABASE_URL", "DEALDESK_PHASE1C_CHECKOUT")),
     "Fresh isolated PostgreSQL source and checkpoint databases required")
@@ -71,6 +86,9 @@ class M21HostedGatePostgres(unittest.TestCase):
 
     def gated(self, graph, config, data, directory, *, active=True, account=True,
               approved=None, selected_models=None):
+        data["execution_context"] = {"fixture_database": "dealdesk_test_fixture",
+            "checkpoint_database": "dealdesk_test_checkpoint",
+            "owner_directory": str(directory), "fresh_databases_required": True}
         approval = directory / "m21-approved-manifest.json"
         if not approval.exists():
             record = {"assessment_id": config["configurable"]["thread_id"],
@@ -149,6 +167,9 @@ class M21HostedGatePostgres(unittest.TestCase):
                 "dealdesk_phase2.m21_groq_contract._post") as send:
             with thesis_checkpointer(self.checkpoint) as saver:
                 graph, config, _, data = self.original(saver)
+                data["execution_context"] = {"fixture_database": "dealdesk_test_fixture",
+                    "checkpoint_database": "dealdesk_test_checkpoint",
+                    "owner_directory": str(Path(directory)), "fresh_databases_required": True}
                 with self.assertRaises(EvidenceMismatch):
                     run_m21_evaluation(graph, config, self.adapter, models(), manifest=data,
                         approved_manifest_sha256=digest(data), authorized=True,
@@ -157,6 +178,7 @@ class M21HostedGatePostgres(unittest.TestCase):
                                lambda x: x.update(credential_env_selection="GROQ_API_KEY"),
                                lambda x: x.update(model="wrong"),
                                lambda x: x.update(maximum_posts_total=6.0),
+                               lambda x: x.update(cases=[7]),
                                lambda x: x["cases"][0].update(bundle_sha256="0" * 64)):
                     bad = json.loads(json.dumps(data))
                     change(bad)
@@ -168,6 +190,19 @@ class M21HostedGatePostgres(unittest.TestCase):
                     self.gated(graph, config, data, Path(directory), account=False)
                 with self.assertRaises(ValueError):
                     self.gated(graph, config, data, Path(directory), approved="0" * 64)
+                with TemporaryDirectory() as other_directory:
+                    with self.assertRaises(ValueError):
+                        run_m21_evaluation(graph, config, self.adapter, models(),
+                            manifest=data, approved_manifest_sha256=digest(data),
+                            authorized=True, free_tier_billing_disabled=True,
+                            owner_dir=Path(other_directory))
+                not_fresh = json.loads(json.dumps(data))
+                not_fresh["execution_context"]["fresh_databases_required"] = False
+                with self.assertRaises(ValueError):
+                    run_m21_evaluation(graph, config, self.adapter, models(),
+                        manifest=not_fresh, approved_manifest_sha256=digest(not_fresh),
+                        authorized=True, free_tier_billing_disabled=True,
+                        owner_dir=Path(directory))
                 send.assert_not_called()
                 self.assertNotIn("m21_hosted_owner", graph.get_state(config).values)
 
