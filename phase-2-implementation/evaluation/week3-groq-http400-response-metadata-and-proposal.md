@@ -1,5 +1,11 @@
 # Groq second-turn HTTP 400: saved metadata and next diagnostic (unapproved)
 
+**Post-trial update:** Ali subsequently approved the exact candidate below
+for one new Credit-only assessment. It made two POSTs and stopped at a second-
+turn HTTP 400 with **no recognized allowlisted diagnostic fields**; see the
+[terminal result](week3-credit-http400-diagnostic-result.md). The approval is
+spent. Nothing below authorizes repeating it or starting another trial.
+
 **28 October 2026. Offline only.** Follow-up to the
 [cross-specialist byte comparison](week3-cross-specialist-http400-offline-diagnosis.md).
 The first-account Pricing, second-account Pricing and secondary-account Credit
