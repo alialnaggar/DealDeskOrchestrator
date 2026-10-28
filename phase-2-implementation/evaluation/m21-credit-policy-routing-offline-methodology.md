@@ -1,5 +1,15 @@
 # M2.1 original-only Credit, Policy and Routing — offline method and limits
 
+**Later Groq Console methodology note (28 October):** The owner reports
+`tool_use_failed` for four HTTP 400 entries. The
+[offline reassessment](week3-groq-console-tool-use-failed-reassessment.md)
+records why local Credit error receipts remain `http_400` without a provider
+category, why 512 Console tokens are not yet established as actual generated
+usage, and why the four-row match is unproven without per-row UTC times and
+account/project. Do not replay, auto-retry or promote an unvalidated tool
+result to a Credit conclusion. Generic synthetic matrix paused; no change to
+fixed Credit, Policy or Routing authority.
+
 **Later 28 October hosted-gate work (offline/mock only):** The
 [gated execution/source audit](week3-hosted-preparation-audit.md#later-28-october-gated-execution-increment--still-no-provider-call)
 documents the exact one-case manifest, owner/checkpoint/file receipt,

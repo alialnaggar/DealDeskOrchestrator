@@ -1,5 +1,15 @@
 # M2.0 — Configuration/Pricing AI offline implementation and acceptance
 
+**Later Groq Console methodology note (28 October):** The owner reports four
+same-model HTTP 400 entries labeled `tool_use_failed`; the
+[offline reassessment](week3-groq-console-tool-use-failed-reassessment.md)
+separates this provider-side observation from locally saved terminal Pricing/
+Credit receipts, notes the unresolved 27/28 October UTC/account correlation
+and evaluates forced second-turn tools and the 512 configured cap. Do not
+reinterpret the old 400 as a proven truncation or a successful AI finding;
+the generic synthetic diagnostic matrix is paused. No production behavior,
+fixed rule or terminal identity changes.
+
 **27 October 2026; opt-in mock-model milestone, not a live-model quality result.**
 The Phase 1C source pin remains
 `90c0bc8e285ee69262c7db826b786096a77ad004`. The existing original

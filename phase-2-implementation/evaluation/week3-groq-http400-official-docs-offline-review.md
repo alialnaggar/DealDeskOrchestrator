@@ -1,5 +1,11 @@
 # Four terminal Groq second-turn HTTP 400s — current-docs and offline review
 
+**Later evidence:** The owner reports four Groq Console `tool_use_failed`
+HTTP 400 entries; see the [new offline reassessment](week3-groq-console-tool-use-failed-reassessment.md)
+for qualified account/date correlation and the generation hypothesis. This
+historical audit's “unclassified” statements refer to **local receipts**;
+the Console report does not add a provider category to those receipts.
+
 **28 October 2026; documentation-only network lookup.** This review fetched
 public official Groq **documentation pages**, not Groq API/model metadata, and
 read existing private checkpoints locally. No inference, new assessment,

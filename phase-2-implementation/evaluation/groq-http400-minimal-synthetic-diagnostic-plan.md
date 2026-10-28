@@ -1,5 +1,10 @@
 # Minimal synthetic Groq second-turn diagnostic — offline-only design
 
+**PAUSED after owner-supplied Console evidence.** Four Console HTTP 400 entries
+are labeled `tool_use_failed`; the [offline reassessment](week3-groq-console-tool-use-failed-reassessment.md)
+prioritizes per-row account/time/token semantics and provider support over
+this generic matrix. Nothing here authorizes a trial or matrix progression.
+
 **28 October 2026; no hosted access authorized.** This is a *proposal*, not
 an executable campaign or approval record. The [four-failure official-docs
 review](week3-groq-http400-official-docs-offline-review.md) found correctly
