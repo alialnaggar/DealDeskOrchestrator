@@ -1,5 +1,11 @@
 # Authorized Credit-only B01 HTTP 400 diagnostic — terminal unknown category
 
+**Subsequent source-first review:** Current official Groq documentation,
+accepted controls and all four failed continuations are compared in the
+[offline documentation audit](week3-groq-http400-official-docs-offline-review.md).
+It found a contradictory documented `messages[].name` warning but no proven
+selective rejection cause. The trial remains terminal.
+
 **28 October 2026. Single hosted trial completed and stopped.** Ali explicitly
 approved [this exact manifest](week3-credit-http400-diagnostic-candidate.json),
 compact sorted-key JSON SHA-256

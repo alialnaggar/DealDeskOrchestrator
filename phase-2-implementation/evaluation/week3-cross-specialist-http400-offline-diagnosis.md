@@ -1,5 +1,11 @@
 # Week 2 Pricing and Week 3 Credit second-turn HTTP 400 — cross-specialist offline diagnosis
 
+**Later four-failure update:** The authorized diagnostic Credit trial also
+stopped at a second-turn 400 without an allowlisted provider category. The
+[current official-docs and exact-wire review](week3-groq-http400-official-docs-offline-review.md)
+compares **all four terminal failures** with accepted continuations; it does
+not establish a root cause or authorize further inference.
+
 **28 October 2026; no provider request.** The three B01 HTTP 400 continuations
 are terminal: original M2.0 Pricing, secondary-account M2.0 Pricing and
 secondary-account M2.1 Credit. No checkpoint, request or receipt was replayed.
