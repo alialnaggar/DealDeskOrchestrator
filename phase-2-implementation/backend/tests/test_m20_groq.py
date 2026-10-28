@@ -1,5 +1,6 @@
 """No-network native Groq tool wire and explicitly gated hosted checkpoint tests."""
 
+import io
 import json
 import os
 from pathlib import Path
@@ -7,13 +8,14 @@ import tempfile
 from hashlib import sha256
 import unittest
 from unittest.mock import patch
+from urllib.error import HTTPError
 
 from dealdesk_phase2.m20_groq import (GroqM20Model, WIRE_VERSION, PROMPT_VERSION,
                                         MAX_REQUEST_BYTES, parse_response, request_body,
                                         system_instruction)
 from dealdesk_phase2.hybrid_pack import _canonical
 from dealdesk_phase2.m20_specialists import build_m20_graph, run_m20_evaluation
-from dealdesk_phase2.live_models import ProviderError
+from dealdesk_phase2.live_models import ProviderError, _json, _post
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from dealdesk_phase2.phase1c_adapter import EvidenceMismatch, Phase1CAdapter
 from m18_case_setup import CASES, install_disposable_cases
@@ -128,6 +130,91 @@ class GroqM20Wire(unittest.TestCase):
             shapes.append((sorted(body), [m["role"] for m in messages],
                 [t["function"]["name"] for t in body["tools"]][1:]))
         self.assertEqual(shapes[0], shapes[1])
+
+    def test_actual_http_serialization_of_both_followups_without_network(self):
+        """Inspect the bytes passed to urllib, not just the typed message list."""
+        for specialist in ("configuration", "pricing"):
+            with self.subTest(specialist=specialist):
+                name = "inspect_" + specialist + "_line"
+                input = {**self.input, "specialist": specialist, "permitted_tool": name}
+                observation = {"tool": name, "execution": "completed", "records": [{
+                    "ref": "product:P" if specialist == "configuration" else "pricing_line:L1",
+                    "fields": {"label": "café", "is_sellable": True}}],
+                    "returned_refs": ["product:P" if specialist == "configuration" else
+                                      "pricing_line:L1"]}
+                call = {"id": "call_offline_39_chars_00000000000000000", "name": name,
+                        "arguments": '{"line_id":"L1"}'}
+                body = request_body(input, (observation,), exchanges=(call,))
+                captured = []
+
+                class OfflineOpener:
+                    def open(self, request, timeout):
+                        captured.append((request, timeout))
+                        return io.BytesIO(json.dumps(tool_response("submit_finding", {
+                            "claims": [], "uncertainty_reasons": []})).encode())
+
+                with patch("dealdesk_phase2.live_models.build_opener",
+                           return_value=OfflineOpener()) as opener:
+                    response = _post("https://api.groq.com/openai/v1/chat/completions",
+                                     "Bearer offline-test", "Authorization", body,
+                                     classify_transport=True, reject_redirects=True)
+                self.assertEqual(len(response["choices"]), 1)
+                self.assertEqual(opener.call_count, 1)
+                request, timeout = captured[0]
+                self.assertEqual(request.get_method(), "POST")
+                self.assertEqual(request.get_header("Content-type"), "application/json")
+                self.assertEqual(request.get_header("Authorization"), "Bearer offline-test")
+                self.assertEqual(timeout, 30)
+                self.assertEqual(request.data, _json(body).encode("utf-8"))
+                self.assertEqual(request.data, _canonical(body).encode("utf-8"))
+                wire = json.loads(request.data)
+                self.assertEqual([m["role"] for m in wire["messages"]],
+                                 ["system", "user", "assistant", "tool"])
+                self.assertEqual(wire["messages"][2]["tool_calls"][0]["id"],
+                                 wire["messages"][3]["tool_call_id"])
+                self.assertEqual(json.loads(wire["messages"][3]["content"]), observation)
+                self.assertEqual(wire["messages"][3]["name"], name)
+                self.assertEqual(wire["max_completion_tokens"], 512)
+                self.assertEqual(wire["tool_choice"], "required")
+                self.assertFalse(wire["parallel_tool_calls"])
+                self.assertNotIn("response_format", wire)
+                self.assertLessEqual(len(request.data), MAX_REQUEST_BYTES)
+
+    def test_pricing_second_turn_http_error_is_sanitized_at_real_transport(self):
+        """A mocked HTTP 400 proves containment, not why Groq rejected a body."""
+        input = {**self.input, "specialist": "pricing",
+                 "permitted_tool": "inspect_pricing_line"}
+        observation = {"tool": "inspect_pricing_line", "execution": "completed",
+                       "records": [{"ref": "pricing_line:L1", "fields": {
+                           "fixed_margin_pct": "21.000"}}],
+                       "returned_refs": ["pricing_line:L1"]}
+        call = {"id": "call_offline_pricing", "name": "inspect_pricing_line",
+                "arguments": '{"line_id":"L1"}'}
+        body = request_body(input, (observation,), exchanges=(call,))
+
+        class UnreadableBody(io.BytesIO):
+            def read(self, *args, **kwargs):
+                raise AssertionError("Provider error body must never be read")
+
+        class OfflineOpener:
+            attempts = 0
+            wire = None
+
+            def open(self, request, timeout):
+                self.attempts += 1
+                self.wire = request.data
+                raise HTTPError(request.full_url, 400, "offline provider rejection", {},
+                                UnreadableBody(b"private provider details"))
+
+        opener = OfflineOpener()
+        with patch("dealdesk_phase2.live_models.build_opener", return_value=opener):
+            with self.assertRaises(ProviderError) as caught:
+                _post("https://api.groq.com/openai/v1/chat/completions",
+                      "Bearer offline-test", "Authorization", body,
+                      classify_transport=True, reject_redirects=True)
+        self.assertEqual(caught.exception.code, "http_400")
+        self.assertEqual(opener.attempts, 1)
+        self.assertEqual(opener.wire, _json(body).encode("utf-8"))
 
     def test_fail_closed_on_malformed_parallel_wrong_domain_and_prose(self):
         valid = tool_response("inspect_configuration_line", {"line_id": "L1"})

@@ -109,3 +109,14 @@ gate, choose whether to activate a bounded hosted Configuration/Pricing model
 adapter under a separately approved evaluation, and define Credit/Policy/
 Routing scoped contracts and accepted source-first cases. No paid API or
 Phase 1C pin upgrade is implicit.
+
+**Later Week 2 Pricing wire review (28 October):** Two separate, terminal
+B01 hosted attempts completed Configuration but stopped on Pricing's paired
+follow-up (HTTP 400), including an authenticated second account. The
+[read-only byte-level comparison and Groq documentation review](m20-pricing-http400-offline-diagnosis.md#28-october-2026--second-account-recurrence-and-byte-level-review)
+find no proven Pricing-specific adapter defect or provider rejection reason.
+Actual urllib-encoded body/hash and native call/result linkage now have
+offline transport tests; a mocked HTTP 400 reproduces safe containment, not
+server validation. No runtime wire, prompt, fixed-rule or candidate behavior
+was altered; no hosted attempt was replayed. The historic test count above
+belongs to its original milestone, not the later regression.
