@@ -45,10 +45,15 @@ or the record cannot be matched uniquely, record **unavailable/ambiguous**;
 do not attribute a Console event to a stopped assessment by date alone. We
 have not verified that Groq Console offers these views or retains errors.
 
-## Disabled offline diagnostic design
+## Bounded diagnostic integration, still unapproved for hosted use
 
-`backend/dealdesk_phase2/groq_error_diagnostic.py` is a **disconnected**
-pure classifier, not an enabled HTTP handler or a runnable trial. It requests
+`backend/dealdesk_phase2/groq_error_diagnostic.py` is a pure classifier.
+The shared `_post` transport now accepts an **opt-in** `capture_http_error`
+flag; **only** the exact separately approved M2.1 Credit-diagnostic manifest
+enables it in the hosted model. Ordinary M2.1, M2.0 and all other callers
+retain the original default (error bodies unread). The
+classifier is reached **only** after an HTTP error, not for 2xx responses.
+It requests
 at most 1,025 bytes from an error stream and rejects any body larger than
 1,024 bytes. Only a parsed JSON `error` object can yield the fixed enumerated
 `type` (`invalid_request_error`, `api_error`), `code`
@@ -60,36 +65,51 @@ reflects provider `message`, unfamiliar `param`, body or headers. An optional
 `x-request-id` is retained **only** when it is an exact lowercase canonical
 UUID; other provider formats become `None`. This deliberately sacrifices some
 potential matches to avoid retaining arbitrary server-supplied text; a future
-ID grammar or enum expansion requires review. The test-only helper never
-stores a body, never creates a receipt and cannot send. No historic data can
-be recovered retroactively from it.
+ID grammar or enum expansion requires review. No historic data can be
+recovered retroactively from it.
 
-Before any real use, obtain explicit approval of the security/retention
-contract and an adapter change that invokes it only after a fresh durable
-one-use reservation, closes the error response, and records **only** the
-allowlisted projection in a separately schema-validated owner-only diagnostic
-record (not arbitrary `ProviderError` text). Keep `http_400` as the receipt
-failure code, do not modify the receipt schema, and never retry or resume a
-failed/uncertain reservation. The classifier's output alone cannot authorize
-any additional POST or business action. Test and review the actual adapter
-integration **offline** before Ali approves a hosted trial. The current
-transport is unchanged; ordinary sends still do not read error bodies.
+The error response is closed; `_post` raises the **original `http_400`** even
+if parsing fails or times out. Only recognized fields (omit `unknown`) can
+be appended to the existing failed receipt as a schema-validated optional
+`diagnostic` object, after a durable one-use reservation. Earlier receipts
+without it remain valid; the `code`, `elapsed_ms` and original request hash
+are unchanged. There is no second file, raw provider message, URL, credential
+or tool evidence in the receipt. Failed receipts and crash-only reservations
+still cannot be sent again. The classifier cannot authorize another POST or
+business action. Ali must separately approve **this** capture/retention
+contract before a new hosted send.
 
-## Smallest proposed hosted discriminator — not executable or approved
+## Smallest proposed hosted discriminator — authorization candidate, not approved
 
-Proposed **new** identity (not present in historical checkpoints):
+The checked-in [exact non-secret candidate manifest](week3-credit-http400-diagnostic-candidate.json)
+has compact sorted-key JSON SHA-256
+`592110acd76a914f56b55f7d23d8fa78819c95015a4444512aada50d47c3c8e9`.
+Its `authorization_candidate` status alone is **not approval**: the hosted
+runner also requires explicit authorization, Free/billing-disabled
+confirmation, exact manifest digest, an owner-supplied private approval record
+with the same digest/assessment/secondary selection, and source/checkpoint
+identity checks. Proposed **new** identity (not present in historical checkpoints):
 `M21-DIAG-B01-31b981ed-d364-422c-91ea-9a5a2c6c661b`.
 Synthetic B01 only; fresh fixture database
 `dealdesk_diag_b01_31b981ed_fixture`, checkpoint
 `dealdesk_diag_b01_31b981ed_checkpoint`, and owner directory
-`/tmp/opencode/dealdesk-diag-b01-31b981ed-owner` must all be verified absent
-before creation. Use pinned Phase 1C commit
+`/tmp/opencode/dealdesk-diag-b01-31b981ed-owner` were checked **absent**
+offline; none was created. A future authorized operator must independently
+recheck absence, create owner-only `0700` storage and confirm actual business
+and checkpoint connections return the **declared distinct database names**
+before either send. The runner checks the checkpointed pinned bundle/source
+digest against the manifest, but the caller must verify actual database
+connection targets and Phase 1C source before any approval record or POST.
+Use pinned Phase 1C commit
 `90c0bc8e285ee69262c7db826b786096a77ad004`, the existing synthetic B01
 source bundle/digest and unchanged fixed original and credit-specific M2.1
 redaction, prompt, tool names/schema and native continuation wire. Keep the
 **same** Groq model `openai/gpt-oss-120b` and **existing secondary** local
 credential selected by `GROQ_SECONDARY_API_KEY`; never fall back to primary.
-No other specialist, case or request is proposed.
+No other specialist, case or request is proposed. The separate Credit-only
+LangGraph edge ends after Credit and deliberately does **not** present an
+incomplete Credit result as a full Policy/Routing review; the existing
+three-specialist route is unchanged.
 
 Maximum **two sequential POSTs total**, at most **512 configured completion
 tokens each** (1,024 combined), **8,192 serialized request bytes each**,
@@ -113,18 +133,29 @@ a successful two-turn response remains inconclusive. A controlled
 counterfactual would require another **separately authorized** fresh identity;
 never alter this wire midway to chase an HTTP 400.
 
-**Approval required before execution:** review and accept the exact
-owner-only capture integration and its offline tests; freeze a new non-secret
-manifest with the above identity, case, model, credential selection, source
-digests, budget and SHA-256; run fresh isolation and source-first/fixed-rule
-preflight; have Ali explicitly approve that *exact* manifest/hash and confirm
-the selected secondary Groq account is Free-tier with paid billing disabled.
-No approval record was created here, and the old trial authorizations cannot
-be reused. Any metadata preflight or network access would need inclusion in
-that separate authorization, not inference from this note.
+**Approval required before execution:** Ali reviews/accepts the capture
+fields, optional failed-receipt schema and tests, then explicitly approves
+**exactly the manifest hash above** and confirms the selected secondary
+Groq account is Free-tier with paid billing disabled. Before any private
+approval record is created or either POST is sent, the operator must recheck
+source pin, full synthetic fixture, fixed original six findings, sealed bundle,
+source-input digest, clean checkout/diff, fresh databases/checkpoint/owner,
+actual database connections, credential ownership and shape, and exact
+two-send budget. Only an explicitly authorized operator may then write the
+owner-only private approval record that binds the manifest SHA-256, assessment
+ID, credential selection and billing attestation. No such record was created
+here; historical approvals cannot be reused. Any metadata preflight or other
+network access would require separate inclusion in Ali's authorization.
 
-Offline validation: **30/30 tests passed** (four classifier/receipt safety
-tests plus 26 focused M2.0/M2.1 wire/gate tests), using a fresh isolated
-PostgreSQL fixture/checkpoint pair; no provider calls. No deterministic
-business rule or historical receipt was changed. CI for this increment
-remains unverified.
+Offline validation: **35/35 focused tests** passed on a fresh isolated
+PostgreSQL fixture/checkpoint pair before the final crash-only receipt test
+was added. The final **fresh seven-database backend regression ran 281 tests:
+274 passed, seven unrelated Gemma skips**. These
+exercise mocked HTTP errors, bounded reads, receipt integrity, historical
+gate behavior and a Credit-only two-send/restart test; no provider calls or
+historical receipts. The B01 synthetic original is ten stocked-finished units:
+the authorized credit inspection would read one selected dated credit profile;
+AI would have the option to return a finding or abstain, but fixed credit and
+the original withheld routing govern. A 400 yields no AI finding and stops.
+No deterministic business rule was changed. Private GitHub CI for this
+increment remains unverified.

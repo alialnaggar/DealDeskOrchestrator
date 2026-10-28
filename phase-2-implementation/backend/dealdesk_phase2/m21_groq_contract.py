@@ -151,6 +151,7 @@ class GroqM21Model:
         self._manifest_hash = None
         self._attempt_ordinal = None
         self._credential_sha256 = None
+        self._capture_http_error = False
 
     def prepare_request(self, input, observations):
         if input["specialist"] != self.specialist:
@@ -180,7 +181,8 @@ class GroqM21Model:
             request_digest=digest, send=lambda: _post(
                 "https://api.groq.com/openai/v1/chat/completions", "Bearer " + key,
                 "Authorization", body, timeout_seconds=30,
-                classify_transport=True, reject_redirects=True))
+                classify_transport=True, reject_redirects=True,
+                capture_http_error=self._capture_http_error))
         if len(_canonical(response).encode()) > MAX_RESPONSE_BYTES:
             raise ProviderError("provider_response_oversize")
         usage = response.get("usage")

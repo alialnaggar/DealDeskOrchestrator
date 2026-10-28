@@ -50,6 +50,17 @@ def digest(data):
 
 
 class M21AuthorizedStatusManifest(unittest.TestCase):
+    def test_credit_diagnostic_candidate_is_non_authorizing_and_two_posts(self):
+        candidate = json.loads(Path("phase-2-implementation/evaluation/"
+            "week3-credit-http400-diagnostic-candidate.json").read_text())
+        self.assertEqual(digest(candidate),
+            "592110acd76a914f56b55f7d23d8fa78819c95015a4444512aada50d47c3c8e9")
+        self.assertEqual(candidate["status"], "authorization_candidate")
+        self.assertEqual(candidate["order"], ["credit"])
+        self.assertEqual(candidate["maximum_posts_total"], 2)
+        self.assertEqual(candidate["maximum_completion_tokens_per_post"], 512)
+        self.assertEqual(candidate["maximum_serialized_request_bytes_per_post"], 8192)
+
     def test_checked_in_authorized_status_is_not_an_approval_record(self):
         candidate = json.loads(Path("phase-2-implementation/evaluation/"
             "week3-hosted-b01-authorization-candidate.json").read_text())
@@ -68,6 +79,44 @@ class M21AuthorizedStatusManifest(unittest.TestCase):
     "M20_DATABASE_URL", "M20_CHECKPOINT_DATABASE_URL", "DEALDESK_PHASE1C_CHECKOUT")),
     "Fresh isolated PostgreSQL source and checkpoint databases required")
 class M21HostedGatePostgres(unittest.TestCase):
+    def test_credit_diagnostic_only_two_sends_then_terminal_restart(self):
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        bodies = []
+
+        def send(url, key, header, body, **kwargs):
+            bodies.append(body)
+            self.assertTrue(kwargs["capture_http_error"])
+            self.assertEqual(body["model"], "openai/gpt-oss-120b")
+            self.assertLessEqual(len(_canonical(body).encode()), 8192)
+            if len(bodies) == 1:
+                public = json.loads(body["messages"][1]["content"])["input"]
+                return response(TOOLS["credit"], {"subject_id": public["subject_id"]})
+            return response("abstain", {"reason_code": "model_uncertainty"})
+
+        with TemporaryDirectory() as directory, patch.dict(os.environ, {
+            "GROQ_SECONDARY_API_KEY": "gsk_offline_test_placeholder_123456789"}), patch(
+                "dealdesk_phase2.m21_groq_contract._post", side_effect=send):
+            owner = Path(directory)
+            with thesis_checkpointer(self.checkpoint) as saver:
+                graph, config, before, data = self.original(saver)
+                data.update(version="m21-credit-http400-diagnostic-v1",
+                    status="authorization_candidate", order=["credit"],
+                    allowed_tools={"credit": TOOLS["credit"]},
+                    maximum_posts_total=2, maximum_posts_per_case=2)
+                # Disposable test-only authorization fixture, NOT the candidate owner.
+                state = self.gated(graph, config, data, owner)
+                self.assertEqual(len(bodies), 2)
+                self.assertEqual(set(state["m21_ai_results"]), {"credit"})
+                self.assertNotIn("m21_review", state)
+                self.assertNotIn("m21_ai", state.get("reviewer_package") or {})
+                self.assertEqual(state["specialist_results"], before["specialist_results"])
+                self.assertEqual(len([x for x in state["m21_model_attempts"] if
+                                      x["status"] == "reserved"]), 2)
+            with thesis_checkpointer(self.checkpoint) as saver:
+                graph = build_original_graph(self.adapter, self.connect, saver)
+                self.gated(graph, config, data, owner)
+                self.assertEqual(len(bodies), 2)
+
     def setUp(self):
         self.adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
         self.connect = lambda: psycopg.connect(os.environ["M20_DATABASE_URL"])
@@ -114,6 +163,7 @@ class M21HostedGatePostgres(unittest.TestCase):
         def send(url, key, header, body, **kwargs):
             bodies.append(body)
             self.assertTrue(key.startswith("Bearer gsk_"))
+            self.assertFalse(kwargs["capture_http_error"])
             for secret in ("M18-C-B01", "M18-D-B01", "M18-SNAPSHOT-B01"):
                 self.assertNotIn(secret, _canonical(body))
             if body["messages"][-1]["role"] == "user":

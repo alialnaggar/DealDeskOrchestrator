@@ -16,6 +16,7 @@ from time import monotonic
 
 from .hybrid_contracts import HybridContractError
 from .live_models import ProviderError
+from .groq_error_diagnostic import safe_fields
 
 
 def sanitized_failure_code(exc: BaseException) -> str:
@@ -37,8 +38,18 @@ def sanitized_failure_code(exc: BaseException) -> str:
 
 
 def _valid_failure(event):
-    if (set(event) != {"event", "code", "elapsed_ms"} or event["event"] != "failed"
+    if (set(event) not in ({"event", "code", "elapsed_ms"},
+                           {"event", "code", "elapsed_ms", "diagnostic"})
+            or event["event"] != "failed"
             or type(event["elapsed_ms"]) is not int or event["elapsed_ms"] < 0):
+        return False
+    if type(event["code"]) is not str:
+        return False
+    if "diagnostic" in event and (not event["code"].startswith("http_")
+            or type(event["diagnostic"]) is not dict or not event["diagnostic"]
+            or safe_fields({**{"type": "unknown", "code": "unknown",
+                "param": "unknown", "request_id": None}, **event["diagnostic"]})
+                != event["diagnostic"]):
         return False
     code = event["code"]
     return (type(code) is str and
@@ -164,8 +175,13 @@ def claim_and_call(directory: Path, *, assessment_id: str, start_digest: str,
         try:
             result = send()
         except BaseException as exc:
-            _append(fd, {"event": "failed", "code": sanitized_failure_code(exc),
-                         "elapsed_ms": max(0, round((monotonic() - started) * 1000))})
+            failure = {"event": "failed", "code": sanitized_failure_code(exc),
+                       "elapsed_ms": max(0, round((monotonic() - started) * 1000))}
+            if isinstance(exc, ProviderError) and failure["code"].startswith("http_"):
+                fields = safe_fields(exc.diagnostic)
+                if fields:
+                    failure["diagnostic"] = fields
+            _append(fd, failure)
             raise
         _append(fd, {"event": "returned", "returned_at_utc":
                      datetime.now(timezone.utc).isoformat()})

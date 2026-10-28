@@ -1,7 +1,7 @@
-"""Offline-only HTTP error classifier. Not connected to any live send path.
+"""Bounded opt-in HTTP error classifier; never returns arbitrary provider text.
 
 Never log, store or return a provider body, message, arbitrary header or URL.
-An approved future adapter may use this only *after* a one-use reservation.
+The hosted transport may use this only after a one-use reservation.
 """
 
 import json
@@ -18,6 +18,20 @@ REQUEST_ID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
 
 def _allowed(value, choices):
     return value if type(value) is str and value in choices else "unknown"
+
+
+def safe_fields(diagnostic):
+    """Fields eligible for a failed receipt; reject unrecognized input shape."""
+    if type(diagnostic) is not dict or set(diagnostic) != {
+            "type", "code", "param", "request_id"}:
+        return {}
+    fields = {name: diagnostic[name] for name, choices in (
+        ("type", TYPES), ("code", CODES), ("param", PARAMS))
+        if type(diagnostic[name]) is str and diagnostic[name] in choices}
+    identifier = diagnostic["request_id"]
+    if type(identifier) is str and REQUEST_ID.fullmatch(identifier):
+        fields["request_id"] = identifier
+    return fields
 
 
 def classify_error(stream, headers=None):

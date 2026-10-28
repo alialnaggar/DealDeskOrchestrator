@@ -30,8 +30,10 @@ MAX_MODEL_TURNS = 6
 
 
 class ProviderError(RuntimeError):
-    def __init__(self, code: str):
+    def __init__(self, code: str, *, diagnostic=None):
         self.code = code
+        # Never put provider-supplied text into the exception's printable form.
+        self.diagnostic = diagnostic
         super().__init__(code)
 
 
@@ -45,7 +47,8 @@ class _NoRedirect(HTTPRedirectHandler):
 
 
 def _post(url: str, key: str, header: str, body: dict, *, timeout_seconds: int = 30,
-          classify_transport: bool = False, reject_redirects: bool = False) -> dict:
+          classify_transport: bool = False, reject_redirects: bool = False,
+          capture_http_error: bool = False) -> dict:
     if type(timeout_seconds) is not int or not 1 <= timeout_seconds <= 60:
         raise ProviderError("invalid_request_timeout")
     payload = _json(body).encode("utf-8")
@@ -75,12 +78,23 @@ def _post(url: str, key: str, header: str, body: dict, *, timeout_seconds: int =
         # Error bodies can echo request content and must not enter logs/checkpoints.
         # Preserve the historical adapter's error lifetime; only the new
         # hybrid no-redirect path owns and closes its failed response here.
-        if reject_redirects:
-            exc.close()
         status = exc.code
+        diagnostic = None
+        if capture_http_error and reject_redirects and classify_transport:
+            from .groq_error_diagnostic import classify_error, safe_fields
+            try:
+                diagnostic = safe_fields(classify_error(exc, exc.headers))
+            except Exception:
+                # Diagnostic failure cannot hide the HTTP error or cause retry.
+                diagnostic = None
+        if reject_redirects:
+            try:
+                exc.close()
+            except (OSError, ValueError):
+                pass
         if type(status) is not int or not 100 <= status <= 599:
             raise ProviderError("provider_http_unknown") from None
-        raise ProviderError("http_" + str(status)) from None
+        raise ProviderError("http_" + str(status), diagnostic=diagnostic) from None
     except (URLError, TimeoutError, OSError) as exc:
         # Opt-in structural diagnostics only; never record exception text, URL,
         # headers, or a potentially sensitive provider error body.

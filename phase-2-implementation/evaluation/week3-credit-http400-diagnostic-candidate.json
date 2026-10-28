@@ -1,0 +1,36 @@
+{
+  "version": "m21-credit-http400-diagnostic-v1",
+  "status": "authorization_candidate",
+  "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
+  "model": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "credential_env_selection": "GROQ_SECONDARY_API_KEY",
+  "prompt_version": "m21-original-system-v1",
+  "wire_version": "m21-groq-native-tools-v1",
+  "m21_contract_version": "m21-original-evidence-v1",
+  "permission_version": "m1.2-v1",
+  "allowed_tools": {"credit": "inspect_customer_credit_evidence"},
+  "maximum_inspections_per_specialist": 1,
+  "order": ["credit"],
+  "maximum_posts_per_specialist": 2,
+  "maximum_posts_per_case": 2,
+  "maximum_posts_total": 2,
+  "maximum_completion_tokens_per_post": 512,
+  "maximum_serialized_request_bytes_per_post": 8192,
+  "reported_total_token_post_send_stop": 24000,
+  "execution_context": {
+    "fixture_database": "dealdesk_diag_b01_31b981ed_fixture",
+    "checkpoint_database": "dealdesk_diag_b01_31b981ed_checkpoint",
+    "owner_directory": "/tmp/opencode/dealdesk-diag-b01-31b981ed-owner",
+    "fresh_databases_required": true
+  },
+  "cases": [{
+    "case_id": "B01",
+    "assessment_id": "M21-DIAG-B01-31b981ed-d364-422c-91ea-9a5a2c6c661b",
+    "run_id": "00000000-0000-4000-8000-000000018001",
+    "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+    "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+    "as_of_at": "2026-09-01T12:00:00+00:00",
+    "data_snapshot_ref": "M18-SNAPSHOT-B01"
+  }]
+}

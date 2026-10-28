@@ -397,11 +397,14 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
         raise EvidenceMismatch("M2.1 hosted investigation terminal; fixed original retained")
 
 
-def build_m21_graph(original, config, adapter, models, *, _capability=None):
+def build_m21_graph(original, config, adapter, models, *, _capability=None,
+                    diagnostic_credit_only=False):
     """Sequential LangGraph post-original continuation; offline doubles only."""
     hosted = _capability is _HOSTED_CAPABILITY
     if _capability is not None and not hosted:
         raise ValueError("M2.1 private hosted capability only")
+    if diagnostic_credit_only and not hosted:
+        raise ValueError("M2.1 credit diagnostic needs hosted capability")
     if set(models) != set(TOOLS):
         raise ValueError("M2.1 three specialist models required")
     if hosted:
@@ -448,10 +451,14 @@ def build_m21_graph(original, config, adapter, models, *, _capability=None):
         return {"current": "handoff"}
     builder.add_node("handoff", handoff)
     builder.add_edge(START, "credit")
-    builder.add_edge("credit", "policy")
-    builder.add_edge("policy", "approval_routing")
-    builder.add_edge("approval_routing", "handoff")
-    builder.add_edge("handoff", END)
+    if diagnostic_credit_only:
+        # Never project an incomplete three-specialist AI reviewer package.
+        builder.add_edge("credit", END)
+    else:
+        builder.add_edge("credit", "policy")
+        builder.add_edge("policy", "approval_routing")
+        builder.add_edge("approval_routing", "handoff")
+        builder.add_edge("handoff", END)
     return builder.compile()
 
 
@@ -487,10 +494,14 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
     from .groq_preflight import credential_shape
     from .m21_groq_contract import GroqM21Model, PROMPT_VERSION, WIRE_VERSION
     from .phase1c_adapter import PHASE1C_COMMIT
+    diagnostic_credit_only = (type(manifest) is dict and
+        manifest.get("version") == "m21-credit-http400-diagnostic-v1")
     if (type(manifest) is not dict or type(approved_manifest_sha256) is not str
             or sha256(_canonical(manifest).encode()).hexdigest() != approved_manifest_sha256
-            or manifest.get("status") != "authorized_one_case"
-            or manifest.get("version") != "m21-week3-proposal-v1"
+            or manifest.get("status") != ("authorization_candidate" if
+                diagnostic_credit_only else "authorized_one_case")
+            or manifest.get("version") != ("m21-credit-http400-diagnostic-v1" if
+                diagnostic_credit_only else "m21-week3-proposal-v1")
             or manifest.get("phase1c_pin") != PHASE1C_COMMIT
             or manifest.get("model") != GROQ_MODEL or manifest.get("provider") != "groq"
             or manifest.get("credential_env_selection") != "GROQ_SECONDARY_API_KEY"
@@ -498,13 +509,15 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
             or manifest.get("wire_version") != WIRE_VERSION
             or manifest.get("m21_contract_version") != VERSION
             or manifest.get("permission_version") != PERMISSION_VERSION
-            or manifest.get("allowed_tools") != TOOLS
+            or manifest.get("allowed_tools") != ({"credit": TOOLS["credit"]} if
+                diagnostic_credit_only else TOOLS)
             or manifest.get("maximum_inspections_per_specialist") != 1
-            or manifest.get("order") != list(TOOLS)
+            or manifest.get("order") != (["credit"] if diagnostic_credit_only else list(TOOLS))
             or type(manifest.get("maximum_posts_per_specialist")) is not int
             or manifest["maximum_posts_per_specialist"] != 2
             or any(type(manifest.get(k)) is not int or manifest[k] != v for k, v in {
-                "maximum_posts_per_case": 6, "maximum_posts_total": 6,
+                "maximum_posts_per_case": 2 if diagnostic_credit_only else 6,
+                "maximum_posts_total": 2 if diagnostic_credit_only else 6,
                 "maximum_completion_tokens_per_post": 512,
                 "maximum_serialized_request_bytes_per_post": 8192,
                 "reported_total_token_post_send_stop": HOSTED_REPORTED_TOKEN_STOP,
@@ -596,7 +609,8 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
         if (fresh.get("m21_hosted_owner") not in (None, owner)
                 or fresh.get("m21_hosted_owner") is None and (fresh.get("m21_model_attempts")
                     or fresh.get("m21_ai_results"))
-                or any(x.get("provider") != "groq" for x in fresh.get("m21_model_attempts", []))
+                or any(x.get("provider") != "groq" or diagnostic_credit_only and
+                    x.get("specialist") != "credit" for x in fresh.get("m21_model_attempts", []))
                 or any(x.get("provider") != "groq" for x in fresh.get("m21_ai_results", {}).values())
                 or any(x.get("execution") == "error" for x in fresh.get(
                     "m21_ai_results", {}).values())):
@@ -614,7 +628,8 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
             and type(x.get("ordinal")) is int and x["ordinal"] in (0, 1))
         if any(entry.name not in allowed_paths for entry in owner_dir.iterdir()):
             raise EvidenceMismatch("M2.1 owner directory contains unknown campaign receipt")
-        if len([x for x in receipts if x.get("status") == "reserved"]) > 6:
+        if len([x for x in receipts if x.get("status") == "reserved"]) > (
+                2 if diagnostic_credit_only else 6):
             raise EvidenceMismatch("M2.1 hosted campaign reservation ceiling changed")
         for item in receipts:
             if item.get("status") != "returned":
@@ -647,12 +662,15 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
                 model._assessment_id = ctx.assessment_id
                 model._manifest_hash = approved_manifest_sha256
                 model._credential_sha256 = owner["credential_sha256"]
+                model._capture_http_error = diagnostic_credit_only
             build_m21_graph(original, config, adapter, models,
-                _capability=_HOSTED_CAPABILITY).invoke({"current": "start"})
+                _capability=_HOSTED_CAPABILITY,
+                diagnostic_credit_only=diagnostic_credit_only).invoke({"current": "start"})
         finally:
             for model in models.values():
                 model._send_capability = None
                 model._owner_directory = None
+                model._capture_http_error = False
                 model._assessment_id = None
                 model._manifest_hash = None
                 model._credential_sha256 = None
