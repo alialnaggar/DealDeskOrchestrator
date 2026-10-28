@@ -1,0 +1,101 @@
+"""Offline-only unit gates for new Pricing/Credit terminal contracts."""
+
+from copy import deepcopy
+import json
+import unittest
+from unittest.mock import patch
+
+from dealdesk_phase2.groq_typed_final import (MAX_COMPLETION_TOKENS,
+    request_body, request_sha256, parse_response)
+from dealdesk_phase2.typed_final_contract import InvalidTerminal, VERSION, decode, schema
+from dealdesk_phase2.m21_redaction import model_view
+from test_terminal_final_offline_design import fixture, finding, response
+
+
+def final_payload(ref, field, value):
+    return {**finding(ref, field, value), "version": VERSION}
+
+
+class TypedFinalContractImpl(unittest.TestCase):
+    def test_new_wire_no_tools_and_redacted_credit(self):
+        for specialist in ("pricing", "credit"):
+            with self.subTest(specialist=specialist):
+                input, rows, _, ref, field, value = fixture(specialist)
+                body = request_body(input, rows, completed_ledger=rows)
+                self.assertNotIn("tools", body)
+                self.assertNotIn("tool_choice", body)
+                self.assertEqual(body["max_completion_tokens"], 1024)
+                self.assertTrue(body["response_format"]["json_schema"]["strict"])
+                self.assertEqual(len(request_sha256(body)), 64)
+                self.assertEqual([m["role"] for m in body["messages"]], ["system", "user"])
+                if specialist == "credit":
+                    self.assertNotIn(ref, body["messages"][1]["content"])
+                    self.assertNotIn(input["customer_id"], body["messages"][1]["content"])
+                alias = ref if specialist == "pricing" else next(iter(model_view(input, rows)[2]))
+                action = parse_response(response(final_payload(alias, field, value)),
+                    input=input, observations=rows)
+                self.assertEqual(action["claims"], [{"ref": ref, "field": field,
+                                                       "value": value}])
+                with self.assertRaises(InvalidTerminal):
+                    request_body(input, rows, completed_ledger=())
+
+    def test_pricing_two_inspections_and_abstention(self):
+        input, rows, _, ref, field, value = fixture("pricing")
+        body = request_body(input, (rows[0], deepcopy(rows[0])),
+                            completed_ledger=(rows[0], deepcopy(rows[0])))
+        self.assertEqual(body["max_completion_tokens"], MAX_COMPLETION_TOKENS)
+        abstain = {"version": VERSION, "kind": "abstain", "claims": [],
+                   "uncertainty_reasons": [], "reason_code": "model_uncertainty"}
+        self.assertEqual(decode(json.dumps(abstain), specialist="pricing", input=input,
+                                observations=rows), {"kind": "abstain",
+                                                      "reason_code": "model_uncertainty"})
+
+    def test_unsupported_schema_and_request_size_before_send(self):
+        input, rows, *_ = fixture("pricing")
+        with patch("dealdesk_phase2.groq_typed_final.schema", return_value={
+                "type": "object", "properties": {}, "required": [],
+                "additionalProperties": False}):
+            with self.assertRaisesRegex(InvalidTerminal, "unsupported_final_schema"):
+                request_body(input, rows, completed_ledger=rows)
+        oversized = deepcopy(rows)
+        oversized[0]["records"][0]["fields"]["long_value"] = "x" * 9000
+        with self.assertRaisesRegex(InvalidTerminal, "final_request_oversize"):
+            request_body(input, oversized, completed_ledger=oversized)
+
+    def test_all_fields_required_and_invalid_outputs_fail_closed(self):
+        shape = schema()
+        self.assertEqual(set(shape["required"]), set(shape["properties"]))
+        self.assertFalse(shape["additionalProperties"])
+        self.assertFalse(shape["properties"]["claims"]["items"]["additionalProperties"])
+        for specialist in ("pricing", "credit"):
+            input, rows, _, ref, field, value = fixture(specialist)
+            alias = ref if specialist == "pricing" else next(iter(model_view(input, rows)[2]))
+            base = final_payload(alias, field, value)
+            for change in (lambda x: x["claims"][0].update(ref="fabricated"),
+                           lambda x: x["claims"][0].update(value_json='"wrong"'),
+                           lambda x: x.update(reason_code="model_uncertainty"),
+                           lambda x: x.update(claims=[])):
+                wrong = deepcopy(base); change(wrong)
+                with self.subTest(specialist=specialist, wrong=wrong):
+                    with self.assertRaises(InvalidTerminal):
+                        parse_response(response(wrong), input=input, observations=rows)
+            for content in ('{"version":', '{"version":"terminal-final-v1",'
+                            '"version":"terminal-final-v1"}'):
+                with self.assertRaises(InvalidTerminal):
+                    decode(content, specialist=specialist, input=input, observations=rows)
+            with self.assertRaises(InvalidTerminal):
+                decode(json.dumps(base)[:-1] + ',"kind":"finding"}',
+                    specialist=specialist, input=input, observations=rows)
+            bad = response(base, reason="length")
+            with self.assertRaises(InvalidTerminal):
+                parse_response(bad, input=input, observations=rows)
+            bad = response(base, tokens=MAX_COMPLETION_TOKENS + 1)
+            with self.assertRaises(InvalidTerminal):
+                parse_response(bad, input=input, observations=rows)
+            bad = response(base); bad.pop("usage")
+            with self.assertRaises(InvalidTerminal):
+                parse_response(bad, input=input, observations=rows)
+
+
+if __name__ == "__main__":
+    unittest.main()

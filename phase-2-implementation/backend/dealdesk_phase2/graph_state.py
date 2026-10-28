@@ -71,6 +71,10 @@ class AssessmentStateV1(TypedDict, total=False):
     m21_model_attempts: list[dict]
     m21_hosted_owner: dict
     m21_review: dict
+    # Separate offline-only typed-final protocol; never interpreted by old graphs.
+    typed_final_protocol: dict
+    typed_final_attempts: list[dict]
+    typed_final_results: dict[str, dict]
 
 
 def context_to_record(context: RunContextV1) -> dict:
