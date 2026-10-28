@@ -9,6 +9,10 @@ and stop without rewriting that identity. **Do not infer that a run occurred.**
 After the local ignored key was configured, a second source-first preflight
 passed but the [single Groq metadata GET returned HTTP 401](week2-closure-hosted-authentication-result.md).
 No inference POST occurred; do not retry that known-invalid credential.
+The separately provided secondary key subsequently passed a [single metadata
+GET](week2-secondary-metadata-access-result.md), but hosted inference is still
+withheld pending confirmation that the **second account** is Free-tier with
+billing disabled. Do not interpret metadata HTTP 200 as that confirmation.
 
 **Not executed.** This is a request for Ali's explicit, separate approval,
 not a continuation of the [permanently stopped B01 assessment](m20-configuration-pricing-hosted-result.md).

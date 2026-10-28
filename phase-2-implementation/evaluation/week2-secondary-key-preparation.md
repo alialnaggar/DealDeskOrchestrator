@@ -1,5 +1,11 @@
 # Week 2 B01 secondary Groq credential — offline preparation only
 
+**Later result:** A separately supplied second key passed exactly one
+[metadata GET](week2-secondary-metadata-access-result.md), but the owner has
+not confirmed Free-tier/billing-disabled status for that second account, so
+no inference POST was made. The statements below describe the *earlier*
+offline preparation, not the current credential availability.
+
 **28 October 2026; no secondary key received, no provider call.** The
 repository was synchronized at `4d8ccdd44aff3462d69aa5bebad5bf6a9804f433`
 on `phase2-agent-implementation`. The host reported `tarekvnic`, user
