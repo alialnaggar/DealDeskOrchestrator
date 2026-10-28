@@ -15,6 +15,7 @@ from langgraph.graph import END, START, StateGraph
 from .fulfillment_tools import _json
 from .graph_state import pinned_from_state
 from .hybrid_pack import _canonical
+from .m21_prompts import PROMPT_VERSION
 from .phase1c_adapter import EvidenceMismatch
 from .tool_ledger import complete, entries, reserve
 from .tool_permissions import AuthorizationDenied, TrustedToolScope
@@ -39,6 +40,7 @@ class M21Model(Protocol):
 
 class M21Input(TypedDict):
     version: str
+    prompt_version: str
     assessment_id: str
     phase1c_run_id: str
     subject_id: str
@@ -232,7 +234,7 @@ def _one(original, config, adapter, specialist, model):
                 previous[specialist].get("model") != model.model or
                 previous[specialist].get("provider") != model.provider or
                 previous[specialist].get("version") != VERSION or
-                previous[specialist].get("prompt_version") != VERSION):
+                previous[specialist].get("prompt_version") not in (PROMPT_VERSION, VERSION)):
             raise EvidenceMismatch("M2.1 completed AI identity changed")
         return
     fixed = state["specialist_results"]
@@ -242,7 +244,8 @@ def _one(original, config, adapter, specialist, model):
             for key in ("configuration", "pricing", "fulfillment", "credit", "policy")))
     status, reason, claims, turns, observations = "skipped", "fixed_prerequisite_unavailable", [], 0, []
     if not unavailable:
-        input = {**identity, "version": VERSION, "customer_id": pool["deal"]["customer_id"],
+        input = {**identity, "version": VERSION, "prompt_version": PROMPT_VERSION,
+            "customer_id": pool["deal"]["customer_id"],
             "policy_set_code": context.policy_set_code,
             "data_snapshot_ref": context.data_snapshot_ref,
             "as_of_at": context.as_of_at.isoformat(), "fixed_execution": fixed[specialist]["execution"],
@@ -255,8 +258,11 @@ def _one(original, config, adapter, specialist, model):
                 attempts = original.get_state(config).values.get("m21_model_attempts", [])
                 marker = {**identity, "version": VERSION, "ordinal": ordinal,
                           "model": model.model, "provider": model.provider,
-                          "prompt_version": VERSION}
-                if any(all(item.get(k) == v for k, v in marker.items()) for item in attempts):
+                          "prompt_version": PROMPT_VERSION}
+                # Old offline checkpoints used VERSION as their prompt label.
+                # A label upgrade must never cause an uncertain send to replay.
+                if any(all(item.get(k) == v for k, v in identity.items())
+                       and item.get("ordinal") == ordinal for item in attempts):
                     raise EvidenceMismatch("M2.1 uncertain model attempt; never resend")
                 original.update_state(config, {"m21_model_attempts": [*attempts,
                     {**marker, "status": "reserved"}]}, as_node="finish")
@@ -307,7 +313,7 @@ def _one(original, config, adapter, specialist, model):
     latest = original.get_state(config).values
     result = {**identity, "version": VERSION, "producer_type": "AI",
         "execution": status, "reason": reason, "validated_claims": claims,
-        "model": model.model, "provider": model.provider, "prompt_version": VERSION,
+        "model": model.model, "provider": model.provider, "prompt_version": PROMPT_VERSION,
         "model_turns": turns, "tool_calls": len(observations)}
     original.update_state(config, {"m21_ai_results": {**latest.get("m21_ai_results", {}),
         specialist: result}, "trace": [*latest["trace"], "m21_" + specialist + ":" + status]},

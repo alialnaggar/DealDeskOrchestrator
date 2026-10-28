@@ -15,6 +15,12 @@ things. **Pass** means the scoped offline implementation is demonstrated;
 **partial** means a specifically required acceptance gate or integration is
 not demonstrated; **missing** means the capability itself does not exist.
 
+**Deferred blocker, 28 October:** Both the [first terminal B01 attempt](m20-configuration-pricing-hosted-result.md)
+and [second-account terminal B01 attempt](week2-secondary-b01-hosted-result.md)
+failed on Pricing's second-turn HTTP 400. The [offline wire diagnosis](m20-pricing-http400-offline-diagnosis.md)
+found no proven root cause. Pricing still requires a future separately
+authorized hosted validation; Week 3 offline progress cannot close Week 2.
+
 | Week 2 criterion | Status | Evidence and exact remaining gap |
 | --- | --- | --- |
 | Preserve Phase 1C authority, Configuration first, Pricing dependent, original unchanged | **Pass (offline)** | [M2.0 LangGraph/typed results](../backend/dealdesk_phase2/m20_specialists.py), [original-only/failure tests](../backend/tests/test_m20_specialists.py), [fixed source mapping](../backend/dealdesk_phase2/fixed_specialists.py). No M2.0 substitute, repricing or candidate modification. |

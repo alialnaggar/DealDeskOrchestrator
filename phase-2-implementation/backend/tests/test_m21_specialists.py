@@ -8,6 +8,7 @@ from uuid import UUID
 
 from dealdesk_phase2.m21_specialists import (_claims, _project, build_m21_graph,
     run_m21_offline, VERSION)
+from dealdesk_phase2.m21_prompts import PROMPT_VERSION
 from dealdesk_phase2.graph_state import pinned_from_state
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from dealdesk_phase2.phase1c_adapter import EvidenceMismatch, Phase1CAdapter
@@ -196,6 +197,10 @@ class M21Postgres(unittest.TestCase):
             self.assertTrue(state["m21_review"]["fixed_route_withheld"])
             self.assertEqual(state["reviewer_package"]["m21_ai"], state["m21_review"])
             self.assertEqual(state["m21_ai_results"]["credit"]["version"], VERSION)
+            self.assertEqual({value["prompt_version"] for value in state[
+                "m21_ai_results"].values()}, {PROMPT_VERSION})
+            self.assertEqual({attempt["prompt_version"] for attempt in state[
+                "m21_model_attempts"]}, {PROMPT_VERSION})
         with thesis_checkpointer(self.checkpoint) as saver:
             graph = build_original_graph(self.adapter, self.connect, saver)
             replay = run_m21_offline(graph, config, self.adapter, models)
@@ -240,6 +245,8 @@ class M21Postgres(unittest.TestCase):
             attempts = graph.get_state(config).values["m21_model_attempts"]
             self.assertEqual(len(attempts), 1)
             self.assertEqual(attempts[0]["status"], "reserved")
+            graph.update_state(config, {"m21_model_attempts": [
+                {**attempts[0], "prompt_version": VERSION}]}, as_node="finish")
         with thesis_checkpointer(self.checkpoint) as saver:
             graph = build_original_graph(self.adapter, self.connect, saver)
             credit = Scripted([lambda *_: (_ for _ in ()).throw(AssertionError("replayed"))])

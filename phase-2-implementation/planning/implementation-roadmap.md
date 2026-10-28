@@ -174,6 +174,28 @@ The Phase 1C production pin remains exactly `90c0bc8e285ee69262c7db826b786096a77
 
 ## M2.0 stopped Pricing investigation and first M2.1 offline slice — 27 October 2026
 
+**28 October 2026 unresolved Week 2 gate (deferred while implementing Week 3):**
+Two distinct, permanently stopped [first B01](../evaluation/m20-configuration-pricing-hosted-result.md)
+and [second-account B01](../evaluation/week2-secondary-b01-hosted-result.md)
+hosted assessments completed Configuration but received HTTP 400 on Pricing's
+second turn. The [offline byte-level wire diagnosis](../evaluation/m20-pricing-http400-offline-diagnosis.md)
+matched serialized request sizes/hashes and call/result linkage; it did not
+establish a cause or justify a speculative adapter change. **Week 2 is not
+closed.** Pricing still needs a separately authorized, source-first hosted
+validation under a *new* assessment identity; neither terminal request may
+be replayed. Week 3 offline work does not substitute for that gate.
+
+**28 October 2026 Week 3 offline increment:** The
+[M2.1 methodology update](../evaluation/m21-credit-policy-routing-offline-methodology.md#28-october-week-3-integration-update--offline-only)
+documents versioned trusted Credit/Policy/Routing instructions and a
+LangGraph original-only composition of the existing Fulfillment, M2.0 and
+M2.1 investigations. Six fixed responsibilities and six separate AI
+investigation results are integrated offline, not hosted. A fresh seven-DB
+PostgreSQL run passed 259 tests (seven skips). The
+[consolidated hosted proposal](../evaluation/week3-hosted-validation-proposal.md)
+is not authorization; a hosted adapter, customer-field redaction review,
+source-verified cases, human approval and the separate Pricing gate remain.
+
 The [Week 2 closure matrix](../evaluation/week2-closure-audit.md) distinguishes
 completed offline behavior from the unresolved hosted Pricing acceptance and
 broader Phase 2 integration. An [offline iterative Fulfillment prompt-hierarchy
