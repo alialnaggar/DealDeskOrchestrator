@@ -129,3 +129,11 @@ Such a diagnostic needs a reviewed redaction contract and must not resend
 either terminal request, silently retry, change tool choice or enlarge limits.
 Even a successful future diagnostic is not a validated hosted Pricing finding;
 a separately authorized new assessment is required to establish that gate.
+
+**Subsequent offline cross-specialist review:** The later, terminal Week 3
+Credit second-turn HTTP 400 has been compared with *both* Pricing failures
+and accepted Configuration/Fulfillment continuations using the matching
+historical/current serializers. See the
+[cross-specialist diagnosis](week3-cross-specialist-http400-offline-diagnosis.md).
+No provider rejection detail or demonstrated current protocol defect was
+found; this does not authorize reuse of any stopped Pricing request.

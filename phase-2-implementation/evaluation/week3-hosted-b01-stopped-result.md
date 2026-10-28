@@ -101,3 +101,9 @@ The last fresh pre-trial seven-database offline backend regression ran
 **271 tests: 264 passed, seven unrelated historical Gemma skips**. Private
 CI status and any provider billing record were not checked during the
 trial; no claim of measured free usage or accepted accuracy is made.
+
+**Offline follow-up:** The
+[cross-specialist wire comparison](week3-cross-specialist-http400-offline-diagnosis.md)
+reconstructed this Credit continuation alongside both terminal Pricing
+continuations and accepted Configuration/Fulfillment controls. The provider
+cause remains unclassified; this Credit assessment remains terminal.
