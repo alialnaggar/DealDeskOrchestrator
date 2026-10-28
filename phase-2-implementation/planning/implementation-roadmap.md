@@ -196,6 +196,16 @@ PostgreSQL run passed 259 tests (seven skips). The
 is not authorization; a hosted adapter, customer-field redaction review,
 source-verified cases, human approval and the separate Pricing gate remain.
 
+**Later Week 3 hosted preparation, no sends:** The
+[readiness and seven-skip audit](../evaluation/week3-hosted-preparation-audit.md)
+records a provider-independent synthetic-only redacted view and dormant Groq
+native-tool contract, plus a fresh 263-test local PostgreSQL run (seven
+unrelated Gemma checkpoint skips). The
+[non-executable proposed manifest](../evaluation/week3-hosted-validation-proposal.json)
+has B01/B05/N03 source identities and explicit secondary-key selection;
+**not ready to send** until a durable exclusive hosted M2.1 gate, budgeted
+attempt tracking, hosted error/no-replay tests, CI and explicit Ali approval.
+
 The [Week 2 closure matrix](../evaluation/week2-closure-audit.md) distinguishes
 completed offline behavior from the unresolved hosted Pricing acceptance and
 broader Phase 2 integration. An [offline iterative Fulfillment prompt-hierarchy

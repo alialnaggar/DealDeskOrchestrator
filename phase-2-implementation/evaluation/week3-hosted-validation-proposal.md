@@ -1,10 +1,63 @@
 # Week 3 consolidated hosted validation — proposal, **not authorized**
 
+## 28 October offline preparation audit — still **not ready to send**
+
+The [non-executable proposed manifest](week3-hosted-validation-proposal.json)
+now records source-reviewed B01/B05/N03 original identities, Groq
+`openai/gpt-oss-120b`, explicit **secondary** credential selection, prompt
+`m21-original-system-v1`, dormant native-tool wire
+`m21-groq-native-tools-v1`, three separate specialist tool scopes, and the
+limits below. Local frozen Phase 1C read verified all three bundle/source
+digests, as-of timestamps and snapshot refs.
+The proposal's canonical sorted-key compact-JSON SHA-256 is
+`f3b71a75cd835234382f4e40af95a410679ab3278c9b5c463b3073b3bf11b291`;
+this checksum identifies an **unapproved draft**, not a send authorization.
+B01 and B05 each have the fixed
+`PO-BASE-DELIVERY-LATE` approval-required hit; N03 has **no fixed Policy hit**.
+All three have a **withheld route, zero exposed roles**, and no selected AR or
+payment rows. None tests over-limit Credit, a hard Policy block, a nonempty
+AR/payment history or a role-visible fixed route. These are case coverage
+gaps, not evidence that those conditions do not occur.
+
+The [provider-independent allowlist and opaque reference view](../backend/dealdesk_phase2/m21_redaction.py)
+now omits customer/deal/receivable/payment raw IDs, invoice numbers,
+commitment evidence IDs and snapshot refs from proposed model messages; it
+keeps internal exact evidence in the private checkpoint and maps model-visible
+aliases back to returned references only after a strict wire parse. The
+[dormant Groq request/response contract](../backend/dealdesk_phase2/m21_groq_contract.py)
+uses the existing model ID/native function-call conventions, explicit trusted
+system prompt, paired assistant/tool messages, bounded JSON, single call,
+no structured-output-with-tools, and exact-value parsing. Its simulated
+HTTP 400 uses the **existing** sanitized `_post` transport. Neither module
+contains a credential lookup, metadata request or executable hosted sender.
+Opaque SHA-256 aliases reduce casual ID exposure; they are **not** a
+cryptographic anonymization guarantee, especially for small identifier spaces.
+Only synthetic source-verified records are proposed; a real-customer/data-use
+review would need separate authorization and stronger privacy controls.
+
+**Remaining hard gates before a bounded hosted trial:** a reviewed, exact
+Groq M2.1 adapter wired to the authorized LangGraph M2.1 stage; durable
+exclusive owner directory and pre-send byte-hash reservation with completed
+ledger exchange matching; terminal stop on HTTP/timeout/invalid output and
+aggregate campaign token/request accounting; manifest-hash/credential/account
+preflight and restart/no-replay tests for the *actual hosted path*; offline
+end-to-end wire double and private CI. The current M2.1 runner explicitly
+rejects Groq adapters. No one can approve or launch inference using this
+proposal. Week 2 Pricing remains independently blocked.
+
+**Recommended authorization sequence:** first complete and test those hard
+gates offline; revalidate the proposed case digests in a fresh disposable
+source; obtain Ali's confirmation of the selected secondary account's Free
+tier and disabled billing, plus approval of a **new canonical manifest hash**,
+account, model, case(s) and budgets. Begin with B01 only, then ask separately
+whether to proceed to B05/N03; do not infer approval from this draft's
+three-case maximum. No metadata GET or inference POST was performed here.
+
 **28 October 2026.** This is a source-first review plan for the three distinct
 Credit, Policy and Approval Routing AI investigations, not an executable
 manifest, approved account charge or permission to call Groq. The current
-M2.1 implementation is **offline-only** and has no hosted Week 3 adapter;
-its versioned prompts are not yet sent to a provider. The separate
+M2.1 implementation is **offline-only** and has no executable hosted Week 3
+adapter; its versioned prompts are not yet sent to a provider. The separate
 [Week 2 Pricing blocker](week2-closure-audit.md) remains open: neither
 terminal B01 Pricing request is eligible for replay. Week 3 cannot be used
 to bypass or close that gate.

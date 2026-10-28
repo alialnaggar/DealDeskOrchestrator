@@ -1,5 +1,14 @@
 # M2.1 original-only Credit, Policy and Routing — offline method and limits
 
+**Later hosted-preparation audit (28 October, no hosted calls):**
+The [source-verified case/skip/test audit](week3-hosted-preparation-audit.md)
+adds a provider-independent redacted synthetic-only evidence view, a dormant
+Groq native-tool wire/strict response contract and mocked transport/error
+tests. **The M2.1 runner still rejects hosted models** until a separately
+reviewed durable owner/manifest/credential gate and end-to-end hosted-path
+tests exist. Latest fresh local regression: **263 tests, seven unrelated
+Gemma checkpoint skips**; no CI claim or inference result is implied.
+
 ## 28 October Week 3 integration update — offline only
 
 The original-only [Week 3 LangGraph composition](../backend/dealdesk_phase2/week3_offline.py)
