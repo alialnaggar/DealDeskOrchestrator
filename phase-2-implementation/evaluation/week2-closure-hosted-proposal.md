@@ -13,6 +13,10 @@ The separately provided secondary key subsequently passed a [single metadata
 GET](week2-secondary-metadata-access-result.md), but hosted inference is still
 withheld pending confirmation that the **second account** is Free-tier with
 billing disabled. Do not interpret metadata HTTP 200 as that confirmation.
+Ali later confirmed the second account Free/billing disabled. The exact
+[B01 hosted assessment](week2-secondary-b01-hosted-result.md) then stopped
+on Pricing's HTTP 400 follow-up; **four POSTs** were sent. Do not resume or
+replay this now-used identity. The immutable JSON manifest is not changed.
 
 **Not executed.** This is a request for Ali's explicit, separate approval,
 not a continuation of the [permanently stopped B01 assessment](m20-configuration-pricing-hosted-result.md).

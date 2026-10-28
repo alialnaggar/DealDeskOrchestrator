@@ -1,5 +1,10 @@
 # Week 2 B01 second-account metadata access — inference withheld
 
+**Later result:** Ali confirmed the second account's Free/billing-disabled
+status. A freshly isolated [B01 hosted assessment](week2-secondary-b01-hosted-result.md)
+then made four sequential POSTs and stopped on Pricing HTTP 400. The account
+gate below describes this earlier pre-inference checkpoint, not current status.
+
 **28 October 2026; no inference POST.** Ali provided a second Groq development
 credential for the already approved B01 assessment
 `M20-WEEK2-CLOSURE-B01-7947a47b-ee53-48b0-9a92-2c3dd64c32a7`.
