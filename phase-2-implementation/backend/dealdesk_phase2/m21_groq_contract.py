@@ -1,13 +1,11 @@
-"""Dormant Week 3 Groq native-tool wire; no credential or HTTP access.
-
-A future separately authorized runner must own request reservations, ledger
-pairing, account gates and terminal no-replay before calling shared _post.
-"""
+"""Week 3 Groq native-tool contract; sends only via separately gated M2.1."""
 
 import json
+import os
+from hashlib import sha256
 
 from .hybrid_pack import _canonical
-from .live_models import GROQ_MODEL
+from .live_models import GROQ_MODEL, ProviderError, _post
 from .m21_prompts import PROMPT_VERSION, system_instruction
 from .m21_redaction import model_view
 from .m21_specialists import TOOLS, VERSION
@@ -16,6 +14,8 @@ from .m21_specialists import TOOLS, VERSION
 WIRE_VERSION = "m21-groq-native-tools-v1"
 MAX_REQUEST_BYTES = 8192
 MAX_COMPLETION_TOKENS = 512
+MAX_RESPONSE_BYTES = 16384
+MAX_PROMPT_TOKENS = 4096
 
 
 def request_body(input: dict, observations: tuple[dict, ...], *, exchanges=()):
@@ -122,3 +122,77 @@ def parse_response(response: dict, input: dict, observations: tuple[dict, ...]):
     except (KeyError, IndexError, TypeError, ValueError, UnicodeError):
         pass
     raise ValueError("m21_groq_invalid_response") from None
+
+
+class GroqM21Model:
+    """Bounded transport behind the M2.1 manifest/owner/reservation gate.
+
+    The runner sets the exact request hash and exclusive owner before calling
+    next_action; instantiating the adapter alone confers no send capability.
+    """
+
+    provider = "groq"
+    model = GROQ_MODEL
+    offline_only = False
+    prompt_version = PROMPT_VERSION
+    wire_version = WIRE_VERSION
+
+    def __init__(self, specialist):
+        if specialist not in TOOLS:
+            raise ValueError("m21_groq_invalid_specialist")
+        self.specialist = specialist
+        self.previous_calls = ()
+        self.pending_request_digest = None
+        self.last_tool_call = None
+        self.last_usage = None
+        self._send_capability = None
+        self._owner_directory = None
+        self._assessment_id = None
+        self._manifest_hash = None
+        self._attempt_ordinal = None
+        self._credential_sha256 = None
+
+    def prepare_request(self, input, observations):
+        if input["specialist"] != self.specialist:
+            raise ValueError("m21_groq_wrong_specialist")
+        return request_body(input, observations, exchanges=self.previous_calls)
+
+    def next_action(self, input, observations):
+        # No direct adapter call may bypass the checkpointed M2.1 runner.
+        from .m21_specialists import _HOSTED_CAPABILITY
+        if (self._send_capability is not _HOSTED_CAPABILITY or
+                self._owner_directory is None or self._assessment_id != input["assessment_id"]
+                or self._attempt_ordinal is None or self._manifest_hash is None
+                or self._credential_sha256 is None):
+            raise ProviderError("missing_hosted_authorization")
+        body = self.prepare_request(input, observations)
+        digest = sha256(_canonical(body).encode()).hexdigest()
+        if self.pending_request_digest != digest:
+            raise ProviderError("hosted_request_identity_changed")
+        from .hybrid_send_reservation import claim_and_call
+        key = os.environ.get("GROQ_SECONDARY_API_KEY")
+        if not key or sha256(key.encode()).hexdigest() != self._credential_sha256:
+            raise ProviderError("missing_credential")
+        self.last_usage = None
+        self.last_tool_call = None
+        response = claim_and_call(self._owner_directory, assessment_id=self._assessment_id,
+            start_digest=self._manifest_hash, stage="decision", ordinal=self._attempt_ordinal,
+            request_digest=digest, send=lambda: _post(
+                "https://api.groq.com/openai/v1/chat/completions", "Bearer " + key,
+                "Authorization", body, timeout_seconds=30,
+                classify_transport=True, reject_redirects=True))
+        if len(_canonical(response).encode()) > MAX_RESPONSE_BYTES:
+            raise ProviderError("provider_response_oversize")
+        usage = response.get("usage")
+        if (type(usage) is not dict or any(type(usage.get(k)) is not int or usage[k] < 0
+                for k in ("prompt_tokens", "completion_tokens"))
+                or usage["prompt_tokens"] > MAX_PROMPT_TOKENS
+                or usage["completion_tokens"] > MAX_COMPLETION_TOKENS):
+            raise ProviderError("hosted_usage_unverifiable")
+        self.last_usage = {k: usage[k] for k in ("prompt_tokens", "completion_tokens")}
+        action = parse_response(response, input, observations)
+        if action["kind"] == "inspect":
+            call = response["choices"][0]["message"]["tool_calls"][0]
+            self.last_tool_call = {"id": call["id"], "name": call["function"]["name"],
+                "arguments": call["function"]["arguments"]}
+        return action

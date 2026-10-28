@@ -125,6 +125,11 @@ class M21GroqWire(unittest.TestCase):
                     exchanges=({"id": "call_w3_synthetic", "name": TOOLS[name],
                                 "arguments": json.dumps({"subject_id": model_view(input, ())[0][
                                     "subject_id"]})},))))
+                if name == "policy":
+                    injected = deepcopy(obs)
+                    injected["records"][0]["fields"]["scope_value"] = "C-SENSITIVE"
+                    with self.assertRaises(ValueError):
+                        model_view(input, (injected,))
 
     def test_shared_transport_error_is_sanitized_without_network_or_body_read(self):
         body = request_body(self.input, ())

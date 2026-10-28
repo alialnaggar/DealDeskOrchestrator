@@ -69,6 +69,7 @@ class AssessmentStateV1(TypedDict, total=False):
     # M2.1 original-only offline AI observations; never replace fixed results.
     m21_ai_results: dict[str, dict]
     m21_model_attempts: list[dict]
+    m21_hosted_owner: dict
     m21_review: dict
 
 

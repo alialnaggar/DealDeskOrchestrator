@@ -80,4 +80,13 @@ def model_view(input: dict, observations: tuple[dict, ...]) -> tuple[dict, tuple
                         "execution": "completed", "records": records, "returned_refs": returned})
     if len(visible) > 1 or len(_canonical(visible).encode()) > 8192:
         raise ValueError("m21_redaction_request_evidence_oversize")
+    wire = _canonical([public, visible])
+    identifiers = {input["subject_id"], input["customer_id"], input["data_snapshot_ref"]}
+    for observation in observations:
+        identifiers.update(row["ref"] for row in observation["records"])
+        for row in observation["records"]:
+            identifiers.update(str(row["fields"][field]) for field in (
+                "invoice_number", "commitment_evidence_ref") if field in row["fields"])
+    if any(len(value) >= 5 and value in wire for value in identifiers):
+        raise ValueError("m21_redaction_identifier_in_model_view")
     return public, tuple(visible), ref_map

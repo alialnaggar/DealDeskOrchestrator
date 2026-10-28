@@ -1,5 +1,17 @@
 # M2.1 original-only Credit, Policy and Routing — offline method and limits
 
+**Later 28 October hosted-gate work (offline/mock only):** The
+[gated execution/source audit](week3-hosted-preparation-audit.md#later-28-october-gated-execution-increment--still-no-provider-call)
+documents the exact one-case manifest, owner/checkpoint/file receipt,
+secondary credential fingerprint, bounded native-tool transport and
+restart/no-replay tests. The original offline entrypoint remains default-deny
+for Groq, and the checked-in B01 proposal is intentionally not executable.
+Pinned `CREDIT-LIMIT` and `POLICY-CLAUSE` conflict runs provide AR/credit
+block and two visible route roles; hard Policy `PRICE-FLOOR` is fail-closed on
+duplicate rule-hit refs, and no selected payment is currently verified.
+Fresh post-review local PostgreSQL regression: **270 tests, seven unrelated Gemma skips**;
+no hosted inference or metadata request and no private CI verification.
+
 **Later hosted-preparation audit (28 October, no hosted calls):**
 The [source-verified case/skip/test audit](week3-hosted-preparation-audit.md)
 adds a provider-independent redacted synthetic-only evidence view, a dormant

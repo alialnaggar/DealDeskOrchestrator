@@ -206,6 +206,18 @@ has B01/B05/N03 source identities and explicit secondary-key selection;
 **not ready to send** until a durable exclusive hosted M2.1 gate, budgeted
 attempt tracking, hosted error/no-replay tests, CI and explicit Ali approval.
 
+**Subsequent Week 3 offline hosted-gate increment:** The
+[gated runner and source-first audit](../evaluation/week3-hosted-preparation-audit.md#later-28-october-gated-execution-increment--still-no-provider-call)
+now use one-case manifests, the existing exclusive send owner/receipt and
+shared Groq transport. A final post-review fresh seven-DB run passed 270 tests with seven
+unrelated historical Gemma skips. The updated
+[single-B01 proposal](../evaluation/week3-hosted-validation-proposal.json)
+has a **six-POST total**, remains `proposal_not_authorized_not_executable`,
+and needs new-status hash approval, account/cost confirmation and CI before
+any hosted call. Pinned conflict cases separately verify an AR/credit blocker
+and visible two-role route; the hard-block duplicate-hit projection and
+payment coverage gaps remain. Week 2 Pricing is still unresolved.
+
 The [Week 2 closure matrix](../evaluation/week2-closure-audit.md) distinguishes
 completed offline behavior from the unresolved hosted Pricing acceptance and
 broader Phase 2 integration. An [offline iterative Fulfillment prompt-hierarchy

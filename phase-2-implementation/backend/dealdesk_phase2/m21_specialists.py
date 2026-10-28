@@ -1,12 +1,16 @@
-"""M2.1 original-only, offline Credit/Policy/Routing evidence investigations.
+"""M2.1 original-only Credit/Policy/Routing evidence investigations.
 
-Only the pinned reader and six fixed results decide business outcomes. No
-hosted model, candidate edit, credit computation, policy engine or approval
-operation is available through this module.
+Only pinned evidence and six fixed results decide business outcomes. The
+default path is offline; a distinct exact-manifest and owner gate may use
+Groq for synthetic original-only observations. No candidate edit, credit
+computation, policy engine or approval operation is available here.
 """
 
 from copy import deepcopy
 from hashlib import sha256
+import json
+import os
+from pathlib import Path
 from time import monotonic
 from typing import Literal, Protocol, TypedDict
 
@@ -15,10 +19,12 @@ from langgraph.graph import END, START, StateGraph
 from .fulfillment_tools import _json
 from .graph_state import pinned_from_state
 from .hybrid_pack import _canonical
+from .hybrid_send_reservation import attempt_path, exclusive_owner, verify_receipt
+from .live_models import GROQ_MODEL, ProviderError
 from .m21_prompts import PROMPT_VERSION
 from .phase1c_adapter import EvidenceMismatch
 from .tool_ledger import complete, entries, reserve
-from .tool_permissions import AuthorizationDenied, TrustedToolScope
+from .tool_permissions import AuthorizationDenied, PERMISSION_VERSION, TrustedToolScope
 
 
 VERSION = "m21-original-evidence-v1"
@@ -28,6 +34,8 @@ TOOLS = {"credit": "inspect_customer_credit_evidence",
 MAX_RECORDS = 25
 MAX_OBSERVATION_BYTES = 16384
 MAX_ACTION_BYTES = 8192
+_HOSTED_CAPABILITY = object()
+HOSTED_REPORTED_TOKEN_STOP = 24000
 
 
 class M21Model(Protocol):
@@ -222,7 +230,7 @@ def _claims(action, observations):
     return validated
 
 
-def _one(original, config, adapter, specialist, model):
+def _one(original, config, adapter, specialist, model, *, hosted=False):
     state = original.get_state(config).values
     pinned = pinned_from_state(state)
     pool = adapter.validate_pinned_context(pinned)
@@ -234,8 +242,11 @@ def _one(original, config, adapter, specialist, model):
                 previous[specialist].get("model") != model.model or
                 previous[specialist].get("provider") != model.provider or
                 previous[specialist].get("version") != VERSION or
-                previous[specialist].get("prompt_version") not in (PROMPT_VERSION, VERSION)):
+                previous[specialist].get("prompt_version") not in (
+                    (PROMPT_VERSION,) if hosted else (PROMPT_VERSION, VERSION))):
             raise EvidenceMismatch("M2.1 completed AI identity changed")
+        if hosted and previous[specialist]["execution"] == "error":
+            raise EvidenceMismatch("M2.1 hosted error terminal; no further sends")
         return
     fixed = state["specialist_results"]
     unavailable = (fixed[specialist]["execution"] != "completed" or
@@ -261,9 +272,51 @@ def _one(original, config, adapter, specialist, model):
                           "prompt_version": PROMPT_VERSION}
                 # Old offline checkpoints used VERSION as their prompt label.
                 # A label upgrade must never cause an uncertain send to replay.
-                if any(all(item.get(k) == v for k, v in identity.items())
-                       and item.get("ordinal") == ordinal for item in attempts):
+                prior = [item for item in attempts if all(item.get(k) == v for k, v in identity.items())
+                         and item.get("ordinal") == ordinal and item.get("status") == "reserved"]
+                returned = [item for item in attempts if all(item.get(k) == v for k, v in identity.items())
+                            and item.get("ordinal") == ordinal and item.get("status") == "returned"]
+                if prior and (not hosted or len(prior) != 1 or len(returned) != 1
+                        or prior[0].get("request_sha256") != returned[0].get("request_sha256")):
                     raise EvidenceMismatch("M2.1 uncertain model attempt; never resend")
+                if returned:
+                    if not hosted or len(prior) != 1 or ordinal != 0 or len(returned) != 1 or returned[0].get(
+                            "action_kind") != "inspect" or returned[0].get("prompt_version") != PROMPT_VERSION:
+                        raise EvidenceMismatch("M2.1 unrecorded terminal exchange; never replay")
+                    completed = [e["result"] for e in entries(original, config,
+                        context.assessment_id, context.bundle_sha256) if e["status"] == "completed"
+                        and e["tool"] == TOOLS[specialist] and e["identity"].get(
+                            "specialist") == specialist and e["identity"].get(
+                            "source_input_digest") == context.source_input_digest]
+                    if (len(completed) != 1 or not returned[0].get("tool_call")
+                            or returned[0].get("model") != model.model
+                            or returned[0].get("request_sha256") is None):
+                        raise EvidenceMismatch("M2.1 incomplete returned inspection; never replay")
+                    observations.append(completed[0])
+                    continue
+                if hosted:
+                    if len([x for x in attempts if x.get("status") == "reserved"]) >= 6:
+                        raise EvidenceMismatch("M2.1 case/campaign POST ceiling")
+                    used = sum(x["usage"]["prompt_tokens"] + x["usage"]["completion_tokens"]
+                        for x in attempts if x.get("status") == "returned" and x.get("usage"))
+                    if used >= HOSTED_REPORTED_TOKEN_STOP:
+                        raise EvidenceMismatch("M2.1 reported token stop")
+                    completed = [e["result"] for e in entries(original, config,
+                        context.assessment_id, context.bundle_sha256) if e["status"] == "completed"
+                        and e["tool"] == TOOLS[specialist] and e["identity"].get(
+                            "specialist") == specialist and e["identity"].get(
+                            "source_input_digest") == context.source_input_digest]
+                    calls = [x["tool_call"] for x in attempts if x.get("specialist") == specialist
+                        and x.get("status") == "returned" and x.get("action_kind") == "inspect"
+                        and "tool_call" in x]
+                    if len(calls) != len(observations) or any(o not in completed for o in observations):
+                        raise EvidenceMismatch("M2.1 hosted completed ledger differs")
+                    model.previous_calls = tuple(calls)
+                    body = model.prepare_request(input, tuple(observations))
+                    request_digest = sha256(_canonical(body).encode()).hexdigest()
+                    model.pending_request_digest = request_digest
+                    model._attempt_ordinal = tuple(TOOLS).index(specialist) * 2 + ordinal
+                    marker["request_sha256"] = request_digest
                 original.update_state(config, {"m21_model_attempts": [*attempts,
                     {**marker, "status": "reserved"}]}, as_node="finish")
                 started = monotonic()
@@ -276,7 +329,15 @@ def _one(original, config, adapter, specialist, model):
                     {**marker, "status": "returned", "action_kind": action.get("kind") if
                         action.get("kind") in ("inspect", "finding", "abstain") else "invalid",
                      "elapsed_ms": max(0, round((monotonic() - started) * 1000)),
-                     "cost_usd": None}]}, as_node="finish")
+                      "cost_usd": None, "usage": dict(model.last_usage) if hosted and
+                      model.last_usage is not None else None,
+                      **({"tool_call": dict(model.last_tool_call)} if hosted and
+                          model.last_tool_call is not None else {})}]}, as_node="finish")
+                if hosted and (model.last_usage is None or sum(
+                    x["usage"]["prompt_tokens"] + x["usage"]["completion_tokens"]
+                    for x in original.get_state(config).values["m21_model_attempts"]
+                    if x.get("status") == "returned" and x.get("usage")) >= HOSTED_REPORTED_TOKEN_STOP):
+                    raise EvidenceMismatch("M2.1 reported token stop")
                 if action.get("kind") == "inspect":
                     if (set(action) != {"kind", "tool", "subject_id"} or ordinal != 0
                             or action["tool"] != TOOLS[specialist]
@@ -306,7 +367,13 @@ def _one(original, config, adapter, specialist, model):
                     raise ValueError("M2.1 unsupported model action")
             else:
                 status, reason = "abstained", "model_turn_budget_exhausted"
-        except (ValueError, TypeError, KeyError, AuthorizationDenied, EvidenceMismatch):
+        except ProviderError as exc:
+            status, reason = "error", "provider_" + exc.code
+        except EvidenceMismatch as exc:
+            status, reason = "error", ("unrecorded_terminal_exchange" if str(exc).startswith(
+                ("M2.1 unrecorded terminal", "M2.1 incomplete returned inspection"))
+                else "evidence_identity_or_budget")
+        except (ValueError, TypeError, KeyError, AuthorizationDenied):
             status, reason = "error", "invalid_model_or_evidence"
         except Exception:
             status, reason = "error", "model_or_tool_failure"
@@ -318,18 +385,38 @@ def _one(original, config, adapter, specialist, model):
     original.update_state(config, {"m21_ai_results": {**latest.get("m21_ai_results", {}),
         specialist: result}, "trace": [*latest["trace"], "m21_" + specialist + ":" + status]},
         as_node="finish")
+    if hosted and status == "error":
+        from .candidate_graph import original_only_package
+        fresh = original.get_state(config).values
+        package = fresh.get("reviewer_package") or original_only_package(fresh)
+        if "m21_ai" not in package:
+            original.update_state(config, {"reviewer_package": {**package, "m21_ai": {
+                "version": VERSION, "execution": "stopped", "specialist": specialist,
+                "reason": reason, "validated_claims": [],
+                "authority": "Fixed original; human review only"}}}, as_node="finish")
+        raise EvidenceMismatch("M2.1 hosted investigation terminal; fixed original retained")
 
 
-def build_m21_graph(original, config, adapter, models):
+def build_m21_graph(original, config, adapter, models, *, _capability=None):
     """Sequential LangGraph post-original continuation; offline doubles only."""
-    if (set(models) != set(TOOLS) or any(getattr(model, "provider", None) != "offline_double"
+    hosted = _capability is _HOSTED_CAPABILITY
+    if _capability is not None and not hosted:
+        raise ValueError("M2.1 private hosted capability only")
+    if set(models) != set(TOOLS):
+        raise ValueError("M2.1 three specialist models required")
+    if hosted:
+        from .m21_groq_contract import GroqM21Model
+        if any(type(models[name]) is not GroqM21Model or models[name].specialist != name
+               for name in TOOLS):
+            raise ValueError("M2.1 exact scoped Groq adapters required")
+    elif any(getattr(model, "provider", None) != "offline_double"
             or getattr(model, "offline_only", None) is not True
-            or not isinstance(getattr(model, "model", None), str) for model in models.values())):
+            or not isinstance(getattr(model, "model", None), str) for model in models.values()):
         raise ValueError("M2.1 offline, three specialist models required")
     builder = StateGraph(M21State)
     for name in TOOLS:
         def node(_, name=name):
-            _one(original, config, adapter, name, models[name])
+            _one(original, config, adapter, name, models[name], hosted=hosted)
             return {"current": name}
         builder.add_node(name, node)
     def handoff(_):
@@ -369,6 +456,12 @@ def build_m21_graph(original, config, adapter, models):
 
 
 def run_m21_offline(original, config, adapter, models):
+    _validate_m21_start(original, config, adapter)
+    build_m21_graph(original, config, adapter, models).invoke({"current": "start"})
+    return original.get_state(config).values
+
+
+def _validate_m21_start(original, config, adapter):
     snapshot = original.get_state(config)
     state = snapshot.values
     pinned = pinned_from_state(state)
@@ -377,5 +470,175 @@ def run_m21_offline(original, config, adapter, models):
             or set(state.get("specialist_results", {})) != {
                 "configuration", "pricing", "fulfillment", "credit", "policy", "approval_routing"}):
         raise EvidenceMismatch("M2.1 needs completed fixed original, no candidate")
-    build_m21_graph(original, config, adapter, models).invoke({"current": "start"})
+    return pinned
+
+
+def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
+                       approved_manifest_sha256: str, authorized: bool = False,
+                       owner_dir: Path | None = None, free_tier_billing_disabled: bool = False):
+    """One synthetic original per explicit approved manifest; no multi-case campaign.
+
+    Proposal manifests cannot call the provider. The caller supplies an exact
+    approved digest and account/billing confirmation for a *new* one-case
+    manifest, plus an empty owner-only directory and original checkpoint.
+    """
+    if authorized is not True or free_tier_billing_disabled is not True:
+        raise ValueError("M2.1 explicit hosted/account authorization required")
+    from .groq_preflight import credential_shape
+    from .m21_groq_contract import GroqM21Model, PROMPT_VERSION, WIRE_VERSION
+    from .phase1c_adapter import PHASE1C_COMMIT
+    if (type(manifest) is not dict or type(approved_manifest_sha256) is not str
+            or sha256(_canonical(manifest).encode()).hexdigest() != approved_manifest_sha256
+            or manifest.get("status") != "authorized_one_case"
+            or manifest.get("version") != "m21-week3-proposal-v1"
+            or manifest.get("phase1c_pin") != PHASE1C_COMMIT
+            or manifest.get("model") != GROQ_MODEL or manifest.get("provider") != "groq"
+            or manifest.get("credential_env_selection") != "GROQ_SECONDARY_API_KEY"
+            or manifest.get("prompt_version") != PROMPT_VERSION
+            or manifest.get("wire_version") != WIRE_VERSION
+            or manifest.get("m21_contract_version") != VERSION
+            or manifest.get("permission_version") != PERMISSION_VERSION
+            or manifest.get("allowed_tools") != TOOLS
+            or manifest.get("maximum_inspections_per_specialist") != 1
+            or manifest.get("order") != list(TOOLS)
+            or type(manifest.get("maximum_posts_per_specialist")) is not int
+            or manifest["maximum_posts_per_specialist"] != 2
+            or any(type(manifest.get(k)) is not int or manifest[k] != v for k, v in {
+                "maximum_posts_per_case": 6, "maximum_posts_total": 6,
+                "maximum_completion_tokens_per_post": 512,
+                "maximum_serialized_request_bytes_per_post": 8192,
+                "reported_total_token_post_send_stop": HOSTED_REPORTED_TOKEN_STOP,
+                "maximum_inspections_per_specialist": 1}.items())
+            or type(manifest.get("cases")) is not list or len(manifest["cases"]) != 1
+            or set(manifest["cases"][0]) != {"case_id", "assessment_id", "run_id",
+                "bundle_sha256", "source_input_digest", "as_of_at", "data_snapshot_ref"}
+            or manifest["cases"][0]["case_id"] not in (
+                "B01", "B05", "N03", "CREDIT-LIMIT", "POLICY-CLAUSE")
+            or set(manifest) != {"version", "status", "phase1c_pin", "model", "provider",
+                "credential_env_selection", "prompt_version", "wire_version", "order",
+                "m21_contract_version", "permission_version", "allowed_tools",
+                "maximum_inspections_per_specialist",
+                "maximum_posts_per_specialist", "maximum_posts_per_case",
+                "maximum_posts_total", "maximum_completion_tokens_per_post",
+                "maximum_serialized_request_bytes_per_post", "reported_total_token_post_send_stop",
+                "cases"}):
+        raise ValueError("M2.1 hosted manifest or approved hash mismatch")
+    if (set(models) != set(TOOLS) or any(type(models[name]) is not GroqM21Model
+            or models[name].specialist != name for name in TOOLS)):
+        raise ValueError("M2.1 exact scoped Groq models required")
+    # Do not call a metadata endpoint; validate only local shape and owner.
+    credential = os.environ.get("GROQ_SECONDARY_API_KEY")
+    if credential_shape(credential) != "credential_shape_ok":
+        raise ValueError("M2.1 secondary credential unavailable")
+    pinned = _validate_m21_start(original, config, adapter)
+    case = manifest["cases"][0]
+    ctx = pinned.context
+    if (ctx.assessment_id != case["assessment_id"]
+            or str(ctx.phase1c_run_id) != case["run_id"]
+            or ctx.bundle_sha256 != case["bundle_sha256"]
+            or ctx.source_input_digest != case["source_input_digest"]
+            or ctx.as_of_at.isoformat() != case["as_of_at"]
+            or ctx.data_snapshot_ref != case["data_snapshot_ref"]
+            or config.get("configurable", {}).get("thread_id") != ctx.assessment_id
+            or pinned.context.original_deal_id != {
+                "B01": "M18-D-B01", "B05": "M18-D-B05", "N03": "M18-D-N03",
+                "CREDIT-LIMIT": "CONFLICT-DEAL-13",
+                "POLICY-CLAUSE": "CONFLICT-DEAL-15"}[case["case_id"]]):
+        raise EvidenceMismatch("M2.1 hosted pinned source/manifest identity changed")
+    if not isinstance(owner_dir, Path):
+        raise ValueError("M2.1 durable owner directory required")
+    with exclusive_owner(owner_dir, ctx.assessment_id):
+        # Approval is an owner-supplied, private durable artifact, NOT derived
+        # from caller's boolean/hash or created by this runner. A proposal
+        # cannot be converted to authorization by passing `authorized=True`.
+        approval_path = owner_dir / "m21-approved-manifest.json"
+        try:
+            fd = os.open(approval_path, os.O_RDONLY | os.O_NOFOLLOW)
+            try:
+                st = os.fstat(fd)
+                if (st.st_uid != os.geteuid() or st.st_nlink != 1 or st.st_mode & 0o077
+                        or st.st_size > 2048 or st.st_size == 0):
+                    raise ValueError("M2.1 invalid owner approval file")
+                with os.fdopen(os.dup(fd), "r", encoding="utf-8") as stream:
+                    approval = json.load(stream)
+            finally:
+                os.close(fd)
+        except (OSError, UnicodeError, ValueError, TypeError):
+            raise EvidenceMismatch("M2.1 owner approval record unavailable") from None
+        if (type(approval) is not dict or approval != {
+                "assessment_id": ctx.assessment_id,
+                "approved_manifest_sha256": approved_manifest_sha256,
+                "credential_env_selection": "GROQ_SECONDARY_API_KEY",
+                "billing_disabled_confirmed": True}):
+            raise EvidenceMismatch("M2.1 owner approval identity mismatch")
+        owner = {"manifest_sha256": approved_manifest_sha256,
+            "path": str(owner_dir.resolve(strict=True)), "device": owner_dir.stat().st_dev,
+            "inode": owner_dir.stat().st_ino, "credential_env_selection": "GROQ_SECONDARY_API_KEY",
+            "credential_sha256": sha256(credential.encode()).hexdigest()}
+        fresh = original.get_state(config).values
+        if (fresh.get("m21_hosted_owner") not in (None, owner)
+                or fresh.get("m21_hosted_owner") is None and (fresh.get("m21_model_attempts")
+                    or fresh.get("m21_ai_results"))
+                or any(x.get("provider") != "groq" for x in fresh.get("m21_model_attempts", []))
+                or any(x.get("provider") != "groq" for x in fresh.get("m21_ai_results", {}).values())
+                or any(x.get("execution") == "error" for x in fresh.get(
+                    "m21_ai_results", {}).values())):
+            raise EvidenceMismatch("M2.1 hosted owner, attempts or terminal state changed")
+        if fresh.get("m21_hosted_owner") is None:
+            original.update_state(config, {"m21_hosted_owner": owner}, as_node="finish")
+        receipts = fresh.get("m21_model_attempts", [])
+        allowed_paths = {approval_path.name, attempt_path(owner_dir,
+            assessment_id=ctx.assessment_id, start_digest="0" * 64, stage="owner",
+            ordinal=0).name}
+        allowed_paths.update(attempt_path(owner_dir, assessment_id=ctx.assessment_id,
+            start_digest=approved_manifest_sha256, stage="decision",
+            ordinal=tuple(TOOLS).index(x["specialist"]) * 2 + x["ordinal"]).name
+            for x in receipts if x.get("status") == "reserved" and x.get("specialist") in TOOLS
+            and type(x.get("ordinal")) is int and x["ordinal"] in (0, 1))
+        if any(entry.name not in allowed_paths for entry in owner_dir.iterdir()):
+            raise EvidenceMismatch("M2.1 owner directory contains unknown campaign receipt")
+        if len([x for x in receipts if x.get("status") == "reserved"]) > 6:
+            raise EvidenceMismatch("M2.1 hosted campaign reservation ceiling changed")
+        for item in receipts:
+            if item.get("status") != "returned":
+                continue
+            reserved = [x for x in receipts if x.get("status") == "reserved"
+                and x.get("specialist") == item.get("specialist")
+                and x.get("ordinal") == item.get("ordinal")
+                and x.get("request_sha256") == item.get("request_sha256")]
+            if (len(reserved) != 1 or item.get("specialist") not in TOOLS
+                    or item.get("ordinal") not in (0, 1)
+                    or type(item.get("usage")) is not dict
+                    or any(type(item["usage"].get(k)) is not int or item["usage"][k] < 0
+                           for k in ("prompt_tokens", "completion_tokens"))):
+                raise EvidenceMismatch("M2.1 hosted returned attempt provenance changed")
+            path = attempt_path(owner_dir, assessment_id=ctx.assessment_id,
+                start_digest=approved_manifest_sha256, stage="decision",
+                ordinal=tuple(TOOLS).index(item["specialist"]) * 2 + item["ordinal"])
+            try:
+                valid = verify_receipt(path, start_digest=approved_manifest_sha256,
+                    stage="decision", ordinal=tuple(TOOLS).index(item["specialist"]) * 2 +
+                    item["ordinal"], request_digest=item["request_sha256"])
+            except OSError:
+                raise EvidenceMismatch("M2.1 hosted receipt unavailable") from None
+            if not valid:
+                raise EvidenceMismatch("M2.1 hosted returned receipt missing")
+        try:
+            for model in models.values():
+                model._send_capability = _HOSTED_CAPABILITY
+                model._owner_directory = owner_dir
+                model._assessment_id = ctx.assessment_id
+                model._manifest_hash = approved_manifest_sha256
+                model._credential_sha256 = owner["credential_sha256"]
+            build_m21_graph(original, config, adapter, models,
+                _capability=_HOSTED_CAPABILITY).invoke({"current": "start"})
+        finally:
+            for model in models.values():
+                model._send_capability = None
+                model._owner_directory = None
+                model._assessment_id = None
+                model._manifest_hash = None
+                model._credential_sha256 = None
+                model._attempt_ordinal = None
+                model.pending_request_digest = None
     return original.get_state(config).values

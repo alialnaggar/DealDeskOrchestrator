@@ -7,10 +7,18 @@
   "credential_env_selection": "GROQ_SECONDARY_API_KEY",
   "prompt_version": "m21-original-system-v1",
   "wire_version": "m21-groq-native-tools-v1",
+  "m21_contract_version": "m21-original-evidence-v1",
+  "permission_version": "m1.2-v1",
+  "allowed_tools": {
+    "credit": "inspect_customer_credit_evidence",
+    "policy": "inspect_fixed_policy_hits",
+    "approval_routing": "inspect_fixed_route"
+  },
+  "maximum_inspections_per_specialist": 1,
   "order": ["credit", "policy", "approval_routing"],
   "maximum_posts_per_specialist": 2,
   "maximum_posts_per_case": 6,
-  "maximum_posts_total": 18,
+  "maximum_posts_total": 6,
   "maximum_completion_tokens_per_post": 512,
   "maximum_serialized_request_bytes_per_post": 8192,
   "reported_total_token_post_send_stop": 24000,
@@ -23,24 +31,6 @@
       "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
       "as_of_at": "2026-09-01T12:00:00+00:00",
       "data_snapshot_ref": "M18-SNAPSHOT-B01"
-    },
-    {
-      "case_id": "B05",
-      "assessment_id": "M21-WEEK3-PROPOSED-B05-7ee56f3b-287a-4c3b-93fe-6ded9c2c7c51",
-      "run_id": "00000000-0000-4000-8000-000000018005",
-      "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
-      "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
-      "as_of_at": "2026-09-01T12:00:00+00:00",
-      "data_snapshot_ref": "M18-SNAPSHOT-B05"
-    },
-    {
-      "case_id": "N03",
-      "assessment_id": "M21-WEEK3-PROPOSED-N03-3564f54a-4c43-483b-87bf-2831fc3dcb9e",
-      "run_id": "00000000-0000-4000-8000-000000018103",
-      "bundle_sha256": "a176ad55e465ea91c66ed5d10d814ee694368f96ee4268ea0021aaff465a8148",
-      "source_input_digest": "6f9918c9e5192a22eb254980dd603a9d842969fdde04039eea8a8bbbbc575a06",
-      "as_of_at": "2026-09-01T12:00:00+00:00",
-      "data_snapshot_ref": "M18-SNAPSHOT-N03"
     }
   ]
 }
