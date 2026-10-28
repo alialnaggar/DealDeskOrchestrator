@@ -265,6 +265,16 @@ not proof of Groq access: the [authorized Week 2 metadata gate](../evaluation/we
 returned HTTP 401 before any inference POST. Do not run any hosted campaign
 without its separate assessment approval, fresh source preflight and budget.
 
+For a **separately provided** second-account credential, retain the original
+`GROQ_API_KEY` line unchanged and add `GROQ_SECONDARY_API_KEY` as a second
+line in the same `0600`, Git-ignored file. To select it for **one** already
+authorized command, use
+`python -m dealdesk_phase2.local_env --credential secondary -- <existing-command>`
+with this backend on `PYTHONPATH`. The child sees only the selected value as
+`GROQ_API_KEY`; it never tries the other key automatically. An absent or
+malformed secondary value fails before launching the command. No key-switching
+or provider fallback is built into model requests.
+
 M1.4 compared the two providers experimentally. The [method](benchmarks/m1.4-method.md),
 [initial failures](benchmarks/m1.4-live-smoke-results.md),
 [diagnostic](benchmarks/m1.4-connectivity-diagnostic.md) and
