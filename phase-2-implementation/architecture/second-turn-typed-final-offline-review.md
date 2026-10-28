@@ -1,5 +1,9 @@
 # Second-turn typed final — offline contract review, not a runtime decision
 
+**Later design-authorized refinement:** The [Pricing/Credit opt-in implementation
+design](pricing-credit-typed-final-implementation-design.md) specifies staged
+wire, budgets, checkpoints and approval gates. It does not activate a sender.
+
 **28 October 2026. Proposed design only.** The current Groq
 `tool_use_failed` observation is owner-supplied; four exact historical
 Console-to-checkpoint matches and the provider's failed generations remain
