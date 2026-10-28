@@ -104,6 +104,13 @@ is justified. The original deals and fixed findings remain authoritative;
 Credit/Policy/Routing hosted completion and Pricing's hosted finding remain
 unproven. Never retry any existing terminal identity.
 
+**Later metadata clarification:** The two M2.0 Pricing failures have durable
+checkpoint reservations but no per-POST owner-directory failed receipt;
+M2.1 Credit has both a checkpoint reservation and a `reserved → failed`
+owner-only receipt. None has a saved Groq HTTP request ID or error category.
+See [the read-only receipt inventory, conditional manual Console checks and
+disabled diagnostic proposal](week3-groq-http400-response-metadata-and-proposal.md).
+
 ## Safe next diagnosis, not an authorization
 
 First ask the account owner whether an **existing provider-side request
