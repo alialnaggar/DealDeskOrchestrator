@@ -75,6 +75,7 @@ class AssessmentStateV1(TypedDict, total=False):
     typed_final_protocol: dict
     typed_final_attempts: list[dict]
     typed_final_results: dict[str, dict]
+    typed_final_hosted_start: dict
 
 
 def context_to_record(context: RunContextV1) -> dict:

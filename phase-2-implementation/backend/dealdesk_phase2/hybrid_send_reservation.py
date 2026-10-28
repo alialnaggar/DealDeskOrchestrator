@@ -102,7 +102,7 @@ def attempt_path(directory: Path, *, assessment_id: str, start_digest: str,
             or len(assessment_id) > 128 or not isinstance(start_digest, str)
             or len(start_digest) != 64 or any(c not in "0123456789abcdef" for c in start_digest)
             or stage not in ("owner", "decision", "final", "revision_intent", "revision",
-                             "typed_inspection", "typed_final")
+                             "typed_configuration", "typed_inspection", "typed_final")
             or type(ordinal) is not int or ordinal < 0 or ordinal > 6):
         raise HybridContractError("invalid_send_reservation_scope")
     identity = f"{assessment_id}:{start_digest}:{stage}:{ordinal}"

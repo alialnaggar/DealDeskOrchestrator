@@ -1,12 +1,14 @@
-"""Explicit offline-only LangGraph Pricing/Credit typed-final execution.
+"""Default-off LangGraph Pricing/Credit typed-final execution foundation.
 
-The existing hosted M2.0/M2.1 gates do not import this module. This path
-accepts only a local scripted double; no key, _post or hosted activation.
+The existing hosted M2.0/M2.1 gates do not import this module. Public calls
+accept only the scripted double; a separate dormant gate holds the private
+capability for hosted transport. No key, HTTP client or activation lives here.
 """
 
 from hashlib import sha256
 import os
 from pathlib import Path
+from contextlib import nullcontext
 from typing import TypedDict
 
 from langgraph.graph import StateGraph, START, END
@@ -32,6 +34,8 @@ from .typed_final_contract import InvalidTerminal, VERSION as FINAL_VERSION
 
 
 PROTOCOL_VERSION = "pricing-credit-optin-offline-v1"
+HOSTED_PROTOCOL_VERSION = "pricing-credit-optin-hosted-v1"
+_HOSTED_CAPABILITY = object()
 MAX_POSTS = {"pricing": 3, "credit": 2}
 MAX_CONFIGURED_COMPLETION = {"pricing": 2048, "credit": 1536}
 MAX_REPORTED_TOKENS = 24000
@@ -66,14 +70,22 @@ class ScriptedTypedFinal:
 
 
 def run_typed_final_offline(original, config, adapter, model, *, specialist,
-                            inspection_plan=1, owner_dir=None, opt_in=False):
-    """Run a separate default-off offline graph over an original PG checkpoint.
+                            inspection_plan=1, owner_dir=None, opt_in=False,
+                            _capability=None, _hosted_binding=None,
+                            _owner_locked=False):
+    """Run a separate default-off graph over an original PG checkpoint.
 
     `inspection_plan=2` is an explicit preflight selection for Pricing, never
     decided by the provider after the first inspection. The default graph is
     unchanged; a future hosted migration requires a distinct reviewed gate.
     """
-    if (opt_in is not True or type(model) is not ScriptedTypedFinal
+    hosted = (_capability is _HOSTED_CAPABILITY and type(_hosted_binding) is dict
+              and _owner_locked is True)
+    if hosted:
+        from .typed_final_hosted import HostedTypedTransport
+    if (opt_in is not True or (not hosted and (type(model) is not ScriptedTypedFinal
+            or _capability is not None or _hosted_binding is not None or _owner_locked))
+            or hosted and type(model) is not HostedTypedTransport
             or specialist not in MAX_POSTS
             or type(inspection_plan) is not int
             or inspection_plan not in ((1, 2) if specialist == "pricing" else (1,))
@@ -81,6 +93,8 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
         raise ValueError("typed_final_offline_opt_in_required")
     snapshot = original.get_state(config)
     state = snapshot.values
+    if not hosted and state.get("typed_final_hosted_start"):
+        raise EvidenceMismatch("typed_final_hosted_selection_cannot_fallback")
     pinned = pinned_from_state(state)
     pool = adapter.validate_pinned_context(pinned)
     ctx = pinned.context
@@ -127,7 +141,8 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
     if (owner_dir.is_symlink() or owner_dir.stat().st_mode & 0o077 or
             owner_dir.stat().st_uid != os.geteuid()):
         raise EvidenceMismatch("typed_final_owner_invalid")
-    protocol = {"version": PROTOCOL_VERSION, "specialist": specialist,
+    protocol_version = HOSTED_PROTOCOL_VERSION if hosted else PROTOCOL_VERSION
+    protocol = {"version": protocol_version, "specialist": specialist,
         "inspection_plan": inspection_plan, "input_sha256": sha256(_canonical(input).encode()).hexdigest(),
         "assessment_id": ctx.assessment_id, "phase1c_run_id": str(ctx.phase1c_run_id),
         "subject_id": ctx.original_deal_id, "bundle_sha256": ctx.bundle_sha256,
@@ -138,7 +153,8 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
         "owner_directory": str(owner_dir),
         "owner_device": owner_dir.stat().st_dev, "owner_inode": owner_dir.stat().st_ino,
         "configuration_turns": configuration_turns,
-        "configuration_result_sha256": configuration_digest}
+        "configuration_result_sha256": configuration_digest,
+        "hosted_binding": _hosted_binding if hosted else None}
     start_digest = sha256(_canonical(protocol).encode()).hexdigest()
     if (state.get("typed_final_protocol") not in (None, protocol)
             or state.get("typed_final_protocol") is None and
@@ -204,7 +220,7 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                     for x in reserved) > MAX_CONFIGURED_COMPLETION[specialist]):
             raise EvidenceMismatch("typed_final_budget_corrupted")
         for x in rows:
-            if (x.get("protocol_version") != PROTOCOL_VERSION or
+            if (x.get("protocol_version") != protocol_version or
                     x.get("specialist") != specialist or
                     x.get("stage") not in ("typed_inspection", "typed_final") or
                     x.get("ordinal") not in ((0, 1) if x.get("stage") ==
@@ -218,6 +234,19 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                     and x["stage"] == row["stage"] and x["ordinal"] == row["ordinal"]
                     and x["request_sha256"] == row["request_sha256"] for x in rows):
                 raise EvidenceMismatch("typed_final_unreserved_return")
+            if row["status"] == "returned" and (type(row.get("usage")) is not dict
+                    or any(type(row["usage"].get(k)) is not int or
+                        row["usage"][k] < 0 for k in ("prompt_tokens", "completion_tokens"))
+                    or row["usage"]["prompt_tokens"] > 4096 or
+                    row["usage"]["completion_tokens"] > (512 if row["stage"] ==
+                        "typed_inspection" else 1024)):
+                raise EvidenceMismatch("typed_final_reported_usage_corrupted")
+        if hosted and (len(reserved) + _hosted_binding["prior_posts"] > _hosted_binding[
+                "maximum_posts_per_case"] or sum(512 if x["stage"] == "typed_inspection"
+                else 1024 for x in reserved) + _hosted_binding[
+                "prior_configured_completion"] > _hosted_binding[
+                "maximum_configured_completion_per_case"]):
+            raise EvidenceMismatch("typed_final_mixed_budget_corrupted")
         return rows
 
     def checked_attempt(stage, ordinal, body, send):
@@ -234,19 +263,28 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                         ordinal=ordinal, request_digest=digest)):
                 raise EvidenceMismatch("typed_final_uncertain_attempt_no_replay")
             return prior[1], True
-        if len([x for x in attempts() if x["status"] == "reserved"]) >= MAX_POSTS[specialist]:
+        reserved_count = len([x for x in attempts() if x["status"] == "reserved"])
+        if reserved_count >= MAX_POSTS[specialist]:
             raise EvidenceMismatch("typed_final_post_budget")
+        if hosted and (_hosted_binding["prior_posts"] + reserved_count + 1 >
+                _hosted_binding["maximum_posts_per_case"]):
+            raise EvidenceMismatch("typed_final_mixed_post_budget")
         reported = sum(x["usage"]["prompt_tokens"] + x["usage"]["completion_tokens"]
             for x in attempts() if x["status"] == "returned")
-        if reported >= MAX_REPORTED_TOKENS:
+        if reported + (_hosted_binding["prior_reported_tokens"] if hosted else 0) >= (
+                MAX_REPORTED_TOKENS):
             raise EvidenceMismatch("typed_final_reported_token_stop")
         configured = sum(512 if x["stage"] == "typed_inspection" else 1024
             for x in attempts() if x["status"] == "reserved")
         if configured + (512 if stage == "typed_inspection" else 1024) > (
                 MAX_CONFIGURED_COMPLETION[specialist]):
             raise EvidenceMismatch("typed_final_completion_budget")
+        if hosted and (_hosted_binding["prior_configured_completion"] + configured +
+                (512 if stage == "typed_inspection" else 1024) >
+                _hosted_binding["maximum_configured_completion_per_case"]):
+            raise EvidenceMismatch("typed_final_mixed_completion_budget")
         marker = {"stage": stage, "ordinal": ordinal, "request_sha256": digest,
-                  "specialist": specialist, "protocol_version": PROTOCOL_VERSION}
+                  "specialist": specialist, "protocol_version": protocol_version}
         original.update_state(config, {"typed_final_attempts": [*attempts(),
             {**marker, "status": "reserved"}]}, as_node="finish")
         response = claim_and_call(owner_dir, assessment_id=ctx.assessment_id,
@@ -263,7 +301,7 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
 
     def publish(result):
         fresh = original.get_state(config).values
-        review = {"version": PROTOCOL_VERSION, "specialist": specialist,
+        review = {"version": protocol_version, "specialist": specialist,
             "assessment_id": ctx.assessment_id, "subject_id": ctx.original_deal_id,
             "source_input_digest": ctx.source_input_digest,
             "execution": result["execution"], "reason": result["reason"],
@@ -275,6 +313,19 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
             **fresh.get("typed_final_results", {}), specialist: result},
             "reviewer_package": {**fresh.get("reviewer_package", {}), "typed_final_ai": review}},
             as_node="finish")
+
+    def inspection_body(observations, exchanges):
+        body = (m20_wire(input, observations, exchanges=exchanges)
+                if specialist == "pricing" else m21_wire(input, observations,
+                    exchanges=exchanges))
+        body["tools"] = [x for x in body["tools"] if x["function"]["name"] in (
+            input["permitted_tool"], "abstain")]
+        if hosted:
+            from .typed_final_hosted import INSPECTION_PROMPT_SUFFIX
+            body["messages"][0]["content"] += INSPECTION_PROMPT_SUFFIX
+        if len(_canonical(body).encode()) > 8192:
+            raise InvalidTerminal("inspection_request_oversize")
+        return body
 
     def node_inspect(ordinal):
         def node(_):
@@ -296,7 +347,7 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                             ordinal=row["ordinal"], request_digest=row["request_sha256"]):
                         raise EvidenceMismatch("typed_final_result_receipt_uncertain")
                 result = results[specialist]
-                if (result.get("protocol_version") != PROTOCOL_VERSION or
+                if (result.get("protocol_version") != protocol_version or
                         result.get("execution") not in ("completed", "abstained") or
                         type(result.get("validated_claims")) is not list):
                     raise EvidenceMismatch("typed_final_result_corrupted")
@@ -312,7 +363,7 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                         _claims(action, observed)
                 review = original.get_state(config).values["reviewer_package"].get(
                     "typed_final_ai")
-                if (type(review) is not dict or review.get("version") != PROTOCOL_VERSION
+                if (type(review) is not dict or review.get("version") != protocol_version
                         or review.get("assessment_id") != ctx.assessment_id
                         or review.get("specialist") != specialist
                         or review.get("execution") != result["execution"]
@@ -329,7 +380,7 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                 if (len(existing) != 2 or existing[0]["status"] != "reserved"
                         or existing[1]["status"] != "returned" or
                         existing[1].get("action_kind") != "inspect" or
-                        existing[1].get("protocol_version") != PROTOCOL_VERSION or
+                        existing[1].get("protocol_version") != protocol_version or
                         existing[1].get("usage", {}).get("prompt_tokens", 4097) > 4096 or
                         existing[1].get("usage", {}).get("completion_tokens", 513) > 512 or
                         existing[1]["request_sha256"] != existing[0]["request_sha256"] or
@@ -343,11 +394,7 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                 if len(prior) != ordinal or any("tool_call" not in x for x in prior):
                     raise EvidenceMismatch("typed_final_inspection_chain")
                 before = observed[:ordinal]
-                body = (m20_wire(input, before, exchanges=tuple(x["tool_call"] for x in prior))
-                    if specialist == "pricing" else m21_wire(input, before,
-                    exchanges=tuple(x["tool_call"] for x in prior)))
-                body["tools"] = [x for x in body["tools"] if x["function"]["name"] in (
-                    input["permitted_tool"], "abstain")]
+                body = inspection_body(before, tuple(x["tool_call"] for x in prior))
                 if existing[0]["request_sha256"] != request_sha256(body):
                     raise EvidenceMismatch("typed_final_inspection_request_changed")
                 return {"current": "continue"}
@@ -359,12 +406,7 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                 if ordinal:
                     raise EvidenceMismatch("typed_final_inspection_receipt_missing")
             exchanges = tuple(x["tool_call"] for x in prior)
-            body = (m20_wire(input, observed, exchanges=exchanges) if specialist == "pricing"
-                    else m21_wire(input, observed, exchanges=exchanges))
-            body["tools"] = [x for x in body["tools"] if x["function"]["name"] in (
-                input["permitted_tool"], "abstain")]
-            if len(_canonical(body).encode()) > 8192:
-                raise InvalidTerminal("inspection_request_oversize")
+            body = inspection_body(observed, exchanges)
             prior_entry, reused = checked_attempt("typed_inspection", ordinal, body,
                                                   model.decide)
             if reused:
@@ -386,8 +428,8 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                 record("typed_inspection", ordinal, marker, action, usage)
                 publish({
                     "execution": "abstained", "reason": action["reason_code"],
-                    "validated_claims": [], "protocol_version": PROTOCOL_VERSION,
-                    "producer_type": "AI", "provider": "offline_double"})
+                    "validated_claims": [], "protocol_version": protocol_version,
+                    "producer_type": "AI", "provider": "groq" if hosted else "offline_double"})
                 return {"current": "stop"}
             if (action["kind"] != "inspect" or ordinal >= inspection_plan
                     or specialist == "pricing" and action["line_id"] not in input["line_ids"]):
@@ -435,8 +477,8 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
             "reason": None if action["kind"] == "finding" else action["reason_code"],
             "validated_claims": action.get("claims", []),
             "uncertainty_reasons": action.get("uncertainty_reasons", []),
-            "protocol_version": PROTOCOL_VERSION, "producer_type": "AI",
-            "provider": "offline_double"})
+            "protocol_version": protocol_version, "producer_type": "AI",
+            "provider": "groq" if hosted else "offline_double"})
         return {"current": "done"}
 
     # LangGraph coordinates the opted-in specialist's fixed inspection plan.
@@ -452,7 +494,7 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
         graph.add_conditional_edges("inspect_1", lambda s: s["current"],
                                     {"stop": END, "continue": "typed_final"})
     graph.add_edge("typed_final", END)
-    with exclusive_owner(owner_dir, ctx.assessment_id):
+    with (nullcontext() if hosted else exclusive_owner(owner_dir, ctx.assessment_id)):
         if original.get_state(config).values.get("typed_final_protocol") is None:
             original.update_state(config, {"typed_final_protocol": protocol,
                 "typed_final_attempts": [], "typed_final_results": {}}, as_node="finish")
@@ -472,8 +514,9 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                 if specialist not in current:
                     original.update_state(config, {"typed_final_results": {
                         **current, specialist: {"execution": "error", "reason": code,
-                            "validated_claims": [], "protocol_version": PROTOCOL_VERSION,
-                            "producer_type": "AI", "provider": "offline_double"}}},
+                            "validated_claims": [], "protocol_version": protocol_version,
+                            "producer_type": "AI", "provider": "groq" if hosted else
+                            "offline_double"}}},
                         as_node="finish")
             # No fallback, retry, or model-derived abstention.
             raise
