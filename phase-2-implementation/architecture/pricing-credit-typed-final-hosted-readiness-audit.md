@@ -259,3 +259,86 @@ fresh business-database provisioning, provider/account billing state, current
 wire compatibility and private CI remains outstanding. **NO-GO to request
 activation approval** on this evidence alone; implementation completion does
 not authorize activation or a manifest-specific inference trial.
+
+### Shared-writer serialization review (29 October 2026)
+
+**Writer inventory.** The original `orchestrator.py` LangGraph nodes write
+sealed evidence, fixed results, assessment identity and stop state through the
+PostgreSQL saver. Candidate/investigation continuations (`candidate_graph.py`,
+`investigation_graph.py`, `hybrid_pack.py`, `hybrid_offline.py`) and the M2.0/M2.1
+specialist continuations (`m20_specialists.py`, `m21_specialists.py`) can write
+review/results, model-attempt and tool ledgers via `graph.update_state`.
+`tool_ledger.py` and `model_attempts.py` append/reserialize reservations and
+completions. `typed_final_hosted.py` selects the hosted protocol, writes its
+Configuration base budget and invokes M2.0 Configuration; `typed_final_offline.py`
+writes typed protocol, attempts, result and reviewer projection. Historical
+Gemma modules and tests remain separate and uncommitted. The immutable original
+business fixture is read through `phase1c_adapter.py`; fixture provisioning or
+any direct SQL write to the business DB requires separate access control.
+
+The typed-final hosted entry acquires its assessment owner-file lock; the
+offline typed-final continuation uses its own lock when not called by the
+hosted entry. Legacy hybrid/M2.0/M2.1 hosted paths use their respective
+owner directories and do **not** share this new gate's lock. The
+ordinary graph, candidate, tool-ledger and model-ledger writers do not acquire
+it. The saver uses individual PostgreSQL transactions for checkpoints, not a
+transaction spanning validation, reservation and network send; PostgreSQL
+row-level locks on a prior checkpoint cannot prevent insertion of a new head.
+The `claim_and_call` receipt writer uses an exclusive, fsynced file creation,
+not a database lock; other local filesystem actors with owner privileges can
+still alter receipts or private approval files. Direct SQL or checkpoint
+clients with write privileges can bypass every application file lock.
+
+**Observed race and correction.** Previously a writer could change the
+checkpoint after the last post-lock read and before the send reservation; a
+second writer could also change it between that reservation and the sender.
+The new gate commits its checkpoint attempt reservation first, then opens a
+separate PostgreSQL transaction on the dedicated checkpoint database and
+acquires `SHARE ROW EXCLUSIVE` locks on `public.checkpoints`,
+`public.checkpoint_writes` and `public.checkpoint_blobs`. These locks block
+ordinary LangGraph and direct SQL checkpoint DML, including inserts of new
+heads. Under the lock the gate revalidates pinned/fixed state, ledger and
+database identity and compares the current checkpoint ID to the ID immediately
+after its own reservation. Typed-final reservations also verify that their
+parent checkpoint ID matches the pre-reservation validation. The locks remain
+held through the receipt-backed send and are released after the sender
+returns or fails. Lock acquisition has a two-second timeout: contention fails
+closed with a terminal reservation, never a silent retry. Configuration uses
+its existing reservation and validates
+the head after that reservation, before send. A writer that commits before
+the lock changes the head or validated state and prevents the send; one that
+tries to commit during the send waits for the lock. Failed/uncertain receipts
+and reserved attempts remain terminal, without replay or automatic fallback.
+The table lock is limited to the **dedicated checkpoint database** required by
+the production manifest, not a global lock or a change to legacy hosted paths.
+
+**Adversarial results.** Synthetic, offline Configuration/Pricing and Credit
+tests inject a concurrent stop after reservation but before `claim_and_call`'s
+sender: no request is sent, and the Credit case remains terminal on restart.
+Direct SQL on a second connection attempting `UPDATE public.checkpoints` during
+each synthetic sender fails with PostgreSQL `lock_not_available` under a
+400-ms lock timeout; normal bounded requests still finish. Focused hosted,
+offline and contract checks: **18 passed**. A writer holding the checkpoint
+table's write lock for over two seconds also causes a failed, unreplayable
+reservation with no send. A fresh seven-database PostgreSQL
+suite using the pinned Phase 1C source and the existing test virtualenv ran
+`python -m unittest discover -s phase-2-implementation/backend/tests -p 'test_*.py' -v`:
+**316 tests in 126.499 s, OK (7 skipped)**; all seven skips are unrelated
+untracked Gemma diagnostics. The complete local logs are
+`/tmp/opencode/dealdesk-serialization-focused.log` and
+`/tmp/opencode/dealdesk-serialization-regression.log`. No live provider call,
+metadata request or CI dispatch was made.
+
+**Limits and decision.** This is a PostgreSQL checkpoint-DML serialization
+guarantee only while the guard transaction is alive; it does not make direct
+writers cooperative outside the send interval, prevent privileged actors from
+altering the business database or owner directory, prove database creation
+time, or independently verify account billing. Crash after a durable receipt
+does not grant another attempt. A writer changing state after the lock is
+released can invalidate the final review; subsequent restart/acceptance must
+still validate checkpoints and receipts, and deployment must restrict writers
+to the dedicated database. Private CI and actual provider acceptance remain
+unverified. **NO-GO for requesting activation approval** pending owner-verified
+fresh provisioning/account terms, current provider-wire review, independent
+deployment/security review of database and owner-directory privileges, and
+authorized private CI evidence. No activation or trial is approved here.

@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from hashlib import sha256
 from pathlib import Path
 import tempfile
+from threading import Thread
 import unittest
 from unittest.mock import patch
 from uuid import uuid4
@@ -198,7 +199,8 @@ class HostedMockPostgres(unittest.TestCase):
                     return
                 if tamper in ("race_stop", "race_fixed", "race_ledger", "race_bundle",
                               "locked_mutation", "history_cleared", "reused_receipt",
-                              "database_oid"):
+                              "database_oid", "reservation_race", "config_reservation_race",
+                              "lock_timeout"):
                     transport = MockTypedTransport([lambda _: self.fail(
                         "no send after concurrent mutation")])
                     if tamper == "database_oid":
@@ -229,6 +231,54 @@ class HostedMockPostgres(unittest.TestCase):
                                    mutate_after_lock), self.assertRaises(EvidenceMismatch):
                             run_mock(graph, config, self.adapter,
                                 _mock_transport=transport, **args)
+                    elif tamper == "reservation_race":
+                        # The old pre-send check ran before the checkpoint
+                        # reservation. An uncooperative writer can commit in
+                        # the gap, without taking the owner file lock.
+                        from dealdesk_phase2.typed_final_offline import claim_and_call
+                        def mutate_after_reservation(*call_args, **call_kwargs):
+                            graph.update_state(config, {"stop_reason": "concurrent_stop"},
+                                               as_node="finish")
+                            return claim_and_call(*call_args, **call_kwargs)
+                        with patch("dealdesk_phase2.typed_final_offline.claim_and_call",
+                                   mutate_after_reservation), self.assertRaises(EvidenceMismatch):
+                            run_mock(graph, config, self.adapter,
+                                _mock_transport=transport, **args)
+                        self.assertTrue(list(owner.glob("*.hybrid.audit.jsonl")))
+                        self.assertTrue(graph.get_state(config).values.get(
+                            "typed_final_attempts"))
+                        with thesis_checkpointer(os.environ["M20_CHECKPOINT_DATABASE_URL"]) as reopened:
+                            replay = build_original_graph(self.adapter, self.connect, reopened)
+                            with self.assertRaises(EvidenceMismatch):
+                                run_mock(replay, config, self.adapter,
+                                    _mock_transport=transport, **args)
+                    elif tamper == "config_reservation_race":
+                        from dealdesk_phase2.typed_final_hosted import claim_and_call
+                        def mutate_config_reservation(*call_args, **call_kwargs):
+                            graph.update_state(config, {"stop_reason": "concurrent_stop"},
+                                               as_node="finish")
+                            return claim_and_call(*call_args, **call_kwargs)
+                        with patch("dealdesk_phase2.typed_final_hosted.claim_and_call",
+                                   mutate_config_reservation), self.assertRaises(EvidenceMismatch):
+                            run_mock(graph, config, self.adapter,
+                                _mock_transport=transport, **args)
+                        self.assertTrue(graph.get_state(config).values.get("m20_model_attempts"))
+                    elif tamper == "lock_timeout":
+                        from dealdesk_phase2.typed_final_offline import claim_and_call
+                        def hold_checkpoint_write_lock(*call_args, **call_kwargs):
+                            with psycopg.connect(os.environ["M20_CHECKPOINT_DATABASE_URL"]) as sql:
+                                sql.execute("LOCK TABLE public.checkpoints IN ROW EXCLUSIVE MODE")
+                                return claim_and_call(*call_args, **call_kwargs)
+                        with patch("dealdesk_phase2.typed_final_offline.claim_and_call",
+                                   hold_checkpoint_write_lock), self.assertRaisesRegex(
+                                   EvidenceMismatch, "checkpoint_lock_unavailable"):
+                            run_mock(graph, config, self.adapter,
+                                _mock_transport=transport, **args)
+                        with thesis_checkpointer(os.environ["M20_CHECKPOINT_DATABASE_URL"]) as reopened:
+                            replay = build_original_graph(self.adapter, self.connect, reopened)
+                            with self.assertRaises(EvidenceMismatch):
+                                run_mock(replay, config, self.adapter,
+                                    _mock_transport=transport, **args)
                     else:
                         from dealdesk_phase2.typed_final_hosted import exclusive_owner
                         @contextmanager
@@ -249,12 +299,33 @@ class HostedMockPostgres(unittest.TestCase):
                                 _mock_transport=transport, **args)
                     self.assertEqual(transport.requests, [])
                     current = graph.get_state(config).values
-                    self.assertFalse(current.get("m20_model_attempts"))
-                    self.assertFalse(current.get("typed_final_attempts"))
-                    if tamper != "locked_mutation":
+                    if tamper != "config_reservation_race":
+                        self.assertFalse(current.get("m20_model_attempts"))
+                    if tamper not in ("reservation_race", "config_reservation_race",
+                                      "lock_timeout"):
+                        self.assertFalse(current.get("typed_final_attempts"))
+                    if tamper not in ("locked_mutation", "reservation_race",
+                                      "config_reservation_race", "lock_timeout"):
                         self.assertFalse(current.get("typed_final_hosted_start"))
                     return
                 def answer(body):
+                    if tamper == "direct_sql_writer" and not hasattr(answer, "blocked"):
+                        outcomes = []
+                        def direct_writer():
+                            try:
+                                with psycopg.connect(os.environ["M20_CHECKPOINT_DATABASE_URL"]) as sql:
+                                    sql.execute("SET lock_timeout = '400ms'")
+                                    sql.execute("UPDATE public.checkpoints SET metadata = metadata "
+                                        "WHERE thread_id = %s", (identifier,))
+                                outcomes.append("unexpected_write")
+                            except psycopg.errors.LockNotAvailable:
+                                outcomes.append("write_blocked")
+                        worker = Thread(target=direct_writer)
+                        worker.start()
+                        worker.join(timeout=5)
+                        self.assertFalse(worker.is_alive(), "checkpoint writer hung during send")
+                        self.assertEqual(outcomes, ["write_blocked"])
+                        answer.blocked = True
                     if wrong == "transport_config" and "response_format" not in body:
                         raise ProviderError("transport_timeout")
                     if wrong == "http_400" and "response_format" in body:
@@ -315,7 +386,8 @@ class HostedMockPostgres(unittest.TestCase):
                 graph = build_original_graph(self.adapter, self.connect, saver)
                 transport2 = MockTypedTransport([lambda _: self.fail("forbidden replay")])
                 if wrong in ("http_400", "timeout", "citation", "malformed",
-                             "usage", "length", "transport_config", "interrupt") or tamper:
+                             "usage", "length", "transport_config", "interrupt") or (
+                             tamper and tamper != "direct_sql_writer"):
                     with self.assertRaises((EvidenceMismatch, ProviderError, ValueError)):
                         run_mock(graph, config, self.adapter,
                             _mock_transport=transport2, **args)
@@ -349,6 +421,15 @@ class HostedMockPostgres(unittest.TestCase):
                        "database_oid"):
             with self.subTest(tamper=tamper):
                 self.run_case("pricing", tamper=tamper)
+
+    def test_unlocked_reservation_window_fails_closed_after_restart(self):
+        self.run_case("credit", tamper="reservation_race")
+        self.run_case("pricing", tamper="config_reservation_race")
+        self.run_case("credit", tamper="lock_timeout")
+
+    def test_direct_sql_checkpoint_writer_blocked_during_send(self):
+        self.run_case("credit", tamper="direct_sql_writer")
+        self.run_case("pricing", tamper="direct_sql_writer")
 
     def test_shared_checkpoint_database_not_fresh(self):
         # This suite deliberately reuses a checkpoint DB across cases. A

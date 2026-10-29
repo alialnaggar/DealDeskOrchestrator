@@ -288,9 +288,16 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
         marker = {"stage": stage, "ordinal": ordinal, "request_sha256": digest,
                   "specialist": specialist, "protocol_version": protocol_version}
         if hosted:
-            _pre_send()
+            before_reservation = _pre_send()
         original.update_state(config, {"typed_final_attempts": [*attempts(),
             {**marker, "status": "reserved"}]}, as_node="finish")
+        if hosted:
+            reserved_snapshot = original.get_state(config)
+            if (reserved_snapshot.parent_config is None or
+                    reserved_snapshot.parent_config.get("configurable", {}).get(
+                        "checkpoint_id") != before_reservation):
+                raise EvidenceMismatch("typed_hosted_reservation_parent_changed")
+            model.expected_head = reserved_snapshot.config["configurable"]["checkpoint_id"]
         response = claim_and_call(owner_dir, assessment_id=ctx.assessment_id,
             start_digest=start_digest, stage=stage, ordinal=ordinal,
             request_digest=digest, send=lambda: send(body))

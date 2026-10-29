@@ -1,5 +1,6 @@
 """Dormant, separately gated hosted infrastructure for typed Pricing/Credit."""
 
+from contextlib import contextmanager
 import json
 import os
 from hashlib import sha256
@@ -192,6 +193,7 @@ class HostedTypedTransport:
 
     def __init__(self, send, inspection_prompt_sha256, final_prompt_sha256):
         self._send = send
+        self.expected_head = None
         self._inspection_prompt_sha256 = inspection_prompt_sha256
         self._final_prompt_sha256 = final_prompt_sha256
 
@@ -206,7 +208,7 @@ class HostedTypedTransport:
                     {"inspect_pricing_line", "abstain"},
                     {"inspect_customer_credit_evidence", "abstain"})):
             raise ValueError("typed_hosted_inspection_wire_invalid")
-        return self._send(body)
+        return self._send(body, self.expected_head)
 
     def finish(self, body):
         if (body.get("response_format", {}).get("json_schema", {}).get("strict") is not True
@@ -217,7 +219,7 @@ class HostedTypedTransport:
                     "stream", "reasoning_format")) or len(body.get("messages", [])) != 2
                 or len(_canonical(body).encode()) > 8192):
             raise ValueError("typed_hosted_final_wire_invalid")
-        return self._send(body)
+        return self._send(body, self.expected_head)
 
 
 class _ConfigurationModel(GroqM20Model):
@@ -239,10 +241,10 @@ class _ConfigurationModel(GroqM20Model):
             raise ValueError("typed_hosted_config_wire_changed")
         self.last_usage = None
         self.last_tool_call = None
-        self._pre_send()
+        expected_head = self._pre_send()
         response = claim_and_call(self._owner, assessment_id=self._assessment,
             start_digest=self._digest, stage="typed_configuration", ordinal=ordinal,
-            request_digest=request_digest, send=lambda: self._send(body))
+            request_digest=request_digest, send=lambda: self._send(body, expected_head))
         if type(response) is not dict or len(_canonical(response).encode()) > 16384:
             raise ProviderError("provider_response_oversize")
         usage = response.get("usage")
@@ -391,6 +393,27 @@ def _history_identity(original, config, manifest, digest):
             raise EvidenceMismatch("typed_hosted_assessment_history_reused")
 
 
+@contextmanager
+def _checkpoint_send_lock(original):
+    """Block every checkpoint DML writer during final validation and send.
+
+    Use a distinct connection: LangGraph's saver commits its reservation before
+    entering here. The production checkpoint database is dedicated to this case.
+    A mere advisory lock would not constrain an ordinary saver or SQL writer.
+    """
+    import psycopg
+    with psycopg.connect(original.checkpointer.conn.info.dsn) as guard:
+        with guard.transaction():
+            # An uncooperative writer must not stall a guarded send forever.
+            guard.execute("SET LOCAL lock_timeout = '2000ms'")
+            try:
+                guard.execute("LOCK TABLE public.checkpoints, public.checkpoint_writes, "
+                              "public.checkpoint_blobs IN SHARE ROW EXCLUSIVE MODE")
+            except psycopg.errors.LockNotAvailable:
+                raise EvidenceMismatch("typed_hosted_checkpoint_lock_unavailable") from None
+            yield
+
+
 def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sha256,
     specialist, owner_dir, send, credential_digest, exclusive_databases):
     """Internal composition layer; only the gated entry creates a live sender.
@@ -448,6 +471,16 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
                             else ("credit",)) for event in ledger[len(ledger_baseline):]) or
                     latest.values.get("typed_final_hosted_start") != owner):
                 raise EvidenceMismatch("typed_hosted_state_changed_before_send")
+            return latest.config["configurable"]["checkpoint_id"]
+
+        def serialized_send(body, expected_head):
+            # The durable checkpoint reservation and receipt are already in
+            # place. A concurrent writer between validation and this lock
+            # changes the head and fails closed, without invoking the sender.
+            with _checkpoint_send_lock(original):
+                if pre_send() != expected_head:
+                    raise EvidenceMismatch("typed_hosted_checkpoint_changed_before_send")
+                return send(body)
         owner = {"version": MANIFEST_VERSION, "manifest_sha256": approved_manifest_sha256,
             "owner_path": str(owner_dir), "owner_device": owner_dir.stat().st_dev,
             "owner_inode": owner_dir.stat().st_ino, "credential_sha256": credential_digest,
@@ -494,7 +527,7 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
                     raise EvidenceMismatch("typed_hosted_configuration_unverified")
                 original.update_state(config, {"m20_hosted_base_tokens": 0}, as_node="finish")
                 run_configuration(original, config, adapter, "configuration",
-                    _ConfigurationModel(send, owner_dir, ctx.assessment_id,
+                    _ConfigurationModel(serialized_send, owner_dir, ctx.assessment_id,
                                         approved_manifest_sha256, pre_send), hosted=True)
                 reserved, completed = _checked_configuration(original, config, adapter, owner_dir,
                     approved_manifest_sha256, ctx.assessment_id)
@@ -519,7 +552,7 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
                 "maximum_configured_completion_per_case"]}
         if prior_reported >= MAX_REPORTED_TOKENS:
             raise EvidenceMismatch("typed_hosted_reported_budget_exhausted")
-        model = HostedTypedTransport(send, manifest["inspection_prompt_sha256"],
+        model = HostedTypedTransport(serialized_send, manifest["inspection_prompt_sha256"],
                                      manifest["final_prompt_sha256"])
         return run_typed_final_offline(original, config, adapter, model,
             specialist=specialist, inspection_plan=manifest["inspection_plan"],
