@@ -7,6 +7,7 @@ from typing import Literal, TypedDict
 
 from .phase1c_adapter import EvidenceMismatch
 from .tool_ledger import entries, was_returned
+from .tool_permissions import SPECIALIST_TOOLS
 
 
 CLAIM_TYPES = frozenset((
@@ -54,7 +55,9 @@ def _visible_records(graph, config, input):
     visible = []
     for event in ledger:
         identity = event.get("identity", {})
-        if event.get("status") != "completed" or event.get("args", {}).get("line_id") != input.line_id:
+        if (event.get("tool") not in SPECIALIST_TOOLS["fulfillment"] or
+                event.get("status") != "completed" or
+                event.get("args", {}).get("line_id") != input.line_id):
             continue
         if (identity.get("phase1c_run_id") != input.phase1c_run_id
                 or identity.get("subject_id") != input.subject_id
@@ -82,6 +85,8 @@ def _record_for(ref, input, graph, config, visible):
 
 def _line_results(ledger, line_id):
     return [item["result"] for item in ledger if item.get("status") == "completed"
+            and item.get("tool") in SPECIALIST_TOOLS["fulfillment"]
+            and item.get("identity", {}).get("specialist") == "fulfillment"
             and item.get("args", {}).get("line_id") == line_id
             and item.get("result", {}).get("execution") == "completed"]
 

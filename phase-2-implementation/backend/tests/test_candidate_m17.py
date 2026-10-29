@@ -67,6 +67,20 @@ def ledger(*, evidence="eligible_binding", refs=None):
 
 
 class BindingContractTests(unittest.TestCase):
+    def test_other_specialists_share_ledger_without_authorizing_binding(self):
+        pricing = {**ledger()[0], "tool": "inspect_pricing_line",
+            "identity": {**ledger()[0]["identity"], "specialist": "pricing"},
+            "returned_refs": ["pricing_line:PRIVATE"],
+            "result": {"execution": "completed"}}
+        self.assertEqual(validate_binding_proposal(proposal(), fake_input(),
+            [pricing, *ledger()])["verification"], "unverified")
+        with self.assertRaisesRegex(EvidenceMismatch, "not returned"):
+            validate_binding_proposal(proposal(), fake_input(), [pricing])
+        forged = {**ledger()[0], "identity": {**ledger()[0]["identity"],
+            "specialist": "pricing"}}
+        with self.assertRaisesRegex(EvidenceMismatch, "ledger identity"):
+            validate_binding_proposal(proposal(), fake_input(), [pricing, forged])
+
     def test_authorized_binding_path_is_only_an_unverified_proposal(self):
         result = validate_binding_proposal(proposal(), fake_input(), ledger())
         self.assertEqual(result["verification"], "unverified")

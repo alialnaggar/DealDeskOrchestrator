@@ -79,6 +79,97 @@ class M21AuthorizedStatusManifest(unittest.TestCase):
     "M20_DATABASE_URL", "M20_CHECKPOINT_DATABASE_URL", "DEALDESK_PHASE1C_CHECKOUT")),
     "Fresh isolated PostgreSQL source and checkpoint databases required")
 class M21HostedGatePostgres(unittest.TestCase):
+    def test_full_six_development_graph_continuations_offline(self):
+        """Fresh PostgreSQL checkpoint; all six model transports are offline doubles."""
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
+        from run_groq_development import _six_campaign
+        name = "dev_six_" + uuid4().hex[:16]
+        parts = psycopg.conninfo.conninfo_to_dict(self.checkpoint)
+        admin = psycopg.conninfo.make_conninfo(**{**parts, "dbname": "postgres"})
+        dedicated = psycopg.conninfo.make_conninfo(**{**parts, "dbname": name})
+        with psycopg.connect(admin, autocommit=True) as db:
+            db.execute("CREATE DATABASE " + name)
+        try:
+            with TemporaryDirectory(dir="/tmp/opencode") as directory:
+                root = Path(directory)
+                root.chmod(0o700)
+                with thesis_checkpointer(dedicated) as saver:
+                    graph, config, before, _ = self.original(saver)
+                    calls = []
+                    def fake_post(url, key, header, body, **kwargs):
+                        calls.append(body)
+                        if body.get("response_format", {}).get("json_schema", {}).get(
+                                "name") == "fulfillment_contribution":
+                            task = json.loads(body["messages"][1]["content"].split(
+                                "Input and observations: ", 1)[1])
+                            return {"choices": [{"finish_reason": "stop", "message": {
+                                "content": json.dumps({"kind": "abstention", "line_id": task[
+                                    "input"]["line_id"], "delivery_slices": [], "citations": [],
+                                    "tradeoffs": [], "assumptions": [], "unmet_requirements": [],
+                                    "uncertainty_reasons": [], "finding": "", "reason":
+                                    "insufficient evidence", "claims": [],
+                                    "tradeoff_code": "none"})}}], "model": "openai/gpt-oss-120b",
+                                "usage": {"prompt_tokens": 100, "completion_tokens": 40}}
+                        if "Input and observations: " in body["messages"][1]["content"]:
+                            return {"choices": [{"finish_reason": "stop", "message": {
+                                "content": "READY"}}], "model": "openai/gpt-oss-120b",
+                                "usage": {"prompt_tokens": 100, "completion_tokens": 15}}
+                        public = json.loads(body["messages"][1]["content"])["input"]
+                        domain = public["specialist"]
+                        if "response_format" not in body:
+                            if domain in TOOLS and len(body["messages"]) > 2:
+                                record = json.loads(body["messages"][3]["content"])[
+                                    "records"][0]
+                                field, value = next(iter(record["fields"].items()))
+                                return response("submit_finding", {"claims": [{
+                                    "ref": record["ref"], "field": field,
+                                    "value_json": json.dumps(value)}]})
+                            name = (TOOLS[domain] if domain in TOOLS else
+                                "inspect_" + domain + "_line")
+                            args = ({"subject_id": public["subject_id"]} if domain in TOOLS
+                                else {"line_id": public["line_ids"][0]})
+                            return response(name, args)
+                        observation = json.loads(body["messages"][1]["content"])[
+                            "observations"][0]
+                        field = {"configuration": "is_sellable", "pricing":
+                            "fixed_margin_pct", "credit": "credit_status"}[domain]
+                        record = next(row for row in observation["records"] if
+                            field in row["fields"])
+                        return {"choices": [{"finish_reason": "stop", "message": {
+                            "content": json.dumps({"version": FINAL_VERSION,
+                                "kind": "finding", "claims": [{"ref": record["ref"],
+                                "field": field, "value_json": json.dumps(record[
+                                    "fields"][field])}], "reason_code": "none",
+                                "uncertainty_reasons": []})}}],
+                            "usage": {"prompt_tokens": 200, "completion_tokens": 60}}
+                    run_id = next(x.run_id for x in CASES if x.case_id == "B01")
+                    with patch.dict(os.environ, {"DEALDESK_GROQ_DEV_ENABLE": "1"}), patch(
+                            "dealdesk_phase2.live_models._post", side_effect=fake_post), patch(
+                            "dealdesk_phase2.m21_groq_contract._post", side_effect=fake_post):
+                        status = _six_campaign(graph, config, self.adapter,
+                            case_id="B01", account_id="synthetic-test-account", root=root,
+                            key="gsk_offline_test_placeholder_123456789", run_id=run_id)
+                    state = graph.get_state(config).values
+                    self.assertEqual(status, "six_stages_completed", msg={
+                        "fulfillment": {k: state.get("ai_fulfillment_result", {}).get(k)
+                            for k in ("execution", "error")}, "calls": len(calls),
+                        "attempts": [(r.get("status"), r.get("error_code")) for r in
+                            state.get("model_attempt_ledger", [])]})
+                    self.assertEqual(state["specialist_results"], before["specialist_results"])
+                    self.assertEqual(state["ai_fulfillment_result"]["execution"], "completed")
+                    self.assertEqual(state["typed_final_results"]["pricing"]["execution"],
+                                     "completed")
+                    self.assertEqual({name: row["execution"] for name, row in
+                        state["m21_ai_results"].items()}, {name: "completed" for
+                        name in TOOLS})
+                    self.assertEqual(state["m21_review"]["assessment_id"],
+                                     config["configurable"]["thread_id"])
+                    self.assertEqual(len(calls), 12)
+        finally:
+            with psycopg.connect(admin, autocommit=True) as db:
+                db.execute("DROP DATABASE " + name)
+
     def test_standing_full_typed_credit_six_sends_and_no_replay(self):
         from dealdesk_phase2.checkpoint import thesis_checkpointer
         from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION

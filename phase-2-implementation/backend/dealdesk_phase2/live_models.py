@@ -49,6 +49,24 @@ class _NoRedirect(HTTPRedirectHandler):
 def _post(url: str, key: str, header: str, body: dict, *, timeout_seconds: int = 30,
           classify_transport: bool = False, reject_redirects: bool = False,
           capture_http_error: bool = False) -> dict:
+    # Only the explicitly opted-in Groq development runtime uses this shared
+    # credential/model coordinator; never apply delays to other providers.
+    if (os.environ.get("DEALDESK_GROQ_DEV_ENABLE") == "1" and
+            url == "https://api.groq.com/openai/v1/chat/completions" and
+            header == "Authorization" and key.startswith("Bearer ")):
+        from .groq_dev_rate import send_with_limit
+        return send_with_limit(body, key[7:], lambda hook: _post_once(url, key,
+            header, body, timeout_seconds=timeout_seconds,
+            classify_transport=classify_transport, reject_redirects=reject_redirects,
+            capture_http_error=capture_http_error, rate_hook=hook))
+    return _post_once(url, key, header, body, timeout_seconds=timeout_seconds,
+        classify_transport=classify_transport, reject_redirects=reject_redirects,
+        capture_http_error=capture_http_error)
+
+
+def _post_once(url: str, key: str, header: str, body: dict, *, timeout_seconds: int = 30,
+               classify_transport: bool = False, reject_redirects: bool = False,
+               capture_http_error: bool = False, rate_hook=None) -> dict:
     if type(timeout_seconds) is not int or not 1 <= timeout_seconds <= 60:
         raise ProviderError("invalid_request_timeout")
     payload = _json(body).encode("utf-8")
@@ -60,6 +78,8 @@ def _post(url: str, key: str, header: str, body: dict, *, timeout_seconds: int =
         # The hosted hybrid may not forward Authorization to a redirected URL.
         client = build_opener(_NoRedirect()).open if reject_redirects else urlopen
         with client(request, timeout=timeout_seconds) as response:
+            if rate_hook is not None:
+                rate_hook(response.status, response.headers)
             if not classify_transport:
                 return json.load(response)
             # Bound untrusted response bytes before decoding. Partial/truncated
@@ -79,6 +99,8 @@ def _post(url: str, key: str, header: str, body: dict, *, timeout_seconds: int =
         # Preserve the historical adapter's error lifetime; only the new
         # hybrid no-redirect path owns and closes its failed response here.
         status = exc.code
+        if rate_hook is not None:
+            rate_hook(status, exc.headers)
         diagnostic = None
         if capture_http_error and reject_redirects and classify_transport:
             from .groq_error_diagnostic import classify_error, safe_fields

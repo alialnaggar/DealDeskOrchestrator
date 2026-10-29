@@ -174,6 +174,9 @@ def main():
     args = cli.parse_args()
     if os.environ.get(DEV_ENABLE_ENV) != "1":
         raise ValueError("groq_development_opt_in_required")
+    if os.environ.get("DEALDESK_GROQ_ACCOUNT_ID") not in (None, args.account_id):
+        raise ValueError("groq_development_rate_account_mismatch")
+    os.environ["DEALDESK_GROQ_ACCOUNT_ID"] = args.account_id
     if args.specialist == "credit" and args.case != "B05":
         raise ValueError("groq_development_credit_case_not_prepared")
     if args.specialist in ("fulfillment", "six_campaign") and args.case not in (

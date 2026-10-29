@@ -5,7 +5,7 @@ introduce an atomic reservation/compare-and-swap mechanism before enablement.
 """
 
 from .phase1c_adapter import EvidenceMismatch
-from .tool_permissions import MAX_CALLS
+from .tool_permissions import MAX_CALLS, SPECIALIST_TOOLS
 
 
 def entries(graph, config, assessment_id: str, bundle_sha256: str) -> list[dict]:
@@ -56,8 +56,10 @@ def complete(graph, config, assessment_id: str, digest: str,
 
 
 def was_returned(graph, config, assessment_id: str, digest: str,
-                 source_category: str, source_id: str, line_id: str) -> bool:
+                  source_category: str, source_id: str, line_id: str) -> bool:
     ref = f"{source_category}:{source_id}"
-    return any(item["status"] == "completed" and item["args"].get("line_id") == line_id
-               and ref in item["returned_refs"]
-               for item in entries(graph, config, assessment_id, digest))
+    return any(item["status"] == "completed" and item.get("tool") in
+                   SPECIALIST_TOOLS["fulfillment"] and item.get("identity", {}).get(
+                   "specialist") == "fulfillment" and item["args"].get("line_id") == line_id
+                and ref in item["returned_refs"]
+                for item in entries(graph, config, assessment_id, digest))

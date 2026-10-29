@@ -6,6 +6,7 @@ import json
 from typing import Literal, TypedDict
 
 from .phase1c_adapter import EvidenceMismatch
+from .tool_permissions import SPECIALIST_TOOLS
 from .tool_ledger import entries
 
 
@@ -66,7 +67,13 @@ def validate_binding_proposal(raw: object, input, ledger: list[dict]) -> dict:
     visible = set()
     for event in ledger:
         identity = event.get("identity", {})
-        if event.get("status") != "completed" or event.get("args", {}).get("line_id") != input.line_id:
+        # The shared original checkpoint also contains Configuration/Pricing
+        # inspections for this line. Only Fulfillment's named tools can
+        # authorize a binding source; a misattributed Fulfillment call still
+        # fails the full identity check below.
+        if (event.get("tool") not in SPECIALIST_TOOLS["fulfillment"] or
+                event.get("status") != "completed" or
+                event.get("args", {}).get("line_id") != input.line_id):
             continue
         if (identity.get("assessment_id") != input.assessment_id
                 or identity.get("phase1c_run_id") != input.phase1c_run_id
