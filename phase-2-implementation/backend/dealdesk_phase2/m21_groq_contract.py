@@ -162,9 +162,10 @@ class GroqM21Model:
         if input["specialist"] != self.specialist:
             raise ValueError("m21_groq_wrong_specialist")
         if self._credit_typed_final and self.specialist == "credit" and observations:
-            from .groq_typed_final import request_body as final_body, DEVELOPMENT_FINAL_INSTRUCTION
+            from .groq_typed_final import (request_body as final_body,
+                CREDIT_DEVELOPMENT_FINAL_INSTRUCTION)
             return final_body(input, observations, completed_ledger=observations,
-                              final_instruction=DEVELOPMENT_FINAL_INSTRUCTION)
+                              final_instruction=CREDIT_DEVELOPMENT_FINAL_INSTRUCTION)
         return request_body(input, observations, exchanges=self.previous_calls)
 
     def next_action(self, input, observations):

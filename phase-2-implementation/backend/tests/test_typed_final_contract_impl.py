@@ -7,7 +7,8 @@ from unittest.mock import patch
 
 from dealdesk_phase2.groq_typed_final import (MAX_COMPLETION_TOKENS,
     FinalResponseError, configuration_final_body, parse_configuration_final,
-    request_body, request_sha256, parse_response, DEVELOPMENT_FINAL_INSTRUCTION)
+    request_body, request_sha256, parse_response, DEVELOPMENT_FINAL_INSTRUCTION,
+    CREDIT_DEVELOPMENT_FINAL_INSTRUCTION)
 from dealdesk_phase2.typed_final_contract import InvalidTerminal, VERSION, decode, schema
 from dealdesk_phase2.m21_redaction import model_view
 from test_terminal_final_offline_design import fixture, finding, response
@@ -18,6 +19,30 @@ def final_payload(ref, field, value):
 
 
 class TypedFinalContractImpl(unittest.TestCase):
+    def test_credit_prompt_invites_exact_observation_not_credit_clearance(self):
+        input, rows, _, ref, field, value = fixture("credit")
+        body = request_body(input, rows, completed_ledger=rows,
+            final_instruction=CREDIT_DEVELOPMENT_FINAL_INSTRUCTION)
+        instruction = body["messages"][0]["content"]
+        self.assertIn("credit-observation-v1", instruction)
+        self.assertIn("not as clearance", instruction)
+        self.assertIn("If no exact field is supportable or the evidence is uncertain, abstain", instruction)
+        self.assertNotIn(ref, instruction)
+        pricing_input, pricing_rows, *_ = fixture("pricing")
+        with self.assertRaises(InvalidTerminal):
+            request_body(pricing_input, pricing_rows, completed_ledger=pricing_rows,
+                final_instruction=CREDIT_DEVELOPMENT_FINAL_INSTRUCTION)
+        alias = next(iter(model_view(input, rows)[2]))
+        self.assertEqual(parse_response(response(final_payload(alias, field, value)),
+            input=input, observations=rows, development=True)["kind"], "finding")
+        abstain = {"version": VERSION, "kind": "abstain", "claims": [],
+            "uncertainty_reasons": [], "reason_code": "model_uncertainty"}
+        self.assertEqual(parse_response(response(abstain), input=input,
+            observations=rows, development=True)["kind"], "abstain")
+        with self.assertRaises(InvalidTerminal):
+            parse_response(response(final_payload(alias, field, "fabricated")),
+                input=input, observations=rows, development=True)
+
     def test_development_caps_and_diagnostic_categories_fail_closed(self):
         from dealdesk_phase2.typed_final_hosted import budgets
         input, rows, _, ref, field, value = fixture("pricing")
