@@ -347,3 +347,23 @@ evaluation digest was reproduced in a new isolated PostgreSQL cohort after
 generating the sample artifacts. Remaining Week 1–4 work is unchanged:
 independent answers (0/36), richer source families, real-model and hosted
 compatibility under **separate approval**, and eventual reviewer UI.
+
+## First authorized typed-final B05 Pricing trial — stopped (29 October 2026)
+
+The owner separately approved the exact one-line activation and one-case
+manifest/budget. A single restricted, Phase 1C-pinned B05 invocation sent
+**two Configuration prerequisite POSTs**, both with returned receipts, for
+**1,024 configured completion tokens**. The first completed one allowed
+product inspection; the second response was rejected as invalid model/tool
+output before checkpointing a returned action. No Pricing inspection or
+typed-schema final was sent, so [this trial result](../evaluation/pricing-b05-typed-final-first-authorized-result.md)
+**does not establish** that the typed-final approach fixes the previous
+`tool_use_failed` HTTP 400. The second send's receipt returned successfully,
+but its unparsed checkpoint reservation is terminal and must never be replayed.
+Fixed review stayed `needs_revision`; the gate was immediately restored to
+`HOSTED_ACTIVATION=False`, with private receipts retained. Eight focused
+offline tests passed after rollback; private CI remains unverified under the
+owner's one-case exception. Next: source-bound offline diagnosis of the
+Configuration second-turn wire/response category; any new hosted case needs
+fresh identity, budget and separate authorization. No broader hosted
+success or measured model-quality claim follows from this single stop.
