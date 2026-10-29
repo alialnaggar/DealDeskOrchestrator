@@ -347,9 +347,13 @@ class LiveInvestigationModel:
             if self._last_sent is not None and self.pace_seconds:
                 sleep(max(0, self.pace_seconds - (monotonic() - self._last_sent)))
             self._last_sent = monotonic()
+            diagnostic_enabled = (self.provider == "groq" and
+                os.environ.get("DEALDESK_GROQ_DEV_ENABLE") == "1")
             response = _post(url, auth, header, body,
-                             timeout_seconds=self.request_timeout_seconds,
-                             classify_transport=self.classify_transport)
+                              timeout_seconds=self.request_timeout_seconds,
+                              classify_transport=self.classify_transport or diagnostic_enabled,
+                              reject_redirects=diagnostic_enabled,
+                              capture_http_error=diagnostic_enabled)
             action, usage, response_model = self._parse(response, phase)
             model_attempts.complete(self.graph, self.config, input, attempt_id,
                                     status="completed", action=action, usage=usage,
@@ -359,11 +363,15 @@ class LiveInvestigationModel:
             return action
         except Exception as exc:
             code = exc.code if isinstance(exc, ProviderError) else "invalid_provider_response"
+            from .groq_error_diagnostic import safe_fields
+            diagnostic = (safe_fields(exc.diagnostic) if isinstance(exc, ProviderError)
+                else {})
             model_attempts.complete(self.graph, self.config, input, attempt_id,
                                     status="error", action=None,
                                     usage=self.error_usage(response), error_code=code,
                                     response_model=None,
-                                    provider_diagnostic=self.provider_diagnostic(response, phase),
+                                    provider_diagnostic=(diagnostic or
+                                        self.provider_diagnostic(response, phase)),
                                     latency_ms=round((monotonic() - start) * 1000))
             raise ProviderError(code) from None
 

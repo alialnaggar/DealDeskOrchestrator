@@ -27,7 +27,8 @@ from dealdesk_phase2.investigation_graph import run_original_investigate_and_rev
 from dealdesk_phase2.local_env import with_local_groq_key
 from dealdesk_phase2.live_models import LiveInvestigationModel, GROQ_MODEL
 from dealdesk_phase2.m21_groq_contract import GroqM21Model
-from dealdesk_phase2.m21_specialists import TOOLS as M21_TOOLS, run_m21_evaluation
+from dealdesk_phase2.m21_specialists import (TOOLS as M21_TOOLS,
+    checked_candidate_context, run_m21_evaluation)
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from dealdesk_phase2.phase1c_adapter import Phase1CAdapter
 from dealdesk_phase2.typed_final_hosted import DEV_ENABLE_ENV, run_groq_development
@@ -46,6 +47,9 @@ def _m21_campaign(graph, config, adapter, *, case_id, owner, root, key,
     pinned = pinned_from_state(graph.get_state(config).values)
     adapter.validate_pinned_context(pinned)
     ctx = pinned.context
+    candidate_context = (checked_candidate_context(graph.get_state(config).values)
+        if typed_credit and graph.get_state(config).values.get("candidate_status") == "fixed_checked"
+        else None)
     with graph.phase2_connection_factory() as connection:
         business_name, business_oid = connection.execute(
             "SELECT current_database(), oid FROM pg_database WHERE datname=current_database()"
@@ -56,7 +60,8 @@ def _m21_campaign(graph, config, adapter, *, case_id, owner, root, key,
     manifest.update(status="standing_development" if (policy_routing_only or
         typed_credit) else
         "authorized_one_case", version="m21-policy-route-standing-dev-v1" if
-        policy_routing_only else "m21-credit-terminal-standing-dev-v1" if
+        policy_routing_only else "m21-original-after-candidate-standing-dev-v1" if
+        candidate_context is not None else "m21-credit-terminal-standing-dev-v1" if
         typed_credit else manifest["version"],
         **({"order": ["policy", "approval_routing"],
             "allowed_tools": {name: M21_TOOLS[name] for name in (
@@ -69,9 +74,11 @@ def _m21_campaign(graph, config, adapter, *, case_id, owner, root, key,
             "source_input_digest": ctx.source_input_digest,
             "as_of_at": ctx.as_of_at.isoformat(),
             "data_snapshot_ref": ctx.data_snapshot_ref}],
-        execution_context={"fixture_database": business_name,
-            "checkpoint_database": checkpoint_row["current_database"],
-            "owner_directory": str(owner), "fresh_databases_required": True})
+         execution_context={"fixture_database": business_name,
+             "checkpoint_database": checkpoint_row["current_database"],
+             "owner_directory": str(owner), "fresh_databases_required": True},
+         **({"candidate_context": candidate_context} if
+            candidate_context is not None else {}))
     _database_identity(graph, {"execution_context": {
         **manifest["execution_context"], "fixture_database_oid": business_oid,
         "checkpoint_database_oid": checkpoint_row["oid"]},
@@ -150,10 +157,10 @@ def _six_campaign(graph, config, adapter, *, case_id, account_id, root, key, run
     state = graph.get_state(config).values
     if state.get("ai_fulfillment_result", {}).get("execution") != "completed":
         return "fulfillment_incomplete"
-    if state.get("candidate_status") != "not_started":
-        # M2.1 explicitly requires no candidate. Never erase or relabel a
-        # fixed-checked candidate just to continue the six-stage campaign.
+    if state.get("candidate_status") not in ("not_started", "fixed_checked"):
         return "candidate_requires_separate_review"
+    if state.get("candidate_status") == "fixed_checked":
+        checked_candidate_context(state)  # fail before any additional send
     owner = root / "owner"
     # main() creates this owner directory during fresh-case provisioning. The
     # offline campaign also runs standalone with a not-yet-created root.
@@ -240,6 +247,8 @@ def main():
                     "fulfillment": state.get("ai_fulfillment_result", {}).get("execution"),
                     **{name: state.get("m21_ai_results", {}).get(name, {}).get("execution")
                        for name in M21_TOOLS}}
+                result["all_six_ai_findings_completed"] = all(
+                    execution == "completed" for execution in result["six_specialists"].values())
                 result["stage_errors"] = {name: {k: row.get(k) for k in (
                     "reason", "model_output_category")} for name, row in (
                     ("configuration", state.get("m20_ai_results", {}).get("configuration", {})),

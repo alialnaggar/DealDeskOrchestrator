@@ -233,6 +233,19 @@ class LiveModelTests(TestCase):
         self.assertEqual(result["ai_fulfillment_result"]["execution"], "error")
         self.assertNotIn("model_attempt_ledger", result)
 
+    def test_dev_http_failure_records_only_allowlisted_diagnostic(self):
+        with patch.dict(os.environ, {"DEALDESK_GROQ_DEV_ENABLE": "1"}):
+            result, request = self.run_model([ProviderError("http_400", diagnostic={
+                "type": "invalid_request_error", "code": "json_validate_failed",
+                "param": "messages", "request_id": "invalid private id"})])
+        self.assertEqual(result["model_attempt_ledger"][-1]["error_code"], "http_400")
+        self.assertEqual(result["model_attempt_ledger"][-1]["provider_diagnostic"], {
+            "type": "invalid_request_error", "code": "json_validate_failed",
+            "param": "messages"})
+        self.assertNotIn("private", str(result["model_attempt_ledger"][-1]))
+        self.assertTrue(request.call_args.kwargs["reject_redirects"])
+        self.assertTrue(request.call_args.kwargs["capture_http_error"])
+
     def test_completed_model_decision_replays_without_second_network_call(self):
         first = {"choices": [{"message": {"tool_calls": [{"function": {
             "name": "inspect_line_supply", "arguments": '{"line_id":"L1"}'}}]}}]}

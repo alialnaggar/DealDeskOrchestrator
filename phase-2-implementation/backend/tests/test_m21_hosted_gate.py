@@ -12,7 +12,8 @@ from uuid import uuid4
 from dealdesk_phase2.hybrid_pack import _canonical
 from dealdesk_phase2.live_models import ProviderError
 from dealdesk_phase2.m21_groq_contract import GroqM21Model
-from dealdesk_phase2.m21_specialists import run_m21_evaluation, TOOLS
+from dealdesk_phase2.m21_specialists import (checked_candidate_context,
+    run_m21_evaluation, TOOLS)
 from dealdesk_phase2.hybrid_send_reservation import attempt_path
 from dealdesk_phase2.hybrid_contracts import HybridContractError
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
@@ -80,6 +81,12 @@ class M21AuthorizedStatusManifest(unittest.TestCase):
     "Fresh isolated PostgreSQL source and checkpoint databases required")
 class M21HostedGatePostgres(unittest.TestCase):
     def test_full_six_development_graph_continuations_offline(self):
+        self._six_campaign_offline()
+
+    def test_full_six_original_ai_with_fixed_checked_candidate_offline(self):
+        self._six_campaign_offline(binding=True)
+
+    def _six_campaign_offline(self, *, binding=False):
         """Fresh PostgreSQL checkpoint; all six model transports are offline doubles."""
         from dealdesk_phase2.checkpoint import thesis_checkpointer
         from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
@@ -98,6 +105,7 @@ class M21HostedGatePostgres(unittest.TestCase):
                 with thesis_checkpointer(dedicated) as saver:
                     graph, config, before, _ = self.original(saver)
                     calls = []
+                    model_visibility = []
                     def fake_post(url, key, header, body, **kwargs):
                         calls.append(body)
                         if body.get("response_format", {}).get("json_schema", {}).get(
@@ -105,12 +113,20 @@ class M21HostedGatePostgres(unittest.TestCase):
                             task = json.loads(body["messages"][1]["content"].split(
                                 "Input and observations: ", 1)[1])
                             return {"choices": [{"finish_reason": "stop", "message": {
-                                "content": json.dumps({"kind": "abstention", "line_id": task[
+                                "content": json.dumps({"kind": ("binding_proposal" if binding else
+                                    "abstention"), "line_id": task[
                                     "input"]["line_id"], "delivery_slices": [], "citations": [],
                                     "tradeoffs": [], "assumptions": [], "unmet_requirements": [],
                                     "uncertainty_reasons": [], "finding": "", "reason":
                                     "insufficient evidence", "claims": [],
-                                    "tradeoff_code": "none"})}}], "model": "openai/gpt-oss-120b",
+                                    "tradeoff_code": ("partial_delivery_requires_customer_acceptance"
+                                        if binding else "none"), **({"delivery_slices": [
+                                        {"quantity": "8", "delivery_date": "2026-09-03",
+                                         "source_refs": ["inventory:M18-INV-B01"]},
+                                        {"quantity": "2", "delivery_date": "2026-09-08",
+                                         "source_refs": ["inbound_supply:M18-IN-B01",
+                                                         "inventory:M18-INV-B01"]}]}
+                                        if binding else {})})}}], "model": "openai/gpt-oss-120b",
                                 "usage": {"prompt_tokens": 100, "completion_tokens": 40}}
                         if "Input and observations: " in body["messages"][1]["content"]:
                             return {"choices": [{"finish_reason": "stop", "message": {
@@ -118,6 +134,9 @@ class M21HostedGatePostgres(unittest.TestCase):
                                 "usage": {"prompt_tokens": 100, "completion_tokens": 15}}
                         public = json.loads(body["messages"][1]["content"])["input"]
                         domain = public["specialist"]
+                        if binding and domain in TOOLS:
+                            model_visibility.append((domain, public.get("subject_id"),
+                                "M17-" in _canonical(body)))
                         if "response_format" not in body:
                             if domain in TOOLS and len(body["messages"]) > 2:
                                 record = json.loads(body["messages"][3]["content"])[
@@ -148,9 +167,19 @@ class M21HostedGatePostgres(unittest.TestCase):
                     with patch.dict(os.environ, {"DEALDESK_GROQ_DEV_ENABLE": "1"}), patch(
                             "dealdesk_phase2.live_models._post", side_effect=fake_post), patch(
                             "dealdesk_phase2.m21_groq_contract._post", side_effect=fake_post):
-                        status = _six_campaign(graph, config, self.adapter,
-                            case_id="B01", account_id="synthetic-test-account", root=root,
-                            key="gsk_offline_test_placeholder_123456789", run_id=run_id)
+                        try:
+                            status = _six_campaign(graph, config, self.adapter,
+                                case_id="B01", account_id="synthetic-test-account", root=root,
+                                key="gsk_offline_test_placeholder_123456789", run_id=run_id)
+                        except EvidenceMismatch:
+                            if not binding:
+                                raise
+                            snapshot = graph.get_state(config).values
+                            self.fail(str({"m21": {k: (v.get("execution"), v.get("reason"),
+                                v.get("model_output_category")) for k,v in snapshot.get(
+                                "m21_ai_results",{}).items()}, "calls": len(calls),
+                                "tool_count": len(snapshot.get("tool_access_ledger", [])),
+                                "visibility": model_visibility}))
                     state = graph.get_state(config).values
                     self.assertEqual(status, "six_stages_completed", msg={
                         "fulfillment": {k: state.get("ai_fulfillment_result", {}).get(k)
@@ -158,6 +187,18 @@ class M21HostedGatePostgres(unittest.TestCase):
                         "attempts": [(r.get("status"), r.get("error_code")) for r in
                             state.get("model_attempt_ledger", [])]})
                     self.assertEqual(state["specialist_results"], before["specialist_results"])
+                    self.assertEqual(state["candidate_status"],
+                        "fixed_checked" if binding else "not_started")
+                    if binding:
+                        candidate = next(iter(state["candidate_records"].values()))
+                        self.assertEqual(candidate["fixed_supply_status"],
+                                         "supply_supported_unreserved")
+                        self.assertEqual({v["subject_id"] for v in candidate[
+                            "specialist_results"].values()}, {candidate["candidate_id"]})
+                        self.assertEqual(state["reviewer_package"]["candidates"][0][
+                            "customer_acceptance"], "pending")
+                        self.assertFalse(state["reviewer_package"]["candidates"][0][
+                            "routing"]["eligible_for_ordinary_routing"])
                     self.assertEqual(state["ai_fulfillment_result"]["execution"], "completed")
                     self.assertEqual(state["typed_final_results"]["pricing"]["execution"],
                                      "completed")
@@ -166,7 +207,61 @@ class M21HostedGatePostgres(unittest.TestCase):
                         name in TOOLS})
                     self.assertEqual(state["m21_review"]["assessment_id"],
                                      config["configurable"]["thread_id"])
+                    self.assertEqual(state["m21_review"]["subject_id"],
+                                     state["context"]["original_deal_id"])
+                    self.assertEqual({v["subject_id"] for v in state[
+                        "m21_ai_results"].values()}, {state["context"]["original_deal_id"]})
+                    if binding:
+                        self.assertEqual(state["reviewer_package"]["m21_ai"],
+                                         state["m21_review"])
+                        self.assertEqual({domain for domain, _, _ in model_visibility},
+                                         set(TOOLS))
+                        self.assertTrue(all(subject.startswith("subject:") and not visible
+                            for _, subject, visible in model_visibility), msg=model_visibility)
+                        self.assertEqual(len({subject for _, subject, _ in model_visibility}), 1)
+                        self.assertEqual(json.loads((root / "m21-manifest.json").read_text())[
+                            "candidate_context"]["candidate_id"], candidate["candidate_id"])
+                        from copy import deepcopy
+                        forged = deepcopy(state)
+                        forged["candidate_records"][candidate["candidate_id"]][
+                            "fixed_decision_sha256"] = "0" * 64
+                        with self.assertRaises(EvidenceMismatch):
+                            checked_candidate_context(forged)
+                        forged = deepcopy(state)
+                        forged["candidate_records"][candidate["candidate_id"]][
+                            "specialist_results"]["credit"]["subject_id"] = "M18-D-B01"
+                        with self.assertRaises(EvidenceMismatch):
+                            checked_candidate_context(forged)
+                        forged = deepcopy(state)
+                        forged["reviewer_package"]["candidates"][0][
+                            "routing"]["eligible_for_ordinary_routing"] = True
+                        with self.assertRaises(EvidenceMismatch):
+                            checked_candidate_context(forged)
+                        from dealdesk_phase2.m21_specialists import _validate_m21_start
+                        with self.assertRaises(EvidenceMismatch):
+                            _validate_m21_start(graph, config, self.adapter)
+                        self.assertEqual(state["reviewer_package"]["candidates"][0][
+                            "customer_acceptance"], "pending")
                     self.assertEqual(len(calls), 12)
+                if binding:
+                    approved_manifest = json.loads((root / "m21-manifest.json").read_text())
+                    with thesis_checkpointer(dedicated) as saver:
+                        restarted = build_original_graph(self.adapter, self.connect, saver)
+                        with patch.dict(os.environ, {"DEALDESK_GROQ_DEV_ENABLE": "1",
+                                "GROQ_SECONDARY_API_KEY": "gsk_offline_test_placeholder_123456789"}), patch(
+                                "dealdesk_phase2.m21_groq_contract._post",
+                                side_effect=AssertionError("terminal assessment replayed")) as sender:
+                            resumed = run_m21_evaluation(restarted, config, self.adapter,
+                                models(), manifest=approved_manifest,
+                                approved_manifest_sha256=digest(approved_manifest),
+                                authorized=True, owner_dir=root / "owner",
+                                free_tier_billing_disabled=True,
+                                development_selection=tuple(TOOLS))
+                        sender.assert_not_called()
+                        self.assertEqual(resumed["candidate_records"],
+                                         state["candidate_records"])
+                        self.assertEqual(resumed["m21_model_attempts"],
+                                         state["m21_model_attempts"])
         finally:
             with psycopg.connect(admin, autocommit=True) as db:
                 db.execute("DROP DATABASE " + name)

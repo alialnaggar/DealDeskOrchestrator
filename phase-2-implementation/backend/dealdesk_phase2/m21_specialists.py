@@ -17,7 +17,8 @@ from typing import Literal, NotRequired, Protocol, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from .fulfillment_tools import _json
-from .graph_state import pinned_from_state
+from .graph_state import SPECIALISTS, pinned_from_state, validate_result
+from .evidence_bundle import unseal
 from .hybrid_pack import _canonical
 from .hybrid_send_reservation import attempt_path, exclusive_owner, verify_receipt
 from .live_models import GROQ_MODEL, ProviderError
@@ -406,7 +407,8 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
 
 
 def build_m21_graph(original, config, adapter, models, *, _capability=None,
-                    diagnostic_credit_only=False, development_selection=None):
+                     diagnostic_credit_only=False, development_selection=None,
+                     candidate_context=None):
     """Sequential LangGraph post-original continuation; offline doubles only."""
     hosted = _capability is _HOSTED_CAPABILITY
     if _capability is not None and not hosted:
@@ -431,10 +433,14 @@ def build_m21_graph(original, config, adapter, models, *, _capability=None,
     builder = StateGraph(M21State)
     for name in (development_selection or tuple(TOOLS)):
         def node(_, name=name):
+            _validate_m21_start(original, config, adapter,
+                candidate_context=candidate_context)
             _one(original, config, adapter, name, models[name], hosted=hosted)
             return {"current": name}
         builder.add_node(name, node)
     def handoff(_):
+        _validate_m21_start(original, config, adapter,
+            candidate_context=candidate_context)
         state = original.get_state(config).values
         pinned = pinned_from_state(state)
         adapter.validate_pinned_context(pinned)
@@ -457,6 +463,8 @@ def build_m21_graph(original, config, adapter, models, *, _capability=None,
                 raise EvidenceMismatch("M2.1 reviewer package changed")
         if state.get("m21_review") is None:
             from .candidate_graph import original_only_package
+            if candidate_context is not None and state.get("reviewer_package") is None:
+                raise EvidenceMismatch("M2.1 candidate reviewer package missing")
             package = state.get("reviewer_package") or original_only_package(state)
             original.update_state(config, {"m21_review": review,
                 "reviewer_package": {**package, "m21_ai": review}}, as_node="finish")
@@ -481,21 +489,85 @@ def build_m21_graph(original, config, adapter, models, *, _capability=None,
     return builder.compile()
 
 
-def run_m21_offline(original, config, adapter, models):
-    _validate_m21_start(original, config, adapter)
-    build_m21_graph(original, config, adapter, models).invoke({"current": "start"})
+def run_m21_offline(original, config, adapter, models, *, candidate_context=None):
+    _validate_m21_start(original, config, adapter,
+        candidate_context=candidate_context)
+    build_m21_graph(original, config, adapter, models,
+        candidate_context=candidate_context).invoke({"current": "start"})
     return original.get_state(config).values
 
 
-def _validate_m21_start(original, config, adapter):
+def checked_candidate_context(state):
+    """Exact fixed candidate identity, never an AI finding or approval claim."""
+    pinned = pinned_from_state(state)
+    records = state.get("candidate_records", {})
+    if (state.get("candidate_status") != "fixed_checked" or type(records) is not dict
+            or len(records) != 1 or not state.get("reviewer_package")):
+        raise EvidenceMismatch("M2.1 checked candidate context unavailable")
+    candidate_id, record = next(iter(records.items()))
+    if (type(record) is not dict or record.get("status") != "fixed_checked"
+            or record.get("candidate_id") != candidate_id
+            or record.get("parent_deal_id") != pinned.context.original_deal_id
+            or record.get("parent_run_id") != str(pinned.context.phase1c_run_id)
+            or record.get("bundle_sha256") != pinned.context.bundle_sha256
+            or record.get("source_input_digest") != pinned.context.source_input_digest
+            or type(record.get("candidate_input_digest")) is not str
+            or type(record.get("fixed_decision_sha256")) is not str
+            or type(record.get("specialist_results")) is not dict
+            or set(record["specialist_results"]) != set(SPECIALISTS)):
+        raise EvidenceMismatch("M2.1 candidate identity or fixed results differ")
+    try:
+        decision = unseal(record["fixed_decision"], record["fixed_decision_sha256"])
+    except (ValueError, KeyError, TypeError):
+        raise EvidenceMismatch("M2.1 fixed candidate seal differs") from None
+    trace = decision.get("candidate_trace", {})
+    if (trace.get("candidate_id") != candidate_id or
+            trace.get("candidate_input_digest") != record["candidate_input_digest"] or
+            decision.get("run_id") != pinned.context.phase1c_run_id or
+            decision.get("deal_id") != pinned.context.original_deal_id or
+            decision.get("status") != record.get("fixed_business_status") or
+            trace.get("assessment", {}).get("status") != record.get("fixed_supply_status")):
+        raise EvidenceMismatch("M2.1 fixed candidate decision differs")
+    for name in SPECIALISTS:
+        validate_result(record["specialist_results"][name], state, name,
+                        subject_id=candidate_id)
+    package = state["reviewer_package"]
+    from .candidate_graph import _package
+    expected_package = _package(state, record)
+    if (package.get("assessment_id") != state["assessment_id"] or
+            package.get("bundle_sha256") != pinned.context.bundle_sha256 or
+            package.get("original") != expected_package["original"] or
+            package.get("candidates") != expected_package["candidates"] or
+            package.get("candidate_workflow_status") != "fixed_checked" or
+            type(package.get("candidates")) is not list or
+            len(package["candidates"]) != 1 or
+            package["candidates"][0].get("candidate_id") != candidate_id or
+            package["candidates"][0].get("status") != "fixed_checked" or
+            package["candidates"][0].get("customer_acceptance") != "pending"):
+        raise EvidenceMismatch("M2.1 candidate review package changed")
+    return {"candidate_id": candidate_id, "candidate_input_digest": record[
+        "candidate_input_digest"], "fixed_decision_sha256": record[
+        "fixed_decision_sha256"]}
+
+
+def _validate_m21_start(original, config, adapter, *, candidate_context=None):
     snapshot = original.get_state(config)
     state = snapshot.values
     pinned = pinned_from_state(state)
     adapter.validate_pinned_context(pinned)
-    if (snapshot.next or state.get("stop_reason") or state.get("candidate_status") != "not_started"
+    if (snapshot.next or state.get("stop_reason")
             or set(state.get("specialist_results", {})) != {
                 "configuration", "pricing", "fulfillment", "credit", "policy", "approval_routing"}):
-        raise EvidenceMismatch("M2.1 needs completed fixed original, no candidate")
+        raise EvidenceMismatch("M2.1 needs completed fixed original")
+    if candidate_context is None:
+        if state.get("candidate_status") != "not_started":
+            raise EvidenceMismatch("M2.1 original-only path requires no candidate")
+    elif (type(candidate_context) is not dict or
+            candidate_context != checked_candidate_context(state)):
+        raise EvidenceMismatch("M2.1 checked candidate manifest differs")
+    if candidate_context is not None:
+        for name in SPECIALISTS:
+            validate_result(state["specialist_results"][name], state, name)
     return pinned
 
 
@@ -520,12 +592,16 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
     from .phase1c_adapter import PHASE1C_COMMIT
     diagnostic_credit_only = (type(manifest) is dict and
         manifest.get("version") == "m21-credit-http400-diagnostic-v1")
+    candidate_context = manifest.get("candidate_context") if type(manifest) is dict else None
+    candidate_development = (development_selection == tuple(TOOLS) and
+        candidate_context is not None)
     if (type(manifest) is not dict or type(approved_manifest_sha256) is not str
             or sha256(_canonical(manifest).encode()).hexdigest() != approved_manifest_sha256
             or manifest.get("status") != ("standing_development" if
                 development_selection else "authorization_candidate" if
                 diagnostic_credit_only else "authorized_one_case")
-            or manifest.get("version") != ("m21-credit-terminal-standing-dev-v1" if
+            or manifest.get("version") != ("m21-original-after-candidate-standing-dev-v1" if
+                candidate_development else "m21-credit-terminal-standing-dev-v1" if
                 development_selection == tuple(TOOLS) else
                 "m21-policy-route-standing-dev-v1" if development_selection else
                 "m21-credit-http400-diagnostic-v1" if
@@ -575,14 +651,15 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
                 != manifest["execution_context"]["owner_directory"]
             or manifest["execution_context"]["fixture_database"] == manifest[
                 "execution_context"]["checkpoint_database"]
-            or set(manifest) != {"version", "status", "phase1c_pin", "model", "provider",
+            or set(manifest) != ({"version", "status", "phase1c_pin", "model", "provider",
                 "credential_env_selection", "prompt_version", "wire_version", "order",
                 "m21_contract_version", "permission_version", "allowed_tools",
                 "maximum_inspections_per_specialist",
                 "maximum_posts_per_specialist", "maximum_posts_per_case",
                 "maximum_posts_total", "maximum_completion_tokens_per_post",
                 "maximum_serialized_request_bytes_per_post", "reported_total_token_post_send_stop",
-                "cases", "execution_context"}):
+                "cases", "execution_context"} | ({"candidate_context"} if
+                    candidate_development else set()))):
         raise ValueError("M2.1 hosted manifest or approved hash mismatch")
     if (set(models) != set(TOOLS) or any(type(models[name]) is not GroqM21Model
             or models[name].specialist != name for name in TOOLS)):
@@ -591,7 +668,8 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
     credential = os.environ.get("GROQ_SECONDARY_API_KEY")
     if credential_shape(credential) != "credential_shape_ok":
         raise ValueError("M2.1 secondary credential unavailable")
-    pinned = _validate_m21_start(original, config, adapter)
+    pinned = _validate_m21_start(original, config, adapter,
+        candidate_context=candidate_context)
     case = manifest["cases"][0]
     ctx = pinned.context
     if (ctx.assessment_id != case["assessment_id"]
@@ -703,7 +781,8 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
             build_m21_graph(original, config, adapter, models,
                 _capability=_HOSTED_CAPABILITY,
                 diagnostic_credit_only=diagnostic_credit_only,
-                development_selection=development_selection).invoke({"current": "start"})
+                development_selection=development_selection,
+                candidate_context=candidate_context).invoke({"current": "start"})
         finally:
             for model in models.values():
                 model._send_capability = None
