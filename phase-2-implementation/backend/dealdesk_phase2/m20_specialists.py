@@ -11,7 +11,7 @@ from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
 from time import monotonic
-from typing import Literal, Protocol, TypedDict
+from typing import Literal, NotRequired, Protocol, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
@@ -85,6 +85,7 @@ class M20AIResult(TypedDict):
     prompt_version: str
     model_turns: int
     tool_calls: int
+    model_output_category: NotRequired[str]  # Fixed label; only on hosted parser rejection.
 
 
 class M20State(TypedDict, total=False):
@@ -260,6 +261,7 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
     observations = []
     status, reason, claims, uncertainty = "error", "model_failure", [], []
     turns = 0
+    output_category = None
     try:
         for ordinal in range(MAX_TURNS):
             attempts = list(original.get_state(config).values.get("m20_model_attempts", []))
@@ -355,6 +357,8 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
     except (ValueError, EvidenceMismatch, TypeError, KeyError) as exc:
         status, reason = "error", ("evidence_identity" if isinstance(exc, EvidenceMismatch)
                                     else "invalid_model_or_tool_output")
+        from .tool_response_diagnostic import ToolResponseError
+        output_category = exc.category if isinstance(exc, ToolResponseError) else None
     except ProviderError as exc:
         status, reason = "error", "provider_" + exc.code
     except Exception:
@@ -363,7 +367,9 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
     result = {**identity, "version": VERSION, "producer_type": "AI", "execution": status,
               "reason": reason, "validated_claims": claims, "uncertainty_reasons": uncertainty,
               "model": model.model, "provider": model.provider, "prompt_version": prompt_version,
-              "model_turns": turns, "tool_calls": len(observations)}
+              "model_turns": turns, "tool_calls": len(observations),
+              **({"model_output_category": output_category} if hosted and status == "error"
+                 and output_category else {})}
     original.update_state(config, {"m20_ai_results": {**latest.get("m20_ai_results", {}),
                             specialist: result}, "trace": [*latest["trace"],
                             "m20_" + specialist + ":" + status]}, as_node="finish")

@@ -12,7 +12,7 @@ import json
 import os
 from pathlib import Path
 from time import monotonic
-from typing import Literal, Protocol, TypedDict
+from typing import Literal, NotRequired, Protocol, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
@@ -87,6 +87,7 @@ class M21Result(TypedDict):
     prompt_version: str
     model_turns: int
     tool_calls: int
+    model_output_category: NotRequired[str]  # Fixed label; only on hosted parser rejection.
 
 
 class M21State(TypedDict, total=False):
@@ -254,6 +255,7 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
         specialist == "approval_routing" and any(fixed[key]["execution"] != "completed"
             for key in ("configuration", "pricing", "fulfillment", "credit", "policy")))
     status, reason, claims, turns, observations = "skipped", "fixed_prerequisite_unavailable", [], 0, []
+    output_category = None
     if not unavailable:
         input = {**identity, "version": VERSION, "prompt_version": PROMPT_VERSION,
             "customer_id": pool["deal"]["customer_id"],
@@ -373,15 +375,19 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
             status, reason = "error", ("unrecorded_terminal_exchange" if str(exc).startswith(
                 ("M2.1 unrecorded terminal", "M2.1 incomplete returned inspection"))
                 else "evidence_identity_or_budget")
-        except (ValueError, TypeError, KeyError, AuthorizationDenied):
+        except (ValueError, TypeError, KeyError, AuthorizationDenied) as exc:
             status, reason = "error", "invalid_model_or_evidence"
+            from .tool_response_diagnostic import ToolResponseError
+            output_category = exc.category if isinstance(exc, ToolResponseError) else None
         except Exception:
             status, reason = "error", "model_or_tool_failure"
     latest = original.get_state(config).values
     result = {**identity, "version": VERSION, "producer_type": "AI",
         "execution": status, "reason": reason, "validated_claims": claims,
         "model": model.model, "provider": model.provider, "prompt_version": PROMPT_VERSION,
-        "model_turns": turns, "tool_calls": len(observations)}
+        "model_turns": turns, "tool_calls": len(observations),
+        **({"model_output_category": output_category} if hosted and status == "error"
+           and output_category else {})}
     original.update_state(config, {"m21_ai_results": {**latest.get("m21_ai_results", {}),
         specialist: result}, "trace": [*latest["trace"], "m21_" + specialist + ":" + status]},
         as_node="finish")

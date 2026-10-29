@@ -9,6 +9,7 @@ from .live_models import GROQ_MODEL, ProviderError, _post
 from .m21_prompts import PROMPT_VERSION, system_instruction
 from .m21_redaction import model_view
 from .m21_specialists import TOOLS, VERSION
+from .tool_response_diagnostic import ToolResponseError, rejected_category
 
 
 WIRE_VERSION = "m21-groq-native-tools-v1"
@@ -78,9 +79,11 @@ def parse_response(response: dict, input: dict, observations: tuple[dict, ...]):
                 or len(response["choices"]) != 1 or response["choices"][0]["finish_reason"] != "tool_calls"):
             raise ValueError()
         message = response["choices"][0]["message"]
+        if type(message) is not dict:
+            raise ValueError()
         calls = message["tool_calls"]
         if (message.get("content") not in (None, "") or type(calls) is not list
-                or len(calls) != 1):
+                or len(calls) != 1 or type(calls[0]) is not dict):
             raise ValueError()
         call = calls[0]
         if (call["type"] != "function" or type(call["id"]) is not str
@@ -121,7 +124,8 @@ def parse_response(response: dict, input: dict, observations: tuple[dict, ...]):
             return {"kind": "finding", "claims": claims}
     except (KeyError, IndexError, TypeError, ValueError, UnicodeError):
         pass
-    raise ValueError("m21_groq_invalid_response") from None
+    raise ToolResponseError(rejected_category(response, {TOOLS[input["specialist"]],
+        "submit_finding", "abstain"})) from None
 
 
 class GroqM21Model:

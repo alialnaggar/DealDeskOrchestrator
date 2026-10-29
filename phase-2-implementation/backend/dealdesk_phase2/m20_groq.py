@@ -11,6 +11,7 @@ from hashlib import sha256
 from .hybrid_pack import _canonical
 from .live_models import GROQ_MODEL, ProviderError, _post
 from .m20_specialists import TOOLS, VERSION
+from .tool_response_diagnostic import ToolResponseError, rejected_category
 
 
 WIRE_VERSION = "m20-groq-native-tools-v1"
@@ -104,8 +105,14 @@ def parse_response(response, input):
                 response["choices"][0]["finish_reason"] != "tool_calls"):
             raise ValueError()
         message = response["choices"][0]["message"]
+        if type(message) is not dict:
+            raise ValueError()
         calls = message["tool_calls"]
-        if message.get("content") not in (None, "") or len(calls) != 1:
+        if (message.get("content") not in (None, "") or type(calls) is not list
+                or len(calls) != 1 or type(calls[0]) is not dict):
+            raise ValueError()
+        if (calls[0].get("type") != "function" or type(calls[0].get("id")) is not str
+                or not 0 < len(calls[0]["id"]) <= 128):
             raise ValueError()
         name = calls[0]["function"]["name"]
         args = json.loads(calls[0]["function"]["arguments"])
@@ -130,7 +137,8 @@ def parse_response(response, input):
                     "uncertainty_reasons": args["uncertainty_reasons"]}
     except (KeyError, TypeError, ValueError, IndexError, UnicodeError):
         pass
-    raise ValueError("m20_groq_invalid_response") from None
+    raise ToolResponseError(rejected_category(response, {input.get("permitted_tool"),
+        "submit_finding", "abstain"})) from None
 
 
 class GroqM20Model:

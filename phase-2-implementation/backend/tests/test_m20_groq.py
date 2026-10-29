@@ -9,6 +9,7 @@ from hashlib import sha256
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
+from uuid import uuid4
 
 from dealdesk_phase2.m20_groq import (GroqM20Model, WIRE_VERSION, PROMPT_VERSION,
                                         MAX_REQUEST_BYTES, parse_response, request_body,
@@ -16,6 +17,7 @@ from dealdesk_phase2.m20_groq import (GroqM20Model, WIRE_VERSION, PROMPT_VERSION
 from dealdesk_phase2.hybrid_pack import _canonical
 from dealdesk_phase2.m20_specialists import build_m20_graph, run_m20_evaluation
 from dealdesk_phase2.live_models import ProviderError, _json, _post
+from dealdesk_phase2.tool_response_diagnostic import ToolResponseError
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from dealdesk_phase2.phase1c_adapter import EvidenceMismatch, Phase1CAdapter
 from m18_case_setup import CASES, install_disposable_cases
@@ -232,6 +234,35 @@ class GroqM20Wire(unittest.TestCase):
         with self.assertRaises(ValueError):
             request_body({**self.input, "permitted_tool": "inspect_pricing_line"}, ())
 
+    def test_rejected_native_response_categories_are_bounded_and_content_free(self):
+        valid = tool_response("inspect_configuration_line", {"line_id": "L1"})
+        choice = valid["choices"][0]
+        message = choice["message"]
+        call = message["tool_calls"][0]
+        variations = (
+            ({"choices": []}, "envelope"),
+            ({**valid, "choices": [{**choice, "finish_reason": "length"}]}, "finish_reason"),
+            ({**valid, "choices": [{**choice, "message": {**message,
+                "content": "PRIVATE-provider-answer"}}]}, "message_content"),
+            ({**valid, "choices": [{**choice, "message": {**message,
+                "tool_calls": [call, call]}}]}, "tool_count"),
+            ({**valid, "choices": [{**choice, "message": {**message,
+                "tool_calls": [{**call, "id": ""}]}}]}, "tool_metadata"),
+            (tool_response("inspect_pricing_line", {"line_id": "L1"}), "unsupported_tool"),
+            ({**valid, "choices": [{**choice, "message": {**message, "tool_calls": [{
+                **call, "function": {**call["function"], "arguments": "{private"}}]}}]},
+                "arguments_json"),
+            (tool_response("inspect_configuration_line", {"subject_id": "PRIVATE"}),
+                "action_arguments"),
+        )
+        for response, category in variations:
+            with self.subTest(category=category):
+                with self.assertRaises(ToolResponseError) as caught:
+                    parse_response(response, self.input)
+                self.assertEqual(caught.exception.category, category)
+                self.assertNotIn("PRIVATE", str(caught.exception))
+        self.assertEqual(parse_response(valid, self.input)["kind"], "inspect")
+
     def test_mocked_transport_requires_usage_and_bounds_provider_response(self):
         model = GroqM20Model("configuration")
         with patch.dict(os.environ, {"GROQ_API_KEY": "gsk_" + "x" * 47}), patch(
@@ -266,6 +297,53 @@ class GroqM20Wire(unittest.TestCase):
     "M20_DATABASE_URL", "M20_CHECKPOINT_DATABASE_URL", "DEALDESK_PHASE1C_CHECKOUT")),
     "Isolated M2.0 PostgreSQL business and checkpoint databases required")
 class HostedWirePostgres(unittest.TestCase):
+    def test_second_configuration_response_shape_is_audit_bounded_and_terminal(self):
+        """Fresh offline B05: a returned but truncated tool turn cannot reach Pricing."""
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
+        connect = lambda: psycopg.connect(os.environ["M20_DATABASE_URL"])
+        with connect() as conn:
+            if conn.execute("SELECT count(*) FROM deal_desk.deals WHERE deal_id LIKE 'M18-D-%'").fetchone()[0] == 0:
+                install_disposable_cases(conn)
+        case = next(x for x in CASES if x.case_id == "B05")
+        config = {"configurable": {"thread_id": "M20-SHAPE-" + uuid4().hex}}
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory, thesis_checkpointer(
+                os.environ["M20_CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(adapter, connect, saver)
+            original = graph.invoke(initial_state(config["configurable"]["thread_id"],
+                                                   case.run_id), config)
+            sends = []
+            def fake_post(url, key, header, body, **kwargs):
+                sends.append(body)
+                if len(sends) == 1:
+                    return tool_response("inspect_configuration_line", {
+                        "line_id": case.ids()["L"]}, call_id="call_shape")
+                self.assertEqual([m["role"] for m in body["messages"]],
+                                 ["system", "user", "assistant", "tool"])
+                response = tool_response("submit_finding", {"claims": [],
+                    "uncertainty_reasons": []})
+                response["choices"][0]["finish_reason"] = "length"
+                return response
+            with patch.dict(os.environ, {"GROQ_API_KEY": "gsk_" + "x" * 47}), patch(
+                    "dealdesk_phase2.m20_groq._post", side_effect=fake_post) as sender:
+                with self.assertRaises(EvidenceMismatch):
+                    run_m20_evaluation(graph, config, adapter, {name: GroqM20Model(name)
+                        for name in ("configuration", "pricing")}, authorized=True,
+                        reservation_dir=Path(directory))
+                self.assertEqual(sender.call_count, 2)
+                with self.assertRaises(EvidenceMismatch):
+                    run_m20_evaluation(graph, config, adapter, {name: GroqM20Model(name)
+                        for name in ("configuration", "pricing")}, authorized=True,
+                        reservation_dir=Path(directory))
+                self.assertEqual(sender.call_count, 2)
+            state = graph.get_state(config).values
+            self.assertEqual(state["specialist_results"], original["specialist_results"])
+            self.assertEqual(state["m20_ai_results"]["configuration"]["model_output_category"],
+                             "finish_reason")
+            self.assertNotIn("pricing", state["m20_ai_results"])
+            self.assertEqual([x["status"] for x in state["m20_model_attempts"]],
+                             ["reserved", "returned", "reserved"])
+
     def test_pricing_second_turn_http_400_stops_and_never_replays(self):
         from dealdesk_phase2.checkpoint import thesis_checkpointer
         database = os.environ["M20_DATABASE_URL"]
@@ -459,7 +537,7 @@ class HostedWirePostgres(unittest.TestCase):
             return {name: GroqM20Model(name) for name in ("configuration", "pricing")}
         with thesis_checkpointer(os.environ["M20_CHECKPOINT_DATABASE_URL"]) as saver:
             graph = build_original_graph(adapter, connect, saver)
-            assessment = "M20-GROQ-WIRE-OFFLINE-B05"
+            assessment = "M20-GROQ-WIRE-OFFLINE-B05-" + uuid4().hex
             config = {"configurable": {"thread_id": assessment}}
             original = graph.invoke(initial_state(assessment, case.run_id), config)
             with patch("dealdesk_phase2.live_models._post", side_effect=AssertionError(
@@ -527,7 +605,7 @@ class HostedWirePostgres(unittest.TestCase):
                     run_m20_evaluation(graph, config, adapter, models(), authorized=True,
                                        reservation_dir=Path(moved_dir))
 
-            assessment = "M20-GROQ-WIRE-ADVERSE-B05"
+            assessment = "M20-GROQ-WIRE-ADVERSE-B05-" + uuid4().hex
             config = {"configurable": {"thread_id": assessment}}
             graph.invoke(initial_state(assessment, case.run_id), config)
             def bad_post(url, key, header, body, **kwargs):

@@ -95,3 +95,10 @@ change or additional POST budget needs its own owner review and authorization.
   after rollback (`/tmp/opencode/dealdesk-b05-scram-9c9794347b09/post-trial-offline-tests.log`).
   No billable CI or full fresh PostgreSQL regression was dispatched for this
   trial. No accuracy or hosted typed-final success claim is warranted.
+
+**Offline follow-up (29 October):** Native-tool parser failures now emit only
+fixed structural categories for *future* attempts; this cannot reconstruct
+B05's unretained second response. Fresh disposable PostgreSQL fixtures passed
+41 relevant Configuration/Pricing/Credit/Policy/Routing and typed-final mocked
+tests, including a complete Configuration → Pricing path and a terminal
+malformed-second-turn case. Groq inference remained disabled and was not sent.

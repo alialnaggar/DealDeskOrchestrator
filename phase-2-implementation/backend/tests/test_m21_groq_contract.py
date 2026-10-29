@@ -13,6 +13,7 @@ from dealdesk_phase2.m21_groq_contract import parse_response, request_body
 from dealdesk_phase2.m21_prompts import PROMPT_VERSION
 from dealdesk_phase2.m21_redaction import model_view
 from dealdesk_phase2.m21_specialists import _claims, TOOLS, VERSION
+from dealdesk_phase2.tool_response_diagnostic import ToolResponseError
 
 
 def tool_response(name, arguments, *, call_id="call_w3_synthetic"):
@@ -103,6 +104,18 @@ class M21GroqWire(unittest.TestCase):
         extra["records"][0]["fields"]["customer_name"] = "PRIVATE-NAME"
         with self.assertRaises(ValueError):
             model_view(self.input, (extra,))
+
+    def test_shared_rejection_categories_do_not_expose_redacted_credit_evidence(self):
+        for response, expected in ((tool_response("approve", {"approved": True}),
+                                    "unsupported_tool"),
+                                   (tool_response("submit_finding", {"claims": []}),
+                                    "action_arguments"),
+                                   ({"choices": []}, "envelope")):
+            with self.subTest(category=expected), self.assertRaises(
+                    ToolResponseError) as caught:
+                parse_response(response, self.input, (self.observation,))
+            self.assertEqual(caught.exception.category, expected)
+            self.assertNotIn("PRIVATE", str(caught.exception))
 
     def test_policy_routing_keep_only_returned_fixed_refs(self):
         for name, record in (("policy", {"ref": "policy_rule:PO-1", "fields": {
