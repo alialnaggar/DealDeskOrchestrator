@@ -358,7 +358,9 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
         status, reason = "error", ("evidence_identity" if isinstance(exc, EvidenceMismatch)
                                     else "invalid_model_or_tool_output")
         from .tool_response_diagnostic import ToolResponseError
-        output_category = exc.category if isinstance(exc, ToolResponseError) else None
+        from .groq_typed_final import FinalResponseError
+        output_category = exc.category if isinstance(exc, (ToolResponseError,
+            FinalResponseError)) else None
     except ProviderError as exc:
         status, reason = "error", "provider_" + exc.code
     except Exception:

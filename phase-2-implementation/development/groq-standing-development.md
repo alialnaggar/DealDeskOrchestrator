@@ -40,9 +40,16 @@ PYTHONPATH=phase-2-implementation/backend:phase-2-implementation/backend/tests \
 ```
 
 The CLI prints only bounded/sanitized outcome fields and the private output
-directory. **One CLI invocation = one assessment**, at most four POSTs and
-2,560 configured completion tokens for Pricing (Configuration first), or two
-POSTs/1,536 configured tokens for Credit. Check the account's actual rate
+directory. **One CLI invocation = one fresh assessment**, with the existing
+bounded Pricing (Configuration first) or Credit budgets. New modes include
+`fulfillment`, `policy_routing`, `full_typed_credit` (Credit → Policy → Routing)
+and `six_campaign` (Configuration → Pricing → Fulfillment → Credit → Policy →
+Routing); `m21_campaign` retains the original native-tool Credit path for
+diagnosis. Each mode uses its own staged tool/model reservation ceilings. A
+six-stage attempt stops before M2.1 if any earlier AI contribution is incomplete
+or a candidate needs a separate exact-candidate review. These modes have not
+established full six-specialist reliability; see
+`evaluation/groq-six-specialist-development-followup.md`. Check the account's actual rate
 limits (Groq's public table is not an account-specific entitlement). Send
 sequentially; on HTTP 429 or quota exhaustion **stop**, report the limit and
 do not rotate credentials/accounts or replay the case to evade it. A new
@@ -50,9 +57,7 @@ assessment is for a changed test or an independently justified follow-up,
 not a retry of an uncertain send. Do not expose raw provider bodies or
 private approval/receipt paths in public reports.
 
-Policy and Routing currently use separate M2.1 hosted contracts; Fulfillment
-uses its own older live path. This first streamlined entry covers the
-Configuration → Pricing typed-final and Credit cases only; it does **not**
-claim the other specialists have passed real-model tests. Extend their
-development harnesses with the same scoped/frozen evidence and receipt
-invariants, never by bypassing their original gates.
+Policy and Routing use M2.1 read-only contracts; Fulfillment uses the existing
+investigation graph and its own checkpointed request ledger. The development-only
+strict-schema Credit terminal is activated only for the `full_typed_credit` and
+`six_campaign` modes; legacy production activation remains off.

@@ -79,6 +79,126 @@ class M21AuthorizedStatusManifest(unittest.TestCase):
     "M20_DATABASE_URL", "M20_CHECKPOINT_DATABASE_URL", "DEALDESK_PHASE1C_CHECKOUT")),
     "Fresh isolated PostgreSQL source and checkpoint databases required")
 class M21HostedGatePostgres(unittest.TestCase):
+    def test_standing_full_typed_credit_six_sends_and_no_replay(self):
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
+        from run_groq_development import _m21_campaign
+        name = "dev_full_m21_" + uuid4().hex[:16]
+        parts = psycopg.conninfo.conninfo_to_dict(self.checkpoint)
+        admin = psycopg.conninfo.make_conninfo(**{**parts, "dbname": "postgres"})
+        dedicated = psycopg.conninfo.make_conninfo(**{**parts, "dbname": name})
+        with psycopg.connect(admin, autocommit=True) as db:
+            db.execute("CREATE DATABASE " + name)
+        try:
+            with TemporaryDirectory(dir="/tmp/opencode") as directory:
+                root = Path(directory)
+                root.chmod(0o700)
+                owner = root / "owner"
+                owner.mkdir(mode=0o700)
+                with thesis_checkpointer(dedicated) as saver:
+                    graph, config, before, _ = self.original(saver)
+                    bodies = []
+                    def fake_post(url, key, header, body, **kwargs):
+                        bodies.append(body)
+                        public = json.loads(body["messages"][1]["content"])["input"]
+                        if "response_format" in body:
+                            self.assertEqual(public["specialist"], "credit")
+                            self.assertNotIn("tools", body)
+                            visible = json.loads(body["messages"][1]["content"])[
+                                "observations"]
+                            claim = visible[0]["records"][0]
+                            field, value = next(iter(claim["fields"].items()))
+                            return {"usage": {"prompt_tokens": 400,
+                                "completion_tokens": 80}, "choices": [{
+                                "finish_reason": "stop", "message": {"content": json.dumps({
+                                    "version": FINAL_VERSION, "kind": "finding",
+                                    "claims": [{"ref": claim["ref"], "field": field,
+                                        "value_json": json.dumps(value)}],
+                                    "uncertainty_reasons": [], "reason_code": "none"})}}]}
+                        if len(body["messages"]) == 2:
+                            return response(TOOLS[public["specialist"]],
+                                {"subject_id": public["subject_id"]})
+                        return response("abstain", {"reason_code": "model_uncertainty"})
+                    with patch.dict(os.environ, {"DEALDESK_GROQ_DEV_ENABLE": "1"}), patch(
+                            "dealdesk_phase2.m21_groq_contract._post",
+                            side_effect=fake_post) as sender:
+                        digest, state = _m21_campaign(graph, config, self.adapter,
+                            case_id="B01", owner=owner, root=root,
+                            key="gsk_offline_test_placeholder_123456789",
+                            typed_credit=True)
+                        self.assertEqual(sender.call_count, 6)
+                        self.assertEqual(set(state["m21_ai_results"]), set(TOOLS))
+                        self.assertEqual(state["m21_ai_results"]["credit"]["execution"],
+                                         "completed")
+                        self.assertEqual(state["specialist_results"],
+                                         before["specialist_results"])
+                        self.assertEqual(state["m21_review"]["assessment_id"],
+                                         config["configurable"]["thread_id"])
+                        with patch.dict(os.environ, {"GROQ_SECONDARY_API_KEY":
+                                "gsk_offline_test_placeholder_123456789"}):
+                            again = run_m21_evaluation(graph, config, self.adapter,
+                                models(), manifest=json.loads((root /
+                                    "manifest.json").read_text()),
+                                approved_manifest_sha256=digest, authorized=True,
+                                owner_dir=owner, free_tier_billing_disabled=True,
+                                development_selection=tuple(TOOLS))
+                        self.assertEqual(again["m21_review"], state["m21_review"])
+                        self.assertEqual(sender.call_count, 6)
+        finally:
+            with psycopg.connect(admin, autocommit=True) as db:
+                db.execute("DROP DATABASE " + name)
+
+    def test_standing_policy_routing_without_credit_and_no_replay(self):
+        """Fresh checkpoint, trusted fixture; no incomplete campaign handoff."""
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        from run_groq_development import _m21_campaign
+        name = "dev_policy_route_" + uuid4().hex[:16]
+        parts = psycopg.conninfo.conninfo_to_dict(self.checkpoint)
+        admin = psycopg.conninfo.make_conninfo(**{**parts, "dbname": "postgres"})
+        dedicated = psycopg.conninfo.make_conninfo(**{**parts, "dbname": name})
+        with psycopg.connect(admin, autocommit=True) as db:
+            db.execute("CREATE DATABASE " + name)
+        try:
+            with TemporaryDirectory(dir="/tmp/opencode") as directory:
+                root = Path(directory)
+                root.chmod(0o700)
+                owner = root / "owner"
+                owner.mkdir(mode=0o700)
+                with thesis_checkpointer(dedicated) as saver:
+                    graph, config, before, _ = self.original(saver)
+                    bodies = []
+                    def fake_post(url, key, header, body, **kwargs):
+                        bodies.append(body)
+                        domain = json.loads(body["messages"][1]["content"])["input"][
+                            "specialist"]
+                        if len(body["messages"]) == 2:
+                            public = json.loads(body["messages"][1]["content"])["input"]
+                            return response(TOOLS[domain], {"subject_id": public["subject_id"]})
+                        return response("abstain", {"reason_code": "model_uncertainty"})
+                    with patch.dict(os.environ, {"DEALDESK_GROQ_DEV_ENABLE": "1"}), patch(
+                            "dealdesk_phase2.m21_groq_contract._post",
+                            side_effect=fake_post) as sender:
+                        digest, state = _m21_campaign(graph, config, self.adapter,
+                            case_id="B01", owner=owner, root=root,
+                            key="gsk_offline_test_placeholder_123456789",
+                            policy_routing_only=True)
+                        self.assertEqual(sender.call_count, 4)
+                        self.assertEqual(set(state["m21_ai_results"]),
+                                         {"policy", "approval_routing"})
+                        self.assertFalse(state.get("m21_review"))
+                        self.assertEqual(state["specialist_results"],
+                                         before["specialist_results"])
+                        with self.assertRaises((ValueError, FileExistsError)):
+                            _m21_campaign(graph, config, self.adapter, case_id="B01",
+                                owner=owner, root=root,
+                                key="gsk_offline_test_placeholder_123456789",
+                                policy_routing_only=True)
+                        self.assertEqual(sender.call_count, 4)
+                        self.assertEqual(len(digest), 64)
+        finally:
+            with psycopg.connect(admin, autocommit=True) as db:
+                db.execute("DROP DATABASE " + name)
+
     def test_credit_diagnostic_only_two_sends_then_terminal_restart(self):
         from dealdesk_phase2.checkpoint import thesis_checkpointer
         bodies = []

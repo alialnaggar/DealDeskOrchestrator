@@ -378,7 +378,9 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
         except (ValueError, TypeError, KeyError, AuthorizationDenied) as exc:
             status, reason = "error", "invalid_model_or_evidence"
             from .tool_response_diagnostic import ToolResponseError
-            output_category = exc.category if isinstance(exc, ToolResponseError) else None
+            from .groq_typed_final import FinalResponseError
+            output_category = exc.category if isinstance(exc, (ToolResponseError,
+                FinalResponseError)) else None
         except Exception:
             status, reason = "error", "model_or_tool_failure"
     latest = original.get_state(config).values
@@ -404,13 +406,17 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
 
 
 def build_m21_graph(original, config, adapter, models, *, _capability=None,
-                    diagnostic_credit_only=False):
+                    diagnostic_credit_only=False, development_selection=None):
     """Sequential LangGraph post-original continuation; offline doubles only."""
     hosted = _capability is _HOSTED_CAPABILITY
     if _capability is not None and not hosted:
         raise ValueError("M2.1 private hosted capability only")
     if diagnostic_credit_only and not hosted:
         raise ValueError("M2.1 credit diagnostic needs hosted capability")
+    if development_selection is not None and (not hosted or
+            development_selection not in (("policy", "approval_routing"),
+                tuple(TOOLS))):
+        raise ValueError("M2.1 development selection unavailable")
     if set(models) != set(TOOLS):
         raise ValueError("M2.1 three specialist models required")
     if hosted:
@@ -423,7 +429,7 @@ def build_m21_graph(original, config, adapter, models, *, _capability=None,
             or not isinstance(getattr(model, "model", None), str) for model in models.values()):
         raise ValueError("M2.1 offline, three specialist models required")
     builder = StateGraph(M21State)
-    for name in TOOLS:
+    for name in (development_selection or tuple(TOOLS)):
         def node(_, name=name):
             _one(original, config, adapter, name, models[name], hosted=hosted)
             return {"current": name}
@@ -455,12 +461,19 @@ def build_m21_graph(original, config, adapter, models, *, _capability=None,
             original.update_state(config, {"m21_review": review,
                 "reviewer_package": {**package, "m21_ai": review}}, as_node="finish")
         return {"current": "handoff"}
-    builder.add_node("handoff", handoff)
-    builder.add_edge(START, "credit")
+    if development_selection == ("policy", "approval_routing"):
+        # No incomplete three-specialist reviewer projection; fixed original
+        # and the two isolated AI results remain separately attributable.
+        builder.add_edge(START, "policy")
+        builder.add_edge("policy", "approval_routing")
+        builder.add_edge("approval_routing", END)
+    else:
+        builder.add_node("handoff", handoff)
+        builder.add_edge(START, "credit")
     if diagnostic_credit_only:
         # Never project an incomplete three-specialist AI reviewer package.
         builder.add_edge("credit", END)
-    else:
+    elif development_selection != ("policy", "approval_routing"):
         builder.add_edge("credit", "policy")
         builder.add_edge("policy", "approval_routing")
         builder.add_edge("approval_routing", "handoff")
@@ -487,8 +500,9 @@ def _validate_m21_start(original, config, adapter):
 
 
 def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
-                       approved_manifest_sha256: str, authorized: bool = False,
-                       owner_dir: Path | None = None, free_tier_billing_disabled: bool = False):
+                        approved_manifest_sha256: str, authorized: bool = False,
+                        owner_dir: Path | None = None, free_tier_billing_disabled: bool = False,
+                        development_selection=None):
     """One synthetic original per explicit approved manifest; no multi-case campaign.
 
     Proposal manifests cannot call the provider. The caller supplies an exact
@@ -497,6 +511,10 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
     """
     if authorized is not True or free_tier_billing_disabled is not True:
         raise ValueError("M2.1 explicit hosted/account authorization required")
+    if development_selection is not None and (development_selection not in (
+            ("policy", "approval_routing"), tuple(TOOLS)) or os.environ.get(
+                "DEALDESK_GROQ_DEV_ENABLE") != "1"):
+        raise ValueError("M2.1 standing development opt-in required")
     from .groq_preflight import credential_shape
     from .m21_groq_contract import GroqM21Model, PROMPT_VERSION, WIRE_VERSION
     from .phase1c_adapter import PHASE1C_COMMIT
@@ -504,9 +522,13 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
         manifest.get("version") == "m21-credit-http400-diagnostic-v1")
     if (type(manifest) is not dict or type(approved_manifest_sha256) is not str
             or sha256(_canonical(manifest).encode()).hexdigest() != approved_manifest_sha256
-            or manifest.get("status") != ("authorization_candidate" if
+            or manifest.get("status") != ("standing_development" if
+                development_selection else "authorization_candidate" if
                 diagnostic_credit_only else "authorized_one_case")
-            or manifest.get("version") != ("m21-credit-http400-diagnostic-v1" if
+            or manifest.get("version") != ("m21-credit-terminal-standing-dev-v1" if
+                development_selection == tuple(TOOLS) else
+                "m21-policy-route-standing-dev-v1" if development_selection else
+                "m21-credit-http400-diagnostic-v1" if
                 diagnostic_credit_only else "m21-week3-proposal-v1")
             or manifest.get("phase1c_pin") != PHASE1C_COMMIT
             or manifest.get("model") != GROQ_MODEL or manifest.get("provider") != "groq"
@@ -515,16 +537,23 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
             or manifest.get("wire_version") != WIRE_VERSION
             or manifest.get("m21_contract_version") != VERSION
             or manifest.get("permission_version") != PERMISSION_VERSION
-            or manifest.get("allowed_tools") != ({"credit": TOOLS["credit"]} if
-                diagnostic_credit_only else TOOLS)
+            or manifest.get("allowed_tools") != ({name: TOOLS[name] for name in
+                development_selection} if development_selection else
+                {"credit": TOOLS["credit"]} if diagnostic_credit_only else TOOLS)
             or manifest.get("maximum_inspections_per_specialist") != 1
-            or manifest.get("order") != (["credit"] if diagnostic_credit_only else list(TOOLS))
+            or manifest.get("order") != (list(development_selection) if
+                development_selection else ["credit"] if diagnostic_credit_only else list(TOOLS))
             or type(manifest.get("maximum_posts_per_specialist")) is not int
             or manifest["maximum_posts_per_specialist"] != 2
             or any(type(manifest.get(k)) is not int or manifest[k] != v for k, v in {
-                "maximum_posts_per_case": 2 if diagnostic_credit_only else 6,
-                "maximum_posts_total": 2 if diagnostic_credit_only else 6,
-                "maximum_completion_tokens_per_post": 512,
+                "maximum_posts_per_case": 6 if development_selection == tuple(TOOLS) else
+                    4 if development_selection else
+                    2 if diagnostic_credit_only else 6,
+                "maximum_posts_total": 6 if development_selection == tuple(TOOLS) else
+                    4 if development_selection else
+                    2 if diagnostic_credit_only else 6,
+                "maximum_completion_tokens_per_post": 1024 if
+                    development_selection == tuple(TOOLS) else 512,
                 "maximum_serialized_request_bytes_per_post": 8192,
                 "reported_total_token_post_send_stop": HOSTED_REPORTED_TOKEN_STOP,
                 "maximum_inspections_per_specialist": 1}.items())
@@ -635,7 +664,8 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
         if any(entry.name not in allowed_paths for entry in owner_dir.iterdir()):
             raise EvidenceMismatch("M2.1 owner directory contains unknown campaign receipt")
         if len([x for x in receipts if x.get("status") == "reserved"]) > (
-                2 if diagnostic_credit_only else 6):
+                6 if development_selection == tuple(TOOLS) else
+                4 if development_selection else 2 if diagnostic_credit_only else 6):
             raise EvidenceMismatch("M2.1 hosted campaign reservation ceiling changed")
         for item in receipts:
             if item.get("status") != "returned":
@@ -668,15 +698,18 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
                 model._assessment_id = ctx.assessment_id
                 model._manifest_hash = approved_manifest_sha256
                 model._credential_sha256 = owner["credential_sha256"]
-                model._capture_http_error = diagnostic_credit_only
+                model._capture_http_error = bool(diagnostic_credit_only or development_selection)
+                model._credit_typed_final = development_selection == tuple(TOOLS)
             build_m21_graph(original, config, adapter, models,
                 _capability=_HOSTED_CAPABILITY,
-                diagnostic_credit_only=diagnostic_credit_only).invoke({"current": "start"})
+                diagnostic_credit_only=diagnostic_credit_only,
+                development_selection=development_selection).invoke({"current": "start"})
         finally:
             for model in models.values():
                 model._send_capability = None
                 model._owner_directory = None
                 model._capture_http_error = False
+                model._credit_typed_final = False
                 model._assessment_id = None
                 model._manifest_hash = None
                 model._credential_sha256 = None

@@ -9,7 +9,7 @@ from urllib.error import HTTPError, URLError
 
 from dealdesk_phase2.hybrid_pack import _canonical
 from dealdesk_phase2.live_models import GROQ_MODEL, ProviderError, _post
-from dealdesk_phase2.m21_groq_contract import parse_response, request_body
+from dealdesk_phase2.m21_groq_contract import GroqM21Model, parse_response, request_body
 from dealdesk_phase2.m21_prompts import PROMPT_VERSION
 from dealdesk_phase2.m21_redaction import model_view
 from dealdesk_phase2.m21_specialists import _claims, TOOLS, VERSION
@@ -76,6 +76,31 @@ class M21GroqWire(unittest.TestCase):
             self.input, (self.observation,))
         self.assertEqual(_claims(finding, (self.observation,)), finding["claims"])
         self.assertEqual(finding["claims"][0]["value"], False)
+
+    def test_development_credit_terminal_is_no_tools_and_exactly_validated(self):
+        from dealdesk_phase2.groq_typed_final import parse_response as parse_final
+        from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
+        model = GroqM21Model("credit")
+        model._credit_typed_final = True
+        body = model.prepare_request(self.input, (self.observation,))
+        self.assertNotIn("tools", body)
+        self.assertNotIn("tool_choice", body)
+        self.assertTrue(body["response_format"]["json_schema"]["strict"])
+        self.assertNotIn("PRIVATE-INVOICE", _canonical(body))
+        ref = model_view(self.input, (self.observation,))[1][0]["records"][0]["ref"]
+        def reply(value):
+            return {"usage": {"prompt_tokens": 300, "completion_tokens": 80},
+                "choices": [{"finish_reason": "stop", "message": {"content": json.dumps({
+                    "version": FINAL_VERSION, "kind": "finding", "claims": [{"ref": ref,
+                        "field": "fixed_commitments_fresh", "value_json": value}],
+                    "uncertainty_reasons": [], "reason_code": "none"})}}]}
+        self.assertEqual(parse_final(reply("false"), input=self.input,
+            observations=(self.observation,))["claims"][0]["value"], False)
+        with self.assertRaises(ValueError):
+            parse_final(reply("true"), input=self.input,
+                observations=(self.observation,))
+        model._credit_typed_final = False
+        self.assertIn("tools", model.prepare_request(self.input, ()))
 
     def test_fabricated_fields_refs_values_and_malformed_or_abstained_response(self):
         _, visible, _ = model_view(self.input, (self.observation,))

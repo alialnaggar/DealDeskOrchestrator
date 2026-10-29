@@ -156,10 +156,15 @@ class GroqM21Model:
         self._attempt_ordinal = None
         self._credential_sha256 = None
         self._capture_http_error = False
+        self._credit_typed_final = False
 
     def prepare_request(self, input, observations):
         if input["specialist"] != self.specialist:
             raise ValueError("m21_groq_wrong_specialist")
+        if self._credit_typed_final and self.specialist == "credit" and observations:
+            from .groq_typed_final import request_body as final_body, DEVELOPMENT_FINAL_INSTRUCTION
+            return final_body(input, observations, completed_ledger=observations,
+                              final_instruction=DEVELOPMENT_FINAL_INSTRUCTION)
         return request_body(input, observations, exchanges=self.previous_calls)
 
     def next_action(self, input, observations):
@@ -189,14 +194,20 @@ class GroqM21Model:
                 capture_http_error=self._capture_http_error))
         if len(_canonical(response).encode()) > MAX_RESPONSE_BYTES:
             raise ProviderError("provider_response_oversize")
+        is_final = self._credit_typed_final and self.specialist == "credit" and observations
+        completion_cap = 1024 if is_final else MAX_COMPLETION_TOKENS
         usage = response.get("usage")
         if (type(usage) is not dict or any(type(usage.get(k)) is not int or usage[k] < 0
                 for k in ("prompt_tokens", "completion_tokens"))
                 or usage["prompt_tokens"] > MAX_PROMPT_TOKENS
-                or usage["completion_tokens"] > MAX_COMPLETION_TOKENS):
+                or usage["completion_tokens"] > completion_cap):
             raise ProviderError("hosted_usage_unverifiable")
         self.last_usage = {k: usage[k] for k in ("prompt_tokens", "completion_tokens")}
-        action = parse_response(response, input, observations)
+        if is_final:
+            from .groq_typed_final import parse_response as parse_final
+            action = parse_final(response, input=input, observations=observations)
+        else:
+            action = parse_response(response, input, observations)
         if action["kind"] == "inspect":
             call = response["choices"][0]["message"]["tool_calls"][0]
             self.last_tool_call = {"id": call["id"], "name": call["function"]["name"],
