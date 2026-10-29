@@ -14,8 +14,9 @@ from typing import TypedDict
 from langgraph.graph import StateGraph, START, END
 
 from .graph_state import pinned_from_state
-from .groq_typed_final import (PROMPT_VERSION, WIRE_VERSION, parse_response,
-                               request_body, request_sha256)
+from .groq_typed_final import (PROMPT_VERSION, WIRE_VERSION, DEVELOPMENT_FINAL_INSTRUCTION,
+                                FinalResponseError, parse_response,
+                                request_body, request_sha256)
 from .hybrid_pack import _canonical
 from .hybrid_send_reservation import (attempt_path, claim_and_call,
                                        exclusive_owner, verify_receipt)
@@ -30,6 +31,7 @@ from .m21_specialists import (_identity as m21_identity, _inspect as m21_inspect
 from .phase1c_adapter import EvidenceMismatch
 from .tool_ledger import entries
 from .tool_permissions import PERMISSION_VERSION
+from .tool_response_diagnostic import ToolResponseError
 from .typed_final_contract import InvalidTerminal, VERSION as FINAL_VERSION
 
 
@@ -72,7 +74,7 @@ class ScriptedTypedFinal:
 def run_typed_final_offline(original, config, adapter, model, *, specialist,
                             inspection_plan=1, owner_dir=None, opt_in=False,
                             _capability=None, _hosted_binding=None,
-                            _owner_locked=False, _pre_send=None):
+                            _owner_locked=False, _pre_send=None, _final_instruction=None):
     """Run a separate default-off graph over an original PG checkpoint.
 
     `inspection_plan=2` is an explicit preflight selection for Pricing, never
@@ -87,6 +89,12 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
             or _capability is not None or _hosted_binding is not None or _owner_locked
             or _pre_send is not None))
             or hosted and not callable(_pre_send)
+            or (not hosted and _final_instruction is not None)
+            or (hosted and _final_instruction is not None and (
+                _final_instruction != DEVELOPMENT_FINAL_INSTRUCTION or
+                _hosted_binding.get("development") is not True))
+            or (hosted and _hosted_binding.get("development") is True and
+                _final_instruction != DEVELOPMENT_FINAL_INSTRUCTION)
             or hosted and type(model) is not HostedTypedTransport
             or specialist not in MAX_POSTS
             or type(inspection_plan) is not int
@@ -471,7 +479,8 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
         observations = scoped_ledger()
         if len(observations) != inspection_plan:
             raise EvidenceMismatch("typed_final_missing_evidence")
-        body = request_body(input, observations, completed_ledger=observations)
+        body = request_body(input, observations, completed_ledger=observations,
+            **({"final_instruction": _final_instruction} if _final_instruction else {}))
         prior_entry, reused = checked_attempt("typed_final", 0, body, model.finish)
         if reused:
             raise EvidenceMismatch("typed_final_returned_without_validated_checkpoint")
@@ -527,7 +536,10 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                         **current, specialist: {"execution": "error", "reason": code,
                             "validated_claims": [], "protocol_version": protocol_version,
                             "producer_type": "AI", "provider": "groq" if hosted else
-                            "offline_double"}}},
+                            "offline_double",
+                            **({"model_output_category": exc.category} if hosted and
+                               isinstance(exc, (FinalResponseError, ToolResponseError))
+                               else {})}}},
                         as_node="finish")
             # No fallback, retry, or model-derived abstention.
             raise

@@ -9,7 +9,9 @@ from pathlib import Path
 from .graph_state import pinned_from_state
 from .groq_preflight import credential_shape
 from .groq_typed_final import (WIRE_VERSION, PROMPT_VERSION, SCHEMA_NAME,
-                               FINAL_SYSTEM_INSTRUCTION,
+                               FINAL_SYSTEM_INSTRUCTION, DEVELOPMENT_FINAL_INSTRUCTION,
+                               CONFIG_FINAL_INSTRUCTION,
+                               configuration_final_body, parse_configuration_final,
                                schema, request_sha256)
 from .hybrid_pack import _canonical
 from .hybrid_send_reservation import (attempt_path, claim_and_call,
@@ -41,7 +43,8 @@ INSPECTION_PROMPT_SUFFIX = (" " + INSPECTION_PROMPT_VERSION + " " +
     INSPECTION_WIRE_VERSION + " Only inspect scoped evidence or abstain; "
     "a finding requires a separate no-tools final request.")
 APPROVAL_NAME = "typed-final-approved-manifest.json"
-HOSTED_ACTIVATION = False  # Changing this requires Ali's separate activation approval.
+HOSTED_ACTIVATION = False  # Paid/production path remains separately authorized.
+DEV_ENABLE_ENV = "DEALDESK_GROQ_DEV_ENABLE"
 MAX_REPORTED_TOKENS = 24000
 SCHEMA_SHA256 = sha256(_canonical(schema()).encode()).hexdigest()
 
@@ -103,12 +106,15 @@ def full_m21_budget():
             "reported_post_send_stop": MAX_REPORTED_TOKENS}
 
 
-def _validate_manifest(manifest, digest, specialist, owner, pinned, config):
-    if (type(manifest) is not dict or set(manifest) != MANIFEST_KEYS or
+def _validate_manifest(manifest, digest, specialist, owner, pinned, config,
+                       *, development=False):
+    if (type(manifest) is not dict or set(manifest) != (MANIFEST_KEYS |
+            {"configuration_final_prompt_sha256"} if development else MANIFEST_KEYS) or
             type(digest) is not str or len(digest) != 64 or
             sha256(_canonical(manifest).encode()).hexdigest() != digest or
             manifest["version"] != MANIFEST_VERSION or
-            manifest["status"] != "authorized_one_case" or
+            manifest["status"] != ("standing_development" if development else
+                                   "authorized_one_case") or
             manifest["specialist"] != specialist or
             type(manifest["inspection_plan"]) is not int or
             manifest["budgets"] != budgets(specialist, manifest["inspection_plan"]) or
@@ -128,10 +134,13 @@ def _validate_manifest(manifest, digest, specialist, owner, pinned, config):
             manifest["configuration_prompt_version"] != CONFIG_PROMPT or
             manifest["configuration_prompt_sha256"] != sha256(config_instruction(
                 "configuration").encode()).hexdigest() or
+            development and manifest.get("configuration_final_prompt_sha256") != sha256(
+                CONFIG_FINAL_INSTRUCTION.encode()).hexdigest() or
             manifest["wire_version"] != WIRE_VERSION or
             manifest["prompt_version"] != PROMPT_VERSION or
-            manifest["final_prompt_sha256"] != sha256(
-                FINAL_SYSTEM_INSTRUCTION.encode()).hexdigest() or
+            manifest["final_prompt_sha256"] != sha256((
+                DEVELOPMENT_FINAL_INSTRUCTION if development else
+                FINAL_SYSTEM_INSTRUCTION).encode()).hexdigest() or
             manifest["schema_name"] != SCHEMA_NAME or
             manifest["schema_sha256"] != SCHEMA_SHA256 or
             type(manifest["case"]) is not dict or set(manifest["case"]) != CASE_KEYS or
@@ -224,13 +233,20 @@ class HostedTypedTransport:
 
 class _ConfigurationModel(GroqM20Model):
     """Existing Configuration wire and validators; new receipt namespace only."""
-    def __init__(self, send, owner, assessment_id, digest, pre_send):
+    def __init__(self, send, owner, assessment_id, digest, pre_send,
+                 *, development=False):
         super().__init__("configuration")
         self._send = send
         self._owner = owner
         self._assessment = assessment_id
         self._digest = digest
         self._pre_send = pre_send
+        self._development = development
+
+    def prepare_request(self, input, observations):
+        if self._development and observations:
+            return configuration_final_body(input, observations)
+        return super().prepare_request(input, observations)
 
     def next_action(self, input, observations):
         body = self.prepare_request(input, observations)
@@ -253,7 +269,8 @@ class _ConfigurationModel(GroqM20Model):
                 usage["prompt_tokens"] > 4096 or usage["completion_tokens"] > 512):
             raise ProviderError("hosted_usage_unverifiable")
         self.last_usage = {k: usage[k] for k in ("prompt_tokens", "completion_tokens")}
-        action = config_parse(response, input)
+        action = (parse_configuration_final(response, input, observations) if
+                  self._development and observations else config_parse(response, input))
         if action["kind"] == "inspect":
             call = response["choices"][0]["message"]["tool_calls"][0]
             if (type(call.get("id")) is not str or not 0 < len(call["id"]) <= 128
@@ -264,7 +281,8 @@ class _ConfigurationModel(GroqM20Model):
         return action
 
 
-def _checked_configuration(original, config, adapter, owner, manifest_digest, assessment_id):
+def _checked_configuration(original, config, adapter, owner, manifest_digest, assessment_id,
+                           *, development=False):
     state = original.get_state(config).values
     pinned = pinned_from_state(state)
     ctx = pinned.context
@@ -336,7 +354,8 @@ def _checked_configuration(original, config, adapter, owner, manifest_digest, as
         for ordinal in range(len(returned)):
             before = tuple(observations[:ordinal])
             calls = tuple(x["tool_call"] for x in inspections[:ordinal])
-            expected = request_sha256(config_request(input, before, exchanges=calls))
+            expected = request_sha256(configuration_final_body(input, before) if
+                development and before else config_request(input, before, exchanges=calls))
             if returned[ordinal].get("request_sha256") != expected:
                 raise EvidenceMismatch("typed_hosted_configuration_request_changed")
         result = state.get("m20_ai_results", {}).get("configuration")
@@ -415,7 +434,8 @@ def _checkpoint_send_lock(original):
 
 
 def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sha256,
-    specialist, owner_dir, send, credential_digest, exclusive_databases):
+    specialist, owner_dir, send, credential_digest, exclusive_databases,
+    development=False):
     """Internal composition layer; only the gated entry creates a live sender.
 
     Tests exercise this with a synthetic sender from backend/tests, never _post.
@@ -428,7 +448,7 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
     pinned = pinned_from_state(snapshot.values)
     adapter.validate_pinned_context(pinned)
     _validate_manifest(manifest, approved_manifest_sha256, specialist, owner_dir,
-                       pinned, config)
+                       pinned, config, development=development)
     if snapshot.next or snapshot.values.get("stop_reason"):
         raise EvidenceMismatch("typed_hosted_original_incomplete")
     ctx = pinned.context
@@ -437,7 +457,7 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
         locked_pinned = pinned_from_state(locked.values)
         adapter.validate_pinned_context(locked_pinned)
         _validate_manifest(manifest, approved_manifest_sha256, specialist, owner_dir,
-                           locked_pinned, config)
+                            locked_pinned, config, development=development)
         if (locked.next or locked.values.get("stop_reason") or
                 locked.values != snapshot.values or locked_pinned != pinned or
                 locked.config.get("configurable", {}).get("checkpoint_id") !=
@@ -455,7 +475,8 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
             latest_pinned = pinned_from_state(latest.values)
             adapter.validate_pinned_context(latest_pinned)
             _validate_manifest(manifest, approved_manifest_sha256, specialist,
-                               owner_dir, latest_pinned, config)
+                                owner_dir, latest_pinned, config,
+                                development=development)
             _database_identity(original, manifest, exclusive=exclusive_databases)
             ledger = latest.values.get("tool_access_ledger", [])
             if (latest.next or latest.values.get("stop_reason") or
@@ -521,16 +542,17 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
         pre_send()
         if specialist == "pricing":
             reserved, completed = _checked_configuration(original, config, adapter, owner_dir,
-                approved_manifest_sha256, ctx.assessment_id)
+                approved_manifest_sha256, ctx.assessment_id, development=development)
             if not completed:
                 if refreshed.get("m20_ai_results", {}).get("configuration"):
                     raise EvidenceMismatch("typed_hosted_configuration_unverified")
                 original.update_state(config, {"m20_hosted_base_tokens": 0}, as_node="finish")
                 run_configuration(original, config, adapter, "configuration",
                     _ConfigurationModel(serialized_send, owner_dir, ctx.assessment_id,
-                                        approved_manifest_sha256, pre_send), hosted=True)
+                                        approved_manifest_sha256, pre_send,
+                                        development=development), hosted=True)
                 reserved, completed = _checked_configuration(original, config, adapter, owner_dir,
-                    approved_manifest_sha256, ctx.assessment_id)
+                    approved_manifest_sha256, ctx.assessment_id, development=development)
             result = original.get_state(config).values.get("m20_ai_results", {}).get(
                 "configuration", {})
             if (result.get("execution") not in ("completed", "abstained") or
@@ -547,6 +569,7 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
             "credential_sha256": credential_digest, "account_id": manifest["account_id"],
             "prior_posts": len(reserved), "prior_configured_completion": len(reserved) * 512,
             "prior_reported_tokens": prior_reported,
+            **({"development": True} if development else {}),
             "maximum_posts_per_case": manifest["budgets"]["maximum_posts_per_case"],
             "maximum_configured_completion_per_case": manifest["budgets"][
                 "maximum_configured_completion_per_case"]}
@@ -557,7 +580,8 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
         return run_typed_final_offline(original, config, adapter, model,
             specialist=specialist, inspection_plan=manifest["inspection_plan"],
             owner_dir=owner_dir, opt_in=True, _capability=_HOSTED_CAPABILITY,
-            _hosted_binding=binding, _owner_locked=True, _pre_send=pre_send)
+            _hosted_binding=binding, _owner_locked=True, _pre_send=pre_send,
+            _final_instruction=DEVELOPMENT_FINAL_INSTRUCTION if development else None)
 
 
 def run_typed_final_hosted(original, config, adapter, *, manifest, approved_manifest_sha256,
@@ -579,3 +603,30 @@ def run_typed_final_hosted(original, config, adapter, *, manifest, approved_mani
         approved_manifest_sha256=approved_manifest_sha256, specialist=specialist,
         owner_dir=owner_dir, send=send, credential_digest=sha256(key.encode()).hexdigest(),
         exclusive_databases=True)
+
+
+def run_groq_development(original, config, adapter, *, manifest, manifest_sha256,
+                         specialist, owner_dir):
+    """Standing free-tier development, explicitly opted in for each local process.
+
+    The private manifest record is an audit binding, not a fresh human approval.
+    No public caller can supply a sender, bypass the snapshot or replay a receipt.
+    Production activation above is independent and remains disabled.
+    """
+    if os.environ.get(DEV_ENABLE_ENV) != "1":
+        raise ValueError("groq_development_opt_in_required")
+    from .live_models import _post
+    key = os.environ.get("GROQ_SECONDARY_API_KEY")
+    if credential_shape(key) != "credential_shape_ok":
+        raise ValueError("groq_development_secondary_credential_unavailable")
+    if (type(manifest) is not dict or manifest.get("status") != "standing_development"):
+        raise ValueError("groq_development_manifest_required")
+    def send(body):
+        return _post("https://api.groq.com/openai/v1/chat/completions",
+            "Bearer " + key, "Authorization", body, timeout_seconds=30,
+            classify_transport=True, reject_redirects=True,
+            capture_http_error=True)
+    return _run_assessment(original, config, adapter, manifest=manifest,
+        approved_manifest_sha256=manifest_sha256, specialist=specialist,
+        owner_dir=owner_dir, send=send, credential_digest=sha256(key.encode()).hexdigest(),
+        exclusive_databases=True, development=True)

@@ -115,6 +115,18 @@ def fixture_approval(owner, data, digest):
 
 
 class GateUnit(unittest.TestCase):
+    def test_groq_development_is_opt_in_and_does_not_enable_production(self):
+        from dealdesk_phase2.typed_final_hosted import (DEV_ENABLE_ENV,
+            run_groq_development)
+        self.assertEqual(DEV_ENABLE_ENV, "DEALDESK_GROQ_DEV_ENABLE")
+        with patch.dict(os.environ, {}, clear=True), patch(
+                "dealdesk_phase2.live_models._post") as sender:
+            with self.assertRaisesRegex(ValueError, "groq_development_opt_in_required"):
+                run_groq_development(None, {}, None, manifest={}, manifest_sha256="0" * 64,
+                    specialist="pricing", owner_dir=Path("/tmp/opencode"))
+            sender.assert_not_called()
+        self.assertIs(HOSTED_ACTIVATION, False)
+
     def test_default_gate_refuses_even_with_authorized_bool(self):
         self.assertIs(HOSTED_ACTIVATION, False)
         self.assertEqual(full_m21_budget(), {"posts": 6,
@@ -154,6 +166,70 @@ class HostedMockPostgres(unittest.TestCase):
         with cls.connect() as conn:
             if not conn.execute("SELECT count(*) FROM deal_desk.deals WHERE deal_id LIKE 'M18-D-%'").fetchone()[0]:
                 install_disposable_cases(conn)
+
+    def test_standing_development_fresh_case_runs_without_per_test_owner_approval(self):
+        from dealdesk_phase2.groq_development import build_manifest, record_manifest
+        from dealdesk_phase2.typed_final_hosted import run_groq_development, DEV_ENABLE_ENV
+        checkpoint_name = "typed_dev_" + uuid4().hex[:16]
+        source = psycopg.conninfo.conninfo_to_dict(os.environ["M20_CHECKPOINT_DATABASE_URL"])
+        admin = psycopg.conninfo.make_conninfo(**{**source, "dbname": "postgres"})
+        dsn = psycopg.conninfo.make_conninfo(**{**source, "dbname": checkpoint_name})
+        with psycopg.connect(admin, autocommit=True) as connection:
+            connection.execute("CREATE DATABASE " + checkpoint_name)
+        try:
+            case = next(x for x in CASES if x.case_id == "B05")
+            identifier = "GROQ-DEV-TEST-" + uuid4().hex
+            config = {"configurable": {"thread_id": identifier}}
+            with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory:
+                owner = Path(directory) / "owner"
+                owner.mkdir(mode=0o700)
+                with thesis_checkpointer(dsn) as saver:
+                    graph = build_original_graph(self.adapter, self.connect, saver)
+                    original = graph.invoke(initial_state(identifier, case.run_id), config)
+                    data, digest = build_manifest(graph, config, self.adapter, case_id="B05",
+                        specialist="pricing", plan=1, account_id="synthetic-free-tier",
+                        owner_dir=owner)
+                    self.assertEqual(data["status"], "standing_development")
+                    record_manifest(owner, data, digest)
+                    with self.assertRaises(ValueError):
+                        record_manifest(owner, data, digest)
+                    requests = []
+                    def fake_post(url, key, header, body, **kwargs):
+                        requests.append(body)
+                        if ("response_format" in body and json.loads(body["messages"][1][
+                                "content"])["input"]["specialist"] == "configuration"):
+                            task = json.loads(body["messages"][1]["content"])
+                            record = task["observations"][0]["records"][0]
+                            return {"choices": [{"finish_reason": "stop", "message": {
+                                "content": json.dumps({"version": VERSION,
+                                    "kind": "finding", "claims": [{"ref": record["ref"],
+                                        "field": "is_sellable", "value_json": json.dumps(
+                                            record["fields"]["is_sellable"])}],
+                                    "uncertainty_reasons": [], "reason_code": "none"}),
+                                "tool_calls": None}}], "usage": {"prompt_tokens": 200,
+                                    "completion_tokens": 50}}
+                        return response(body)
+                    with patch.dict(os.environ, {DEV_ENABLE_ENV: "1",
+                            "GROQ_SECONDARY_API_KEY": "gsk_" + "x" * 47}), patch(
+                            "dealdesk_phase2.live_models._post", side_effect=fake_post) as sender:
+                        result = run_groq_development(graph, config, self.adapter,
+                            manifest=data, manifest_sha256=digest, specialist="pricing",
+                            owner_dir=owner)
+                        self.assertEqual(sender.call_count, 4)
+                        self.assertEqual(["response_format" in body for body in requests],
+                                         [False, True, False, True])
+                        self.assertEqual(result["execution"], "completed")
+                        replay = run_groq_development(graph, config, self.adapter,
+                            manifest=data, manifest_sha256=digest, specialist="pricing",
+                            owner_dir=owner)
+                        self.assertEqual(replay, result)
+                        self.assertEqual(sender.call_count, 4)
+                    self.assertEqual(graph.get_state(config).values["specialist_results"],
+                                     original["specialist_results"])
+                    self.assertIs(HOSTED_ACTIVATION, False)
+        finally:
+            with psycopg.connect(admin, autocommit=True) as connection:
+                connection.execute("DROP DATABASE " + checkpoint_name)
 
     def run_case(self, specialist="credit", plan=1, wrong=None, tamper=None):
         identifier = "TYPED-HOSTED-MOCK-" + uuid4().hex

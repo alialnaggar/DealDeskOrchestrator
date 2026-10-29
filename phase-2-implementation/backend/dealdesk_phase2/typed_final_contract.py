@@ -50,7 +50,8 @@ def decode(content, *, specialist, input, observations):
     `observations` MUST be the already-verified completed tool-ledger results;
     the caller owns checkpoint/owner/permission binding and no-replay.
     """
-    if (specialist not in ("pricing", "credit") or input.get("specialist") != specialist
+    if (specialist not in ("configuration", "pricing", "credit") or
+            input.get("specialist") != specialist
             or type(observations) is not tuple or not 1 <= len(observations) <= (
                 2 if specialist == "pricing" else 1) or any(type(x) is not dict
                 or x.get("execution") != "completed" for x in observations)):
@@ -83,9 +84,9 @@ def decode(content, *, specialist, input, observations):
             parsed.append({"ref": claim["ref"], "field": claim["field"], "value": value})
         if len({(c["ref"], c["field"]) for c in parsed}) != len(parsed):
             raise ValueError()
-        if specialist == "pricing":
+        if specialist in ("configuration", "pricing"):
             action = {"kind": "finding", "claims": parsed,
-                      "uncertainty_reasons": raw["uncertainty_reasons"]}
+                       "uncertainty_reasons": raw["uncertainty_reasons"]}
             _validate_claims(action, observations, specialist)
             return action
         if raw["uncertainty_reasons"]:

@@ -6,6 +6,7 @@ import unittest
 from unittest.mock import patch
 
 from dealdesk_phase2.groq_typed_final import (MAX_COMPLETION_TOKENS,
+    FinalResponseError, configuration_final_body, parse_configuration_final,
     request_body, request_sha256, parse_response)
 from dealdesk_phase2.typed_final_contract import InvalidTerminal, VERSION, decode, schema
 from dealdesk_phase2.m21_redaction import model_view
@@ -17,6 +18,43 @@ def final_payload(ref, field, value):
 
 
 class TypedFinalContractImpl(unittest.TestCase):
+    def test_configuration_development_final_is_no_tools_and_exact_evidence_only(self):
+        input = {"specialist": "configuration", "permitted_tool":
+            "inspect_configuration_line", "line_ids": ["L1"]}
+        observation = ({"tool": "inspect_configuration_line", "execution": "completed",
+            "returned_refs": ["product:P"], "records": [{"ref": "product:P",
+                "fields": {"is_sellable": True}}]},)
+        body = configuration_final_body(input, observation)
+        self.assertNotIn("tools", body)
+        self.assertTrue(body["response_format"]["json_schema"]["strict"])
+        claim = final_payload("product:P", "is_sellable", True)
+        self.assertEqual(parse_configuration_final(response(claim), input, observation)[
+            "claims"], [{"ref": "product:P", "field": "is_sellable", "value": True}])
+        with self.assertRaises(FinalResponseError):
+            parse_configuration_final(response(final_payload("product:FORGED",
+                "is_sellable", True)), input, observation)
+        with self.assertRaises(InvalidTerminal):
+            configuration_final_body(input, ())
+
+    def test_rejected_final_carries_only_bounded_category(self):
+        input, rows, _, ref, field, value = fixture("pricing")
+        valid = response(final_payload(ref, field, value))
+        cases = (({**valid, "choices": []}, "envelope"),
+                 (response(final_payload(ref, field, value), reason="length"),
+                  "finish_reason"),
+                 ({**valid, "usage": None}, "usage"),
+                 ({**valid, "choices": [{"finish_reason": "stop", "message": {
+                     "content": "PRIVATE {", "tool_calls": None}}]}, "content_json"),
+                 (response({"private": "PRIVATE"}), "schema_shape"),
+                 (response(final_payload("forged:PRIVATE", field, value)),
+                  "claim_binding"))
+        for item, category in cases:
+            with self.subTest(category=category), self.assertRaises(
+                    FinalResponseError) as caught:
+                parse_response(item, input=input, observations=rows)
+            self.assertEqual(caught.exception.category, category)
+            self.assertNotIn("PRIVATE", str(caught.exception))
+
     def test_new_wire_no_tools_and_redacted_credit(self):
         for specialist in ("pricing", "credit"):
             with self.subTest(specialist=specialist):
