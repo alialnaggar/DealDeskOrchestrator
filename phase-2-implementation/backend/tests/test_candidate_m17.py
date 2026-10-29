@@ -67,6 +67,11 @@ def ledger(*, evidence="eligible_binding", refs=None):
 
 
 class BindingContractTests(unittest.TestCase):
+    def test_none_tradeoff_still_rejected_for_binding(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported tradeoff"):
+            validate_binding_proposal({**proposal(), "tradeoff_code": "none"},
+                                      fake_input(), ledger())
+
     def test_other_specialists_share_ledger_without_authorizing_binding(self):
         pricing = {**ledger()[0], "tool": "inspect_pricing_line",
             "identity": {**ledger()[0]["identity"], "specialist": "pricing"},

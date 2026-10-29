@@ -61,6 +61,8 @@ class LiveModelTests(TestCase):
             self.assertIn("never confirmed", system)
             self.assertIn("Abstain when evidence cannot support a claim", system)
             self.assertIn("never '8.000'", system)
+            self.assertIn("never use none for a binding_proposal", system)
+            self.assertIn("Use none only for a finding or abstention", system)
             self.assertIn(injection, user)
             self.assertNotIn(injection, system)
             self.assertNotIn(PROMPT_VERSION, user)

@@ -62,3 +62,25 @@ No normal provider quota reset was independently verified in this session;
 therefore **no fresh real-Groq assessment was started**. The OpenACP execution
 limit reported for the prior interrupted execution did not recur during this
 offline work. Private CI status was not inferred from local tests.
+
+## Bounded prompt follow-up (29 October 2026)
+
+The retained rejected Fulfillment binding payload used `tradeoff_code="none"`,
+which is valid for a finding/abstention but not for an M1.7 binding proposal.
+The versioned binding prompt now explicitly distinguishes those kinds and tells
+the model to abstain or give a bounded finding when permission or binding
+evidence is uncertain. The strict schema and business validator are unchanged;
+the validator continues to reject `"none"` on binding proposals. On the
+synthetic B01 shortfall, the model may suggest a two-slice delivery only after
+reading an eligible binding path; fixed rules still verify each unit, source,
+date and customer constraint, and no delivery is promised. The 71-test focused
+offline regression (7 skipped without all fixture environment variables)
+passed, including a fresh-checkpoint PostgreSQL six-specialist LangGraph
+assessment using model doubles. No real-model success is inferred from that.
+
+Normal Groq quota availability was not independently verified: the prior 429
+retained no reset headers or identifiable quota type, and the new coordinator
+has no history from that attempt. Do not use a fresh assessment to probe an
+uncertain daily limit or replay any prior terminal assessment. The previous
+OpenACP execution-limit message is separate from the provider's HTTP 429 and
+did not recur. CI could not be inspected here (`gh` unavailable).

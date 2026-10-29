@@ -23,7 +23,7 @@ GROQ_MODEL = "openai/gpt-oss-120b"
 # Prompt identity is independent of the output schema and model-attempt protocol.
 # Historical M1.6–M1.9 observations retain their original v1 attribution.
 PROMPT_VERSION = "m16-fulfillment-claims-v2-system"
-BINDING_PROMPT_SUFFIX = "-m17-binding-optin-m19-wholeunits-v3-line-identity"
+BINDING_PROMPT_SUFFIX = "-m17-binding-optin-m19-wholeunits-v4-tradeoff"
 MAX_OUTPUT_TOKENS = 2048
 MAX_PROMPT_BYTES = 20000
 MAX_MODEL_TURNS = 6
@@ -248,8 +248,14 @@ def _system_instruction(*, enable_binding_proposals=False):
             "after inspect_fulfillment_paths returns a complete eligible_binding path. "
             "Each slice must cite returned inventory or inbound_supply source_refs; never use "
             "supplier_offer as a confirmed source. The pinned Phase 1C verifier may reject "
-            "quantities, dates or customer constraints. Use tradeoff_code "
-            "partial_delivery_requires_customer_acceptance. For binding_proposal, each "
+            "quantities, dates or customer constraints. The output schema requires a "
+            "tradeoff_code for every kind: use exactly "
+            "partial_delivery_requires_customer_acceptance when kind is binding_proposal; "
+            "never use none for a binding_proposal. Use none only for a finding or "
+            "abstention. If customer permission for partial delivery or any binding "
+            "source is uncertain, do not emit a binding_proposal: report a bounded "
+            "finding or abstain. Do not change quantities, dates, sources or permission "
+            "to satisfy this instruction. For binding_proposal, each "
             "quantity must be a positive whole-unit string of ASCII digits only: write '8' "
             "and '2', never '8.000', '8.0', 8, a rounded fraction or a unit with a suffix. "
             "Source records may encode a whole quantity as a decimal (for example 8.000 means "
