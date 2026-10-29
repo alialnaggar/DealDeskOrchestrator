@@ -283,3 +283,24 @@ are invalid as authorizations; no new inference follows from their existence.
    unchanged. Evaluate the reviewer UI only after the six-agent backend is
    coherently exercised. Further architecture, cost or hosted scope changes
    need separate owner approval.
+
+## Weeks 1–4 evidence checkpoint — six-specialist offline development (29 October 2026)
+
+| Plan period | Verified working boundary | Still open |
+| --- | --- | --- |
+| Week 1, pinned foundation | Exact Phase 1C `90c0bc8e285ee69262c7db826b786096a77ad004` reader, sealed context, six **deterministic mappings of one** fixed decision, original PostgreSQL LangGraph/checkpoint and restart. | Broader Phase 1C release/calibration and a pin upgrade are separate decisions. |
+| Week 2, bounded agents | Permissioned Fulfillment AI investigation, scripted proposal/abstention, and a separate candidate path that fully rechecks six **fixed** responsibilities. Configuration and Pricing have independent scoped offline AI investigations; hosted Pricing remains stopped by prior 400s. | Typed-final hosted acceptance, substitution/repricing and combined six-AI candidate continuation are not demonstrated. Never replay a spent hosted attempt. |
+| Week 3, specialist integration | The existing `week3_offline.py` LangGraph composes original/Fulfillment → Configuration/Pricing → Credit/Policy/Routing → original-only reviewer handoff. Five bounded evidence-reading offline AI specialists plus Fulfillment retain separate results and preserve fixed authority. | Credit/Policy/Route source coverage (nonempty AR/payment roles), candidate-subject AI isolation and all-specialist hosted operation remain incomplete. |
+| Week 4, evaluation | New [three-case development baseline](../evaluation/week3-six-specialist-development.md) and [machine-readable trace](../evaluation/week3-six-specialist-development.json) exercise B01 nominal, B05 fabricated Credit/Policy abstention, N03 insufficient evidence. Distinct disposable DB reruns yield byte-identical observations; 0 accepted independent answers, no provider requests. | The pinned 36 provisional packets have **0/36 accepted** answers. Independent evaluation/scoring, comparative controlled cases, real-model reliability and reviewer UI are not complete. |
+
+**Next minimal offline increment:** extend source-first nonempty Credit/Policy/
+Routing cases and original/candidate-subject isolation tests without changing
+Phase 1C rules; secure independent answer acceptance before quality scoring.
+Then seek separately scoped hosted validation (if still needed) and UI review.
+The Week 3 development runner demonstrates orchestration and safety boundaries
+with scripted actions, **not** AI model quality or a finished Week 4 thesis.
+Fresh disposable PostgreSQL verification for this increment: **14 focused
+tests passed** and **320 full-suite tests passed, seven unrelated Gemma skips**
+(`/tmp/opencode/dealdesk-six-specialist-focused.log` and
+`/tmp/opencode/dealdesk-six-specialist-regression.log`). Private GitHub CI
+was not run.

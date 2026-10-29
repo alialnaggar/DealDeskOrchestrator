@@ -1,0 +1,955 @@
+{
+  "cohort": "development_only_pinned_synthetic",
+  "independent_answers_accepted": 0,
+  "provider_requests": 0,
+  "scenarios": [
+    {
+      "as_of_at": "2026-09-01T12:00:00+00:00",
+      "assessment_id": "DEV-W3-week3-six-specialist-development-v1-B01-nominal",
+      "attempts": {
+        "m20": [
+          {
+            "ordinal": 0,
+            "specialist": "configuration",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "configuration",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "configuration",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "configuration",
+            "status": "returned"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "pricing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "pricing",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "pricing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "pricing",
+            "status": "returned"
+          }
+        ],
+        "m21": [
+          {
+            "ordinal": 0,
+            "specialist": "credit",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "credit",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "credit",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "credit",
+            "status": "returned"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "policy",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "policy",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "policy",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "policy",
+            "status": "returned"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "approval_routing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "approval_routing",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "approval_routing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "approval_routing",
+            "status": "returned"
+          }
+        ]
+      },
+      "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+      "candidate_status": "not_started",
+      "case_id": "M18-D-B01",
+      "data_snapshot_ref": "M18-SNAPSHOT-B01",
+      "deterministic_baseline": {
+        "decision_status": "needs_revision",
+        "review_status": "needs_revision",
+        "specialists": {
+          "approval_routing": {
+            "execution": "completed",
+            "finding": "withheld",
+            "prerequisite": "met"
+          },
+          "configuration": {
+            "execution": "completed",
+            "finding": "confirmed",
+            "prerequisite": "met"
+          },
+          "credit": {
+            "execution": "completed",
+            "finding": "calculated",
+            "prerequisite": "met"
+          },
+          "fulfillment": {
+            "execution": "completed",
+            "finding": "needs_revision",
+            "prerequisite": "met"
+          },
+          "policy": {
+            "execution": "completed",
+            "finding": "evaluated_with_interface_limits",
+            "prerequisite": "met"
+          },
+          "pricing": {
+            "execution": "completed",
+            "finding": "calculated",
+            "prerequisite": "met"
+          }
+        }
+      },
+      "fixed_decision_sha256": "728569caa5c5305805ebc6f66fba844ce834f66cbdfd54f33c310e1733adc7bc",
+      "fulfillment_claim_audit_records": 0,
+      "ground_truth": "none_accepted_development_diagnostic_only",
+      "hosted_model_quality": "not_measured_offline_doubles",
+      "human_approval": "not_granted_by_system",
+      "offline_ai": {
+        "approval_routing": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "route_withheld",
+              "ref": "fixed_route:M18-D-B01"
+            }
+          ]
+        },
+        "configuration": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "is_sellable",
+              "ref": "product:M18-P-B01"
+            }
+          ]
+        },
+        "credit": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "credit_limit",
+              "ref": "credit_profile:M18-C-B01"
+            }
+          ]
+        },
+        "fulfillment": {
+          "contribution_kind": "abstention",
+          "execution": "completed",
+          "model_turns": null,
+          "reason": null,
+          "tool_calls": null,
+          "validated_claims": []
+        },
+        "policy": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "rule_id",
+              "ref": "policy_rule:PO-BASE-DELIVERY-LATE"
+            }
+          ]
+        },
+        "pricing": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "fixed_margin_pct",
+              "ref": "pricing_line:M18-L-B01"
+            }
+          ]
+        }
+      },
+      "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
+      "phase1c_run_id": "00000000-0000-4000-8000-000000018001",
+      "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+      "tool_trace": [
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "configuration",
+          "status": "reserved",
+          "tool": "inspect_configuration_line"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "product:M18-P-B01"
+          ],
+          "specialist": "configuration",
+          "status": "completed",
+          "tool": "inspect_configuration_line"
+        },
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "pricing",
+          "status": "reserved",
+          "tool": "inspect_pricing_line"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "pricing_line:M18-L-B01"
+          ],
+          "specialist": "pricing",
+          "status": "completed",
+          "tool": "inspect_pricing_line"
+        },
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "credit",
+          "status": "reserved",
+          "tool": "inspect_customer_credit_evidence"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "credit_profile:M18-C-B01"
+          ],
+          "specialist": "credit",
+          "status": "completed",
+          "tool": "inspect_customer_credit_evidence"
+        },
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "policy",
+          "status": "reserved",
+          "tool": "inspect_fixed_policy_hits"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "policy_rule:PO-BASE-DELIVERY-LATE"
+          ],
+          "specialist": "policy",
+          "status": "completed",
+          "tool": "inspect_fixed_policy_hits"
+        },
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "approval_routing",
+          "status": "reserved",
+          "tool": "inspect_fixed_route"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "fixed_route:M18-D-B01"
+          ],
+          "specialist": "approval_routing",
+          "status": "completed",
+          "tool": "inspect_fixed_route"
+        }
+      ],
+      "trace": [
+        "evidence_pinned",
+        "configuration:completed",
+        "pricing:completed",
+        "fulfillment:completed",
+        "credit:completed",
+        "policy:completed",
+        "reconciled",
+        "approval_routing:completed",
+        "review_prepared",
+        "fulfillment_ai:completed",
+        "m20_configuration:completed",
+        "m20_pricing:completed",
+        "m21_credit:completed",
+        "m21_policy:completed",
+        "m21_approval_routing:completed"
+      ],
+      "version": "week3-six-specialist-development-v1"
+    },
+    {
+      "as_of_at": "2026-09-01T12:00:00+00:00",
+      "assessment_id": "DEV-W3-week3-six-specialist-development-v1-B05-adverse",
+      "attempts": {
+        "m20": [
+          {
+            "ordinal": 0,
+            "specialist": "configuration",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "configuration",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "configuration",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "configuration",
+            "status": "returned"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "pricing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "pricing",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "pricing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "pricing",
+            "status": "returned"
+          }
+        ],
+        "m21": [
+          {
+            "ordinal": 0,
+            "specialist": "credit",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "credit",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "credit",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "credit",
+            "status": "returned"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "policy",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "policy",
+            "status": "returned"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "approval_routing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "approval_routing",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "approval_routing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "approval_routing",
+            "status": "returned"
+          }
+        ]
+      },
+      "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+      "candidate_status": "not_started",
+      "case_id": "M18-D-B05",
+      "data_snapshot_ref": "M18-SNAPSHOT-B05",
+      "deterministic_baseline": {
+        "decision_status": "needs_revision",
+        "review_status": "needs_revision",
+        "specialists": {
+          "approval_routing": {
+            "execution": "completed",
+            "finding": "withheld",
+            "prerequisite": "met"
+          },
+          "configuration": {
+            "execution": "completed",
+            "finding": "confirmed",
+            "prerequisite": "met"
+          },
+          "credit": {
+            "execution": "completed",
+            "finding": "calculated",
+            "prerequisite": "met"
+          },
+          "fulfillment": {
+            "execution": "completed",
+            "finding": "needs_revision",
+            "prerequisite": "met"
+          },
+          "policy": {
+            "execution": "completed",
+            "finding": "evaluated_with_interface_limits",
+            "prerequisite": "met"
+          },
+          "pricing": {
+            "execution": "completed",
+            "finding": "calculated",
+            "prerequisite": "met"
+          }
+        }
+      },
+      "fixed_decision_sha256": "a94d2cf8629e7694dfcf73ab5b3b12fd0eb4793c0a14e678fb1c6b93c43ac356",
+      "fulfillment_claim_audit_records": 0,
+      "ground_truth": "none_accepted_development_diagnostic_only",
+      "hosted_model_quality": "not_measured_offline_doubles",
+      "human_approval": "not_granted_by_system",
+      "offline_ai": {
+        "approval_routing": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "route_withheld",
+              "ref": "fixed_route:M18-D-B05"
+            }
+          ]
+        },
+        "configuration": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "is_sellable",
+              "ref": "product:M18-P-B05"
+            }
+          ]
+        },
+        "credit": {
+          "execution": "error",
+          "model_turns": 2,
+          "reason": "invalid_model_or_evidence",
+          "tool_calls": 1,
+          "validated_claims": []
+        },
+        "fulfillment": {
+          "contribution_kind": "abstention",
+          "execution": "completed",
+          "model_turns": null,
+          "reason": null,
+          "tool_calls": null,
+          "validated_claims": []
+        },
+        "policy": {
+          "execution": "abstained",
+          "model_turns": 1,
+          "reason": "insufficient_evidence",
+          "tool_calls": 0,
+          "validated_claims": []
+        },
+        "pricing": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "fixed_margin_pct",
+              "ref": "pricing_line:M18-L-B05"
+            }
+          ]
+        }
+      },
+      "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
+      "phase1c_run_id": "00000000-0000-4000-8000-000000018005",
+      "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+      "tool_trace": [
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "configuration",
+          "status": "reserved",
+          "tool": "inspect_configuration_line"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "product:M18-P-B05"
+          ],
+          "specialist": "configuration",
+          "status": "completed",
+          "tool": "inspect_configuration_line"
+        },
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "pricing",
+          "status": "reserved",
+          "tool": "inspect_pricing_line"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "pricing_line:M18-L-B05"
+          ],
+          "specialist": "pricing",
+          "status": "completed",
+          "tool": "inspect_pricing_line"
+        },
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "credit",
+          "status": "reserved",
+          "tool": "inspect_customer_credit_evidence"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "credit_profile:M18-C-B05"
+          ],
+          "specialist": "credit",
+          "status": "completed",
+          "tool": "inspect_customer_credit_evidence"
+        },
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "approval_routing",
+          "status": "reserved",
+          "tool": "inspect_fixed_route"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "fixed_route:M18-D-B05"
+          ],
+          "specialist": "approval_routing",
+          "status": "completed",
+          "tool": "inspect_fixed_route"
+        }
+      ],
+      "trace": [
+        "evidence_pinned",
+        "configuration:completed",
+        "pricing:completed",
+        "fulfillment:completed",
+        "credit:completed",
+        "policy:completed",
+        "reconciled",
+        "approval_routing:completed",
+        "review_prepared",
+        "fulfillment_ai:completed",
+        "m20_configuration:completed",
+        "m20_pricing:completed",
+        "m21_credit:error",
+        "m21_policy:abstained",
+        "m21_approval_routing:completed"
+      ],
+      "version": "week3-six-specialist-development-v1"
+    },
+    {
+      "as_of_at": "2026-09-01T12:00:00+00:00",
+      "assessment_id": "DEV-W3-week3-six-specialist-development-v1-N03-nominal",
+      "attempts": {
+        "m20": [
+          {
+            "ordinal": 0,
+            "specialist": "configuration",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "configuration",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "configuration",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "configuration",
+            "status": "returned"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "pricing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "pricing",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "pricing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "pricing",
+            "status": "returned"
+          }
+        ],
+        "m21": [
+          {
+            "ordinal": 0,
+            "specialist": "credit",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "credit",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "credit",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "credit",
+            "status": "returned"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "policy",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "policy",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "policy",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "approval_routing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 0,
+            "specialist": "approval_routing",
+            "status": "returned"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "approval_routing",
+            "status": "reserved"
+          },
+          {
+            "ordinal": 1,
+            "specialist": "approval_routing",
+            "status": "returned"
+          }
+        ]
+      },
+      "bundle_sha256": "a176ad55e465ea91c66ed5d10d814ee694368f96ee4268ea0021aaff465a8148",
+      "candidate_status": "not_started",
+      "case_id": "M18-D-N03",
+      "data_snapshot_ref": "M18-SNAPSHOT-N03",
+      "deterministic_baseline": {
+        "decision_status": "needs_evidence",
+        "review_status": "needs_evidence",
+        "specialists": {
+          "approval_routing": {
+            "execution": "completed",
+            "finding": "withheld",
+            "prerequisite": "met"
+          },
+          "configuration": {
+            "execution": "completed",
+            "finding": "confirmed",
+            "prerequisite": "met"
+          },
+          "credit": {
+            "execution": "completed",
+            "finding": "calculated",
+            "prerequisite": "met"
+          },
+          "fulfillment": {
+            "execution": "completed",
+            "finding": "unknown",
+            "prerequisite": "met"
+          },
+          "policy": {
+            "execution": "completed",
+            "finding": "evaluated_with_interface_limits",
+            "prerequisite": "met"
+          },
+          "pricing": {
+            "execution": "completed",
+            "finding": "calculated",
+            "prerequisite": "met"
+          }
+        }
+      },
+      "fixed_decision_sha256": "f0ba97d89c6a3b67413ccc21250246b357176a1ce79d43c6179d606fe61ea80f",
+      "fulfillment_claim_audit_records": 0,
+      "ground_truth": "none_accepted_development_diagnostic_only",
+      "hosted_model_quality": "not_measured_offline_doubles",
+      "human_approval": "not_granted_by_system",
+      "offline_ai": {
+        "approval_routing": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "route_withheld",
+              "ref": "fixed_route:M18-D-N03"
+            }
+          ]
+        },
+        "configuration": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "is_sellable",
+              "ref": "product:M18-P-N03"
+            }
+          ]
+        },
+        "credit": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "credit_limit",
+              "ref": "credit_profile:M18-C-N03"
+            }
+          ]
+        },
+        "fulfillment": {
+          "contribution_kind": null,
+          "execution": "skipped",
+          "model_turns": null,
+          "reason": "no_single_supported_recoverable_shortage",
+          "tool_calls": null,
+          "validated_claims": []
+        },
+        "policy": {
+          "execution": "error",
+          "model_turns": 2,
+          "reason": "model_or_tool_failure",
+          "tool_calls": 1,
+          "validated_claims": []
+        },
+        "pricing": {
+          "execution": "completed",
+          "model_turns": 2,
+          "reason": null,
+          "tool_calls": 1,
+          "validated_claims": [
+            {
+              "field": "fixed_margin_pct",
+              "ref": "pricing_line:M18-L-N03"
+            }
+          ]
+        }
+      },
+      "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
+      "phase1c_run_id": "00000000-0000-4000-8000-000000018103",
+      "source_input_digest": "6f9918c9e5192a22eb254980dd603a9d842969fdde04039eea8a8bbbbc575a06",
+      "tool_trace": [
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "configuration",
+          "status": "reserved",
+          "tool": "inspect_configuration_line"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "product:M18-P-N03"
+          ],
+          "specialist": "configuration",
+          "status": "completed",
+          "tool": "inspect_configuration_line"
+        },
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "pricing",
+          "status": "reserved",
+          "tool": "inspect_pricing_line"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "pricing_line:M18-L-N03"
+          ],
+          "specialist": "pricing",
+          "status": "completed",
+          "tool": "inspect_pricing_line"
+        },
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "credit",
+          "status": "reserved",
+          "tool": "inspect_customer_credit_evidence"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "credit_profile:M18-C-N03"
+          ],
+          "specialist": "credit",
+          "status": "completed",
+          "tool": "inspect_customer_credit_evidence"
+        },
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "policy",
+          "status": "reserved",
+          "tool": "inspect_fixed_policy_hits"
+        },
+        {
+          "counted": false,
+          "returned_refs": [],
+          "specialist": "policy",
+          "status": "completed",
+          "tool": "inspect_fixed_policy_hits"
+        },
+        {
+          "counted": true,
+          "returned_refs": [],
+          "specialist": "approval_routing",
+          "status": "reserved",
+          "tool": "inspect_fixed_route"
+        },
+        {
+          "counted": false,
+          "returned_refs": [
+            "fixed_route:M18-D-N03"
+          ],
+          "specialist": "approval_routing",
+          "status": "completed",
+          "tool": "inspect_fixed_route"
+        }
+      ],
+      "trace": [
+        "evidence_pinned",
+        "configuration:completed",
+        "pricing:completed",
+        "fulfillment:completed",
+        "credit:completed",
+        "policy:completed",
+        "reconciled",
+        "approval_routing:completed",
+        "review_prepared",
+        "fulfillment_ai:skipped",
+        "m20_configuration:completed",
+        "m20_pricing:completed",
+        "m21_credit:completed",
+        "m21_policy:error",
+        "m21_approval_routing:completed"
+      ],
+      "version": "week3-six-specialist-development-v1"
+    }
+  ],
+  "summary": {
+    "abstained_ai_results": 1,
+    "accepted_answer_accuracy": null,
+    "completed_ai_results": 14,
+    "error_ai_results": 2,
+    "fixed_results": 18,
+    "fulfillment_contribution_abstentions": 2,
+    "hosted_model_reliability": "not_measured",
+    "scenarios": 3,
+    "skipped_ai_results": 1
+  },
+  "version": "week3-six-specialist-development-v1"
+}
