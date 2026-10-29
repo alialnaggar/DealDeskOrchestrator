@@ -23,7 +23,7 @@ GROQ_MODEL = "openai/gpt-oss-120b"
 # Prompt identity is independent of the output schema and model-attempt protocol.
 # Historical M1.6–M1.9 observations retain their original v1 attribution.
 PROMPT_VERSION = "m16-fulfillment-claims-v2-system"
-BINDING_PROMPT_SUFFIX = "-m17-binding-optin-m19-wholeunits-v4-tradeoff"
+BINDING_PROMPT_SUFFIX = "-m17-binding-optin-m19-wholeunits-v7-path-then-final"
 MAX_OUTPUT_TOKENS = 2048
 MAX_PROMPT_BYTES = 20000
 MAX_MODEL_TURNS = 6
@@ -411,9 +411,32 @@ class LiveInvestigationModel:
                                  {"role": "user", "content": self.decision_prompt(
                                      input, observations, _prompt(input, observations,
                                          enable_binding_proposals=self.enable_binding_proposals))}]}
-        first = self._request(input, step, "decision", decision)
-        if first["type"] == "tool":
-            return first
+        # The binding path reader includes the complete eligible path and
+        # exposed refs. Once it has returned, a further native-tool decision
+        # is unnecessary; the strict no-tools final can find or abstain. If the
+        # first inspection was supply-only, perform the permitted path read as
+        # a fixed prerequisite rather than relying on an extra tool-enabled
+        # model turn. Both tools still pass through the normal guarded ledger.
+        inspected = {item.get("tool") for item in observations if isinstance(item, dict)
+                     and item.get("execution") == "completed"}
+        binding = self.provider == "groq" and self.enable_binding_proposals
+        ready_for_final = binding and "inspect_fulfillment_paths" in inspected
+        if (binding and not ready_for_final and "inspect_line_supply" in inspected and
+                "inspect_fulfillment_paths" in input.permitted_tools):
+            return {"type": "tool", "tool": "inspect_fulfillment_paths",
+                    "arguments": {"line_id": input.line_id}}
+        if not ready_for_final:
+            first = self._request(input, step, "decision", decision)
+            if first["type"] == "tool":
+                return first
+            # A binding schedule cannot cite a path the model never inspected.
+            # READY is not evidence: expose the already-permitted fixed path
+            # inspection before giving the model a no-tools final opportunity.
+            if (binding and
+                    "inspect_fulfillment_paths" in input.permitted_tools and
+                    "inspect_fulfillment_paths" not in inspected):
+                return {"type": "tool", "tool": "inspect_fulfillment_paths",
+                        "arguments": {"line_id": input.line_id}}
         # Preserve legacy experimental subclass wire without editing its
         # untracked adapter; only the selected Groq wire changes hierarchy.
         final_prompt = (task if self.provider == "groq" else _prompt(input, observations,

@@ -94,6 +94,7 @@ class M21HostedGatePostgres(unittest.TestCase):
             with TemporaryDirectory(dir="/tmp/opencode") as directory:
                 root = Path(directory)
                 root.chmod(0o700)
+                (root / "owner").mkdir(mode=0o700)  # same setup as the real CLI
                 with thesis_checkpointer(dedicated) as saver:
                     graph, config, before, _ = self.original(saver)
                     calls = []

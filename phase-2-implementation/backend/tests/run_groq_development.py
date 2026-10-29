@@ -148,11 +148,18 @@ def _six_campaign(graph, config, adapter, *, case_id, account_id, root, key, run
     finally:
         os.environ.pop("GROQ_API_KEY", None)
     state = graph.get_state(config).values
-    if (state.get("ai_fulfillment_result", {}).get("execution") != "completed" or
-            state.get("candidate_status") != "not_started"):
-        return "fulfillment_incomplete_or_candidate_requires_separate_review"
+    if state.get("ai_fulfillment_result", {}).get("execution") != "completed":
+        return "fulfillment_incomplete"
+    if state.get("candidate_status") != "not_started":
+        # M2.1 explicitly requires no candidate. Never erase or relabel a
+        # fixed-checked candidate just to continue the six-stage campaign.
+        return "candidate_requires_separate_review"
     owner = root / "owner"
-    owner.mkdir(mode=0o700)
+    # main() creates this owner directory during fresh-case provisioning. The
+    # offline campaign also runs standalone with a not-yet-created root.
+    owner.mkdir(mode=0o700, exist_ok=True)
+    if owner.is_symlink() or not owner.is_dir() or owner.stat().st_mode & 0o077:
+        raise ValueError("groq_development_owner_directory_unsafe")
     _m21_campaign(graph, config, adapter, case_id=case_id, owner=owner,
         root=root, key=key, typed_credit=True,
         manifest_path=root / "m21-manifest.json")
