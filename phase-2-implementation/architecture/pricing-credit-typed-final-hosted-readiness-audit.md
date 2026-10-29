@@ -148,3 +148,114 @@ review of the proposed corrections first; after corrections and independent
 verification, request activation approval and later *separate* approval of an
 exact fresh-case manifest. This audit neither activates the gate nor grants
 permission for a trial.
+
+## Remediation after audit (28 October 2026)
+
+**Implementation authorized, activation and hosted trial not authorized.**
+The preceding sections describe the *audited v1 commit* and remain historical;
+the following supersedes their implementation findings for the remediated
+v2 gate. `HOSTED_ACTIVATION` remains `False`.
+
+1. **Gate and mock isolation:** `run_typed_final_hosted` no longer accepts a
+   mock or arbitrary sender argument. It checks activation/authorization/owner
+   attestation before importing `_post` or reading a key. The synthetic sender
+   is in `backend/tests/typed_final_hosted_harness.py`, which invokes an
+   internal composition layer with a synthetic callable; mocked tests patch
+   the live HTTP sender to assert it is never used. The internal Python layer
+   remains importable by trusted in-process code; this is *not* a sandbox for
+   arbitrary local Python/plugins. An adversarial caller with code execution
+   in the same process can use other networking APIs, irrespective of this
+   gate. Restrict deployment access accordingly.
+2. **Post-lock checks:** under the OS owner lock, re-read the full checkpoint
+   (including checkpoint ID), revalidate its sealed evidence, case manifest,
+   stop/next state, private approval, database identity and checkpoint history.
+   Reject any difference from the pre-lock snapshot before even writing the
+   hosted selection. Before each new Configuration/typed reservation, recheck
+   pinned state, fixed results, database identity and stop condition; existing
+   attempt/ledger/budget checks still gate sends. A writer that ignores the
+   lock can still race *after* a recheck: enforce shared lock discipline or a
+   serialized transaction across all assessment writers before production.
+3. **Freshness:** v2 binds actual PostgreSQL database OIDs as well as names;
+   production requires the dedicated checkpoint database to contain no thread
+   other than the selected assessment in checkpoint, writes or blobs. Every
+   available checkpoint state for that thread is scanned for older terminal
+   or conflicting protocol attempts, even if the latest state was cleared.
+   Existing owner receipts are checked against a closed allowlist before
+   recording the new hosted start. These are independent negative checks for
+   reuse, **not** proof that the business database was newly created. A
+   PostgreSQL database OID proves identity, not creation time; owner-controlled
+   fresh database provisioning and access isolation remain required. The test
+   harness permits a shared checkpoint database to run many synthetic cases;
+   the production entry does not.
+4. **Billing:** v2 requires `billing_state=owner_asserts_free_tier_billing_disabled`,
+   `owner_billing_attested=True` and a private approval with that same owner
+   attestation. These are statements by the owner, not provider verification.
+   The gate verifies selected credential shape and binds its hash on restart;
+   it cannot prove the key belongs to `account_id` or that the actual account
+   currently has billing disabled. Ali must check the provider console/account
+   and key identity through an approved manual channel *before* any activation
+   or exact-manifest trial; do not infer state from string literals.
+5. **Offline regression:** a fresh seven-database PostgreSQL run passed
+   **314 tests, 7 skipped**. Focused hosted/offline/contract checks passed
+   **16 tests**. Cases include mock B05 Configuration→Pricing findings and
+   fixed-margin citation verification, Credit findings/abstention, one/two
+   inspections, four-POST cap and restart no-replay; default terminal-tool
+   paths retain their legacy tests. Adversarial tests cover injected transport
+   rejection before credential access, pre-lock stop/fixed/ledger/sealed-bundle
+   mutation, mutation after lock, tampered returned usage, cleared attempt
+   history, database OID change, reused receipt, foreign checkpoint thread,
+   interrupted sends, timeout and HTTP 400. No hosted inference or new CI
+   workflow was run. Private CI status is **unverified**: no local `gh` client
+   or discovered GitHub credential variable was available; `git fetch` cannot
+   establish Actions status.
+
+**Revised recommendation:** **conditional NO-GO for requesting activation
+approval** until independent review confirms the shared-writer lock/transaction
+discipline, owner evidences fresh business database and actual key/account
+billing status, and private CI and current provider wire documentation are
+reviewed. After those checks, Ali may separately consider a reviewed activation
+diff; an actual first trial additionally requires a fresh B05 assessment,
+actual account and exact v2 manifest hash, separate approval, at most **four
+POSTs / 2,560 configured completion tokens**, and no retry/fallback. No such
+manifest or live approval exists from this remediation.
+
+### Interrupted-work recovery verification (29 October 2026)
+
+The checkout at `projects/DealDeskOrchestrator` was verified on
+`phase2-agent-implementation`, with `origin` pointing to the private
+`alialnaggar/DealDeskOrchestrator` repository. Fetch and remote-head inspection
+found both local and remote at `61bfc002962266f6ae2b89fb79688a0f65addec8`
+before this remediation commit. The old regression log showed 314 tests and
+seven skips, but an additional uncommitted pre-send ledger guard postdated that
+log; the old result therefore did not verify the final worktree.
+
+A new run provisioned seven distinct disposable PostgreSQL databases under the
+isolated test server, pinned Phase 1C checkout
+`90c0bc8e285ee69262c7db826b786096a77ad004`, installed the pinned schema
+and reference rows into the four business fixtures, and compiled/applied the
+pinned rules. The command was
+`python -m unittest discover -s phase-2-implementation/backend/tests -p 'test_*.py' -v`
+using the existing test virtualenv with distinct `DATABASE_URL`,
+`CHECKPOINT_DATABASE_URL`, `REFERENCE_DATABASE_URL`, `M20_DATABASE_URL`,
+`M20_CHECKPOINT_DATABASE_URL`, `M20_E2E_DATABASE_URL` and
+`M20_E2E_CHECKPOINT_URL`. The complete run log is
+`/tmp/opencode/dealdesk-recovery-regression.log`: **314 tests in 118.060 s,
+OK (skipped=7)**. All seven skips belong to unrelated, untracked Gemma
+read-only-checkpoint diagnostics; none is a hosted Pricing/Credit skip. Two
+initial setup attempts lacked the locally packaged `psql` executable/library;
+they stopped before running tests. No provider request or CI dispatch occurred.
+The recovery commit carries `[skip ci]` because a normal push of backend
+changes triggers the branch's GitHub Actions workflow; this offline-only
+authorization does not permit a billable CI run. Consequently private CI
+for the remediation commit remains unverified, not implicitly passed.
+
+The last pre-send guard checks that the permissioned tool ledger retains its
+pre-lock prefix and that subsequent entries belong to the selected assessment
+and allowed specialist. Adversarial offline tests cover pre-lock ledger
+replacement, post-lock fixed-state mutation, historical attempts and receipt
+reuse. These do **not** establish atomicity against arbitrary writers that
+ignore the owner lock. Separate confirmation of shared-writer serialization,
+fresh business-database provisioning, provider/account billing state, current
+wire compatibility and private CI remains outstanding. **NO-GO to request
+activation approval** on this evidence alone; implementation completion does
+not authorize activation or a manifest-specific inference trial.

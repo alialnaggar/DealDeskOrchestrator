@@ -2,6 +2,7 @@
 
 import json
 import os
+from contextlib import contextmanager
 from hashlib import sha256
 from pathlib import Path
 import tempfile
@@ -22,8 +23,9 @@ from dealdesk_phase2.tool_permissions import PERMISSION_VERSION
 from dealdesk_phase2.typed_final_contract import VERSION
 from dealdesk_phase2.typed_final_hosted import (APPROVAL_NAME, HOSTED_ACTIVATION,
     INSPECTION_WIRE_VERSION, INSPECTION_PROMPT_VERSION, MANIFEST_VERSION,
-    SCHEMA_SHA256, MockTypedTransport, budgets, inspection_instruction,
-    full_m21_budget, run_typed_final_hosted)
+    SCHEMA_SHA256, budgets, inspection_instruction,
+    full_m21_budget, run_typed_final_hosted, _database_identity)
+from typed_final_hosted_harness import MockTypedTransport, run_mock
 from m18_case_setup import CASES, install_disposable_cases
 from test_m20_groq import tool_response
 
@@ -65,12 +67,13 @@ def response(body, wrong=None):
         "tool_calls": None}}], "usage": {"prompt_tokens": 200, "completion_tokens": 50}}
 
 
-def manifest(state, specialist, owner, business_database, checkpoint_database, plan=1):
+def manifest(state, specialist, owner, business_database, checkpoint_database,
+             business_oid, checkpoint_oid, plan=1):
     context = state["context"]
     return {"version": MANIFEST_VERSION, "status": "authorized_one_case",
         "phase1c_pin": PHASE1C_COMMIT, "specialist": specialist,
         "inspection_plan": plan, "account_id": "synthetic-test-account",
-        "billing_state": "free_tier_billing_disabled", "provider": "groq",
+        "billing_state": "owner_asserts_free_tier_billing_disabled", "provider": "groq",
         "model": GROQ_MODEL, "credential_env_selection": "GROQ_SECONDARY_API_KEY",
         "permission_version": PERMISSION_VERSION,
         "inspection_wire_version": INSPECTION_WIRE_VERSION,
@@ -93,6 +96,8 @@ def manifest(state, specialist, owner, business_database, checkpoint_database, p
             "data_snapshot_ref": context["data_snapshot_ref"]},
         "execution_context": {"fixture_database": business_database,
             "checkpoint_database": checkpoint_database,
+            "fixture_database_oid": business_oid,
+            "checkpoint_database_oid": checkpoint_oid,
             "owner_directory": str(owner), "fresh_databases_required": True}}
 
 
@@ -102,7 +107,7 @@ def fixture_approval(owner, data, digest):
         "assessment_id": data["case"]["assessment_id"],
         "approved_manifest_sha256": digest,
         "credential_env_selection": "GROQ_SECONDARY_API_KEY",
-        "account_id": data["account_id"], "billing_disabled_confirmed": True,
+        "account_id": data["account_id"], "owner_billing_attested": True,
         "typed_final_opt_in_confirmed": True}))
     path.chmod(0o600)
     return path
@@ -121,7 +126,20 @@ class GateUnit(unittest.TestCase):
             run_typed_final_hosted(None, {}, None, manifest={},
                 approved_manifest_sha256="a" * 64, specialist="credit",
                 owner_dir=Path("/tmp/opencode"), authorized=True,
-                billing_disabled=True)
+                owner_billing_attested=True)
+
+    def test_injected_transport_rejected_before_credential_or_send(self):
+        transport = MockTypedTransport([lambda _: self.fail("unexpected send")])
+        with patch("dealdesk_phase2.live_models._post") as sender, patch(
+                "dealdesk_phase2.typed_final_hosted.credential_shape") as credential:
+            with self.assertRaises(TypeError):
+                run_typed_final_hosted(None, {}, None, manifest={},
+                    approved_manifest_sha256="a" * 64, specialist="credit",
+                    owner_dir=Path("/tmp/opencode"), authorized=True,
+                    owner_billing_attested=True, _mock_transport=transport)
+            sender.assert_not_called()
+            credential.assert_not_called()
+            self.assertEqual(transport.requests, [])
 
 
 @unittest.skipUnless(psycopg and all(os.getenv(k) for k in (
@@ -147,18 +165,25 @@ class HostedMockPostgres(unittest.TestCase):
                 graph = build_original_graph(self.adapter, self.connect, saver)
                 original = graph.invoke(initial_state(identifier, case.run_id), config)
                 with graph.phase2_connection_factory() as connection:
-                    database = connection.info.dbname
+                    database, business_oid = connection.execute(
+                        "SELECT current_database(), oid FROM pg_database WHERE datname = current_database()"
+                    ).fetchone()
+                checkpoint_row = graph.checkpointer.conn.execute(
+                    "SELECT current_database(), oid FROM pg_database WHERE datname = current_database()"
+                ).fetchone()
+                checkpoint_db, checkpoint_oid = (checkpoint_row["current_database"],
+                                                  checkpoint_row["oid"])
                 data = manifest(original, specialist, owner, database,
-                    graph.checkpointer.conn.info.dbname, plan)
+                    checkpoint_db, business_oid, checkpoint_oid, plan)
                 digest = sha256(_canonical(data).encode()).hexdigest()
                 approval = fixture_approval(owner, data, digest)
                 args = dict(manifest=data, approved_manifest_sha256=digest,
                     specialist=specialist, owner_dir=owner, authorized=True,
-                    billing_disabled=True)
+                    owner_billing_attested=True)
                 if tamper == "approval":
                     approval.write_text("{}")
                     with self.assertRaises(EvidenceMismatch):
-                        run_typed_final_hosted(graph, config, self.adapter,
+                        run_mock(graph, config, self.adapter,
                             _mock_transport=MockTypedTransport([]), **args)
                     return
                 if tamper in ("manifest", "schema", "budget"):
@@ -167,9 +192,67 @@ class HostedMockPostgres(unittest.TestCase):
                         if tamper == "schema" else {"budgets": {
                             **data["budgets"], "maximum_posts_per_case": 1}})}
                     with self.assertRaises(ValueError):
-                        run_typed_final_hosted(graph, config, self.adapter,
+                        run_mock(graph, config, self.adapter,
                             _mock_transport=MockTypedTransport([]),
                             **{**args, "manifest": bad})
+                    return
+                if tamper in ("race_stop", "race_fixed", "race_ledger", "race_bundle",
+                              "locked_mutation", "history_cleared", "reused_receipt",
+                              "database_oid"):
+                    transport = MockTypedTransport([lambda _: self.fail(
+                        "no send after concurrent mutation")])
+                    if tamper == "database_oid":
+                        other = {**data, "execution_context": {**data["execution_context"],
+                            "fixture_database_oid": business_oid + 1}}
+                        with self.assertRaises(EvidenceMismatch):
+                            _database_identity(graph, other, exclusive=False)
+                        return
+                    if tamper == "reused_receipt":
+                        (owner / "old.hybrid.audit.jsonl").write_text("old")
+                        with self.assertRaises(EvidenceMismatch):
+                            run_mock(graph, config, self.adapter,
+                                _mock_transport=transport, **args)
+                    elif tamper == "history_cleared":
+                        graph.update_state(config, {"m20_model_attempts": [{
+                            "specialist": "pricing", "status": "reserved"}]}, as_node="finish")
+                        graph.update_state(config, {"m20_model_attempts": []}, as_node="finish")
+                        with self.assertRaises(EvidenceMismatch):
+                            run_mock(graph, config, self.adapter,
+                                _mock_transport=transport, **args)
+                    elif tamper == "locked_mutation":
+                        from dealdesk_phase2.typed_final_hosted import _approval
+                        def mutate_after_lock(*approval_args):
+                            _approval(*approval_args)
+                            graph.update_state(config, {"fixed_decision_sha256": "0" * 64},
+                                               as_node="finish")
+                        with patch("dealdesk_phase2.typed_final_hosted._approval",
+                                   mutate_after_lock), self.assertRaises(EvidenceMismatch):
+                            run_mock(graph, config, self.adapter,
+                                _mock_transport=transport, **args)
+                    else:
+                        from dealdesk_phase2.typed_final_hosted import exclusive_owner
+                        @contextmanager
+                        def concurrent_change(path, assessment):
+                            updates = {
+                                "race_stop": {"stop_reason": "concurrent_stop"},
+                                "race_fixed": {"fixed_decision_sha256": "0" * 64},
+                                "race_ledger": {"tool_access_ledger": [{"status": "reserved"}]},
+                                "race_bundle": {"sealed_bundle": "corrupted"},
+                            }
+                            graph.update_state(config, updates[tamper], as_node="finish")
+                            with exclusive_owner(path, assessment):
+                                yield
+                        with patch("dealdesk_phase2.typed_final_hosted.exclusive_owner",
+                                   concurrent_change), self.assertRaises(
+                                   (EvidenceMismatch, ValueError)):
+                            run_mock(graph, config, self.adapter,
+                                _mock_transport=transport, **args)
+                    self.assertEqual(transport.requests, [])
+                    current = graph.get_state(config).values
+                    self.assertFalse(current.get("m20_model_attempts"))
+                    self.assertFalse(current.get("typed_final_attempts"))
+                    if tamper != "locked_mutation":
+                        self.assertFalse(current.get("typed_final_hosted_start"))
                     return
                 def answer(body):
                     if wrong == "transport_config" and "response_format" not in body:
@@ -184,21 +267,21 @@ class HostedMockPostgres(unittest.TestCase):
                     return result
                 transport = MockTypedTransport([answer] * (plan + (3 if specialist ==
                     "pricing" else 1)))
-                with patch("dealdesk_phase2.typed_final_hosted._post",
+                with patch("dealdesk_phase2.live_models._post",
                         side_effect=AssertionError("no HTTP even with mock")) as sender:
                     if wrong == "interrupt":
                         with patch("dealdesk_phase2.typed_final_offline.parse_response",
                                 side_effect=KeyboardInterrupt("synthetic crash")), self.assertRaises(
                                 KeyboardInterrupt):
-                            run_typed_final_hosted(graph, config, self.adapter,
+                            run_mock(graph, config, self.adapter,
                                 _mock_transport=transport, **args)
                     elif wrong in ("http_400", "timeout", "citation", "malformed",
                                    "usage", "length", "transport_config"):
                         with self.assertRaises((EvidenceMismatch, ProviderError, ValueError)):
-                            run_typed_final_hosted(graph, config, self.adapter,
+                            run_mock(graph, config, self.adapter,
                                 _mock_transport=transport, **args)
                     else:
-                        result = run_typed_final_hosted(graph, config, self.adapter,
+                        result = run_mock(graph, config, self.adapter,
                             _mock_transport=transport, **args)
                         self.assertEqual(result["execution"], "abstained" if wrong ==
                             "abstain" else "completed")
@@ -221,16 +304,23 @@ class HostedMockPostgres(unittest.TestCase):
                     graph.update_state(config, {"m20_model_attempts": [{
                         **state["m20_model_attempts"][0], "bundle_sha256": "0" * 64},
                         *state["m20_model_attempts"][1:]]}, as_node="finish")
+                if tamper == "reported_budget":
+                    state = graph.get_state(config).values
+                    rows = state["typed_final_attempts"]
+                    graph.update_state(config, {"typed_final_attempts": [
+                        {**row, "usage": {"prompt_tokens": 4097,
+                            "completion_tokens": 0}} if row["status"] == "returned"
+                        else row for row in rows]}, as_node="finish")
             with thesis_checkpointer(os.environ["M20_CHECKPOINT_DATABASE_URL"]) as saver:
                 graph = build_original_graph(self.adapter, self.connect, saver)
                 transport2 = MockTypedTransport([lambda _: self.fail("forbidden replay")])
                 if wrong in ("http_400", "timeout", "citation", "malformed",
                              "usage", "length", "transport_config", "interrupt") or tamper:
                     with self.assertRaises((EvidenceMismatch, ProviderError, ValueError)):
-                        run_typed_final_hosted(graph, config, self.adapter,
+                        run_mock(graph, config, self.adapter,
                             _mock_transport=transport2, **args)
                 else:
-                    self.assertEqual(run_typed_final_hosted(graph, config, self.adapter,
+                    self.assertEqual(run_mock(graph, config, self.adapter,
                         _mock_transport=transport2, **args)["execution"],
                         "abstained" if wrong == "abstain" else "completed")
                 self.assertEqual(transport2.requests, [])
@@ -253,6 +343,66 @@ class HostedMockPostgres(unittest.TestCase):
         self.run_case(tamper="schema")
         self.run_case(tamper="budget")
         self.run_case("pricing", tamper="config_identity")
+        self.run_case("pricing", tamper="reported_budget")
+        for tamper in ("race_stop", "race_fixed", "race_ledger", "race_bundle",
+                       "locked_mutation", "history_cleared", "reused_receipt",
+                       "database_oid"):
+            with self.subTest(tamper=tamper):
+                self.run_case("pricing", tamper=tamper)
+
+    def test_shared_checkpoint_database_not_fresh(self):
+        # This suite deliberately reuses a checkpoint DB across cases. A
+        # production send must reject it even if the assessment ID is new.
+        identifier = "TYPED-SHARED-" + uuid4().hex
+        case = next(x for x in CASES if x.case_id == "B05")
+        config = {"configurable": {"thread_id": identifier}}
+        with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory, thesis_checkpointer(
+                os.environ["M20_CHECKPOINT_DATABASE_URL"]) as saver:
+            graph = build_original_graph(self.adapter, self.connect, saver)
+            state = graph.invoke(initial_state(identifier, case.run_id), config)
+            with graph.phase2_connection_factory() as conn:
+                business, business_oid = conn.execute("SELECT current_database(), oid FROM "
+                    "pg_database WHERE datname = current_database()").fetchone()
+            row = graph.checkpointer.conn.execute("SELECT current_database(), oid FROM "
+                "pg_database WHERE datname = current_database()").fetchone()
+            data = manifest(state, "pricing", Path(directory), business,
+                row["current_database"], business_oid, row["oid"])
+            with self.assertRaisesRegex(EvidenceMismatch, "checkpoint_database_reused"):
+                _database_identity(graph, data, exclusive=True)
+
+    def test_fresh_checkpoint_database_then_foreign_assessment_denied(self):
+        # A dedicated database permits only its first assessment; changing
+        # the identifier does not make a reused checkpoint database fresh.
+        checkpoint_name = "typed_fresh_" + uuid4().hex[:16]
+        source = psycopg.conninfo.conninfo_to_dict(os.environ["M20_CHECKPOINT_DATABASE_URL"])
+        admin = psycopg.conninfo.make_conninfo(**{**source, "dbname": "postgres"})
+        dsn = psycopg.conninfo.make_conninfo(**{**source, "dbname": checkpoint_name})
+        with psycopg.connect(admin, autocommit=True) as connection:
+            connection.execute("CREATE DATABASE " + checkpoint_name)
+        try:
+            with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory, thesis_checkpointer(
+                    dsn) as saver:
+                graph = build_original_graph(self.adapter, self.connect, saver)
+                case = next(x for x in CASES if x.case_id == "B05")
+                first = "FRESH-FIRST-" + uuid4().hex
+                config = {"configurable": {"thread_id": first}}
+                state = graph.invoke(initial_state(first, case.run_id), config)
+                with graph.phase2_connection_factory() as conn:
+                    business, business_oid = conn.execute("SELECT current_database(), oid "
+                        "FROM pg_database WHERE datname = current_database()").fetchone()
+                row = graph.checkpointer.conn.execute("SELECT current_database(), oid FROM "
+                    "pg_database WHERE datname = current_database()").fetchone()
+                data = manifest(state, "pricing", Path(directory), business,
+                    row["current_database"], business_oid, row["oid"])
+                _database_identity(graph, data, exclusive=True)
+                second = "FRESH-SECOND-" + uuid4().hex
+                graph.invoke(initial_state(second, case.run_id), {"configurable": {
+                    "thread_id": second}})
+                with self.assertRaisesRegex(EvidenceMismatch, "checkpoint_database_reused"):
+                    _database_identity(graph, data, exclusive=True)
+        finally:
+            with psycopg.connect(admin, autocommit=True) as connection:
+                connection.execute("DROP DATABASE " + checkpoint_name)
 
 
 if __name__ == "__main__":

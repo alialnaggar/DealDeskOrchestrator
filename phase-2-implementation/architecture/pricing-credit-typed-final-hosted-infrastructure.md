@@ -3,19 +3,22 @@
 **28 October 2026. Infrastructure implementation only.** This extends the
 [approved design](pricing-credit-typed-final-implementation-design.md) and
 [offline implementation](pricing-credit-typed-final-offline-implementation.md).
-The `HOSTED_ACTIVATION = False` gate in `typed_final_hosted.py` prevents all
-production sends regardless of a caller's boolean, manifest or credential.
+The `HOSTED_ACTIVATION = False` production entry in `typed_final_hosted.py`
+rejects before reading a credential or importing the HTTP sender. See the
+[remediation record](pricing-credit-typed-final-hosted-readiness-audit.md#remediation-after-audit-28-october-2026)
+for the exact in-process trust boundary and residual conditions.
 No owner approval was created outside disposable test fixtures. No Groq API,
 metadata endpoint, live inference or paid model was contacted.
 
 ## Boundary and compatibility
 
-The new `pricing-credit-typed-hosted-manifest-v1` gate checks one fresh pinned
+The remediated `pricing-credit-typed-hosted-manifest-v2` gate checks a pinned
 case, exact manifest SHA-256, owner-only `0700` directory and preexisting
 `0600` exact approval file, explicit account and free-tier/billing-disabled
-confirmation, a single selected specialist, immutable run/source/snapshot,
-permission/wire/prompt/schema versions, actual business/checkpoint database
-names, and an exclusive OS owner lock. Existing M2.0/M2.1 manifests and
+**owner assertion** about billing, a single selected specialist, immutable
+run/source/snapshot, permission/wire/prompt/schema versions, actual business/
+checkpoint database names and PostgreSQL OIDs, and an exclusive OS owner lock.
+Existing M2.0/M2.1 manifests and the pre-remediation v1 shape and
 approval files are structurally incompatible. Credit is a standalone targeted
 inspection; fixed Pricing is still a prerequisite. Pricing runs **unchanged
 Configuration native wire and its original validators** first under the new
@@ -63,19 +66,30 @@ an assessment selected for hosted cannot revert to that double.
 
 ## Test-only exception and limits
 
-`MockTypedTransport` explicitly bypasses **only** the hard activation switch
-for ephemeral synthetic PostgreSQL tests and has no HTTP client or credential
-access. It still requires the exact new manifest and temporary permissioned
-approval fixture; `_post` is patched to fail if called. This is not a live
-approval record. The production branch reads a credential and could call
-the provider only after a separately approved code change enabling the
-hard-disabled gate and supplying an externally authored matching approval.
+The old `MockTypedTransport` override of the production entry has been
+**removed**. Synthetic mock transport and `run_mock` now exist only in
+`backend/tests/typed_final_hosted_harness.py`; they invoke a separate internal
+composition layer without importing or receiving the HTTP sender. Tests still
+require an ephemeral permissioned approval fixture and patch `_post` to fail
+if accidentally invoked. This is not a live approval record. Python code
+executing arbitrarily in the trusted process could import internal functions
+or other HTTP clients; the guarantee applies to the public production entry,
+not to untrusted in-process plugins. Only a separately approved activation
+change and externally authored matching approval could permit the production
+entry to send.
 The original default paths, existing hosted authorizations and historical
 terminal identities remain unchanged.
 
 The targeted gate does not run Policy/Routing or establish accuracy versus
 the legacy path. It does not prove Groq will accept this exact schema, model
 or request. No current Groq capability or free-tier metadata was queried.
+The v2 manifest and approval record explicitly call billing a **manual owner
+attestation**; they do not independently verify billing or account ownership.
+Database names and OIDs detect swapping, and an exclusive checkpoint database
+and per-assessment history detect foreign/reused checkpoints; PostgreSQL has
+no reliable built-in creation timestamp, so business-database age/isolation
+must still be evidenced by owner-controlled provisioning. All writers to one
+assessment must honor the same lock or equivalent transaction discipline.
 Before activation, perform an independent security and architecture review,
 check private CI, verify current provider documentation and owner account
 terms/quotas without inferring them from tests, and obtain Ali's separate

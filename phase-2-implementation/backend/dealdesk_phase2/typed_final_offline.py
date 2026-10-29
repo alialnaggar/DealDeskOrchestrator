@@ -72,7 +72,7 @@ class ScriptedTypedFinal:
 def run_typed_final_offline(original, config, adapter, model, *, specialist,
                             inspection_plan=1, owner_dir=None, opt_in=False,
                             _capability=None, _hosted_binding=None,
-                            _owner_locked=False):
+                            _owner_locked=False, _pre_send=None):
     """Run a separate default-off graph over an original PG checkpoint.
 
     `inspection_plan=2` is an explicit preflight selection for Pricing, never
@@ -84,7 +84,9 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
     if hosted:
         from .typed_final_hosted import HostedTypedTransport
     if (opt_in is not True or (not hosted and (type(model) is not ScriptedTypedFinal
-            or _capability is not None or _hosted_binding is not None or _owner_locked))
+            or _capability is not None or _hosted_binding is not None or _owner_locked
+            or _pre_send is not None))
+            or hosted and not callable(_pre_send)
             or hosted and type(model) is not HostedTypedTransport
             or specialist not in MAX_POSTS
             or type(inspection_plan) is not int
@@ -285,6 +287,8 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
             raise EvidenceMismatch("typed_final_mixed_completion_budget")
         marker = {"stage": stage, "ordinal": ordinal, "request_sha256": digest,
                   "specialist": specialist, "protocol_version": protocol_version}
+        if hosted:
+            _pre_send()
         original.update_state(config, {"typed_final_attempts": [*attempts(),
             {**marker, "status": "reserved"}]}, as_node="finish")
         response = claim_and_call(owner_dir, assessment_id=ctx.assessment_id,
