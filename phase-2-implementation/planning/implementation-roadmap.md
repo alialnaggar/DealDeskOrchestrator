@@ -251,3 +251,35 @@ status must be reported as unverified unless actually observed.
 Fresh local Phase 1C-pinned PostgreSQL regression for this increment passed
 **244 tests (seven skips)** across seven isolated databases. This is not a
 measured multi-specialist accuracy result; GitHub Actions status is unverified.
+
+## Current short path from typed-final preparation (29 October 2026)
+
+The [offline activation/trial preparation](../architecture/typed-final-offline-trial-preparation.md)
+and [readiness decision sheet](../architecture/pricing-credit-typed-final-hosted-readiness-audit.md#final-owner-decision-sheet-29-october-2026)
+supersede older *pre-remediation* gate advice above; historical stopped cases
+remain spent. The typed-final Pricing/Credit gate is dormant. Offline templates
+are invalid as authorizations; no new inference follows from their existence.
+
+1. **Owner gate, not new speculative implementation:** confirm actual free-tier
+   account/key/billing-disabled status, deployment privilege boundary and
+   current provider wire documentation. Decide explicitly whether to accept
+   local-only regression without private CI for **one** synthetic trial. Then
+   review the separate minimal activation diff; no automatic activation.
+2. **Only after distinct approvals:** owner provisions a fresh pinned B05
+   case with independently evidenced DB creation, identity and exclusivity;
+   review the exact manifest hash and separately authorize at most four POSTs
+   / 2,560 configured completion tokens. Stop at the first uncertain send;
+   no retry/fallback. Credit's proposal is **unscheduled** and requires its
+   own fresh case and later authorization. Hosted compatibility and quality
+   remain unproven until measured.
+3. **Keep the thesis moving offline meanwhile:** close the source-first
+   Credit/Policy/Routing visibility and payment/AR fixture gaps; integrate all
+   six distinct AI observations with the existing six deterministic checks
+   and human-only Approval Routing; test original and candidate isolation,
+   prerequisite skips, disagreements, bounded alternatives, reruns and
+   PostgreSQL restart. Prepare independent accepted evaluation cases and
+   compare to deterministic-only baselines before any accuracy claim. The
+   Phase 1C pin, supplier-offer constraints and human approval boundary stay
+   unchanged. Evaluate the reviewer UI only after the six-agent backend is
+   coherently exercised. Further architecture, cost or hosted scope changes
+   need separate owner approval.

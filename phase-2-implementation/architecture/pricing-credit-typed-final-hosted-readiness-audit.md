@@ -413,3 +413,35 @@ whether to accept the documented CI gap and separately approve a reviewed
 activation change. Even an activation approval is **not** permission to create
 a live approval artifact or send: fresh provisioning, exact-manifest review
 and a separate one-case trial authorization are subsequent decisions.
+
+### Offline preparation follow-up (29 October 2026; still NO-GO)
+
+The [activation, rollback, fresh-provisioning and owner checklist](typed-final-offline-trial-preparation.md)
+records the exact *proposed* one-line activation diff without applying it.
+Non-authorizing versioned [Pricing B05](trial-proposals/pricing-b05-typed-final-v2.json)
+and [Credit limit](trial-proposals/credit-limit-typed-final-v2.json) templates
+retain `proposal_not_authorized_not_executable`, null case/account/DB identities
+and no approval artifact. An offline contract test checks their exact key
+shape, version, prompt/schema hashes, permission/model and 4/2-POST budgets
+against current code, and proves they cannot pass the manifest validator or
+disabled production entry. The older mock PostgreSQL tests still cover
+pre/post-lock and direct SQL races, mismatched database OIDs, reused receipts,
+foreign checkpoint threads and restart no-replay. No runtime code, existing
+business record, actual credential, production/shared database or owner
+approval was modified.
+
+Focused hosted/offline/contract/proposal run: **19 passed** (local log
+`/tmp/opencode/dealdesk-offline-preparation-focused.log`). A new, isolated
+seven-database PostgreSQL run with pinned Phase 1C
+`90c0bc8e285ee69262c7db826b786096a77ad004` passed **317 tests in
+126.282 seconds, seven unrelated Gemma skips** (local log
+`/tmp/opencode/dealdesk-offline-preparation-regression.log`). The owner still
+must supply dated *creation* evidence and access control for the eventual
+business/checkpoint DBs; test database names/OIDs do not prove that future
+environment's freshness. No Groq API call, metadata request, hosted inference
+or new approval occurred. Private CI remains **unverified** when skipped.
+
+**No new implementation blocker is established.** Owner account/billing and
+deployment attestations, provider-document review, the private-CI exception
+decision, and separate activation and exact-manifest approvals are outstanding.
+No proposed trial is authorized by this offline work.
