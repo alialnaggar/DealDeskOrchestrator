@@ -61,6 +61,8 @@ def capture_original_development(state: dict, adapter) -> dict:
         identity = item.get("identity", {})
         name = identity.get("specialist")
         if (name not in refs or identity.get("assessment_id") != ctx.assessment_id
+                or identity.get("phase1c_run_id") != str(ctx.phase1c_run_id)
+                or identity.get("subject_id") != ctx.original_deal_id
                 or identity.get("bundle_sha256") != ctx.bundle_sha256
                 or identity.get("source_input_digest") != ctx.source_input_digest
                 or item.get("status") not in ("reserved", "completed", "budget_exhausted")):
@@ -79,6 +81,7 @@ def capture_original_development(state: dict, adapter) -> dict:
         if (result.get("specialist") != name or result.get("producer_type") != "AI"
                 or result.get("provider") != "offline_double"
                 or result.get("assessment_id") != ctx.assessment_id
+                or result.get("phase1c_run_id") != str(ctx.phase1c_run_id)
                 or result.get("subject_id") != ctx.original_deal_id
                 or result.get("bundle_sha256") != ctx.bundle_sha256
                 or result.get("source_input_digest") != ctx.source_input_digest
@@ -96,11 +99,15 @@ def capture_original_development(state: dict, adapter) -> dict:
             raise EvidenceMismatch("Week 3 development unsupported AI claim")
         ai[name] = {"execution": result["execution"], "reason": result.get("reason"),
             "validated_claims": [{"ref": c["ref"], "field": c["field"]} for c in claims],
-            "model_turns": result.get("model_turns"), "tool_calls": result.get("tool_calls")}
+            "model_turns": result.get("model_turns"), "tool_calls": result.get("tool_calls"),
+            "provider": result.get("provider"), "model": result.get("model"),
+            "prompt_version": result.get("prompt_version"), "contract_version": result.get("version")}
     if (fulfillment.get("provider") not in (None, "offline_double")
             or fulfillment.get("execution") not in ("skipped", "completed", "error")
             or fulfillment.get("execution") != "skipped" and (
                 fulfillment.get("assessment_id") != ctx.assessment_id
+                or fulfillment.get("phase1c_run_id") != str(ctx.phase1c_run_id)
+                or fulfillment.get("subject_id") != ctx.original_deal_id
                 or fulfillment.get("bundle_sha256") != ctx.bundle_sha256)
             or fulfillment.get("execution") == "skipped" and (
                 fulfillment.get("assessment_id") not in (None, ctx.assessment_id)

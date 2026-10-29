@@ -304,3 +304,29 @@ tests passed** and **320 full-suite tests passed, seven unrelated Gemma skips**
 (`/tmp/opencode/dealdesk-six-specialist-focused.log` and
 `/tmp/opencode/dealdesk-six-specialist-regression.log`). Private GitHub CI
 was not run.
+
+## Week 4 follow-on — reproducible broader offline cohort (29 October 2026)
+
+[Week 4 development runner](../backend/tests/run_week4_development.py) and
+[fresh-disposable one-command setup](../backend/tests/run_week4_disposable.py)
+exercise all nine Phase 2 M1.8 synthetic source cases B01–B05/N01–N04, not
+the provisional 36-answer set. The [sample JSON](../evaluation/week4-offline-development.json)
+and [report](../evaluation/week4-offline-development.md) keep 54 original
+fixed mappings apart from 54 offline AI execution slots (scripted, not measured
+model reasoning); five source-derived fixed binding splits, four no-split
+controls, failure/abstention/skips and a separately checkpointed B01 scripted
+binding proposal with six fixed candidate rechecks. Original assessment and
+candidate share the exact pinned evidence identity but never share a checkpoint
+thread. Candidate fixed supply is supported **unreserved**, the aggregate
+remains `needs_revision` and customer acceptance is pending; its schedule
+matches deterministic-only discovery, so no added AI value is established.
+Structural metrics, tool/model ledger transitions and optional wall-clock
+diagnostics make no semantic accuracy claim. Two independent fresh cohorts
+produced the same stable structural SHA-256; timing and unique database names
+are deliberately excluded from that digest. This does **not** change the
+pinned handoff's **0/36 accepted** answers; hosted inference remains disabled.
+Fresh seven-DB full regression: 325 tests passed with seven unrelated Gemma
+skips (`/tmp/opencode/dealdesk-week4-regression.log`); private CI not run.
+Remaining Week 4: broader source families and nonempty Credit/Policy/Route
+evidence, source-first independent answer acceptance, semantic/blinded human
+comparison, and separately authorized hosted validation if pursued.

@@ -159,8 +159,12 @@
       "human_approval": "not_granted_by_system",
       "offline_ai": {
         "approval_routing": {
+          "contract_version": "m21-original-evidence-v1",
           "execution": "completed",
+          "model": "m21-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m21-original-system-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
@@ -171,8 +175,12 @@
           ]
         },
         "configuration": {
+          "contract_version": "m20-ai-investigation-v1",
           "execution": "completed",
+          "model": "m20-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m20-ai-investigation-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
@@ -183,8 +191,12 @@
           ]
         },
         "credit": {
+          "contract_version": "m21-original-evidence-v1",
           "execution": "completed",
+          "model": "m21-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m21-original-system-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
@@ -203,8 +215,12 @@
           "validated_claims": []
         },
         "policy": {
+          "contract_version": "m21-original-evidence-v1",
           "execution": "completed",
+          "model": "m21-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m21-original-system-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
@@ -215,8 +231,12 @@
           ]
         },
         "pricing": {
+          "contract_version": "m20-ai-investigation-v1",
           "execution": "completed",
+          "model": "m20-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m20-ai-investigation-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
@@ -477,8 +497,12 @@
       "human_approval": "not_granted_by_system",
       "offline_ai": {
         "approval_routing": {
+          "contract_version": "m21-original-evidence-v1",
           "execution": "completed",
+          "model": "m21-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m21-original-system-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
@@ -489,8 +513,12 @@
           ]
         },
         "configuration": {
+          "contract_version": "m20-ai-investigation-v1",
           "execution": "completed",
+          "model": "m20-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m20-ai-investigation-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
@@ -501,8 +529,12 @@
           ]
         },
         "credit": {
+          "contract_version": "m21-original-evidence-v1",
           "execution": "error",
+          "model": "m21-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m21-original-system-v1",
+          "provider": "offline_double",
           "reason": "invalid_model_or_evidence",
           "tool_calls": 1,
           "validated_claims": []
@@ -516,15 +548,23 @@
           "validated_claims": []
         },
         "policy": {
+          "contract_version": "m21-original-evidence-v1",
           "execution": "abstained",
+          "model": "m21-scripted-v1",
           "model_turns": 1,
+          "prompt_version": "m21-original-system-v1",
+          "provider": "offline_double",
           "reason": "insufficient_evidence",
           "tool_calls": 0,
           "validated_claims": []
         },
         "pricing": {
+          "contract_version": "m20-ai-investigation-v1",
           "execution": "completed",
+          "model": "m20-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m20-ai-investigation-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
@@ -774,8 +814,12 @@
       "human_approval": "not_granted_by_system",
       "offline_ai": {
         "approval_routing": {
+          "contract_version": "m21-original-evidence-v1",
           "execution": "completed",
+          "model": "m21-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m21-original-system-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
@@ -786,8 +830,12 @@
           ]
         },
         "configuration": {
+          "contract_version": "m20-ai-investigation-v1",
           "execution": "completed",
+          "model": "m20-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m20-ai-investigation-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
@@ -798,8 +846,12 @@
           ]
         },
         "credit": {
+          "contract_version": "m21-original-evidence-v1",
           "execution": "completed",
+          "model": "m21-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m21-original-system-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
@@ -818,15 +870,23 @@
           "validated_claims": []
         },
         "policy": {
+          "contract_version": "m21-original-evidence-v1",
           "execution": "error",
+          "model": "m21-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m21-original-system-v1",
+          "provider": "offline_double",
           "reason": "model_or_tool_failure",
           "tool_calls": 1,
           "validated_claims": []
         },
         "pricing": {
+          "contract_version": "m20-ai-investigation-v1",
           "execution": "completed",
+          "model": "m20-scripted-v1",
           "model_turns": 2,
+          "prompt_version": "m20-ai-investigation-v1",
+          "provider": "offline_double",
           "reason": null,
           "tool_calls": 1,
           "validated_claims": [
