@@ -23,7 +23,7 @@ GROQ_MODEL = "openai/gpt-oss-120b"
 # Prompt identity is independent of the output schema and model-attempt protocol.
 # Historical M1.6–M1.9 observations retain their original v1 attribution.
 PROMPT_VERSION = "m16-fulfillment-claims-v2-system"
-BINDING_PROMPT_SUFFIX = "-m17-binding-optin-m19-wholeunits-v2"
+BINDING_PROMPT_SUFFIX = "-m17-binding-optin-m19-wholeunits-v3-line-identity"
 MAX_OUTPUT_TOKENS = 2048
 MAX_PROMPT_BYTES = 20000
 MAX_MODEL_TURNS = 6
@@ -238,7 +238,9 @@ def _system_instruction(*, enable_binding_proposals=False):
             "do not attach an inbound source to a stock-only early slice or invent a date. "
             "If exact whole units or source-to-slice support are uncertain, abstain or report "
             "a bounded finding. If no binding path supports "
-            "a suggestion, report bounded findings or abstain. "
+            "a suggestion, report bounded findings or abstain. For every contribution, "
+            "copy line_id exactly from input.line_id; never use a product ID, "
+            "source ID or another line's ID. "
             if enable_binding_proposals else "")
     return (PROMPT_VERSION + (BINDING_PROMPT_SUFFIX if enable_binding_proposals else "") +
             ". You investigate a fulfillment shortage. Only tool responses are citable; "
@@ -280,12 +282,16 @@ class LiveInvestigationModel:
     classify_transport = False
 
     def __init__(self, graph, config, *, pace_seconds: float = 0,
-                 enable_binding_proposals: bool = False):
+                 enable_binding_proposals: bool = False,
+                 decision_completion_tokens: int = 1024):
+        if decision_completion_tokens not in (1024, 2048):
+            raise ValueError("unsupported_decision_completion_cap")
         self.provider = "groq"
         self.model = GROQ_MODEL
         self.graph, self.config = graph, config
         self.pace_seconds = pace_seconds
         self.enable_binding_proposals = enable_binding_proposals
+        self.decision_completion_tokens = decision_completion_tokens
         self._last_sent = None
 
     def _request(self, input, step: int, phase: str, body: dict):
@@ -301,8 +307,10 @@ class LiveInvestigationModel:
                             f"{self.provider}:{self.model}:{step}:{phase}".encode()).hexdigest()
         prior = model_attempts.reserve(self.graph, self.config, input, attempt_id,
                                        self.provider, self.model, digest,
-                                       prompt_version=(PROMPT_VERSION + BINDING_PROMPT_SUFFIX
-                                           if self.enable_binding_proposals else PROMPT_VERSION))
+                                        prompt_version=(PROMPT_VERSION + BINDING_PROMPT_SUFFIX
+                                            if self.enable_binding_proposals else PROMPT_VERSION) +
+                                            ("-dev-decision2048" if self.decision_completion_tokens ==
+                                             2048 else ""))
         if prior:
             return prior["action"]
         start = monotonic()
@@ -364,7 +372,8 @@ class LiveInvestigationModel:
                   "description": "Read only pinned Fulfillment evidence",
                   "parameters": TOOL_PARAMETERS[name]}}
                  for name in input.permitted_tools]
-        decision = {"model": self.model, "temperature": 0, "max_completion_tokens": 1024,
+        decision = {"model": self.model, "temperature": 0,
+                    "max_completion_tokens": self.decision_completion_tokens,
                     "parallel_tool_calls": False, "tool_choice": "auto", "tools": tools,
                     "messages": [{"role": "system", "content": guidance +
                                  "Permitted read-only tools for this turn: " +
@@ -415,6 +424,9 @@ class LiveInvestigationModel:
         return self._request(input, "correction-v1", "final", body)
 
     def _parse(self, response: dict, phase: str):
+        if response["choices"][0].get("finish_reason") == "length":
+            raise ProviderError("decision_truncated" if phase == "decision" else
+                                "final_truncated")
         choice = response["choices"][0]["message"]
         calls = choice.get("tool_calls") or []
         if phase == "decision" and calls:

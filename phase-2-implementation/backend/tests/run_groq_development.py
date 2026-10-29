@@ -131,7 +131,8 @@ def _six_campaign(graph, config, adapter, *, case_id, account_id, root, key, run
         "status": "standing_development", "provider": "groq", "model": GROQ_MODEL,
         "assessment_id": pinned.context.assessment_id, "case_id": case_id,
         "bundle_sha256": pinned.context.bundle_sha256,
-        "source_input_digest": pinned.context.source_input_digest}
+        "source_input_digest": pinned.context.source_input_digest,
+        "decision_completion_tokens": 2048, "maximum_final_completion_tokens": 2048}
     fd = os.open(root / "fulfillment-manifest.json", os.O_WRONLY | os.O_CREAT |
                  os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, "w") as output:
@@ -141,7 +142,7 @@ def _six_campaign(graph, config, adapter, *, case_id, account_id, root, key, run
     os.environ["GROQ_API_KEY"] = key
     try:
         model = LiveInvestigationModel(graph, config, pace_seconds=12,
-                                       enable_binding_proposals=True)
+            enable_binding_proposals=True, decision_completion_tokens=2048)
         run_original_investigate_and_review(graph, config, adapter, model,
             assessment_id=pinned.context.assessment_id, run_id=run_id)
     finally:

@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from dealdesk_phase2.groq_typed_final import (MAX_COMPLETION_TOKENS,
     FinalResponseError, configuration_final_body, parse_configuration_final,
-    request_body, request_sha256, parse_response)
+    request_body, request_sha256, parse_response, DEVELOPMENT_FINAL_INSTRUCTION)
 from dealdesk_phase2.typed_final_contract import InvalidTerminal, VERSION, decode, schema
 from dealdesk_phase2.m21_redaction import model_view
 from test_terminal_final_offline_design import fixture, finding, response
@@ -18,6 +18,44 @@ def final_payload(ref, field, value):
 
 
 class TypedFinalContractImpl(unittest.TestCase):
+    def test_development_caps_and_diagnostic_categories_fail_closed(self):
+        from dealdesk_phase2.typed_final_hosted import budgets
+        input, rows, _, ref, field, value = fixture("pricing")
+        wire = request_body(input, rows, completed_ledger=rows,
+            final_instruction=DEVELOPMENT_FINAL_INSTRUCTION)
+        self.assertEqual(wire["max_completion_tokens"], 2048)
+        self.assertEqual(budgets("pricing", 1, development=True)[
+            "maximum_configured_completion_per_case"], 4096)
+        self.assertEqual(budgets("pricing", 1)[
+            "maximum_configured_completion_per_case"], 2560)
+        valid = response(final_payload(ref, field, value), tokens=1500)
+        self.assertEqual(parse_response(valid, input=input, observations=rows,
+            development=True)["kind"], "finding")
+        with self.assertRaises(FinalResponseError):
+            parse_response(valid, input=input, observations=rows)
+        for payload, category in (({**final_payload(ref, field, value),
+                "claims": []}, "finding_claim_count"),
+                ({**final_payload(ref, field, value), "reason_code":
+                    "model_uncertainty"}, "finding_reason"),
+                ({**final_payload(ref, field, value), "kind": "abstain",
+                    "reason_code": "model_uncertainty"}, "abstention_semantics")):
+            with self.subTest(category=category), self.assertRaises(
+                    FinalResponseError) as caught:
+                parse_response(response(payload), input=input, observations=rows,
+                    development=True)
+            self.assertEqual(caught.exception.category, category)
+        config_input = {"specialist": "configuration", "permitted_tool":
+            "inspect_configuration_line"}
+        config_row = ({"tool": "inspect_configuration_line", "execution": "completed",
+            "records": [{"ref": "product:P", "fields": {"is_sellable": True}}],
+            "returned_refs": ["product:P"]},)
+        self.assertEqual(configuration_final_body(config_input, config_row)[
+            "max_completion_tokens"], 1024)
+        bad = response(final_payload("product:FAKE", "is_sellable", True))
+        with self.assertRaises(FinalResponseError) as caught:
+            parse_configuration_final(bad, config_input, config_row)
+        self.assertEqual(caught.exception.category, "claim_binding")
+
     def test_configuration_development_final_is_no_tools_and_exact_evidence_only(self):
         input = {"specialist": "configuration", "permitted_tool":
             "inspect_configuration_line", "line_ids": ["L1"]}

@@ -28,6 +28,17 @@ def final(line="L1", citations=("supplier_offer:O1",)):
 
 
 class LiveModelTests(TestCase):
+    def test_bounded_development_decision_cap_and_truncation_not_ready(self):
+        from test_candidate_m17 import fake_input
+        model = LiveInvestigationModel(object(), {}, decision_completion_tokens=2048)
+        with patch.object(model, "_request", return_value={"type": "ready"}) as sender:
+            model.next_action(fake_input(), ())
+        self.assertEqual(sender.call_args_list[0].args[3]["max_completion_tokens"], 2048)
+        with self.assertRaises(ProviderError) as caught:
+            model._parse({"choices": [{"finish_reason": "length", "message": {
+                "content": "READY"}}]}, "decision")
+        self.assertEqual(caught.exception.code, "decision_truncated")
+
     def test_system_hierarchy_tool_phase_and_injection_isolation(self):
         from test_candidate_m17 import fake_input
 

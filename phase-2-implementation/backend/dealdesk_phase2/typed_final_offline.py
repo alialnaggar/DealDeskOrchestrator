@@ -139,6 +139,10 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
     # already-budgeted offline model turns. Do not silently make Pricing standalone.
     configuration_turns = 0
     configuration_digest = None
+    development_pricing = (hosted and specialist == "pricing" and
+        _hosted_binding.get("development") is True)
+    final_cap = 2048 if development_pricing else 1024
+    component_cap = inspection_plan * 512 + final_cap
     if specialist == "pricing":
         config_result = state["m20_ai_results"]["configuration"]
         configuration_digest = sha256(_canonical(config_result).encode()).hexdigest()
@@ -146,7 +150,10 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
         if (type(configuration_turns) is not int or not 0 <= configuration_turns <= 2 or
                 config_result.get("execution") not in ("completed", "abstained") or
                 configuration_turns + inspection_plan + 1 > 5 or
-                configuration_turns * 512 + MAX_CONFIGURED_COMPLETION["pricing"] > 3072):
+                (512 if configuration_turns >= 1 else 0) +
+                (1024 if development_pricing and configuration_turns == 2 else
+                 512 if configuration_turns == 2 else 0) + component_cap > (
+                    4608 if development_pricing else 3072)):
             raise EvidenceMismatch("typed_final_configuration_budget")
     if (owner_dir.is_symlink() or owner_dir.stat().st_mode & 0o077 or
             owner_dir.stat().st_uid != os.geteuid()):
@@ -226,8 +233,8 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
         rows = attempts()
         reserved = [x for x in rows if x.get("status") == "reserved"]
         if (len(reserved) > MAX_POSTS[specialist] or len(rows) > 2 * MAX_POSTS[specialist]
-                or sum(512 if x.get("stage") == "typed_inspection" else 1024
-                    for x in reserved) > MAX_CONFIGURED_COMPLETION[specialist]):
+                or sum(512 if x.get("stage") == "typed_inspection" else final_cap
+                    for x in reserved) > component_cap):
             raise EvidenceMismatch("typed_final_budget_corrupted")
         for x in rows:
             if (x.get("protocol_version") != protocol_version or
@@ -249,11 +256,11 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
                         row["usage"][k] < 0 for k in ("prompt_tokens", "completion_tokens"))
                     or row["usage"]["prompt_tokens"] > 4096 or
                     row["usage"]["completion_tokens"] > (512 if row["stage"] ==
-                        "typed_inspection" else 1024)):
+                        "typed_inspection" else final_cap)):
                 raise EvidenceMismatch("typed_final_reported_usage_corrupted")
         if hosted and (len(reserved) + _hosted_binding["prior_posts"] > _hosted_binding[
                 "maximum_posts_per_case"] or sum(512 if x["stage"] == "typed_inspection"
-                else 1024 for x in reserved) + _hosted_binding[
+                else final_cap for x in reserved) + _hosted_binding[
                 "prior_configured_completion"] > _hosted_binding[
                 "maximum_configured_completion_per_case"]):
             raise EvidenceMismatch("typed_final_mixed_budget_corrupted")
@@ -284,13 +291,13 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
         if reported + (_hosted_binding["prior_reported_tokens"] if hosted else 0) >= (
                 MAX_REPORTED_TOKENS):
             raise EvidenceMismatch("typed_final_reported_token_stop")
-        configured = sum(512 if x["stage"] == "typed_inspection" else 1024
+        configured = sum(512 if x["stage"] == "typed_inspection" else final_cap
             for x in attempts() if x["status"] == "reserved")
-        if configured + (512 if stage == "typed_inspection" else 1024) > (
-                MAX_CONFIGURED_COMPLETION[specialist]):
+        if configured + (512 if stage == "typed_inspection" else final_cap) > (
+                component_cap):
             raise EvidenceMismatch("typed_final_completion_budget")
         if hosted and (_hosted_binding["prior_configured_completion"] + configured +
-                (512 if stage == "typed_inspection" else 1024) >
+                (512 if stage == "typed_inspection" else final_cap) >
                 _hosted_binding["maximum_configured_completion_per_case"]):
             raise EvidenceMismatch("typed_final_mixed_completion_budget")
         marker = {"stage": stage, "ordinal": ordinal, "request_sha256": digest,
@@ -485,11 +492,12 @@ def run_typed_final_offline(original, config, adapter, model, *, specialist,
         if reused:
             raise EvidenceMismatch("typed_final_returned_without_validated_checkpoint")
         marker, response = prior_entry
-        action = parse_response(response, input=input, observations=observations)
+        action = parse_response(response, input=input, observations=observations,
+            development=development_pricing)
         usage = response["usage"]
-        configured = sum(512 if x["stage"] == "typed_inspection" else 1024
+        configured = sum(512 if x["stage"] == "typed_inspection" else final_cap
             for x in attempts() if x["status"] == "reserved")
-        if configured > MAX_CONFIGURED_COMPLETION[specialist]:
+        if configured > component_cap:
             raise EvidenceMismatch("typed_final_completion_budget")
         record("typed_final", 0, marker, action, usage)
         publish({

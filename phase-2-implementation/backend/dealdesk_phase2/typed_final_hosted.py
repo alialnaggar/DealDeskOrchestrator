@@ -80,23 +80,25 @@ CONTEXT_KEYS = frozenset(("fixture_database", "checkpoint_database",
     "fresh_databases_required"))
 
 
-def budgets(specialist, inspection_plan):
+def budgets(specialist, inspection_plan, *, development=False):
     """Exact component and mixed ceilings, not a pre-send spending guarantee."""
     if specialist not in ("pricing", "credit") or inspection_plan not in (
             (1, 2) if specialist == "pricing" else (1,)):
         raise ValueError("typed_hosted_invalid_plan")
-    component = inspection_plan * 512 + 1024
+    component = inspection_plan * 512 + (2048 if development and specialist ==
+        "pricing" else 1024)
     return {"maximum_posts_per_case": (2 + inspection_plan + 1 if specialist ==
         "pricing" else 2), "maximum_posts_per_specialist": inspection_plan + 1,
-        "maximum_configured_completion_per_case": (1024 + component if specialist ==
-        "pricing" else component),
+        "maximum_configured_completion_per_case": ((1536 if development else 1024) +
+            component if specialist == "pricing" else component),
         "maximum_configured_completion_per_specialist": component,
         "maximum_serialized_request_bytes_per_post": 8192,
         "maximum_response_bytes_per_post": 16384,
         "maximum_prompt_tokens_per_returned_post": 4096,
         "maximum_final_content_bytes": 8192,
         "maximum_inspection_completion_tokens": 512,
-        "maximum_final_completion_tokens": 1024,
+        "maximum_final_completion_tokens": 2048 if development and specialist ==
+            "pricing" else 1024,
         "reported_total_token_post_send_stop": MAX_REPORTED_TOKENS}
 
 
@@ -117,7 +119,8 @@ def _validate_manifest(manifest, digest, specialist, owner, pinned, config,
                                    "authorized_one_case") or
             manifest["specialist"] != specialist or
             type(manifest["inspection_plan"]) is not int or
-            manifest["budgets"] != budgets(specialist, manifest["inspection_plan"]) or
+            manifest["budgets"] != budgets(specialist, manifest["inspection_plan"],
+                development=development) or
             set(manifest["budgets"]) != BUDGET_KEYS or
             manifest["phase1c_pin"] != PHASE1C_COMMIT or
             manifest["provider"] != "groq" or manifest["model"] != GROQ_MODEL or
@@ -266,7 +269,8 @@ class _ConfigurationModel(GroqM20Model):
         usage = response.get("usage")
         if (type(usage) is not dict or any(type(usage.get(k)) is not int or usage[k] < 0
                 for k in ("prompt_tokens", "completion_tokens")) or
-                usage["prompt_tokens"] > 4096 or usage["completion_tokens"] > 512):
+                usage["prompt_tokens"] > 4096 or usage["completion_tokens"] > (
+                    1024 if self._development and observations else 512)):
             raise ProviderError("hosted_usage_unverifiable")
         self.last_usage = {k: usage[k] for k in ("prompt_tokens", "completion_tokens")}
         action = (parse_configuration_final(response, input, observations) if
@@ -308,7 +312,8 @@ def _checked_configuration(original, config, adapter, owner, manifest_digest, as
                 any(type(matches[0]["usage"].get(k)) is not int or
                     matches[0]["usage"][k] < 0 for k in ("prompt_tokens", "completion_tokens"))
                 or matches[0]["usage"]["prompt_tokens"] > 4096 or
-                matches[0]["usage"]["completion_tokens"] > 512 or
+                matches[0]["usage"]["completion_tokens"] > (1024 if development and
+                    reservation["ordinal"] == 1 else 512) or
                 not verify_receipt(attempt_path(owner, assessment_id=assessment_id,
                     start_digest=manifest_digest, stage="typed_configuration",
                     ordinal=reservation["ordinal"]), start_digest=manifest_digest,
@@ -567,7 +572,8 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
             for x in completed)
         binding = {"manifest_sha256": approved_manifest_sha256,
             "credential_sha256": credential_digest, "account_id": manifest["account_id"],
-            "prior_posts": len(reserved), "prior_configured_completion": len(reserved) * 512,
+            "prior_posts": len(reserved), "prior_configured_completion": sum(
+                1024 if development and x["ordinal"] == 1 else 512 for x in reserved),
             "prior_reported_tokens": prior_reported,
             **({"development": True} if development else {}),
             "maximum_posts_per_case": manifest["budgets"]["maximum_posts_per_case"],
