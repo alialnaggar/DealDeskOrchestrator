@@ -28,6 +28,18 @@ def final(line="L1", citations=("supplier_offer:O1",)):
 
 
 class LiveModelTests(TestCase):
+    def test_binding_schema_meets_documented_groq_strict_object_requirements(self):
+        def check(shape):
+            if shape["type"] == "object":
+                self.assertEqual(set(shape["properties"]), set(shape["required"]))
+                self.assertIs(shape["additionalProperties"], False)
+                for child in shape["properties"].values():
+                    check(child)
+            elif shape["type"] == "array":
+                check(shape["items"])
+        check(BINDING_FINAL_SCHEMA)
+        self.assertEqual(len(BINDING_FINAL_SCHEMA["required"]), 12)
+
     def test_configuration_final_guides_json_encoded_scalar_without_relaxing_parser(self):
         from dealdesk_phase2.groq_typed_final import CONFIG_FINAL_INSTRUCTION
         self.assertIn('"\\"active\\""', CONFIG_FINAL_INSTRUCTION)
@@ -245,6 +257,29 @@ class LiveModelTests(TestCase):
         self.assertNotIn("private", str(result["model_attempt_ledger"][-1]))
         self.assertTrue(request.call_args.kwargs["reject_redirects"])
         self.assertTrue(request.call_args.kwargs["capture_http_error"])
+        metadata = result["model_attempt_ledger"][-1]["request_metadata"]
+        self.assertEqual(metadata["phase"], "decision")
+        self.assertIsNone(metadata["strict_schema_sha256"])
+        self.assertGreater(metadata["bytes"], 0)
+
+    def test_final_failure_records_bounded_wire_identity_without_prompt(self):
+        from dealdesk_phase2.live_models import _json
+        from hashlib import sha256
+        ready = {"choices": [{"message": {"content": "READY"}}]}
+        state, request = self.run_model([ready, ProviderError("http_400")])
+        body = request.call_args_list[-1].args[3]
+        metadata = state["model_attempt_ledger"][-1]["request_metadata"]
+        self.assertEqual(state["model_attempt_ledger"][-1]["error_code"], "http_400")
+        self.assertEqual(metadata["phase"], "final")
+        self.assertEqual(metadata["bytes"], len(_json(body).encode()))
+        self.assertNotIn("tools", body)
+        self.assertEqual(body["response_format"]["json_schema"]["strict"], True)
+        self.assertEqual(body["response_format"]["json_schema"]["schema"],
+                         FINAL_SCHEMA)
+        self.assertEqual([row["role"] for row in body["messages"]], ["system", "user"])
+        self.assertEqual(metadata["strict_schema_sha256"],
+                         sha256(_json(FINAL_SCHEMA).encode()).hexdigest())
+        self.assertNotIn("READY", str(metadata))
 
     def test_completed_model_decision_replays_without_second_network_call(self):
         first = {"choices": [{"message": {"tool_calls": [{"function": {
@@ -262,6 +297,11 @@ class LiveModelTests(TestCase):
                 run_original_then_investigate(self.graph, self.config, self.adapter,
                     InterruptAfterFirst(model), assessment_id=self.id(), run_id=RUN)
             self.assertEqual(request.call_count, 1)
+        # Pre-metadata checkpoints remain replayable, but never sent again.
+        saved = self.graph.get_state(self.config).values
+        ledger = [{k: v for k, v in row.items() if k != "request_metadata"}
+                  for row in saved["model_attempt_ledger"]]
+        self.graph.update_state(self.config, {"model_attempt_ledger": ledger}, as_node="finish")
         restarted = build_original_graph(self.adapter, None, self.saver)
         model = LiveInvestigationModel(restarted, self.config)
         ready = {"choices": [{"message": {"content": "READY"}}]}

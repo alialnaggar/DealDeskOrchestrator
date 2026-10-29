@@ -330,7 +330,12 @@ class LiveInvestigationModel:
         header = self.auth_header
         auth = self.auth_value(key)
         body = self.provider_body(body)
-        digest = sha256(_json(body).encode()).hexdigest()
+        payload = _json(body).encode()
+        digest = sha256(payload).hexdigest()
+        schema = body.get("response_format", {}).get("json_schema", {}).get("schema")
+        request_metadata = {"phase": phase, "bytes": len(payload),
+            "strict_schema_sha256": sha256(_json(schema).encode()).hexdigest()
+                if schema is not None else None}
         attempt_id = sha256(f"{input.assessment_id}:{input.bundle_sha256}:"
                             f"{self.provider}:{self.model}:{step}:{phase}".encode()).hexdigest()
         prior = model_attempts.reserve(self.graph, self.config, input, attempt_id,
@@ -338,7 +343,7 @@ class LiveInvestigationModel:
                                         prompt_version=(PROMPT_VERSION + BINDING_PROMPT_SUFFIX
                                             if self.enable_binding_proposals else PROMPT_VERSION) +
                                             ("-dev-decision2048" if self.decision_completion_tokens ==
-                                             2048 else ""))
+                                             2048 else ""), request_metadata=request_metadata)
         if prior:
             return prior["action"]
         start = monotonic()
