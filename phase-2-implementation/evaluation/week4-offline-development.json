@@ -7,8 +7,8 @@
     "m21": "m21-original-evidence-v1"
   },
   "disposable_setup": {
-    "business_database": "recovery_5bce5a699b9c_m20",
-    "checkpoint_database": "recovery_5bce5a699b9c_m20_checkpoint",
+    "business_database": "recovery_2c62dbce4832_m20",
+    "checkpoint_database": "recovery_2c62dbce4832_m20_checkpoint",
     "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004"
   },
   "independent_answers_accepted": 0,
@@ -313,6 +313,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018001",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
       "tool_trace": [
         {
@@ -667,6 +668,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018002",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "b661c429592e6a3dd45d7d40a93fdbff830a0f10344799778738465517822233",
       "tool_trace": [
         {
@@ -1021,6 +1023,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018003",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "4ca57be824a18ba60ff4701446eaa8e576224d5ddd8d5b23016452523854e518",
       "tool_trace": [
         {
@@ -1375,6 +1378,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018004",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "b1f3c33065cdb1567e940b0a643f1028e518a2860358972c75b209d30cd491f3",
       "tool_trace": [
         {
@@ -1709,6 +1713,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018005",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
       "tool_trace": [
         {
@@ -2047,6 +2052,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018101",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "30eec02f45047467736e4378eb9b764e4fe28b0c39e5a66aa408a8a945ba2edd",
       "tool_trace": [
         {
@@ -2391,6 +2397,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018102",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "630aa7b2a2fc0d8a8eea7afdcb4ffe31c7bd142cbc4e7392e39f51813a2c49fd",
       "tool_trace": [
         {
@@ -2733,6 +2740,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018103",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "6f9918c9e5192a22eb254980dd603a9d842969fdde04039eea8a8bbbbc575a06",
       "tool_trace": [
         {
@@ -3075,6 +3083,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018104",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "975bbcef1650d3918001a0d0b0fe1d6b8b001ba40563dad84a487c7c28d547d8",
       "tool_trace": [
         {
@@ -3180,7 +3189,7 @@
     "fixture_sha256": "d1ffab448fb114aa9e2b5442f77c745ada03b4503380d37ee9985ae675f0ceee",
     "schema_sha256": "637a8d78ef8ec15e912c02209ccac2ab04623aa37c44595eeed9df33d36bca0f"
   },
-  "stable_result_sha256": "a8a86863882fa58ab93672b531740d20a8eb1e4d53bfb1471904eb7b1434ff31",
+  "stable_result_sha256": "75036c5ccf36d77970c43342f3fe467ac386aefcafe9ea7b84e60c525e46c41b",
   "summary": {
     "accepted_answer_accuracy": null,
     "candidate_fixed_checked": 1,
@@ -3222,42 +3231,42 @@
     "observations": [
       {
         "case_id": "M18-D-B01",
-        "original_wall_ms": 1314
+        "original_wall_ms": 1353
       },
       {
         "case_id": "M18-D-B02",
-        "original_wall_ms": 1236
+        "original_wall_ms": 1264
       },
       {
         "case_id": "M18-D-B03",
-        "original_wall_ms": 1212
+        "original_wall_ms": 1203
       },
       {
         "case_id": "M18-D-B04",
-        "original_wall_ms": 1189
+        "original_wall_ms": 1211
       },
       {
         "case_id": "M18-D-B05",
-        "original_wall_ms": 1201
+        "original_wall_ms": 1185
       },
       {
         "case_id": "M18-D-N01",
-        "original_wall_ms": 1248
+        "original_wall_ms": 1234
       },
       {
         "case_id": "M18-D-N02",
-        "original_wall_ms": 1112
+        "original_wall_ms": 1148
       },
       {
         "case_id": "M18-D-N03",
-        "original_wall_ms": 1109
+        "original_wall_ms": 1156
       },
       {
         "case_id": "M18-D-N04",
-        "original_wall_ms": 1112
+        "original_wall_ms": 1107
       },
       {
-        "candidate_wall_ms": 988,
+        "candidate_wall_ms": 1012,
         "case_id": "M18-D-B01"
       }
     ],

@@ -1,0 +1,416 @@
+{
+  "approval_authority": "human_only",
+  "contracts": {
+    "candidate": "m1.7-binding-v1",
+    "graph_state": "m1.1-original-v1",
+    "m20": "m20-ai-investigation-v1",
+    "m21": "m21-original-evidence-v1"
+  },
+  "evaluation_stable_sha256": "75036c5ccf36d77970c43342f3fe467ac386aefcafe9ea7b84e60c525e46c41b",
+  "hosted_model_reliability": "unmeasured",
+  "independent_answers_accepted": 0,
+  "model_class": "scripted_offline_doubles_only",
+  "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
+  "scenarios": [
+    {
+      "assessment_id": "DEV-W4-week4-offline-development-v1-B01-nominal",
+      "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+      "candidate_status": "not_started",
+      "deal_id": "M18-D-B01",
+      "fixed_decision_sha256": "728569caa5c5305805ebc6f66fba844ce834f66cbdfd54f33c310e1733adc7bc",
+      "fixed_review_status": "needs_revision",
+      "fixed_specialists": {
+        "approval_routing": {
+          "execution": "completed",
+          "finding": "withheld",
+          "prerequisite": "met"
+        },
+        "configuration": {
+          "execution": "completed",
+          "finding": "confirmed",
+          "prerequisite": "met"
+        },
+        "credit": {
+          "execution": "completed",
+          "finding": "calculated",
+          "prerequisite": "met"
+        },
+        "fulfillment": {
+          "execution": "completed",
+          "finding": "needs_revision",
+          "prerequisite": "met"
+        },
+        "policy": {
+          "execution": "completed",
+          "finding": "evaluated_with_interface_limits",
+          "prerequisite": "met"
+        },
+        "pricing": {
+          "execution": "completed",
+          "finding": "calculated",
+          "prerequisite": "met"
+        }
+      },
+      "offline_ai": {
+        "approval_routing": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "route_withheld",
+              "ref": "fixed_route:M18-D-B01"
+            }
+          ]
+        },
+        "configuration": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "is_sellable",
+              "ref": "product:M18-P-B01"
+            }
+          ]
+        },
+        "credit": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "credit_limit",
+              "ref": "credit_profile:M18-C-B01"
+            }
+          ]
+        },
+        "fulfillment": {
+          "contribution_kind": "abstention",
+          "execution": "completed",
+          "provider": "offline_scripted_double",
+          "validated_claims": []
+        },
+        "policy": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "rule_id",
+              "ref": "policy_rule:PO-BASE-DELIVERY-LATE"
+            }
+          ]
+        },
+        "pricing": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "fixed_margin_pct",
+              "ref": "pricing_line:M18-L-B01"
+            }
+          ]
+        }
+      },
+      "phase1c_run_id": "00000000-0000-4000-8000-000000018001",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
+      "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
+      "trace": [
+        "evidence_pinned",
+        "configuration:completed",
+        "pricing:completed",
+        "fulfillment:completed",
+        "credit:completed",
+        "policy:completed",
+        "reconciled",
+        "approval_routing:completed",
+        "review_prepared",
+        "fulfillment_ai:completed",
+        "m20_configuration:completed",
+        "m20_pricing:completed",
+        "m21_credit:completed",
+        "m21_policy:completed",
+        "m21_approval_routing:completed"
+      ]
+    },
+    {
+      "assessment_id": "DEV-W4-week4-offline-development-v1-B05-adverse",
+      "bundle_sha256": "be3a5bae596cecb0a0bf7faaf05ed06755652db1f4f7f771826a70a49ca37008",
+      "candidate_status": "not_started",
+      "deal_id": "M18-D-B05",
+      "fixed_decision_sha256": "a94d2cf8629e7694dfcf73ab5b3b12fd0eb4793c0a14e678fb1c6b93c43ac356",
+      "fixed_review_status": "needs_revision",
+      "fixed_specialists": {
+        "approval_routing": {
+          "execution": "completed",
+          "finding": "withheld",
+          "prerequisite": "met"
+        },
+        "configuration": {
+          "execution": "completed",
+          "finding": "confirmed",
+          "prerequisite": "met"
+        },
+        "credit": {
+          "execution": "completed",
+          "finding": "calculated",
+          "prerequisite": "met"
+        },
+        "fulfillment": {
+          "execution": "completed",
+          "finding": "needs_revision",
+          "prerequisite": "met"
+        },
+        "policy": {
+          "execution": "completed",
+          "finding": "evaluated_with_interface_limits",
+          "prerequisite": "met"
+        },
+        "pricing": {
+          "execution": "completed",
+          "finding": "calculated",
+          "prerequisite": "met"
+        }
+      },
+      "offline_ai": {
+        "approval_routing": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "route_withheld",
+              "ref": "fixed_route:M18-D-B05"
+            }
+          ]
+        },
+        "configuration": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "is_sellable",
+              "ref": "product:M18-P-B05"
+            }
+          ]
+        },
+        "credit": {
+          "contribution_kind": null,
+          "execution": "error",
+          "provider": "offline_double",
+          "validated_claims": []
+        },
+        "fulfillment": {
+          "contribution_kind": "abstention",
+          "execution": "completed",
+          "provider": "offline_scripted_double",
+          "validated_claims": []
+        },
+        "policy": {
+          "contribution_kind": null,
+          "execution": "abstained",
+          "provider": "offline_double",
+          "validated_claims": []
+        },
+        "pricing": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "fixed_margin_pct",
+              "ref": "pricing_line:M18-L-B05"
+            }
+          ]
+        }
+      },
+      "phase1c_run_id": "00000000-0000-4000-8000-000000018005",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
+      "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
+      "trace": [
+        "evidence_pinned",
+        "configuration:completed",
+        "pricing:completed",
+        "fulfillment:completed",
+        "credit:completed",
+        "policy:completed",
+        "reconciled",
+        "approval_routing:completed",
+        "review_prepared",
+        "fulfillment_ai:completed",
+        "m20_configuration:completed",
+        "m20_pricing:completed",
+        "m21_credit:error",
+        "m21_policy:abstained",
+        "m21_approval_routing:completed"
+      ]
+    },
+    {
+      "assessment_id": "DEV-W4-week4-offline-development-v1-N03-nominal",
+      "bundle_sha256": "a176ad55e465ea91c66ed5d10d814ee694368f96ee4268ea0021aaff465a8148",
+      "candidate_status": "not_started",
+      "deal_id": "M18-D-N03",
+      "fixed_decision_sha256": "f0ba97d89c6a3b67413ccc21250246b357176a1ce79d43c6179d606fe61ea80f",
+      "fixed_review_status": "needs_evidence",
+      "fixed_specialists": {
+        "approval_routing": {
+          "execution": "completed",
+          "finding": "withheld",
+          "prerequisite": "met"
+        },
+        "configuration": {
+          "execution": "completed",
+          "finding": "confirmed",
+          "prerequisite": "met"
+        },
+        "credit": {
+          "execution": "completed",
+          "finding": "calculated",
+          "prerequisite": "met"
+        },
+        "fulfillment": {
+          "execution": "completed",
+          "finding": "unknown",
+          "prerequisite": "met"
+        },
+        "policy": {
+          "execution": "completed",
+          "finding": "evaluated_with_interface_limits",
+          "prerequisite": "met"
+        },
+        "pricing": {
+          "execution": "completed",
+          "finding": "calculated",
+          "prerequisite": "met"
+        }
+      },
+      "offline_ai": {
+        "approval_routing": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "route_withheld",
+              "ref": "fixed_route:M18-D-N03"
+            }
+          ]
+        },
+        "configuration": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "is_sellable",
+              "ref": "product:M18-P-N03"
+            }
+          ]
+        },
+        "credit": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "credit_limit",
+              "ref": "credit_profile:M18-C-N03"
+            }
+          ]
+        },
+        "fulfillment": {
+          "contribution_kind": null,
+          "execution": "skipped",
+          "provider": "offline_scripted_double",
+          "validated_claims": []
+        },
+        "policy": {
+          "contribution_kind": null,
+          "execution": "error",
+          "provider": "offline_double",
+          "validated_claims": []
+        },
+        "pricing": {
+          "contribution_kind": null,
+          "execution": "completed",
+          "provider": "offline_double",
+          "validated_claims": [
+            {
+              "field": "fixed_margin_pct",
+              "ref": "pricing_line:M18-L-N03"
+            }
+          ]
+        }
+      },
+      "phase1c_run_id": "00000000-0000-4000-8000-000000018103",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
+      "source_input_digest": "6f9918c9e5192a22eb254980dd603a9d842969fdde04039eea8a8bbbbc575a06",
+      "trace": [
+        "evidence_pinned",
+        "configuration:completed",
+        "pricing:completed",
+        "fulfillment:completed",
+        "credit:completed",
+        "policy:completed",
+        "reconciled",
+        "approval_routing:completed",
+        "review_prepared",
+        "fulfillment_ai:skipped",
+        "m20_configuration:completed",
+        "m20_pricing:completed",
+        "m21_credit:completed",
+        "m21_policy:error",
+        "m21_approval_routing:completed"
+      ]
+    }
+  ],
+  "separate_fulfillment_candidate": {
+    "assessment_id": "DEV-W4-ISOLATED-CANDIDATE-B01-v1",
+    "bundle_sha256": "720f3b16d9be58a83ece05881387ea0b074bc1552e1b301b933c00eb17128526",
+    "candidate_id": "M17-7d86e523f539c408025fdca7",
+    "candidate_status": "fixed_checked",
+    "case_id": "M18-D-B01",
+    "citations_returned": true,
+    "customer_acceptance": "pending",
+    "fixed_business_status": "needs_revision",
+    "fixed_rechecks": {
+      "approval_routing": {
+        "execution": "completed",
+        "finding": "withheld"
+      },
+      "configuration": {
+        "execution": "completed",
+        "finding": "confirmed"
+      },
+      "credit": {
+        "execution": "completed",
+        "finding": "calculated"
+      },
+      "fulfillment": {
+        "execution": "completed",
+        "finding": "needs_revision"
+      },
+      "policy": {
+        "execution": "completed",
+        "finding": "evaluated_with_interface_limits"
+      },
+      "pricing": {
+        "execution": "completed",
+        "finding": "calculated"
+      }
+    },
+    "fixed_supply_status": "supply_supported_unreserved",
+    "human_approval": "not_granted_by_system",
+    "proposal_source": "predeclared_offline_script_not_model_reasoning",
+    "same_schedule_as_fixed_discovery": true,
+    "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4"
+  },
+  "source_hashes": {
+    "fixture_sha256": "d1ffab448fb114aa9e2b5442f77c745ada03b4503380d37ee9985ae675f0ceee",
+    "schema_sha256": "637a8d78ef8ec15e912c02209ccac2ab04623aa37c44595eeed9df33d36bca0f"
+  },
+  "version": "offline-release-demo-v1"
+}

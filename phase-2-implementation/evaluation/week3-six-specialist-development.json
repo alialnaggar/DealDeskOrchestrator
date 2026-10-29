@@ -249,6 +249,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018001",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "64aca7dd89012213a130b542ebc37c15707342a7763d6ecdeda0c5765821ffe4",
       "tool_trace": [
         {
@@ -577,6 +578,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018005",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "3af874a55010ef7d84134d673c2e800aa984596cb6a2d5a5935395aef60f30cd",
       "tool_trace": [
         {
@@ -899,6 +901,7 @@
       },
       "phase1c_pin": "90c0bc8e285ee69262c7db826b786096a77ad004",
       "phase1c_run_id": "00000000-0000-4000-8000-000000018103",
+      "reviewer_action": "Human review required; no approval, reservation or delivery promise",
       "source_input_digest": "6f9918c9e5192a22eb254980dd603a9d842969fdde04039eea8a8bbbbc575a06",
       "tool_trace": [
         {

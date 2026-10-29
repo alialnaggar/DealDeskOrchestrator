@@ -19,6 +19,7 @@ from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
 from dealdesk_phase2.phase1c_adapter import PHASE1C_COMMIT, Phase1CAdapter
 from m18_case_setup import install_disposable_cases
+from offline_release_demo import markdown as demo_markdown, project as project_demo
 from run_week4_development import report, run
 
 
@@ -33,7 +34,12 @@ def require_disposable_cluster(dsn):
         raise ValueError("Only local /tmp/opencode disposable PostgreSQL cluster allowed")
 
 
-def provision_and_run(dsn, checkout, output_json, output_md, pg_bin, pg_lib):
+def provision_and_run(dsn, checkout, output_json, output_md, pg_bin, pg_lib,
+                      demo_json=None, demo_md=None):
+    demo_json = demo_json or output_json.with_name("dealdesk-offline-demo.json")
+    demo_md = demo_md or output_json.with_name("dealdesk-offline-demo.md")
+    if len({output_json.resolve(), output_md.resolve(), demo_json.resolve(), demo_md.resolve()}) != 4:
+        raise ValueError("Evaluation and demo outputs require four distinct paths")
     require_disposable_cluster(dsn)
     pg_bin = pg_bin.resolve()
     if not pg_bin.is_relative_to("/tmp/opencode") or not (pg_bin / "psql").is_file():
@@ -90,8 +96,11 @@ def provision_and_run(dsn, checkout, output_json, output_md, pg_bin, pg_lib):
     # Never put DB credentials, connection strings or owner secrets in artifacts.
     result["disposable_setup"] = {"business_database": business,
         "checkpoint_database": checkpoint, "phase1c_pin": commit}
+    demo = project_demo(result)
     output_json.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     output_md.write_text(report(result))
+    demo_json.write_text(json.dumps(demo, indent=2, sort_keys=True) + "\n")
+    demo_md.write_text(demo_markdown(demo))
     return result
 
 
@@ -106,9 +115,11 @@ def main():
                         help="Local /tmp/opencode PostgreSQL shared library directory")
     parser.add_argument("--json", required=True, type=Path)
     parser.add_argument("--markdown", required=True, type=Path)
+    parser.add_argument("--demo-json", type=Path, help="Default: dealdesk-offline-demo.json beside --json")
+    parser.add_argument("--demo-markdown", type=Path, help="Default: dealdesk-offline-demo.md beside --json")
     args = parser.parse_args()
     provision_and_run(args.cluster_dsn, args.phase1c, args.json, args.markdown,
-                      args.pg_bin, args.pg_lib)
+                      args.pg_bin, args.pg_lib, args.demo_json, args.demo_markdown)
 
 
 if __name__ == "__main__":

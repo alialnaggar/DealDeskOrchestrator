@@ -330,3 +330,20 @@ skips (`/tmp/opencode/dealdesk-week4-regression.log`); private CI not run.
 Remaining Week 4: broader source families and nonempty Credit/Policy/Route
 evidence, source-first independent answer acceptance, semantic/blinded human
 comparison, and separately authorized hosted validation if pursued.
+
+## Offline release-candidate operator handoff (29 October 2026)
+
+The existing [fresh-disposable Week 4 command](../backend/tests/run_week4_disposable.py)
+now emits a verified, read-only [operator demonstration](../evaluation/dealdesk-offline-demo.md)
+and [structured projection](../evaluation/dealdesk-offline-demo.json) beside its
+evaluation files, with one B01 complete original LangGraph handoff, B05/N03
+fault/skip controls and the separate B01 fixed-checked binding candidate.
+The [acceptance checklist and Oracle command](../evaluation/offline-release-candidate-acceptance.md)
+are the offline release-candidate entrypoint; no new business or agent runtime
+capability was added. Graph reviewer identity, six fixed mappings, AI evidence
+and human-only action are checked before projection. Offline doubles and
+deterministic-only discovery remain separately attributable. The structural
+evaluation digest was reproduced in a new isolated PostgreSQL cohort after
+generating the sample artifacts. Remaining Week 1–4 work is unchanged:
+independent answers (0/36), richer source families, real-model and hosted
+compatibility under **separate approval**, and eventual reviewer UI.

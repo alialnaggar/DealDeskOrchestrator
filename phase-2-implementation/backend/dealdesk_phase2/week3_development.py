@@ -51,6 +51,18 @@ def capture_original_development(state: dict, adapter) -> dict:
         if fixed[name] != expected:
             raise EvidenceMismatch("Week 3 fixed result differs from pinned decision mapping")
         reconstructed[name] = expected
+    original = review.get("original", {})
+    if (original.get("deal_id") != ctx.original_deal_id
+            or original.get("run_id") != str(ctx.phase1c_run_id)
+            or original.get("review_status") != state["review_status"]
+            or original.get("specialists") != {name: {
+                "execution": fixed[name]["execution"], "finding": fixed[name]["finding"]}
+                for name in SPECIALISTS}
+            or review.get("candidates") != []
+            or review.get("candidate_workflow_status") != "not_started"
+            or review.get("reviewer_action") != (
+                "Human review required; no approval, reservation or delivery promise")):
+        raise EvidenceMismatch("Week 3 reviewer handoff differs from fixed original")
     ledger = state.get("tool_access_ledger", [])
     if not isinstance(ledger, list):
         raise EvidenceMismatch("Week 3 development tool ledger changed")
@@ -138,6 +150,7 @@ def capture_original_development(state: dict, adapter) -> dict:
         "trace": list(state.get("trace", [])),
         "fulfillment_claim_audit_records": len(state.get("ai_claim_audit", [])),
         "candidate_status": state["candidate_status"],
+        "reviewer_action": review["reviewer_action"],
         "human_approval": "not_granted_by_system",
         "ground_truth": "none_accepted_development_diagnostic_only",
         "hosted_model_quality": "not_measured_offline_doubles"}

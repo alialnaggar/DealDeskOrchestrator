@@ -20,7 +20,7 @@ A separate B01 checkpoint runs a predeclared scripted two-slice Fulfillment hypo
 
 Counts describe contracts, source visibility and fault containment, not model accuracy or business correctness against independent answers. Reserved and returned attempt records are ledger transitions, not unique provider sends or retries. This run exercises replay; interruption/no-replay and budget-exhaustion are tested separately, not measured here. Duration includes DB/checkpoint and is nonreproducible (fresh versus resume). No tokens or API cost exist offline. Execution `completed` may contain an abstention contribution; `error` is not a validated finding. N01 disallows partial delivery, N02 cancels inbound, N03 has stale stock evidence and N04 lacks supply. N01 can still enter Fulfillment investigation but cannot produce a permitted partial candidate. Conditional supplier offers are exercised by existing separate fault tests, not this cohort. The fixture cohort shares one product class, policy and region.
 
-Stable projection SHA-256: `a8a86863882fa58ab93672b531740d20a8eb1e4d53bfb1471904eb7b1434ff31` (excludes timing only). Re-running on the same threads tests idempotence, not another independent case.
+Stable projection SHA-256: `75036c5ccf36d77970c43342f3fe467ac386aefcafe9ea7b84e60c525e46c41b` (excludes timing only). Re-running on the same threads tests idempotence, not another independent case.
 
 ## Run
 
