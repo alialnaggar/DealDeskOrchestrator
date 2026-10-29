@@ -155,3 +155,64 @@ neither operation is performed here. At most two Configuration native POSTs,
 one Pricing inspection POST and one strict no-tools final POST; no retry,
 replay, fallback, Credit case or paid OpenAI API. On any uncertain send, stop,
 preserve checkpoint/receipt history and coordinate a reviewed rollback.
+
+## Account-ID contract clarification and final offline proposal (follow-up)
+
+The **original** [hosted infrastructure contract](../pricing-credit-typed-final-hosted-infrastructure.md#proposed-first-hosted-acceptance--not-authorized)
+calls for a single owner-identified **Groq account whose actual ID** Ali
+confirms, explicitly excludes the test-only account ID, and requires that
+account ID in the final approved manifest. The later [v2 audit](../pricing-credit-typed-final-hosted-readiness-audit.md#remediation-after-audit-28-october-2026)
+states that the gate cannot prove the key belongs to the manifest's
+`account_id`. This is a **provider organization/account identity for an owner
+assertion and immutable binding**, not a freely chosen application owner label.
+Its runtime check is deliberately only string type, nonempty and ≤100
+characters. The exact **value** must match in the manifest, private approval
+JSON, checkpoint `typed_final_hosted_start` and hosted protocol binding;
+the canonical manifest SHA-256 binds all manifest fields across recovery.
+`run_typed_final_hosted` selects
+`GROQ_SECONDARY_API_KEY` to authenticate the POST, but it never sends
+`account_id` to Groq or derives it from the key. The test fixture's
+`synthetic-test-account` exercises **shape/equality only**, not semantics.
+Accepting an arbitrary label because it passes Python validation would
+contradict the written owner-identified-account contract. Changing to an
+application-defined identifier would require a separate architecture decision;
+no such change is proposed.
+
+The provider's public [Organization Settings page](https://console.groq.com/settings/organization)
+labels **Organization ID** as the unique identifier (the Organization name
+is explicitly non-unique); it says the ID is used in invoices/communications
+and *not* needed for API calls. Ali can **sign in personally**, select the
+organization associated with the secondary key using the Console's
+[Organization / Projects selector](https://console.groq.com/docs/projects),
+then open **Settings → Organization → General → Organization ID** and copy
+*only that nonsecret ID*. Do not send the API key, a key hash, screenshot or
+console session token; no metadata request is necessary. If this Console
+does not display an Organization ID, report that exact UI limitation rather
+than guessing from an organization name, project name or key identifier.
+No organization ID was present in authorized local configuration, previous
+documented deployment evidence, or the trial templates.
+
+After the owner's already recorded free-tier/billing-disabled statement, a
+**new, still non-authorizing private proposal** was prepared at
+`/tmp/opencode/dealdesk-b05-scram-9c9794347b09/b05-proposal-owner-statement-not-authorized.json`
+(mode `0600`). It is exactly the previous preflight proposal except
+`billing_state=owner_asserts_free_tier_billing_disabled`; its *proposal-only*
+canonical SHA-256 is
+`a90b1d6dd9932ed25dea492034fee181e880fb74d004756ea6779f42670549b7`.
+It retains `account_id=null` and
+`status=proposal_not_authorized_not_executable`; it is **not** an executable
+manifest or owner approval, and its hash must not be approved as one. The
+original private creation/proposal records were not overwritten. All actual
+DB/assessment identities, prompt and schema hashes, permissions and
+**four POSTs / 2,560 configured completion tokens** remain unchanged. An
+offline field-by-field comparison to the earlier proposal and seven focused
+contract/gate tests passed; no Groq/metadata call or CI dispatch. Once the
+actual Organization ID is supplied and identity/history remains valid, add
+that exact value to a **new non-authorizing** proposal. For the owner's
+decision, calculate a separately labeled **would-be runtime hash** in memory
+from the *exact* final JSON bytes, including the future
+`status=authorized_one_case`; do not persist that executable-status JSON,
+create an approval file or use its hash to send before explicit approval of
+those bytes and the activation diff. Hashing the still-non-authorizing
+proposal instead would produce a **different hash**, which cannot be used as
+the runtime approval digest. The one-line activation diff remains unapplied.
