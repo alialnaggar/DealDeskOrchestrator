@@ -23,6 +23,43 @@ ROOT = Path(__file__).resolve().parents[2] / "architecture" / "trial-proposals"
 
 
 class ProposalContracts(unittest.TestCase):
+    def test_b05_exact_review_hash_is_not_a_runtime_authorization(self):
+        """The final owner-review digest includes the future status, not the proposal's."""
+        base = json.loads((ROOT / "pricing-b05-typed-final-v2.json").read_text())
+        proposal = json.loads((ROOT / "pricing-b05-scram-final-review-proposal.json").read_text())
+        self.assertEqual(set(proposal), MANIFEST_KEYS)
+        self.assertEqual(set(proposal["case"]), CASE_KEYS)
+        self.assertEqual(set(proposal["execution_context"]), CONTEXT_KEYS)
+        self.assertEqual(proposal["status"], "proposal_not_authorized_not_executable")
+        self.assertEqual(proposal["account_id"], "org_01m5d82zneee6b2vzsz8d2014b")
+        self.assertEqual(proposal["billing_state"],
+                         "owner_asserts_free_tier_billing_disabled")
+        self.assertEqual(proposal["case"]["assessment_id"],
+                         "TYPED-B05-SCRAM-8ba93fddd647")
+        self.assertEqual(proposal["case"]["bundle_sha256"],
+                         "a80b5b99f5d09ca2568010f8c26867413f4049097173e72ff229661e7a830df9")
+        self.assertEqual(proposal["execution_context"]["fixture_database_oid"], 16385)
+        self.assertEqual(proposal["execution_context"]["checkpoint_database_oid"], 16386)
+        for key in set(base) - {"account_id", "billing_state", "case", "execution_context"}:
+            self.assertEqual(proposal[key], base[key])
+        self.assertEqual(proposal["budgets"], budgets("pricing", 1))
+        self.assertEqual(proposal["inspection_prompt_sha256"], sha256(
+            inspection_instruction("pricing").encode()).hexdigest())
+        self.assertEqual(proposal["configuration_prompt_sha256"], sha256(
+            config_instruction("configuration").encode()).hexdigest())
+        self.assertEqual(proposal["final_prompt_sha256"], sha256(
+            FINAL_SYSTEM_INSTRUCTION.encode()).hexdigest())
+        self.assertEqual(proposal["schema_sha256"], SCHEMA_SHA256)
+        proposed_digest = sha256(_canonical(proposal).encode()).hexdigest()
+        self.assertEqual(proposed_digest,
+                         "16feccc8c0e499d8015399f1404bf101bd04ce08a2f0d133ed0710d877012b1a")
+        with self.assertRaises(ValueError):
+            _validate_manifest(proposal, proposed_digest, "pricing", None, None, {})
+        future = {**proposal, "status": "authorized_one_case"}  # Only in memory.
+        self.assertEqual(sha256(_canonical(future).encode()).hexdigest(),
+                         "530cfc1d87cde830b3376284e9f0a05dd6a0e167b9e5c7bc27def85c2a42b0e3")
+        self.assertIs(HOSTED_ACTIVATION, False)
+
     def test_proposals_match_offline_contract_but_cannot_authorize_a_send(self):
         self.assertIs(HOSTED_ACTIVATION, False)
         for file, specialist, case_id, subject in (
