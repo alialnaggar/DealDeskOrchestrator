@@ -1,5 +1,9 @@
 # Dormant typed-final hosted gate — security/readiness audit
 
+**Current decision:** see [final owner decision sheet](#final-owner-decision-sheet-29-october-2026).
+The dated v1 findings below are historical; do not interpret them as current
+implementation defects after the subsequent remediation and serialization.
+
 **28 October 2026 · branch `phase2-agent-implementation` · audited commit
 `98c0ae6bc5e9d7e55971a2948b4fbd082b267a73`.** Read-only audit of
 implementation and documentary Groq compatibility; no Groq request, account
@@ -342,3 +346,70 @@ unverified. **NO-GO for requesting activation approval** pending owner-verified
 fresh provisioning/account terms, current provider-wire review, independent
 deployment/security review of database and owner-directory privileges, and
 authorized private CI evidence. No activation or trial is approved here.
+
+## Final owner decision sheet (29 October 2026)
+
+**Basis and scope.** Branch `phase2-agent-implementation`, reviewed at
+`a5add41930420c27e4522eb3f173e3e65bb77187`. The gate is still disabled;
+the production entry has no mock transport, rechecks pinned state after the
+owner lock, and serializes final validation/send against ordinary checkpoint
+writers. The fresh seven-database offline regression passed **316 tests with
+seven unrelated Gemma skips**; the hosted-focused suite passed **18**. These
+are local results, not GitHub Actions results or provider acceptance. No new
+code blocker was found in this read-only review. Do not reopen the corrected
+issues absent a reproducible contradiction.
+
+| Classification | Open evidence or decision | Acceptance boundary |
+| --- | --- | --- |
+| **Mandatory before enabling the gate** | Ali independently identifies the exact selected Groq account and credential, verifies its current free-tier status **and billing-disabled state** and applicable quota/terms, and approves the reviewed **activation diff** separately. Confirm the production process is trusted (no untrusted Python/plugins), owner-directory permissions and checkpoint/business-DB roles are restricted; review current official provider wire documentation for the selected model, tool request, strict no-tools schema and limits. | Record dated owner attestation and reviewer sign-off, without keys or approval JSON. If free-tier/billing-disabled status cannot be independently confirmed or the deployment trust boundary cannot be enforced: **NO-GO**. Another cost-control arrangement would need separate governance review; documentation compatibility is not actual acceptance. |
+| **Mandatory before authorizing a specific trial** | Owner independently provisions fresh isolated synthetic B05 business/checkpoint DBs and a fresh assessment; records DB names/OIDs, role isolation, Phase 1C pin, source fingerprint/bundle digest, run/as-of/snapshot, empty prior attempts/receipts and exclusive checkpoint history. Prepare a new owner-only directory and a *proposed* exact v2 manifest hash, then obtain a separate one-case/budget/account approval before any approval file or send. | No historical failed assessment or reused checkpoint DB. Verify first checkpoint belongs only to that assessment, no foreign thread in checkpoints/writes/blobs, no previous incompatible history, and manifest matches the actual pinned state. Names, OIDs and a manifest boolean are identity/negative-reuse checks, **not** proof of creation time. |
+| **Verifiable only during/after first trial** | Whether Groq accepts this exact model/inspection request and strict final schema, returns well-formed output/usage, and avoids the earlier second-turn 400. Measure actual sent POSTs, latency, usage and citations against the exact receipt/checkpoint history. | On 400, timeout, invalid response, budget/evidence error or uncertain send: stop that assessment, no retry, replay or fallback; do not infer success from offline wire checks. A successful trial does not establish population-level accuracy. |
+| **Documented residual risk / explicit owner exception** | Private CI for the remediation commits is unverified: pushes carried `[skip ci]` to avoid a potentially billable workflow. The fresh isolated PostgreSQL run and adversarial tests give substantial **local** evidence for one narrowly controlled synthetic experiment, but not independent CI or deployment validation. Failed sends may have unknown provider usage; the 24,000 reported-token stop acts **after** returned responses. Privileged local/DB actors, business-DB changes and changes after a send lock is released remain outside its atomic checkpoint guarantee. | Ali may explicitly accept the CI-evidence gap for a single bounded trial after all other mandatory gates; do not claim CI passed. If independent CI is required by owner policy, seek separate approval to run/check it before activation. Restrict privilege and retain abort/no-replay rules. |
+
+**Independent provisioning evidence (not yet collected).** A trusted operator
+should record a dated, redacted creation/provisioning transcript or inventory
+for both newly created databases, their OIDs and roles/ACLs, plus separate
+first-use attestation of the checkpoint tables and assessment ID. Verify the
+business fixture came from the separate checkout at
+`90c0bc8e285ee69262c7db826b786096a77ad004`, and record schema/rule and
+synthetic fixture provenance. Before any send, independently compare the run
+ID, subject `M18-D-B05`, sealed bundle SHA-256, source input digest, as-of and
+snapshot reference to the checkpoint and proposed manifest. Check that the
+business fixture is access-isolated/read-only for the sending role and that
+checkpoint history has no foreign assessment, terminal prior attempts or
+receipts. The gate's database OID/history checks supplement but cannot replace
+these records; PostgreSQL does not supply reliable DB creation time. Do not
+publish connection strings, private approval data, or customer information.
+
+**Credential check without disclosure (not yet performed).** Ali signs in
+personally to the provider's account/billing and API-key consoles over an
+owner-controlled channel, matches the selected key's masked identifier to
+the intended account, checks plan/quota, billing status and whether payment or
+automatic paid overages are enabled, then records the date, account identifier,
+masked key identifier, relevant settings and any spending limits privately.
+If the console cannot establish *free tier with billing disabled*, stop and
+obtain clarification or a separately reviewed change to the gate's policy;
+the manifest string `owner_asserts_free_tier_billing_disabled` is not proof.
+Never show a key, credential hash, console secret, or screenshot with sensitive
+fields in Git, logs or chat. No API or metadata request is needed for this
+manual verification.
+
+**Exact proposed first trial — NOT AUTHORIZED.** One new synthetic **B05
+Pricing** assessment, `inspection_plan=1`, model `openai/gpt-oss-120b`:
+**two Configuration native POSTs + one Pricing inspection POST + one separate
+no-tools strict-schema final POST = at most four POSTs**, configured completion
+limits **512 + 512 + 512 + 1,024 = 2,560 tokens**. Maximum serialized request
+8,192 bytes and response 16,384 bytes per POST; reported prompt-token ceiling
+4,096 on each returned POST and a 24,000 reported-token **post-return** stop.
+No metadata GET, retry, fallback, Credit campaign, replay or second case.
+No real account, assessment, approval record or immutable manifest hash has
+been selected here.
+
+**Recommendation: conditional NO-GO now.** There is no identified need for
+another dormant-gate code change before *requesting* activation approval, but
+owner account/billing attestation, deployment privilege review and current
+wire-document review have not been evidenced. After those, Ali can decide
+whether to accept the documented CI gap and separately approve a reviewed
+activation change. Even an activation approval is **not** permission to create
+a live approval artifact or send: fresh provisioning, exact-manifest review
+and a separate one-case trial authorization are subsequent decisions.
