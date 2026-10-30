@@ -1,5 +1,7 @@
 # Phase 1C accountable answer adjudication handoff — 30 October 2026
 
+> **Methodology update, 30 October:** Ali has chosen no external human reviewer. The current workflow is [blinded second-model source-first review with author oversight](../second_model_review/README.md). References below to a qualified external reviewer or independent human validation describe the earlier proposed method and are superseded. No acceptance count changes until Ali records a case-level decision under an explicitly versioned criterion.
+
 **Reviewer-only preparation; no accepted labels.** Original 36: 0/36; supplemental Configuration 039: 0/1; Credit controls 040–041: 0/2. The [fresh isolated PostgreSQL report](phase1c_postgres_verification_2026-10-30.md) verifies source import, reader selection, packet hashes and mutations. It does not establish expected six-specialist answers or reviewer independence. The [216-recommendation matrix](v3_six_responsibility_technical_matrix.md) is model-assisted, uses authored archetype navigation and has unadjudicated rule/action wording. Never place this handoff or completed answers in agent-visible inputs.
 
 ## Packet set and review order
