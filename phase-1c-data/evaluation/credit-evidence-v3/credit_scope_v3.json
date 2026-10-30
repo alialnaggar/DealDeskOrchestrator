@@ -5,7 +5,7 @@
   "cases": [
     {
       "archetype_id": "STOCK-READY",
-      "as_of_at": "2026-09-01T12:01:00+00:00",
+      "as_of_at": "2026-09-01 12:01:00+00:00",
       "base_packet_sha256": "80d4cb16172cefca0d1f4779b14edfb0fc729efb025c2179010d2942fc527e63",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-001",
@@ -27,7 +27,7 @@
     },
     {
       "archetype_id": "STOCK-READY",
-      "as_of_at": "2026-09-01T12:02:00+00:00",
+      "as_of_at": "2026-09-01 12:02:00+00:00",
       "base_packet_sha256": "5d97ab2af7731f3014ed507b3384f4c3e06bb0ea135af53aa9e1a0b66a0e2663",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-002",
@@ -49,7 +49,7 @@
     },
     {
       "archetype_id": "STOCK-ALLOCATED",
-      "as_of_at": "2026-09-01T12:03:00+00:00",
+      "as_of_at": "2026-09-01 12:03:00+00:00",
       "base_packet_sha256": "9072b3083ed5d48ef5da028d57803e57f98cc3d4b8deeaf5233f1c1a2425a4dc",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-003",
@@ -71,7 +71,7 @@
     },
     {
       "archetype_id": "STOCK-ALLOCATED",
-      "as_of_at": "2026-09-01T12:04:00+00:00",
+      "as_of_at": "2026-09-01 12:04:00+00:00",
       "base_packet_sha256": "9022895e0db8deff0a619db263983329f48bd0f726e8071c01930d83ffaebe95",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-004",
@@ -93,7 +93,7 @@
     },
     {
       "archetype_id": "STOCK-STALE",
-      "as_of_at": "2026-09-01T12:05:00+00:00",
+      "as_of_at": "2026-09-01 12:05:00+00:00",
       "base_packet_sha256": "7137474bf7e6187188d59fee9520c9b161ea5f9bc61cfdd353622e23e6f2f8e9",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-005",
@@ -115,7 +115,7 @@
     },
     {
       "archetype_id": "STOCK-STALE",
-      "as_of_at": "2026-09-01T12:06:00+00:00",
+      "as_of_at": "2026-09-01 12:06:00+00:00",
       "base_packet_sha256": "2c75667976cbb6317ffd20169c6db67dad9c41b2c0c087e8fe3385324c3d4c39",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-006",
@@ -137,7 +137,7 @@
     },
     {
       "archetype_id": "SUPPLY-CONFIRMED",
-      "as_of_at": "2026-09-01T12:07:00+00:00",
+      "as_of_at": "2026-09-01 12:07:00+00:00",
       "base_packet_sha256": "5a619d81fe9007918ba20fa442b738b7ebfa5cb0e7b68933b16c5c80469af1c1",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-007",
@@ -159,7 +159,7 @@
     },
     {
       "archetype_id": "SUPPLY-CONFIRMED",
-      "as_of_at": "2026-09-01T12:08:00+00:00",
+      "as_of_at": "2026-09-01 12:08:00+00:00",
       "base_packet_sha256": "3f3b255a69738a832a23d8a5fa579a51eb56c583ffba31dd6a66d6a812808731",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-008",
@@ -181,7 +181,7 @@
     },
     {
       "archetype_id": "SUPPLY-OFFER-ONLY",
-      "as_of_at": "2026-09-01T12:09:00+00:00",
+      "as_of_at": "2026-09-01 12:09:00+00:00",
       "base_packet_sha256": "bed348a585b9cbcaaca8e2a2082b6289bc1125b998672b441a4fda4cb43fb8f9",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-009",
@@ -203,7 +203,7 @@
     },
     {
       "archetype_id": "SUPPLY-OFFER-ONLY",
-      "as_of_at": "2026-09-01T12:10:00+00:00",
+      "as_of_at": "2026-09-01 12:10:00+00:00",
       "base_packet_sha256": "b02e36696b1192229fa3f3f8a03b24571310c29f199642efa53f3574679612b8",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-010",
@@ -225,7 +225,7 @@
     },
     {
       "archetype_id": "SUPPLY-CANCELLED",
-      "as_of_at": "2026-09-01T12:11:00+00:00",
+      "as_of_at": "2026-09-01 12:11:00+00:00",
       "base_packet_sha256": "0f4e90857be2efdda23742539c542b55a85dfe4f3fe7601a6b473dd7be354d13",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-011",
@@ -247,7 +247,7 @@
     },
     {
       "archetype_id": "SUPPLY-CANCELLED",
-      "as_of_at": "2026-09-01T12:12:00+00:00",
+      "as_of_at": "2026-09-01 12:12:00+00:00",
       "base_packet_sha256": "1769145a278a4356b8d887b26b729d9a9375aab260c92f9775c89183b5b7b562",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-012",
@@ -269,7 +269,7 @@
     },
     {
       "archetype_id": "BUILD-READY",
-      "as_of_at": "2026-09-01T12:13:00+00:00",
+      "as_of_at": "2026-09-01 12:13:00+00:00",
       "base_packet_sha256": "24762884769d0c1a0d3e7c9be832d81629bc2279b2c45e58c1c54ba4ed958e76",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-013",
@@ -291,7 +291,7 @@
     },
     {
       "archetype_id": "BUILD-READY",
-      "as_of_at": "2026-09-01T12:14:00+00:00",
+      "as_of_at": "2026-09-01 12:14:00+00:00",
       "base_packet_sha256": "cfbb2be9d60cafb45e44c6e877d0cb012a7bf0445a6e97d7ae6a084402c5a9f9",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-014",
@@ -313,7 +313,7 @@
     },
     {
       "archetype_id": "BUILD-SUBSTITUTE",
-      "as_of_at": "2026-09-01T12:15:00+00:00",
+      "as_of_at": "2026-09-01 12:15:00+00:00",
       "base_packet_sha256": "b6b40a791af78f504f9143b689e14c83d7935efc51c12bb46318e989ac685433",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-015",
@@ -335,7 +335,7 @@
     },
     {
       "archetype_id": "BUILD-SUBSTITUTE",
-      "as_of_at": "2026-09-01T12:16:00+00:00",
+      "as_of_at": "2026-09-01 12:16:00+00:00",
       "base_packet_sha256": "8f1fe69b6d6d4f5e2f2757422678304422f3b3c34d4f9e6f60b3ba304877bfea",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-016",
@@ -357,7 +357,7 @@
     },
     {
       "archetype_id": "BUILD-CAPACITY-STALE",
-      "as_of_at": "2026-09-01T12:17:00+00:00",
+      "as_of_at": "2026-09-01 12:17:00+00:00",
       "base_packet_sha256": "c497769337268bf292bbc2fae6d897c22ca88cebf292ad514c27d76937165504",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-017",
@@ -379,7 +379,7 @@
     },
     {
       "archetype_id": "BUILD-CAPACITY-STALE",
-      "as_of_at": "2026-09-01T12:18:00+00:00",
+      "as_of_at": "2026-09-01 12:18:00+00:00",
       "base_packet_sha256": "68af2a45af0deb79e4f22f771ef0c33ac34c408b40fd1ff85cd21d5f03d84e32",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-018",
@@ -401,7 +401,7 @@
     },
     {
       "archetype_id": "BUILD-HORIZON",
-      "as_of_at": "2026-09-01T12:19:00+00:00",
+      "as_of_at": "2026-09-01 12:19:00+00:00",
       "base_packet_sha256": "5549aa868e8a561b376e19e05e7ac29482e5e69194f884cb1011bbde8fe96632",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-019",
@@ -423,7 +423,7 @@
     },
     {
       "archetype_id": "BUILD-HORIZON",
-      "as_of_at": "2026-09-01T12:20:00+00:00",
+      "as_of_at": "2026-09-01 12:20:00+00:00",
       "base_packet_sha256": "6edee7da614ce168e3422a3f1d013da26769f97e8378cacb107f0a55b036957b",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-020",
@@ -445,7 +445,7 @@
     },
     {
       "archetype_id": "DIGITAL-PROVED",
-      "as_of_at": "2026-09-01T12:21:00+00:00",
+      "as_of_at": "2026-09-01 12:21:00+00:00",
       "base_packet_sha256": "34dedd161be0b150512d0ffde9af5bbc5a10f35069fb4bce5d685939e24696e7",
       "base_provider_file_sha256": "5677b084ef5ddb0c58611b1168d20fed2c342443319f0288832902a4fd14cd8e",
       "case_id": "EVAL-PREP-021",
@@ -467,7 +467,7 @@
     },
     {
       "archetype_id": "DIGITAL-PROVED",
-      "as_of_at": "2026-09-01T12:22:00+00:00",
+      "as_of_at": "2026-09-01 12:22:00+00:00",
       "base_packet_sha256": "23326392a8a4a34d689ebd3713f36851289a5e15e3c027f880dd11bf39e9e652",
       "base_provider_file_sha256": "d7fedee60d5c0c44f5cafc7ee310b92614e9b2ca034a32f45fbef67f49b7a5dc",
       "case_id": "EVAL-PREP-022",
@@ -489,7 +489,7 @@
     },
     {
       "archetype_id": "DIGITAL-NO-PROOF",
-      "as_of_at": "2026-09-01T12:23:00+00:00",
+      "as_of_at": "2026-09-01 12:23:00+00:00",
       "base_packet_sha256": "c5cfd05dae6ede4235d26832147c6b7dd567c1d859042375a560c18c8a6fc6cd",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-023",
@@ -511,7 +511,7 @@
     },
     {
       "archetype_id": "DIGITAL-NO-PROOF",
-      "as_of_at": "2026-09-01T12:24:00+00:00",
+      "as_of_at": "2026-09-01 12:24:00+00:00",
       "base_packet_sha256": "49ef1ed5fe79aa1309fd40fd27b5d0af52107663f757e05438d1feeb7bef90c5",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-024",
@@ -533,7 +533,7 @@
     },
     {
       "archetype_id": "DIGITAL-EXPIRED",
-      "as_of_at": "2026-09-01T12:25:00+00:00",
+      "as_of_at": "2026-09-01 12:25:00+00:00",
       "base_packet_sha256": "ac14c1af1b88d315144641bf63b96a2710bdecf7722d5c3ca6527148f0f916b0",
       "base_provider_file_sha256": "26dd6a192219baf145e37b4400fbb9caa2fa1b45050694110ab53bdebe439b09",
       "case_id": "EVAL-PREP-025",
@@ -555,7 +555,7 @@
     },
     {
       "archetype_id": "DIGITAL-EXPIRED",
-      "as_of_at": "2026-09-01T12:26:00+00:00",
+      "as_of_at": "2026-09-01 12:26:00+00:00",
       "base_packet_sha256": "3c7a7004edc958b61868b59fe9f55d3b96538145d7a302690fba425f80b14b55",
       "base_provider_file_sha256": "1efe0169c024fe6a3c6dcca833b31af595415e0d07aa7d27c294950a30544a3e",
       "case_id": "EVAL-PREP-026",
@@ -577,7 +577,7 @@
     },
     {
       "archetype_id": "SERVICE-COVERED",
-      "as_of_at": "2026-09-01T12:27:00+00:00",
+      "as_of_at": "2026-09-01 12:27:00+00:00",
       "base_packet_sha256": "c894adb22258cccd0cb207265b07d79afaa52f555721c5973fb39f0090c44eb2",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-027",
@@ -599,7 +599,7 @@
     },
     {
       "archetype_id": "SERVICE-COVERED",
-      "as_of_at": "2026-09-01T12:28:00+00:00",
+      "as_of_at": "2026-09-01 12:28:00+00:00",
       "base_packet_sha256": "b66bd7a6ad845e3595aa8cf9af1dd00931c671e70f29f50f3e9a33ddb1e5aaa3",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-028",
@@ -621,7 +621,7 @@
     },
     {
       "archetype_id": "SERVICE-OUTSIDE",
-      "as_of_at": "2026-09-01T12:29:00+00:00",
+      "as_of_at": "2026-09-01 12:29:00+00:00",
       "base_packet_sha256": "804c94095b50d86bea226db6e27f0afca3c818b619a1c12624c49bb066b8ca30",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-029",
@@ -643,7 +643,7 @@
     },
     {
       "archetype_id": "SERVICE-OUTSIDE",
-      "as_of_at": "2026-09-01T12:30:00+00:00",
+      "as_of_at": "2026-09-01 12:30:00+00:00",
       "base_packet_sha256": "a4dda68a57028c87c6be5c6799a34b896db7cfbe88f3e5908aa13a5ddcc6044e",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-030",
@@ -665,7 +665,7 @@
     },
     {
       "archetype_id": "CREDIT-LIMIT",
-      "as_of_at": "2026-09-01T12:31:00+00:00",
+      "as_of_at": "2026-09-01 12:31:00+00:00",
       "base_packet_sha256": "cba1d10ad0a15512a5a75a9c1a34b2f852e49bd2831b61388bf568c253c284ce",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-031",
@@ -687,7 +687,7 @@
     },
     {
       "archetype_id": "CREDIT-LIMIT",
-      "as_of_at": "2026-09-01T12:32:00+00:00",
+      "as_of_at": "2026-09-01 12:32:00+00:00",
       "base_packet_sha256": "b571f69cfc5c0fb853ddb627283bebb7d07c84b276b78ef6f87568f871ead564",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-032",
@@ -709,7 +709,7 @@
     },
     {
       "archetype_id": "PRICE-FLOOR",
-      "as_of_at": "2026-09-01T12:33:00+00:00",
+      "as_of_at": "2026-09-01 12:33:00+00:00",
       "base_packet_sha256": "fb304c768fd99fddf3ff2108d17d3de3fc88af056846d431eab40c97c0458276",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-033",
@@ -731,7 +731,7 @@
     },
     {
       "archetype_id": "PRICE-FLOOR",
-      "as_of_at": "2026-09-01T12:34:00+00:00",
+      "as_of_at": "2026-09-01 12:34:00+00:00",
       "base_packet_sha256": "b1eeb756af73dae3752b97d81d98974c6aa81447f5462e862261777d8d1803da",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-034",
@@ -753,7 +753,7 @@
     },
     {
       "archetype_id": "POLICY-CLAUSE",
-      "as_of_at": "2026-09-01T12:35:00+00:00",
+      "as_of_at": "2026-09-01 12:35:00+00:00",
       "base_packet_sha256": "f0c176218620587c5c317da15ffa0bc450dd91f5a92b76418d500ffe8c91c43e",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-035",
@@ -775,7 +775,7 @@
     },
     {
       "archetype_id": "POLICY-CLAUSE",
-      "as_of_at": "2026-09-01T12:36:00+00:00",
+      "as_of_at": "2026-09-01 12:36:00+00:00",
       "base_packet_sha256": "16613466401ae6f31669f98b31def900dc317269406211d7f8fa0ae13b08bdc5",
       "base_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
       "case_id": "EVAL-PREP-036",

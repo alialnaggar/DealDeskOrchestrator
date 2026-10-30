@@ -117,7 +117,9 @@ def build(base, authoring, index, intent, *, raw_base, raw_index):
             "deal_id": deal["deal_id"],
             "run_id": run["run_id"],
             "data_snapshot_ref": run["data_snapshot_ref"],
-            "as_of_at": run["as_of_at"],
+            # PostgreSQL packet canonicalization uses str(datetime), with a
+            # space separator, while the authored source JSON uses ISO T.
+            "as_of_at": str(as_of),
             "commitment_evidence_ref": credit["commitment_evidence_ref"],
             "archetype_id": review["archetype_id"],
             "credit_evidence_scope": {

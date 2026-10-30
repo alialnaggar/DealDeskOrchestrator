@@ -42,6 +42,7 @@ class CreditV3SourceTests(unittest.TestCase):
                             "declared_complete_zero" for x in scoped["cases"]))
         self.assertEqual(index["accepted_original_answers"], 0)
         self.assertEqual(index["accepted_control_answers"], 0)
+        self.assertEqual(scoped["cases"][0]["as_of_at"], "2026-09-01 12:01:00+00:00")
         nonempty, incomplete = controls["cases"]
         self.assertEqual(nonempty["credit_evidence_scope"]["completeness"],
                          "declared_complete_nonempty")
