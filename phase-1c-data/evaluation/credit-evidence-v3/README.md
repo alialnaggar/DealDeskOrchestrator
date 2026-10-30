@@ -37,16 +37,27 @@ rows and an **explicitly incomplete/unknown** scope. The two controls are
 not included in the original 36, the 039 Configuration extension, or accepted
 answers. Their IDs and row content are hashed separately in `index.json`.
 
+The source-only `../credit_evidence_gate.py` checks the control document's
+exact bytes against the index and each case's canonical hash, source/customer/
+run identity, declared population and accounting/cutoff facts. It reports
+`unknown_incomplete` for 041, a null overdue amount and
+`credit_clearance_allowed=false`, even though its selected sets are empty.
+It also withholds clearance from 040 until selected PostgreSQL rows and a
+trusted exported packet have been verified. Agent-provided text cannot serve
+as the trusted source declaration. Five focused mutation/identity tests pass.
+
 The existing Phase 1C nonhistorical reader will still sum zero selected AR
-for case 041. The metadata has not been integrated into its deterministic
-Credit gate, so case 041 is currently an input/control design, **not** a
-passing missing-evidence end-to-end test or a license to score the reader.
+for case 041. This source gate is **not integrated into the reader or Phase 2**;
+041 remains a pending end-to-end missing-evidence control. A future explicit
+consumer must bind the selected reader packet and this trusted scope before
+turning source completeness into a specialist finding. An empty selected set
+alone never establishes complete-zero exposure or credit clearance.
 No six-responsibility expected findings for either control are accepted.
 
 ## Verification and remaining gate
 
 Run `python build_credit_v3.py --check` and
-`python -m unittest -v test_build_credit_v3` from `phase-1c-data/evaluation`.
+`python -m unittest -v test_build_credit_v3 test_credit_evidence_gate` from `phase-1c-data/evaluation`.
 The source-only local tests check pin drift, per-case review mutations,
 case separation, and control source shape. They do not replace a fresh
 PostgreSQL import/reader replay. Before release, import each control in an
