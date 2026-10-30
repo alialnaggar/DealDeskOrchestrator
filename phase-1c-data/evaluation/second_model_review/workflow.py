@@ -18,6 +18,10 @@ FINDINGS = {"no_issue_identified", "issue_identified", "evidence_needed",
 GATES = {"blocked", "needs_revision", "needs_evidence", "needs_commitment",
          "approval_required", "abstain"}
 HIGH_RISK = {20, 29, 30, 31, 32, 33, 34, 39, 40, 41}
+FORBIDDEN_BLIND_KEYS = {"archetype_id", "technical_review", "technical_recommendation",
+                        "overall_technical_gate_proposal", "expected_decision",
+                        "expected_findings", "reviewer_oracle_draft", "author_amendments",
+                        "review_status", "accepted_answer", "score"}
 
 
 def read(path):
@@ -122,6 +126,26 @@ def load_case(row, dirs):
     return docs
 
 
+def assert_blind_sources(row, docs):
+    """Prevent reviewer metadata/answers entering the second model's source view.
+
+    A product attributes_json.archetype_code is a pinned catalogue attribute,
+    not the case author's scenario archetype_id; it must not be removed from a
+    hash-bound PostgreSQL packet merely to hide that legitimate source fact.
+    """
+    if set(docs) != ({"packet", "provider"} if row["cohort"] == "supplemental_configuration"
+                     else {"packet", "provider", "credit_scope"}):
+        raise ValueError("Blind package contains unexpected documents")
+    def inspect(value):
+        if isinstance(value, dict):
+            if FORBIDDEN_BLIND_KEYS.intersection(value):
+                raise ValueError("Answer or authoring metadata in blind package")
+            for item in value.values(): inspect(item)
+        elif isinstance(value, list):
+            for item in value: inspect(item)
+    inspect(docs)
+
+
 def blank(row):
     return {"case_id": row["case_id"], "cohort": row["cohort"],
             "packet_sha256": row["packet_sha256"],
@@ -141,12 +165,15 @@ def blank(row):
 def prepare(args):
     man = manifest()
     out = Path(args.output)
-    out.mkdir(parents=True, exist_ok=True)
+    # Never put freshly prepared facts alongside old model responses or
+    # silently overwrite a previous frozen package.
+    out.mkdir(parents=True, exist_ok=False)
     dirs = {"original_v3": Path(args.original_packets),
             "supplemental_configuration": Path(args.configuration_packets),
             "supplemental_credit": Path(args.credit_packets)}
     for row in man["cases"]:
         docs = load_case(row, dirs)
+        assert_blind_sources(row, docs)
         case_dir = out / row["case_id"]
         case_dir.mkdir(exist_ok=True)
         write(case_dir / "sources.json", {"source_pins": row, "documents": docs})
@@ -173,7 +200,7 @@ def validate_response(response, row, docs):
                 raise ValueError()
         except ValueError:
             errors.append("Review timestamp needs timezone")
-    findings = response["findings"]
+    findings = response.get("findings")
     if not isinstance(findings, dict) or set(findings) != set(ROLES):
         return errors + ["Six findings required"]
     for role, item in findings.items():
@@ -188,25 +215,41 @@ def validate_response(response, row, docs):
             for ref in item["evidence_refs"]:
                 try: source_pointer(docs, ref)
                 except (ValueError, KeyError, IndexError, TypeError): errors.append(role + ": citation does not resolve")
-        if not isinstance(item["calculations"], list) or not isinstance(item["uncertainties"], list):
+        if (not isinstance(item["calculations"], list) or
+                not isinstance(item["uncertainties"], list) or
+                not all(isinstance(u, str) for u in item["uncertainties"])):
             errors.append(role + ": calculations/uncertainties must be lists")
         elif any(not isinstance(c, dict) or set(c) != {"metric", "value_eur", "formula", "evidence_refs"}
                  or not all(isinstance(c.get(k), str) and c[k].strip() for k in ("metric", "formula"))
                  or not isinstance(c.get("evidence_refs"), list) or not c["evidence_refs"]
                  for c in item["calculations"]):
             errors.append(role + ": calculation record incomplete")
+        else:
+            for calc in item["calculations"]:
+                for ref in calc["evidence_refs"]:
+                    try: source_pointer(docs, ref)
+                    except (ValueError, KeyError, IndexError, TypeError):
+                        errors.append(role + ": calculation citation does not resolve")
         if role in ("Pricing", "Credit") and not item["calculations"] and item["finding"] != "abstain":
             errors.append(role + ": calculation or abstention required")
         if item["finding"] == "abstain" and not item["abstention_reason"]:
             errors.append(role + ": abstention reason required")
-    overall = response["overall"]
+    overall = response.get("overall")
     if (not isinstance(overall, dict) or set(overall) != set(blank(row)["overall"])
             or overall["gate"] not in GATES
             or not isinstance(overall["rationale"], str) or not overall["rationale"].strip()
-            or not isinstance(overall["human_actions"], list)):
+            or not isinstance(overall["human_actions"], list)
+            or not isinstance(overall["uncertainties"], list)
+            or not isinstance(overall["evidence_refs"], list)
+            or not all(isinstance(u, str) for u in overall["uncertainties"])):
         errors.append("Overall gate/actions/rationale incomplete")
     elif overall["gate"] == "abstain" and not overall["abstention_reason"]:
         errors.append("Overall abstention reason required")
+    if isinstance(overall, dict) and isinstance(overall.get("evidence_refs"), list):
+        for ref in overall["evidence_refs"]:
+            try: source_pointer(docs, ref)
+            except (ValueError, KeyError, IndexError, TypeError):
+                errors.append("Overall citation does not resolve")
     return errors
 
 
@@ -243,7 +286,9 @@ def deterministic_discrepancies(response, docs):
                 try: source_pointer(docs, ref)
                 except (ValueError, KeyError, IndexError, TypeError): issues.append(role + ": calculation citation does not resolve")
     for metric in expected.keys() - seen:
-        issues.append(metric + ": deterministic calculation missing")
+        role = "Credit" if metric in ("credit_exposure_eur", "overdue_ar_eur") else "Pricing"
+        if response["findings"][role]["finding"] != "abstain":
+            issues.append(metric + ": deterministic calculation missing")
     return issues
 
 
@@ -263,7 +308,13 @@ def compare(args):
             queue.append({"case_id": cid, "priority": "high" if int(cid[-3:]) in HIGH_RISK else "normal",
                           "classes": ["missing_second_model_review"]})
             continue
-        response = read(path)
+        try:
+            response = read(path)
+        except (ValueError, UnicodeError):
+            queue.append({"case_id": cid, "priority": "high",
+                          "classes": ["invalid_or_unsupported_review"],
+                          "details": ["Response is not valid JSON; raw output remains pending"]})
+            continue
         errors = validate_response(response, row, docs)
         classes = ["invalid_or_unsupported_review"] if errors else []
         details = errors[:]

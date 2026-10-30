@@ -16,6 +16,57 @@ The script refuses any packet/provider or v3 scope hash mismatch and creates 39 
 
 The source-first AI output is **independent of the prior answer drafts only in its blinded initial context**. It is still AI-assisted technical review, not independent human expert validation; the author owns final decisions and must disclose authorship and model assistance.
 
+## Bounded zero-priced runner and current execution status
+
+`run_free_batch.py` requires an explicitly allowlisted free model **and**
+verifies its live OpenCode catalogue input/output/cache pricing is zero before
+sending. It attaches only the per-case source and blank form from the isolated
+directory, checkpoints *before* each send, stores the exact prompt, timestamps,
+raw JSONL and stderr outside the source packages, and never automatically
+retries a case with any attempt record. Defaults: sequential batches of at
+most three cases, 180-second per-call timeout; stop on provider errors, tool
+use or uncertain transport. Structurally/arithmetic-invalid responses remain
+pending in the attempt log, not in the valid-response folder. An operator must
+review raw attempts (including tool calls) and explicitly approve any further
+send after a transport error; do not relabel a retry as a first blind pass.
+
+After free quota and runtime availability are confirmed, from this folder:
+
+```sh
+python run_free_batch.py --model opencode/flint-40b-free \
+  --original-packets /tmp/opencode/phase1c_original_packets \
+  --configuration-packets /tmp/opencode/phase1c_configuration_packets \
+  --credit-packets /tmp/opencode/phase1c_credit_packets \
+  --packages /tmp/opencode/phase1c_blind_verified_20261030 \
+  --attempts /private/phase1c-attempts --responses /private/phase1c-valid-responses \
+  --max-cases 1
+```
+
+The example model is **unproven** for this contract: run one new-case pilot,
+inspect valid citations and calculations, then increase to `--max-cases 3`
+only if its outputs pass. Prefer an explicitly approved reliable paid model
+over repeated invalid free passes only after the user authorizes cost.
+The runner excludes the four earlier pilot IDs (001–004) by default even if a
+new attempts folder is used. Only after inspecting their frozen raw attempts,
+use `--case-id EVAL-PREP-002 --acknowledge-previous-send EVAL-PREP-002`
+to make an explicit *new attempt*; it cannot be claimed as the original blind
+first pass. The first default fresh-case pilot is 005.
+
+The **30 October 2026** free-tier pilots were not a successful adjudication:
+001 returned a parseable but structurally invalid draft, 002 and 003 ended
+with transport errors after sending, and 004 attempted a tool call then hit
+HTTP 429 `FreeUsageLimitError`. No valid six-responsibility review resulted;
+the first-pass responses must not be treated as accepted findings. Raw logs,
+attached-prompt snapshots and comparison queue remain only in the VM's
+`/tmp/opencode/phase1c_second_model_attempts_20261030/`. See the [attempt
+provenance and author-priority sheet](../reviews/second_model_attempts_2026-10-30.md).
+
+The product catalogue field `attributes_json.archetype_code` in some source
+packets is a hash-bound **product attribute**, not an author case archetype or
+technical recommendation. It is retained rather than editing sealed facts.
+The package auditor rejects `archetype_id`, findings and authoring metadata;
+case-level reviewer-only archetype mappings remain excluded.
+
 ## Second pass and author decision
 
 After freezing all raw initial responses, compare them with the existing model-assisted matrix and source arithmetic:
