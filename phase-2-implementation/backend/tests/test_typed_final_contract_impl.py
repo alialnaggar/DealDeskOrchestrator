@@ -24,9 +24,10 @@ class TypedFinalContractImpl(unittest.TestCase):
         body = request_body(input, rows, completed_ledger=rows,
             final_instruction=CREDIT_DEVELOPMENT_FINAL_INSTRUCTION)
         instruction = body["messages"][0]["content"]
-        self.assertIn("credit-observation-v1", instruction)
+        self.assertIn("credit-observation-v2", instruction)
         self.assertIn("not as clearance", instruction)
-        self.assertIn("If no exact field is supportable or the evidence is uncertain, abstain", instruction)
+        self.assertIn("evidence is uncertain, abstain", instruction)
+        self.assertNotIn("Pricing:", instruction)
         self.assertNotIn(ref, instruction)
         pricing_input, pricing_rows, *_ = fixture("pricing")
         with self.assertRaises(InvalidTerminal):

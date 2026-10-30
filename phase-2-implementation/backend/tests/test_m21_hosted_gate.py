@@ -51,6 +51,27 @@ def digest(data):
 
 
 class M21AuthorizedStatusManifest(unittest.TestCase):
+    def test_fulfillment_campaign_error_summary_is_bounded_and_distinguishes_local_quota(self):
+        from run_groq_development import _fulfillment_error_summary
+        for code, phase, expected in (("groq_daily_limit", "decision", None),
+                                      ("http_400", "final", "a" * 64)):
+            receipt = {"status": "error", "error_code": code,
+                "request_metadata": {"phase": phase, "bytes": 9888,
+                    "strict_schema_sha256": expected, "private": "SECRET"},
+                "provider_diagnostic": {"message": "SECRET"}}
+            result = _fulfillment_error_summary({"model_attempt_ledger": [receipt]})
+            self.assertEqual(result["error_code"], code)
+            self.assertEqual(result["phase"], phase)
+            self.assertEqual(result["strict_schema_sha256"], expected)
+            self.assertEqual(result["request_bytes"], 9888)
+            self.assertNotIn("SECRET", str(result))
+        self.assertEqual(_fulfillment_error_summary({"model_attempt_ledger": [{
+            "status": "error", "error_code": "SECRET", "request_metadata": {
+                "phase": "SECRET", "bytes": True,
+                "strict_schema_sha256": "z" * 64}}]}),
+            {"error_code": "other", "phase": None, "request_bytes": None,
+             "strict_schema_sha256": None})
+
     def test_credit_diagnostic_candidate_is_non_authorizing_and_two_posts(self):
         candidate = json.loads(Path("phase-2-implementation/evaluation/"
             "week3-credit-http400-diagnostic-candidate.json").read_text())

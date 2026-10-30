@@ -9,6 +9,7 @@ the manifest's request budget. No retry or fallback on any uncertain send.
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 import tempfile
 from hashlib import sha256
@@ -35,6 +36,26 @@ from dealdesk_phase2.typed_final_hosted import DEV_ENABLE_ENV, run_groq_developm
 from dealdesk_phase2.typed_final_hosted import _database_identity
 from m18_case_setup import CASES
 from run_week4_disposable import provision_and_run, require_disposable_cluster
+
+
+def _fulfillment_error_summary(state):
+    """Public allowlisted failure metadata; not a substitute for provider cause."""
+    failed = [row for row in state.get("model_attempt_ledger", [])
+        if row.get("status") == "error"]
+    last = failed[-1] if failed else {}
+    metadata = last.get("request_metadata") or {}
+    code = last.get("error_code")
+    return {"error_code": code if code in ("http_400", "http_429",
+            "groq_daily_limit", "groq_rate_limited") else "other",
+        "phase": metadata.get("phase") if metadata.get("phase") in (
+            "decision", "final") else None,
+        "request_bytes": metadata.get("bytes") if type(
+            metadata.get("bytes")) is int and 0 <= metadata["bytes"] <= 65536
+            else None,
+        "strict_schema_sha256": metadata.get("strict_schema_sha256") if
+            type(metadata.get("strict_schema_sha256")) is str and
+            re.fullmatch(r"[0-9a-f]{64}", metadata["strict_schema_sha256"])
+            else None}
 
 
 def _m21_campaign(graph, config, adapter, *, case_id, owner, root, key,
@@ -255,6 +276,11 @@ def main():
                     ("pricing", state.get("typed_final_results", {}).get("pricing", {})),
                     *((name, state.get("m21_ai_results", {}).get(name, {}))
                       for name in M21_TOOLS)) if row.get("execution") == "error"}
+                if state.get("ai_fulfillment_result", {}).get("execution") == "error":
+                    # No model text, response body or arbitrary exception reaches
+                    # the public campaign report. The attempt ledger already
+                    # retains the bounded phase/size/schema metadata.
+                    result["stage_errors"]["fulfillment"] = _fulfillment_error_summary(state)
                 result["candidate_status"] = state.get("candidate_status")
                 result["m21_review_present"] = bool(state.get("m21_review"))
                 result["completed_evidence_refs"] = [row.get("returned_refs", [])
