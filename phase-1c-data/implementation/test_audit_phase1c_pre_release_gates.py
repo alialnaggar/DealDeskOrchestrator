@@ -3,7 +3,7 @@
 from copy import deepcopy
 import unittest
 
-from audit_phase1c_pre_release_gates import audit, CALIBRATION_MARKERS
+from audit_phase1c_pre_release_gates import audit, CALIBRATION_MARKERS, SUPPLEMENTAL_SCOPE_MARKER
 from phase1c_evaluation_review import digest
 
 
@@ -16,7 +16,8 @@ class PreReleaseInventoryTests(unittest.TestCase):
         for name in ('attributes_json', 'list_price', 'standard_cost'):
             self.rules['tables']['products'][name] = {'resolved_by': 'bounded review'}
         self.rules['tables']['suppliers']['order_calendar_json'] = {'resolved_by': 'bounded review'}
-        self.rules['tables']['compatibility_rules']['condition_json'] = {'resolved_by': 'bounded review'}
+        self.rules['tables']['compatibility_rules']['condition_json'] = {
+            'resolved_by': 'bounded review; ' + SUPPLEMENTAL_SCOPE_MARKER}
         self.rules['tables']['agent_execution_log']['output_json'] = {'review_before_generation': 'runtime needed'}
         self.calibration = '\n'.join(CALIBRATION_MARKERS)
         payload = {'status': 'development_reader_selected_sources_not_evaluation_answers',
@@ -38,6 +39,12 @@ class PreReleaseInventoryTests(unittest.TestCase):
         with patch('audit_phase1c_pre_release_gates.check_v2_index'):
             base = (self.rules, self.calibration, self.development, {}, self.extension)
             self.assertFalse(audit(*base)['ready_for_generation'])
+            self.assertEqual(audit(*base)['field_reviews']['supplemental_v2_dependency_scope'],
+                             'bounded_field_disposition_039_answer_review_pending')
+            changed = deepcopy(self.rules)
+            changed['tables']['compatibility_rules']['condition_json']['resolved_by'] = 'bounded review'
+            with self.assertRaises(ValueError):
+                audit(changed, *base[1:])
             changed = deepcopy(self.rules)
             changed['tables']['agent_execution_log']['output_json']['resolved_by'] = 'unsupported'
             with self.assertRaises(ValueError):

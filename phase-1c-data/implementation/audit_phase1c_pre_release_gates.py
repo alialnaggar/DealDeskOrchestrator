@@ -31,6 +31,7 @@ CALIBRATION_MARKERS = (
     '**Mix evidence review: resolved for the synthetic V1 catalogue**',
     '**Fixed-p50 calibration evidence review: resolved for internal synthetic arithmetic only**',
 )
+SUPPLEMENTAL_SCOPE_MARKER = 'bounded supplemental 039 V2 dependency field disposition on 30 October 2026'
 
 
 def audit(rules, calibration_text, development, v2, extension):
@@ -76,6 +77,8 @@ def audit(rules, calibration_text, development, v2, extension):
             raise ValueError(f'{name}: missing explicit field review status')
     if documented != [f'{t}.{c}' for t, c in FIELDS[:5]] or pending != ['agent_execution_log.output_json']:
         raise ValueError('Bounded field review scope differs; inspect before updating gate')
+    if SUPPLEMENTAL_SCOPE_MARKER not in rules['tables']['compatibility_rules']['condition_json']['resolved_by']:
+        raise ValueError('Supplemental 039 technical field disposition is missing')
     if not all(marker in calibration_text for marker in CALIBRATION_MARKERS):
         raise ValueError('Calibration evidence disposition text differs')
     return {
@@ -84,7 +87,8 @@ def audit(rules, calibration_text, development, v2, extension):
         'development_diagnostics': {'registered_cases': 100, 'accepted_answers': 0,
                                     'exclusion_registry_sha256': development['sha256']},
         'field_reviews': {'bounded_dispositions': documented, 'pending': pending,
-                          'supplemental_v2_dependency_scope': 'pending_explicit_review'},
+                          'supplemental_v2_dependency_scope':
+                          'bounded_field_disposition_039_answer_review_pending'},
         'calibration_evidence_reviews': {'documented_bounded_dispositions': 2,
                                          'external_market_validity_claimed': False},
         'evaluation': {'original_input_count': 36,
