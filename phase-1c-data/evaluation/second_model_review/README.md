@@ -16,19 +16,43 @@ The script refuses any packet/provider or v3 scope hash mismatch and creates 39 
 
 The source-first AI output is **independent of the prior answer drafts only in its blinded initial context**. It is still AI-assisted technical review, not independent human expert validation; the author owns final decisions and must disclose authorship and model assistance.
 
+## Offline contract example (not a blind-package attachment)
+
+[`source_neutral_example.json`](source_neutral_example.json) is a tiny
+**EXAMPLE-ONLY**, non-evaluation source, blank-form identity and illustrative
+six-role JSON response. Its EUR 20 quote and EUR 23 bounded fictional Credit
+exposure are deliberately unrelated to any evaluation case. Unit tests run
+both the structural validator and the narrow source arithmetic against it.
+It teaches `{ "document": "packet", "pointer": "/source_rows/lines/0" }`
+object citations and decimal-string EUR calculations, not a case conclusion.
+Additional *synthetic-only* unit examples distinguish an overdue EUR 100
+invoice with EUR 20 paid/EUR 80 outstanding (both AR and payment references
+required) from an incomplete invoice population, which cannot assert zero
+exposure even with empty selected rows. Neither uses a real evaluation ID,
+source hash or answer.
+**Never attach the example or this README to a blinded case request.** The
+model receives only its exact case source and blank form; no existing answer,
+matrix or technical recommendation appears in the prompt or package.
+
 ## Bounded zero-priced runner and current execution status
 
-`run_free_batch.py` requires an explicitly allowlisted free model **and**
+No model calls, pricing checks or quota polls are scheduled. **Do not invoke
+the runner until existing free-tier quota is demonstrably available again**
+and the work is resumed. `run_free_batch.py` requires an explicitly
+allowlisted free model **and**
 verifies its live OpenCode catalogue input/output/cache pricing is zero before
 sending. It attaches only the per-case source and blank form from the isolated
 directory, checkpoints *before* each send, stores the exact prompt, timestamps,
 raw JSONL and stderr outside the source packages, and never automatically
-retries a case with any attempt record. Defaults: sequential batches of at
-most three cases, 180-second per-call timeout; stop on provider errors, tool
-use or uncertain transport. Structurally/arithmetic-invalid responses remain
-pending in the attempt log, not in the valid-response folder. An operator must
-review raw attempts (including tool calls) and explicitly approve any further
-send after a transport error; do not relabel a retry as a first blind pass.
+retries a case with any attempt record. Default: **one fresh case** and a
+180-second per-call timeout. A batch of two or three first requires a valid,
+checkpointed fresh-case pilot from the **same model**, with all six labels,
+resolvable citations, and bounded required arithmetic; stop on any invalid
+output, provider error, tool use or uncertain transport. Structurally/arithmetic-invalid responses remain
+pending in the attempt log, not in the valid-response folder. Ali must
+explicitly authorize any new attempt for 002–004 after inspecting the frozen
+raw evidence; the current runner cannot make such an attempt. Do not relabel
+a retry as a first blind pass.
 
 After free quota and runtime availability are confirmed, from this folder:
 
@@ -44,19 +68,22 @@ python run_free_batch.py --model opencode/flint-40b-free \
 
 The example model is **unproven** for this contract: run one new-case pilot,
 inspect valid citations and calculations, then increase to `--max-cases 3`
-only if its outputs pass. Prefer an explicitly approved reliable paid model
-over repeated invalid free passes only after the user authorizes cost.
-The runner excludes the four earlier pilot IDs (001–004) by default even if a
-new attempts folder is used. Only after inspecting their frozen raw attempts,
-use `--case-id EVAL-PREP-002 --acknowledge-previous-send EVAL-PREP-002`
-to make an explicit *new attempt*; it cannot be claimed as the original blind
-first pass. The first default fresh-case pilot is 005.
+only if its outputs pass. **Paid API usage is not authorized**; do not switch
+providers, bypass limits or retry failed free models to finish this campaign.
+The runner unconditionally excludes the four earlier pilot IDs (001–004),
+even if a new attempts folder is used. **No override is provided.** Cases
+002–004 require explicit authorization from Ali before any further attempt;
+if granted, the recorded attempt policy must be versioned rather than bypassed
+with a CLI switch. The first default fresh-case pilot is 005.
 
 The **30 October 2026** free-tier pilots were not a successful adjudication:
 001 returned a parseable but structurally invalid draft, 002 and 003 ended
 with transport errors after sending, and 004 attempted a tool call then hit
 HTTP 429 `FreeUsageLimitError`. No valid six-responsibility review resulted;
-the first-pass responses must not be treated as accepted findings. Raw logs,
+the attempts are **0 valid, 1 invalid (001), 3 uncertain/incomplete
+(002–004), and 35 never attempted**. The comparator's 38 "missing" entries
+include the three uncertain attempts; do not report them as never sent.
+The first-pass responses must not be treated as accepted findings. Raw logs,
 attached-prompt snapshots and comparison queue remain only in the VM's
 `/tmp/opencode/phase1c_second_model_attempts_20261030/`. See the [attempt
 provenance and author-priority sheet](../reviews/second_model_attempts_2026-10-30.md).

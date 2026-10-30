@@ -1,0 +1,114 @@
+{
+  "status": "illustrative_contract_fixture_not_evaluation_source_or_answer",
+  "row": {
+    "case_id": "EXAMPLE-ONLY",
+    "cohort": "original_v3",
+    "packet_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "provider_file_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "scope_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "documents": {
+    "packet": {
+      "source_rows": {
+        "lines": [
+          {"quantity": 2, "quoted_unit_price": "10.00"}
+        ],
+        "credit": {"unbilled_committed_amount": "3.00"},
+        "receivables": [],
+        "payments": [],
+        "inventory": [],
+        "rules": {"policy_rules": []},
+        "deal": {"terms_json": {"payment_terms_days": 30}}
+      },
+      "run_context": {"as_of_at": "2000-01-01 00:00:00+00:00"},
+      "business_contract": {"contract_id": "EXAMPLE-NOT-PHASE1C"}
+    },
+    "provider": {"records": []},
+    "credit_scope": {
+      "credit_evidence_scope": {
+        "completeness": "declared_complete_zero",
+        "external_financial_verification": false
+      }
+    }
+  },
+  "response": {
+    "case_id": "EXAMPLE-ONLY",
+    "cohort": "original_v3",
+    "packet_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "provider_file_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "scope_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "reviewer": {
+      "model_id": "example-only/not-a-real-model",
+      "reviewed_at": "2000-01-01T00:00:00Z",
+      "source_first_attestation": "Illustrative synthetic source only; not an executed review.",
+      "assistance_disclosure": "Contract example, not an independent expert or actual evaluation response."
+    },
+    "findings": {
+      "Configuration": {
+        "finding": "evidence_needed",
+        "rationale": "A submitted quantity exists; this excerpt cannot establish configuration fit.",
+        "evidence_refs": [{"document": "packet", "pointer": "/source_rows/lines/0"}],
+        "calculations": [],
+        "uncertainties": ["No configuration rules in the illustrative excerpt."],
+        "abstention_reason": null
+      },
+      "Pricing": {
+        "finding": "evidence_needed",
+        "rationale": "The quote can be calculated; price-policy fit is not established by this excerpt.",
+        "evidence_refs": [{"document": "packet", "pointer": "/source_rows/lines/0"}],
+        "calculations": [{
+          "metric": "quote_total_eur", "value_eur": "20.00", "formula": "2 * EUR 10.00",
+          "evidence_refs": [{"document": "packet", "pointer": "/source_rows/lines/0"}]
+        }],
+        "uncertainties": ["No price-policy thresholds supplied in the illustrative excerpt."],
+        "abstention_reason": null
+      },
+      "Availability": {
+        "finding": "evidence_needed",
+        "rationale": "An empty inventory list does not prove that no stock exists.",
+        "evidence_refs": [{"document": "packet", "pointer": "/source_rows/inventory"}],
+        "calculations": [], "uncertainties": ["No stock completeness declaration."],
+        "abstention_reason": null
+      },
+      "Credit": {
+        "finding": "human_review_required",
+        "rationale": "The fictional complete-zero scope supports only bounded exposure arithmetic; it is not external payment verification or clearance.",
+        "evidence_refs": [
+          {"document": "packet", "pointer": "/source_rows/credit/unbilled_committed_amount"},
+          {"document": "credit_scope", "pointer": "/credit_evidence_scope/completeness"}
+        ],
+        "calculations": [{
+          "metric": "credit_exposure_eur", "value_eur": "23.00", "formula": "EUR 20.00 quoted + EUR 3.00 commitments",
+          "evidence_refs": [
+            {"document": "packet", "pointer": "/source_rows/lines/0"},
+            {"document": "packet", "pointer": "/source_rows/credit/unbilled_committed_amount"},
+            {"document": "credit_scope", "pointer": "/credit_evidence_scope/completeness"}
+          ]
+        }],
+        "uncertainties": ["No external verification is represented."],
+        "abstention_reason": null
+      },
+      "Policy": {
+        "finding": "evidence_needed", "rationale": "An empty example policy-rule set does not establish policy compliance.",
+        "evidence_refs": [{"document": "packet", "pointer": "/source_rows/rules/policy_rules"}],
+        "calculations": [], "uncertainties": ["No applicable policy evidence in this excerpt."],
+        "abstention_reason": null
+      },
+      "Approval": {
+        "finding": "human_review_required", "rationale": "Payment terms are submitted, but no human approval is evidenced.",
+        "evidence_refs": [{"document": "packet", "pointer": "/source_rows/deal/terms_json"}],
+        "calculations": [], "uncertainties": ["No approval record in this excerpt."],
+        "abstention_reason": null
+      }
+    },
+    "overall": {
+      "gate": "needs_evidence",
+      "rationale": "This is only a format example with incomplete illustrative source facts, not a business outcome.",
+      "evidence_refs": [{"document": "packet", "pointer": "/source_rows/inventory"}],
+      "human_actions": ["Obtain source facts before any real assessment."],
+      "uncertainties": ["No actual evaluation case was reviewed."],
+      "abstention_reason": null
+    },
+    "status": "second_model_draft_not_accepted"
+  }
+}

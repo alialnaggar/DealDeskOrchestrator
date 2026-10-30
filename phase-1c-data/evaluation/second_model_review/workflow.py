@@ -9,6 +9,7 @@ from decimal import Decimal
 from hashlib import sha256
 import json
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 HERE = Path(__file__).resolve().parent
@@ -22,6 +23,9 @@ FORBIDDEN_BLIND_KEYS = {"archetype_id", "technical_review", "technical_recommend
                         "overall_technical_gate_proposal", "expected_decision",
                         "expected_findings", "reviewer_oracle_draft", "author_amendments",
                         "review_status", "accepted_answer", "score"}
+EUR_VALUE = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]{1,2})?\Z")
+REQUIRED_METRIC_ROLE = {"quote_total_eur": "Pricing", "credit_exposure_eur": "Credit",
+                        "overdue_ar_eur": "Credit"}
 
 
 def read(path):
@@ -226,25 +230,38 @@ def validate_response(response, row, docs):
             errors.append(role + ": calculation record incomplete")
         else:
             for calc in item["calculations"]:
+                value = calc["value_eur"]
+                if not isinstance(value, str) or not EUR_VALUE.fullmatch(value):
+                    errors.append(role + ": value_eur must be a finite decimal EUR amount (at most cents)")
+                if calc["metric"] in REQUIRED_METRIC_ROLE and REQUIRED_METRIC_ROLE[calc["metric"]] != role:
+                    errors.append(role + ": required metric belongs to " + REQUIRED_METRIC_ROLE[calc["metric"]])
                 for ref in calc["evidence_refs"]:
                     try: source_pointer(docs, ref)
                     except (ValueError, KeyError, IndexError, TypeError):
                         errors.append(role + ": calculation citation does not resolve")
         if role in ("Pricing", "Credit") and not item["calculations"] and item["finding"] != "abstain":
             errors.append(role + ": calculation or abstention required")
-        if item["finding"] == "abstain" and not item["abstention_reason"]:
+        if item["finding"] == "abstain" and not isinstance(item["abstention_reason"], str):
             errors.append(role + ": abstention reason required")
+        elif item["finding"] == "abstain" and not item["abstention_reason"].strip():
+            errors.append(role + ": abstention reason required")
+        elif item["finding"] != "abstain" and item["abstention_reason"] is not None:
+            errors.append(role + ": abstention reason only allowed for abstain")
     overall = response.get("overall")
     if (not isinstance(overall, dict) or set(overall) != set(blank(row)["overall"])
             or overall["gate"] not in GATES
             or not isinstance(overall["rationale"], str) or not overall["rationale"].strip()
-            or not isinstance(overall["human_actions"], list)
+            or not isinstance(overall["human_actions"], list) or not overall["human_actions"]
+            or not all(isinstance(a, str) and a.strip() for a in overall["human_actions"])
             or not isinstance(overall["uncertainties"], list)
-            or not isinstance(overall["evidence_refs"], list)
+            or not isinstance(overall["evidence_refs"], list) or not overall["evidence_refs"]
             or not all(isinstance(u, str) for u in overall["uncertainties"])):
         errors.append("Overall gate/actions/rationale incomplete")
-    elif overall["gate"] == "abstain" and not overall["abstention_reason"]:
+    elif overall["gate"] == "abstain" and (not isinstance(overall["abstention_reason"], str)
+                                           or not overall["abstention_reason"].strip()):
         errors.append("Overall abstention reason required")
+    elif overall["gate"] != "abstain" and overall["abstention_reason"] is not None:
+        errors.append("Overall abstention reason only allowed for abstain")
     if isinstance(overall, dict) and isinstance(overall.get("evidence_refs"), list):
         for ref in overall["evidence_refs"]:
             try: source_pointer(docs, ref)
@@ -270,24 +287,46 @@ def deterministic_discrepancies(response, docs):
     seen = set()
     for role in ROLES:
         for calc in response["findings"][role]["calculations"]:
+            metric = calc["metric"]
+            refs = calc["evidence_refs"]
+            def cites(document, prefix):
+                return any(ref["document"] == document and
+                           (ref["pointer"] == prefix or ref["pointer"].startswith(prefix + "/"))
+                           for ref in refs)
             if scope.get("completeness") == "explicitly_incomplete_unknown" and calc["metric"] in (
                     "credit_exposure_eur", "overdue_ar_eur"):
                 issues.append(role + ": incomplete population cannot assert numeric " + calc["metric"])
-            if calc["metric"] not in expected:
+            if metric not in expected:
                 continue
-            seen.add(calc["metric"])
+            if (role, metric) in seen:
+                issues.append(role + "/" + metric + ": duplicate required calculation")
+            seen.add((role, metric))
             try:
                 actual = Decimal(str(calc["value_eur"]))
-                if actual != expected[calc["metric"]]:
-                    issues.append(f"{role}/{calc['metric']}: {actual} differs from source arithmetic {expected[calc['metric']]}")
-            except (ValueError, TypeError):
-                issues.append(f"{role}/{calc['metric']}: nonnumeric value")
+                if not actual.is_finite() or actual != expected[metric]:
+                    issues.append(f"{role}/{metric}: {actual} differs from source arithmetic {expected[metric]}")
+            except (ValueError, TypeError, ArithmeticError):
+                issues.append(f"{role}/{metric}: nonnumeric value")
             for ref in calc["evidence_refs"]:
                 try: source_pointer(docs, ref)
                 except (ValueError, KeyError, IndexError, TypeError): issues.append(role + ": calculation citation does not resolve")
-    for metric in expected.keys() - seen:
+            if metric in ("quote_total_eur", "credit_exposure_eur"):
+                for n in range(len(rows["lines"])):
+                    if not cites("packet", f"/source_rows/lines/{n}"):
+                        issues.append(role + "/" + metric + f": line {n} source citation missing")
+            if metric == "credit_exposure_eur" and not cites("packet", "/source_rows/credit/unbilled_committed_amount"):
+                issues.append(role + "/" + metric + ": commitment source citation missing")
+            if metric in ("credit_exposure_eur", "overdue_ar_eur"):
+                scope_path = ("/credit_evidence_scope" if "credit_evidence_scope" in docs["credit_scope"]
+                              else "/completeness")
+                if not cites("credit_scope", scope_path):
+                    issues.append(role + "/" + metric + ": trusted completeness citation missing")
+            if metric == "overdue_ar_eur":
+                if not cites("packet", "/source_rows/receivables") or not cites("packet", "/source_rows/payments"):
+                    issues.append(role + "/" + metric + ": invoice/payment source citations missing")
+    for metric in expected:
         role = "Credit" if metric in ("credit_exposure_eur", "overdue_ar_eur") else "Pricing"
-        if response["findings"][role]["finding"] != "abstain":
+        if (role, metric) not in seen and response["findings"][role]["finding"] != "abstain":
             issues.append(metric + ": deterministic calculation missing")
     return issues
 

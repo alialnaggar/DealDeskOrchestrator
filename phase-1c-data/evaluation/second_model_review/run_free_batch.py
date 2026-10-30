@@ -41,7 +41,10 @@ def prompt(model, timestamp):
             "Use ONLY attached sources.json and blank_response.json. No tools, web, "
             "outside files, prior answers or recommendations. Return exactly ONE JSON "
             "object, no markdown, using the precise blank_response.json keys and nested "
-            "keys. status=second_model_draft_not_accepted. "
+            "keys; replace nulls only when supported, keep lists as lists. Do NOT use "
+            "free-form labels (such as valid, available, compliant or approved), "
+            "string citations (such as packet#/source_rows/lines/0), placeholders "
+            "or invented source IDs. status=second_model_draft_not_accepted. "
             f"reviewer.model_id={model}; reviewer.reviewed_at={timestamp}; "
             "reviewer.source_first_attestation=Only supplied blinded case sources; "
             "reviewer.assistance_disclosure=AI-only source-first technical review, "
@@ -50,17 +53,25 @@ def prompt(model, timestamp):
             "finding MUST be one of no_issue_identified, issue_identified, evidence_needed, "
             "human_review_required, not_applicable, abstain (no other label); nonempty "
             "rationale; evidence_refs must be OBJECTS {document,pointer} citing EXISTING "
-            "facts in sources.json.documents. packet pointers start /source_rows/, "
-            "/run_context/ or /business_contract/; credit_scope pointers start /credit_evidence_scope/ "
-            "for originals and /completeness for controls. Include calculations arrays "
+            "facts in sources.json.documents. For example, cite a submitted "
+            "line as {\"document\":\"packet\",\"pointer\":\"/source_rows/lines/0\"}; "
+            "packet pointers start /source_rows/, /run_context/ or /business_contract/; "
+            "credit_scope pointers use /credit_evidence_scope/completeness for originals "
+            "and /completeness for controls. Include calculations arrays "
             "of {metric,value_eur,formula,evidence_refs}, uncertainties arrays, and null "
-            "abstention_reason unless abstaining. Pricing: quote_total_eur calculation or "
-            "explicit abstention. For declared complete-zero Credit: credit_exposure_eur "
-            "calculation or abstention. For complete nonempty Credit: overdue_ar_eur "
-            "calculation or abstention. For incomplete credit evidence: no asserted numeric "
-            "credit exposure or overdue balance. Overall gate MUST be one of blocked, "
+            "abstention_reason unless abstaining. All value_eur amounts are decimal strings "
+            "with at most two fractional digits; no float, NaN or infinity. Pricing: "
+            "calculate quote_total_eur from EVERY line, citing each line. For a trusted "
+            "declared complete-zero Credit scope: calculate credit_exposure_eur from quoted "
+            "total and unbilled commitments, citing each line, commitment and trusted "
+            "completeness declaration; do not claim external financial verification. "
+            "For a trusted complete nonempty Credit scope: calculate overdue_ar_eur, citing "
+            "receivables, payments and completeness. For incomplete credit evidence: "
+            "do not assert a numeric credit exposure or overdue balance. Abstain with a "
+            "specific reason only if a required calculation truly cannot be supported. "
+            "Overall gate MUST be one of blocked, "
             "needs_revision, needs_evidence, needs_commitment, approval_required, abstain; "
-            "give rationale, evidence_refs, human_actions, uncertainties and null "
+            "give rationale, nonempty evidence_refs, actionable human_actions, uncertainties and null "
             "abstention_reason unless abstaining. No approval, reservation, payment-history "
             "or delivery promise from missing facts. No evaluation answer is accepted.")
 
@@ -76,16 +87,33 @@ def run(args):
     packages, attempts, responses = map(Path, (args.packages, args.attempts, args.responses))
     attempts.mkdir(parents=True, exist_ok=True)
     responses.mkdir(parents=True, exist_ok=True)
+    if args.max_cases > 1:
+        prior_valid = False
+        for prior in attempts.glob("EVAL-PREP-*.json"):
+            checkpoint = json.loads(prior.read_bytes())
+            cid = checkpoint.get("case_id")
+            row = next((r for r in rows if r["case_id"] == cid), None)
+            candidate = responses / (str(cid) + ".json")
+            if (row is None or cid in PREVIOUS_ATTEMPTS or
+                    checkpoint.get("state") != "valid_ai_draft_not_accepted" or
+                    checkpoint.get("model_id") != args.model or not candidate.is_file()):
+                continue
+            docs = load_case(row, dirs)
+            response = json.loads(candidate.read_bytes())
+            if (not validate_response(response, row, docs) and
+                    not deterministic_discrepancies(response, docs) and
+                    response["reviewer"]["model_id"] == args.model):
+                prior_valid = True
+                break
+        if not prior_valid:
+            raise ValueError("First validate one new-case pilot with this model before batching")
     chosen = set(args.case_id or [r["case_id"] for r in rows])
     if chosen - {r["case_id"] for r in rows}:
         raise ValueError("Unknown case ID")
-    acknowledgments = set(args.acknowledge_previous_send or [])
-    if acknowledgments - PREVIOUS_ATTEMPTS or acknowledgments - chosen:
-        raise ValueError("Acknowledge only selected, documented prior sends")
     count = 0
     for row in rows:
         cid = row["case_id"]
-        if (cid not in chosen or (cid in PREVIOUS_ATTEMPTS and cid not in acknowledgments)
+        if (cid not in chosen or cid in PREVIOUS_ATTEMPTS
                 or (attempts / (cid + ".json")).exists() or
                 (responses / (cid + ".json")).exists()):
             continue  # Never automatically retry an ambiguous or rejected send.
@@ -125,6 +153,9 @@ def run(args):
                 chunks = [e["part"]["text"] for e in events if e.get("type") == "text"]
                 response = json.loads("".join(chunks))
                 errors = validate_response(response, row, docs)
+                if isinstance(response, dict) and isinstance(response.get("reviewer"), dict):
+                    if response["reviewer"].get("model_id") != args.model:
+                        errors.append("Declared model differs from invoked model")
                 if not errors:
                     errors = deterministic_discrepancies(response, docs)
                 record["validation_errors"] = errors
@@ -142,8 +173,8 @@ def run(args):
         write(checkpoint, record)
         count += 1
         print(cid, record["state"], flush=True)
-        if record["state"] in ("failed_or_tool_use_pending_manual_review", "uncertain_or_invalid_pending_no_retry"):
-            break  # Rate-limit/transport/timeout may affect all subsequent calls.
+        if record["state"] != "valid_ai_draft_not_accepted":
+            break  # Invalid output, rate-limit or uncertain send: stop this batch.
 
 
 if __name__ == "__main__":
@@ -156,9 +187,7 @@ if __name__ == "__main__":
     p.add_argument("--attempts", required=True)
     p.add_argument("--responses", required=True)
     p.add_argument("--case-id", action="append", help="May be repeated; omit for remaining cases")
-    p.add_argument("--acknowledge-previous-send", action="append",
-                   help="Explicitly authorize a new attempt after inspecting that case's raw pilot evidence")
-    p.add_argument("--max-cases", type=int, default=3)
+    p.add_argument("--max-cases", type=int, default=1)
     p.add_argument("--timeout-seconds", type=int, default=180)
     a = p.parse_args()
     if not 1 <= a.max_cases <= 5 or not 10 <= a.timeout_seconds <= 600:
