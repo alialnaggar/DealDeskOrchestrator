@@ -47,11 +47,14 @@ trusted exported packet have been verified. Agent-provided text cannot serve
 as the trusted source declaration. Five focused mutation/identity tests pass.
 
 The existing Phase 1C nonhistorical reader will still sum zero selected AR
-for case 041. This source gate is **not integrated into the reader or Phase 2**;
-041 remains a pending end-to-end missing-evidence control. A future explicit
-consumer must bind the selected reader packet and this trusted scope before
-turning source completeness into a specialist finding. An empty selected set
-alone never establishes complete-zero exposure or credit clearance.
+for case 041. The version-1 **evaluation-only** `classify_selected_packet`
+projection now binds a fresh PostgreSQL packet, provider, control source,
+source index and [packet index](control_packet_index_v1.json) before exposing
+the declared evidence state. It reports 040 as complete/nonempty with EUR 700
+overdue and 041 as unknown/incomplete with null overdue, both without credit
+clearance. It does **not** alter the existing reader, its v2 packet schema or
+Phase 2 runtime; those consumers must adopt the projection explicitly and
+must never infer completeness from empty selected sets.
 No six-responsibility expected findings for either control are accepted.
 
 ## Verification and remaining gate
@@ -60,10 +63,12 @@ Run `python build_credit_v3.py --check` and
 `python -m unittest -v test_build_credit_v3 test_credit_evidence_gate` from `phase-1c-data/evaluation`.
 The source-only local tests check pin drift, per-case review mutations,
 case separation, and control source shape. They do not replace a fresh
-PostgreSQL import/reader replay. Before release, import each control in an
-isolated clean database, check typed rows and exact selected AR/payment
-records, implement/verify the trusted completeness projection without
-altering the Phase 2 pin, generate and hash v3 packets, and obtain accountable
+PostgreSQL import/reader replay. `test_phase1c_credit_controls` performs the
+fresh rollback-only replay on a separate empty database with the compiled
+rules, checks typed rows, exact selected AR/payment records, packet/provider
+pins and negative mutations. The packet index is a **separate control-v1
+artifact**, not a change to the original 36-case index; it must be reproduced
+from new imports. Before release, obtain accountable
 source-first six-finding reviews for the chosen original and supplemental
 cases. Keep reviewer-only answers away from agent-visible input.
 

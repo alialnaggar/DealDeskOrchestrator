@@ -137,6 +137,18 @@ class ConfigurationExtensionDatabase(unittest.TestCase):
                         facts = bundle['facts']['compatibility']
                         self.assertEqual([(fact['compatibility_rule_id'], fact['status']) for fact in facts],
                                          [('EVALCFG-003-REQUIRES-ADDON', 'fail')])
+                        # A missing dependency source is not a witnessed failure.
+                        # Keep this mutation inside the disposable case transaction.
+                        with conn.transaction(force_rollback=True):
+                            conn.execute('DELETE FROM compatibility_rules WHERE compatibility_rule_id=%s',
+                                         ('EVALCFG-003-REQUIRES-ADDON',))
+                            absent = read_run(conn, run_id, commercial_rule_mode='compiled',
+                                              digital_evidence_resolver=resolver)
+                            self.assertEqual(absent['facts']['compatibility'], [])
+                            self.assertNotEqual(prepare_heldout_review_input(
+                                absent, case_id=case['case_id'], development_manifest=development,
+                                historical_manifest=historical, business_contract=contract)['sha256'],
+                                packet['sha256'])
                     self.assertEqual(conn.execute('SELECT count(*) FROM agent_execution_log').fetchone()[0], 0)
                     proof = render(case['provider_manifest'])
                     (output / (case['case_id'] + '.json')).write_text(render(packet))

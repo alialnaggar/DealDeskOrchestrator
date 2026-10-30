@@ -76,6 +76,10 @@ def classify(source_bytes, index_bytes, case_id):
         ar, pay = receivables[0], payments[0]
         from decimal import Decimal
         if (ar["invoice_number"] != pay["invoice_number"]
+                or Decimal(ar["original_amount"]) != Decimal("1000.00")
+                or Decimal(pay["invoice_amount"]) != Decimal("1000.00")
+                or Decimal(pay["paid_amount"]) != Decimal("300.00")
+                or Decimal(ar["outstanding_amount"]) != Decimal("700.00")
                 or ar["as_of_date"] != run["as_of_at"][:10]
                 or pay["paid_date"] > run["as_of_at"][:10]
                 or ar["due_date"] >= run["as_of_at"][:10]
@@ -93,6 +97,69 @@ def classify(source_bytes, index_bytes, case_id):
     return {"case_id": case_id, "source_evidence_state": "unknown_incomplete",
             "receivables": 0, "payments": 0, "overdue_ar_eur": None,
             "selection_verified": False, "credit_clearance_allowed": False}
+
+
+def classify_selected_packet(source_bytes, index_bytes, case_id, packet, *, provider_bytes,
+                             packet_index_bytes):
+    """Bind a freshly exported reader packet to the pinned control and source scope.
+
+    Only a trusted caller may supply the source/index and a packet exported from
+    PostgreSQL. This versioned projection does not change the v2 packet or reader.
+    """
+    state = classify(source_bytes, index_bytes, case_id)
+    packet_index = json.loads(packet_index_bytes)
+    if (packet_index.get("schema_version") != 1 or
+            packet_index.get("status") != "postgresql_replayed_control_inputs_not_accepted_answers" or
+            packet_index.get("accepted_answers") != 0 or
+            packet_index.get("credit_source_index_sha256") != sha256(index_bytes).hexdigest() or
+            packet_index.get("control_source_sha256") != sha256(source_bytes).hexdigest() or
+            [r.get("case_id") for r in packet_index.get("cases", [])] !=
+            ["EVAL-PREP-040", "EVAL-PREP-041"]):
+        raise ValueError("Credit packet index source binding differs")
+    pin = next(r for r in packet_index["cases"] if r["case_id"] == case_id)
+    if (pin.get("packet_sha256") != packet.get("sha256") or
+            pin.get("provider_file_sha256") != sha256(provider_bytes).hexdigest()):
+        raise ValueError("Credit packet/provider pin differs")
+    source = json.loads(source_bytes)
+    case = next(c for c in source["cases"] if c["case_id"] == case_id)
+    payload = packet.get("payload", {})
+    from phase1c_evaluation_input import verify_review_input
+    from decimal import Decimal
+    rows = payload.get("source_rows", {})
+    context = payload.get("run_context", {})
+    if (not isinstance(provider_bytes, bytes) or
+            json.loads(provider_bytes) != case["provider_manifest"] or
+            context.get("run_id") != case["tables"]["deal_runs"][0]["run_id"] or
+            context.get("deal_id") != case["tables"]["deals"][0]["deal_id"] or
+            context.get("data_snapshot_ref") != case["tables"]["deal_runs"][0]["data_snapshot_ref"] or
+            context.get("as_of_at") != case["tables"]["deal_runs"][0]["as_of_at"].replace("T", " ") or
+            rows.get("customer", {}).get("customer_id") != case["tables"]["customers"][0]["customer_id"] or
+            rows.get("deal", {}).get("customer_id") != rows["customer"]["customer_id"] or
+            rows.get("credit", {}).get("customer_id") != rows["customer"]["customer_id"]):
+        raise ValueError("Credit packet source identity differs")
+    for key, table in (("receivables", "accounts_receivable"), ("payments", "payment_history")):
+        selected = rows.get(key)
+        expected = case["tables"].get(table, [])
+        if not isinstance(selected, list) or len(selected) != len(expected):
+            raise ValueError("Credit selected-row count differs")
+        for authored in expected:
+            matches = [item for item in selected if all(
+                str(item.get(field)) == str(value) or
+                (isinstance(value, str) and value.replace("T", " ") == str(item.get(field))) or
+                (field in {"original_amount", "outstanding_amount", "invoice_amount", "paid_amount"}
+                 and item.get(field) is not None and Decimal(str(item[field])) == Decimal(str(value)))
+                for field, value in authored.items())]
+            if len(matches) != 1:
+                raise ValueError("Credit selected rows differ from authored source")
+    # Recompute the packet seal and verify its complete source-row shape. The
+    # caller must additionally compare its digest to the freshly read bundle.
+    verify_review_input(packet, expected_case_id=case_id,
+                        expected_source_digest=payload.get("source_input_digest"),
+                        expected_business_contract=payload.get("business_contract"))
+    return {**state, "selection_verified": True,
+            # 040 has an overdue balance; 041 has unknown completeness.
+            "credit_clearance_allowed": False, "packet_sha256": packet["sha256"],
+            "provider_file_sha256": sha256(provider_bytes).hexdigest()}
 
 
 if __name__ == "__main__":

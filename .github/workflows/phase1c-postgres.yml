@@ -573,7 +573,14 @@ jobs:
         run: |
           cd ../evaluation
           python build_credit_v3.py --check
-          python -m unittest -v test_build_credit_v3
+          python -m unittest -v test_build_credit_v3 test_credit_evidence_gate
+          python build_v3_technical_matrix.py --packets /tmp/phase1c_evaluation_packets --check
+      - name: Replay Credit controls in a separate empty database
+        run: |
+          createdb deal_desk_credit_controls
+          psql -X -v ON_ERROR_STOP=1 -d deal_desk_credit_controls -f schema.sql
+          psql -X -v ON_ERROR_STOP=1 -d deal_desk_credit_controls -f /tmp/phase1c_compiled_rules.sql
+          PYTHONPATH=../evaluation EVALUATION_DATABASE_URL=postgresql://postgres:phase1c_ci_only@localhost:5432/deal_desk_credit_controls PHASE1C_CREDIT_PACKETS=/tmp/phase1c_credit_packets python -m unittest -v test_phase1c_credit_controls
       - name: Inventory Phase 1C release gates after source and review checks
         run: |
           python -m unittest -v test_audit_phase1c_pre_release_gates

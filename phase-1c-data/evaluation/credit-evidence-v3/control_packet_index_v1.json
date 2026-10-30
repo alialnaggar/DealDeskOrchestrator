@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "status": "postgresql_replayed_control_inputs_not_accepted_answers",
+  "credit_source_index_sha256": "61c51f2039930b9fd893fad3e69d791081b0919342923c6f913acebf680a24d1",
+  "control_source_sha256": "e83acf2a59140064a26cc4e9b829526b43f05c155ef07f27ecc5dcfc4514e243",
+  "accepted_answers": 0,
+  "cases": [
+    {
+      "case_id": "EVAL-PREP-040",
+      "packet_sha256": "f9bde65c883535ae1ee9f9abd2915870c9d809fae880c7a700cb9e97d0ecae25",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    {
+      "case_id": "EVAL-PREP-041",
+      "packet_sha256": "367e0755d1775b5cdd0b63a5db1bcb5b1664cc63da31e9d632ab321698126f9b",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    }
+  ]
+}
