@@ -569,6 +569,11 @@ jobs:
             /tmp/phase1c_v2_combined_diagnostic.json
             /tmp/phase1c_v2_combined_diagnostic_validation.json
           if-no-files-found: error
+      - name: Validate provisional Credit v3 source overlay and controls
+        run: |
+          cd ../evaluation
+          python build_credit_v3.py --check
+          python -m unittest -v test_build_credit_v3
       - name: Inventory Phase 1C release gates after source and review checks
         run: |
           python -m unittest -v test_audit_phase1c_pre_release_gates
