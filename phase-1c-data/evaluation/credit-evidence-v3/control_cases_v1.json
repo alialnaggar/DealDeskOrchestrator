@@ -1,0 +1,329 @@
+{
+  "base_v2_source_definition_sha256": "1b7e0dffb3eaae8ee7c7e4bcd82aba0d55da11321198ce8c54e1581fae6740cc",
+  "cases": [
+    {
+      "case_id": "EVAL-PREP-040",
+      "credit_evidence_scope": {
+        "completeness": "declared_complete_nonempty",
+        "customer_invoice_population": "complete_for_this_synthetic_customer_at_cutoff",
+        "external_financial_verification": false,
+        "selected_payment_events_count": 1,
+        "selected_receivables_count": 1,
+        "source_class": "fictional_isolated_credit_control"
+      },
+      "derived_from": "EVAL-PREP-001",
+      "provider_manifest": {
+        "records": [],
+        "schema_version": 1
+      },
+      "tables": {
+        "accounts_receivable": [
+          {
+            "as_of_date": "2026-09-01",
+            "customer_id": "EVALCREDIT-040-CUSTOMER",
+            "due_date": "2026-08-20",
+            "invoice_date": "2026-08-01",
+            "invoice_number": "EVALCREDIT-040-INV-1",
+            "original_amount": "1000.00",
+            "outstanding_amount": "700.00",
+            "receivable_id": "EVALCREDIT-040-AR-1",
+            "status": "Overdue"
+          }
+        ],
+        "customer_credit_profiles": [
+          {
+            "commitment_evidence_ref": "EVALCREDIT-040-CREDIT",
+            "commitments_as_of_at": "2026-09-01T10:36:00+00:00",
+            "credit_limit": 260000,
+            "credit_status": "Active",
+            "customer_id": "EVALCREDIT-040-CUSTOMER",
+            "default_payment_terms_days": 30,
+            "last_review_date": "2026-08-25",
+            "risk_rating": "Low",
+            "unbilled_committed_amount": 125
+          }
+        ],
+        "customers": [
+          {
+            "account_status": "Active",
+            "country_code": "DE",
+            "customer_code": "EVALCREDIT-040-CUSTOMER",
+            "customer_id": "EVALCREDIT-040-CUSTOMER",
+            "customer_name": "Synthetic evaluation buyer 001",
+            "customer_since": "2024-06-01",
+            "industry": "manufacturing",
+            "region": "DE-NW",
+            "size_segment": "SMB"
+          }
+        ],
+        "deal_lines": [
+          {
+            "configuration_json": {},
+            "deal_id": "EVALCREDIT-040-DEAL",
+            "deal_line_id": "EVALCREDIT-040-LINE",
+            "line_number": 1,
+            "product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-001",
+            "quantity": 2,
+            "quoted_unit_price": "1959.40",
+            "requested_activation_date": null
+          }
+        ],
+        "deal_runs": [
+          {
+            "applied_policy_set_code": "BASELINE_2026",
+            "as_of_at": "2026-09-01T12:01:00+00:00",
+            "catalog_version_used": "CATALOGUE_2026_V1",
+            "config_hash": "c021a16c977559517d495ae0699ac4d1fc2c260c2f9659581fb6ea92f83732fc",
+            "data_snapshot_ref": "EVALCREDIT-040-SOURCES",
+            "deal_id": "EVALCREDIT-040-DEAL",
+            "input_snapshot_json": {
+              "deal_id": "EVALCREDIT-040-DEAL"
+            },
+            "original_policy_set_code": "BASELINE_2026",
+            "run_id": "00000000-0000-4000-8000-000000360040",
+            "run_status": "queued",
+            "started_at": "2026-09-01T12:01:00+00:00"
+          }
+        ],
+        "deals": [
+          {
+            "catalog_version": "CATALOGUE_2026_V1",
+            "currency_code": "EUR",
+            "customer_id": "EVALCREDIT-040-CUSTOMER",
+            "dataset_type": "evaluation",
+            "deal_id": "EVALCREDIT-040-DEAL",
+            "deal_name": "Synthetic credit evidence control 40",
+            "deal_status": "Draft",
+            "destination_country_code": "DE",
+            "destination_region": "DE-NW",
+            "policy_set_code": "BASELINE_2026",
+            "requested_delivery_date": "2026-09-10",
+            "salesperson_id": "SALES-036",
+            "shipping_service_code": "standard",
+            "submitted_at": "2026-09-01T08:01:00+00:00",
+            "terms_json": {
+              "allow_partial_delivery": false,
+              "contract_clause_codes": [
+                "standard"
+              ],
+              "payment_terms_days": 30
+            }
+          }
+        ],
+        "inventory": [
+          {
+            "inventory_id": "EVALCREDIT-040-INV-SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-001",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-001",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 5,
+            "snapshot_at": "2026-09-01T10:36:00+00:00"
+          }
+        ],
+        "payment_history": [
+          {
+            "customer_id": "EVALCREDIT-040-CUSTOMER",
+            "due_date": "2026-08-20",
+            "invoice_amount": "1000.00",
+            "invoice_date": "2026-08-01",
+            "invoice_number": "EVALCREDIT-040-INV-1",
+            "paid_amount": "300.00",
+            "paid_date": "2026-08-15",
+            "payment_id": "EVALCREDIT-040-PAY-1"
+          }
+        ],
+        "shipping_lanes": [
+          {
+            "cutoff_local_time": "16:00:00",
+            "destination_country_code": "DE",
+            "destination_region": "DE-NW",
+            "dispatch_weekdays_json": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "lane_id": "EVALCREDIT-040-LANE",
+            "origin_location_id": "WH-EU-CENTRAL",
+            "origin_time_zone": "Europe/Berlin",
+            "shipping_service_code": "standard",
+            "transit_workdays": 1
+          }
+        ],
+        "suppliers": [
+          {
+            "country_code": "NL",
+            "order_calendar_json": {
+              "holiday_dates": [],
+              "time_zone": "Europe/Amsterdam",
+              "working_weekdays": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            },
+            "status": "active",
+            "supplier_code": "EVALCREDIT-040-SUPPLIER",
+            "supplier_id": "EVALCREDIT-040-SUPPLIER",
+            "supplier_name": "Synthetic source owner 001"
+          }
+        ]
+      },
+      "technical_review": "source_only_control_pending_postgresql_replay_and_six_findings"
+    },
+    {
+      "case_id": "EVAL-PREP-041",
+      "credit_evidence_scope": {
+        "completeness": "explicitly_incomplete_unknown",
+        "customer_invoice_population": "not_established",
+        "external_financial_verification": false,
+        "selected_payment_events_count": 0,
+        "selected_receivables_count": 0,
+        "source_class": "fictional_isolated_credit_control"
+      },
+      "derived_from": "EVAL-PREP-001",
+      "provider_manifest": {
+        "records": [],
+        "schema_version": 1
+      },
+      "tables": {
+        "customer_credit_profiles": [
+          {
+            "commitment_evidence_ref": "EVALCREDIT-041-CREDIT",
+            "commitments_as_of_at": "2026-09-01T10:36:00+00:00",
+            "credit_limit": 260000,
+            "credit_status": "Active",
+            "customer_id": "EVALCREDIT-041-CUSTOMER",
+            "default_payment_terms_days": 30,
+            "last_review_date": "2026-08-25",
+            "risk_rating": "Low",
+            "unbilled_committed_amount": 125
+          }
+        ],
+        "customers": [
+          {
+            "account_status": "Active",
+            "country_code": "DE",
+            "customer_code": "EVALCREDIT-041-CUSTOMER",
+            "customer_id": "EVALCREDIT-041-CUSTOMER",
+            "customer_name": "Synthetic evaluation buyer 001",
+            "customer_since": "2024-06-01",
+            "industry": "manufacturing",
+            "region": "DE-NW",
+            "size_segment": "SMB"
+          }
+        ],
+        "deal_lines": [
+          {
+            "configuration_json": {},
+            "deal_id": "EVALCREDIT-041-DEAL",
+            "deal_line_id": "EVALCREDIT-041-LINE",
+            "line_number": 1,
+            "product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-001",
+            "quantity": 2,
+            "quoted_unit_price": "1959.40",
+            "requested_activation_date": null
+          }
+        ],
+        "deal_runs": [
+          {
+            "applied_policy_set_code": "BASELINE_2026",
+            "as_of_at": "2026-09-01T12:01:00+00:00",
+            "catalog_version_used": "CATALOGUE_2026_V1",
+            "config_hash": "c021a16c977559517d495ae0699ac4d1fc2c260c2f9659581fb6ea92f83732fc",
+            "data_snapshot_ref": "EVALCREDIT-041-SOURCES",
+            "deal_id": "EVALCREDIT-041-DEAL",
+            "input_snapshot_json": {
+              "deal_id": "EVALCREDIT-041-DEAL"
+            },
+            "original_policy_set_code": "BASELINE_2026",
+            "run_id": "00000000-0000-4000-8000-000000360041",
+            "run_status": "queued",
+            "started_at": "2026-09-01T12:01:00+00:00"
+          }
+        ],
+        "deals": [
+          {
+            "catalog_version": "CATALOGUE_2026_V1",
+            "currency_code": "EUR",
+            "customer_id": "EVALCREDIT-041-CUSTOMER",
+            "dataset_type": "evaluation",
+            "deal_id": "EVALCREDIT-041-DEAL",
+            "deal_name": "Synthetic credit evidence control 41",
+            "deal_status": "Draft",
+            "destination_country_code": "DE",
+            "destination_region": "DE-NW",
+            "policy_set_code": "BASELINE_2026",
+            "requested_delivery_date": "2026-09-10",
+            "salesperson_id": "SALES-036",
+            "shipping_service_code": "standard",
+            "submitted_at": "2026-09-01T08:01:00+00:00",
+            "terms_json": {
+              "allow_partial_delivery": false,
+              "contract_clause_codes": [
+                "standard"
+              ],
+              "payment_terms_days": 30
+            }
+          }
+        ],
+        "inventory": [
+          {
+            "inventory_id": "EVALCREDIT-041-INV-SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-001",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-001",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 5,
+            "snapshot_at": "2026-09-01T10:36:00+00:00"
+          }
+        ],
+        "shipping_lanes": [
+          {
+            "cutoff_local_time": "16:00:00",
+            "destination_country_code": "DE",
+            "destination_region": "DE-NW",
+            "dispatch_weekdays_json": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "lane_id": "EVALCREDIT-041-LANE",
+            "origin_location_id": "WH-EU-CENTRAL",
+            "origin_time_zone": "Europe/Berlin",
+            "shipping_service_code": "standard",
+            "transit_workdays": 1
+          }
+        ],
+        "suppliers": [
+          {
+            "country_code": "NL",
+            "order_calendar_json": {
+              "holiday_dates": [],
+              "time_zone": "Europe/Amsterdam",
+              "working_weekdays": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            },
+            "status": "active",
+            "supplier_code": "EVALCREDIT-041-SUPPLIER",
+            "supplier_id": "EVALCREDIT-041-SUPPLIER",
+            "supplier_name": "Synthetic source owner 001"
+          }
+        ]
+      },
+      "technical_review": "source_only_control_pending_postgresql_replay_and_six_findings"
+    }
+  ],
+  "extension_id": "credit-evidence-controls-v1",
+  "schema_version": 1,
+  "status": "provisional_source_cases_pending_postgresql_replay_and_review"
+}

@@ -26,6 +26,8 @@ from pathlib import Path
 from psycopg.rows import dict_row
 
 from phase1c_policy_decision import evaluate_compiled_policy
+from phase1c_candidate import assess_reader_slices, reader_input_digest
+from phase1c_supplier_estimates import estimate_supplier_offer
 
 
 def _rows(conn, query, args=()):
@@ -332,8 +334,15 @@ def _supply_findings(bundle, as_of):
             line_fact["fulfillment_status"] = "unknown"
         else:
             line_fact["fulfillment_status"] = "conditional" if any(x["product_id"] == product for x in bundle["supplier_offers"]) else "infeasible"
-        if not options and line["fulfillment_mode"] == "supplier_finished":
-            line_fact["supplier_offer_days"] = [x["lead_days_mode"] for x in bundle["supplier_offers"] if x["product_id"] == product]
+        if line["fulfillment_mode"] == "supplier_finished":
+            matching_offers = [x for x in bundle["supplier_offers"] if x["product_id"] == product]
+            line_fact["supplier_offer_days"] = [x["lead_days_mode"] for x in matching_offers]
+            estimates = []
+            for offer in matching_offers:
+                estimate = estimate_supplier_offer(offer, as_of)
+                if estimate is not None:
+                    estimates.append(estimate)
+            line_fact["supplier_offer_estimates"] = estimates
     plans = []
     aggregate_components = defaultdict(lambda: Decimal(0))
     for b in bundle["bom"]:
@@ -476,6 +485,18 @@ def _supply_findings(bundle, as_of):
         record = {"bom_id": b["bom_id"], "product_id": product, "line_ids": sorted(plan["line_ids"]),
             "build_units": build,
             "component_demand": plan["components"], "component_stock_required": stock_required,
+            # An offer is a procurement possibility, never material on hand.
+            # Keep incomplete historical offers visible with no invented date.
+            "component_supplier_offers": [
+                {"component_product_id": offer["product_id"],
+                 "supplier_item_id": offer["supplier_item_id"],
+                 "selected_for_current_plan": offer["product_id"] in plan["components"],
+                 "estimate": estimate_supplier_offer(offer, as_of)}
+                for offer in sorted(bundle["supplier_offers"],
+                                    key=lambda row: row["supplier_item_id"])
+                if any(line["bom_id"] == b["bom_id"] and
+                       line["component_product_id"] == offer["product_id"]
+                       for line in bundle["bom_lines"])],
             "substitution_groups": plan["substitution_groups"],
             "required_hours": plan["hours"],
             "operation_days": [key[2] for key, _ in best[2]] if best else [],
@@ -529,7 +550,7 @@ def _supply_findings(bundle, as_of):
 def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_resolver=None,
              historical_operational_resolver=None,
              cost_parameters=None,
-             commercial_rule_mode="auto"):
+             commercial_rule_mode="auto", candidate=None):
     """Return run context, selected evidence and derived facts. No writes.
 
     Call inside a REPEATABLE READ READ ONLY transaction for a stable DB snapshot.
@@ -549,6 +570,7 @@ def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_
     if not lines or any(x["catalog_version"] != run["catalog_version_used"] for x in lines):
         raise ValueError("Missing lines or mismatched catalogue version")
     products = [x["product_id"] for x in lines]
+    needs_build_capacity = any(x["fulfillment_mode"] == "make_to_order" for x in lines)
     customer = _one(conn, "SELECT * FROM deal_desk.customers WHERE customer_id=%s", (deal["customer_id"],))
     partition = _one(conn, "SELECT dataset_type FROM deal_desk.deals WHERE deal_id=%s", (deal["deal_id"],))["dataset_type"]
     if partition == "historical":
@@ -585,8 +607,9 @@ def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_
         supply = [x for x in operational["inbound_supply"] if x["product_id"] in stock_products]
         offers = [x for x in operational["supplier_offers"] if x["product_id"] in stock_products and
                   x["is_active"] and (x["valid_to"] is None or x["valid_to"] >= as_of.date())]
-        capacities = _latest([x for x in operational["production_capacity"] if x["capacity_date"] >= as_of.date()],
-                             ("location_id", "capability_code", "resource_type", "capacity_date"), as_of)
+        capacities = (_latest([x for x in operational["production_capacity"] if x["capacity_date"] >= as_of.date()],
+                              ("location_id", "capability_code", "resource_type", "capacity_date"), as_of)
+                      if needs_build_capacity else [])
         digital = _latest([x for x in operational["digital_capacity"] if x["product_id"] in products],
                           ("product_id", "configuration_signature_json", "provider_id", "region_code",
                            "term_code", "capacity_unit"), as_of)
@@ -600,10 +623,12 @@ def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_
         po.destination_location_id FROM deal_desk.inbound_supply s
         LEFT JOIN deal_desk.purchase_orders po USING(purchase_order_id)
         WHERE s.product_id=ANY(%s) AND (s.confirmed_at IS NULL OR s.confirmed_at<=%s)""", (stock_products, as_of))
-        offers = _rows(conn, """SELECT si.* FROM deal_desk.supplier_items si JOIN deal_desk.suppliers s USING(supplier_id)
+        offers = _rows(conn, """SELECT si.*, s.order_calendar_json FROM deal_desk.supplier_items si JOIN deal_desk.suppliers s USING(supplier_id)
         WHERE si.product_id=ANY(%s) AND si.is_active AND s.status='active'
         AND si.valid_from<=%s::date AND (si.valid_to IS NULL OR si.valid_to>=%s::date)""", (stock_products, as_of, as_of))
-        capacities = _latest(_rows(conn, "SELECT * FROM deal_desk.production_capacity WHERE snapshot_at<=%s AND capacity_date>=%s::date", (as_of, as_of)), ("location_id", "capability_code", "resource_type", "capacity_date"), as_of)
+        capacities = (_latest(_rows(conn, "SELECT * FROM deal_desk.production_capacity WHERE snapshot_at<=%s AND capacity_date>=%s::date", (as_of, as_of)),
+                              ("location_id", "capability_code", "resource_type", "capacity_date"), as_of)
+                      if needs_build_capacity else [])
         digital = _latest(_rows(conn, "SELECT * FROM deal_desk.digital_capacity WHERE product_id=ANY(%s) AND snapshot_at<=%s", (products, as_of)), ("product_id", "configuration_signature_json", "provider_id", "region_code", "term_code", "capacity_unit"), as_of)
         lanes = _rows(conn, """SELECT * FROM deal_desk.shipping_lanes WHERE is_active AND
         destination_country_code=%s AND destination_region=%s AND shipping_service_code=%s""", (deal["destination_country_code"], deal["destination_region"], deal["shipping_service_code"])) if deal["shipping_service_code"] else []
@@ -684,4 +709,18 @@ def read_run(conn, run_id, *, digital_evidence_resolver=None, historical_credit_
                 commercial_rule_mode == "auto" and any(
                     r["rule_type"] == "category_margin_floor" for r in rules["pricing_rules"]))
     facts["commercial"] = evaluate_compiled_policy(bundle) if compiled else _commercial_findings(bundle)
+    if candidate is not None:
+        # Keep the submitted deal and its customer date unchanged. This is a
+        # read-only, run-scoped proposal with an explicit input fingerprint.
+        assessment = assess_reader_slices(candidate, bundle)
+        bundle["candidate_trace"] = {
+            "candidate_id": candidate.candidate_id,
+            "parent_run_id": str(run["run_id"]),
+            "original_requested_date": deal["requested_delivery_date"],
+            "source_input_digest": reader_input_digest(bundle),
+            "candidate_input_digest": reader_input_digest(bundle, candidate),
+            "assessment": assessment,
+            "rerun_specialists": ["Configuration", "Pricing", "Availability", "Credit", "Policy", "Approval"],
+            "persisted": False,
+        }
     return bundle

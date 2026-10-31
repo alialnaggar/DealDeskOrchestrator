@@ -17,6 +17,18 @@ calendar:
   holiday_dates_must_be_empty: true
   date_precision_rule: a confirmed receipt on date D may support production on D; no arrival hour is claimed
 
+# Deliberate versioned dependency pilot; the 156-row V1 catalogue remains the
+# calibrated baseline. These two V2 rows are not part of the 120 sellable V1 mix.
+catalogue_extensions:
+  dependency_pilot:
+    catalog_version: CATALOGUE_2026_V2
+    product_ids:
+      - SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-004-V2
+      - SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-005-V2
+    deal_ids: [DEP-V2-DEAL-21, DEP-V2-DEAL-22]
+    generated_test_deal_ids: [GEN-TEST-099, GEN-TEST-100]
+    rule_id: V2-REQUIRES-ADDON
+
 controlled_vocabularies:
   catalog_version: CATALOGUE_2026_V1
   policy_set_codes: [BASELINE_2026, LENIENT_EXPERIMENT, STRICT_EXPERIMENT]
@@ -141,7 +153,12 @@ json_contracts:
         optional: [installation_eligible, supported_installation_regions, option_codes, build_platform, offered_options]
       component:
         required: []
-        optional: [component_family, component_role, supported_platforms]
+        optional: [component_family, component_role, supported_platforms,
+                   storage_host_interface, network_slot_interface, board_form_factor,
+                   rated_watts, host_interface, form_factor, network_interface,
+                   psu_output_watts, supported_board_form_factors,
+                   supported_drive_form_factors, drive_slots, power_budget_watts,
+                   cooling_capacity_watts]
   deal_terms_json:
     required_on_submission:
       payment_terms_days: payment_terms_days

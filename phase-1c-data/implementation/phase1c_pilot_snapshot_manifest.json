@@ -9,7 +9,7 @@
     {
       "path": "phase1c_buildable_master.sql",
       "role": "pilot_sql",
-      "sha256": "9e661692cc6d39017b317cfe5110cf759a7dff3c87f41e2c438468739c390336"
+      "sha256": "e9520cb46312d70d45821dde0e094aebc9da7e7b041a1cadcb443c1fda2513c9"
     },
     {
       "path": "phase1c_sellable_catalogue.sql",
@@ -32,6 +32,11 @@
       "sha256": "1bc0ce984d2a34295015009cc51bcf167a30f689e1352bcafa05e798b6328134"
     },
     {
+      "path": "phase1c_dependency_pilot.sql",
+      "role": "pilot_sql",
+      "sha256": "c4e90d6a953a14efb39b462540db5794653f153a0a16c36359817efe6ef98660"
+    },
+    {
       "path": "calibration_config.yaml",
       "role": "calibration",
       "sha256": "dda3df36a6bdbf802cc135e7ed54b966f9b573d6c1efd97e3d4ea31716e039b2"
@@ -39,12 +44,12 @@
     {
       "path": "phase1c_data_contract.yaml",
       "role": "contract",
-      "sha256": "492e18f7583a84949d2b4efeafc3e53d0b7f32647e76d1b90493c4e283b211d9"
+      "sha256": "fb455d53631466ca2145f80bec5d9038eb5523a87f12fa84146ee884ede56b60"
     },
     {
       "path": "phase1c_scenario_matrix.yaml",
       "role": "scenario_matrix",
-      "sha256": "ebf98a7823c6d82f9d8c46ba1750a13e705e6f4f7cd28c0709fd4cbdefef86b6"
+      "sha256": "8402c4c31ef3a77d5e3b9dcb27eeac42a3dddfe398a3fd5d924e3d3b0913cf99"
     },
     {
       "path": "phase1c_vertical_provider_manifest.json",

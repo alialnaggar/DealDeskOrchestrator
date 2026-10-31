@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "contract_id": "DDO-EVALUATION-CONTRACT-V2",
+  "evaluation_input_version": 2,
+  "status": "approved_synthetic_business_conventions_not_released_answers",
+  "approval": {
+    "by": "Ali",
+    "at": "2026-10-14T19:04:52Z",
+    "instruction": "approve contnue",
+    "proposal_commit": "1b97d2326e7f3e574eacb9b9c29703d9c982be41",
+    "decisions": ["F1", "C1", "C2", "G1", "S1", "R1"],
+    "scope": "Versioned evaluation input and renewed review; no schema change, calibration freeze or answer acceptance."
+  },
+  "evidence_age": {
+    "snapshot_max_elapsed_hours": 24,
+    "snapshot_sources": ["inventory", "production_capacity", "digital_capacity", "credit_commitments"],
+    "provider_verification_max_elapsed_days": 7,
+    "upper_boundary_inclusive": true,
+    "future_timestamps_allowed": false,
+    "interpretation": "Older, future or missing observations do not establish current availability/exposure; request refreshed evidence rather than infer impossibility. Provider proof also needs matching identity, quantity, term, binding dates and validity. These are fictional conventions, not externally validated service levels."
+  },
+  "digital_term": {
+    "start": "requested_activation_date",
+    "end": "activation date plus contract_months using calendar months, clamped to last day of shorter month",
+    "coverage": "covers_from <= activation date and covers_until >= anniversary end date",
+    "claim": "Conservative simulation convention; not legal contract interpretation."
+  },
+  "costing": {
+    "currency": "EUR",
+    "basis": "Per catalogue unit, fictional tax-exclusive values; no additional freight/tax adjustment in these cases.",
+    "quote_margin_cost": "Versioned submitted-line catalogue standard_cost",
+    "procurement_offer_cost": "Same-product declared standard cost for these cases; supports uncommitted procurement, does not replace quote-margin cost.",
+    "workstation_loaded_standard_cost_eur": "715.00",
+    "missing_cost_parameters": "No independent labour/overhead reconstruction or reconciled BOM rollup may be claimed when cost_parameters is null."
+  },
+  "gates": {
+    "precedence": ["blocked", "needs_revision", "needs_evidence", "needs_commitment", "approval_required"],
+    "blocked": "Hard prohibition or invalid configuration.",
+    "needs_revision": "Submitted quantity, date or region cannot be supported as submitted and requires a changed proposal.",
+    "needs_evidence": "Adequate current facts are missing.",
+    "needs_commitment": "A feasible conditional alternative needs a supplier, provider, production or service commitment.",
+    "approval_required": "Applicable human review route can be presented; approval has not been granted.",
+    "multiple_findings": "Retain subordinate findings and human actions when a higher-precedence gate applies; distinguish missing supply from a feasible uncommitted alternative."
+  },
+  "service_scope": {
+    "regional_rule_type": "installation_eligibility",
+    "uses": ["requested installation eligibility", "scheduled-service regional coverage"],
+    "installation_requested_false": "Removes an additional installation request, not a scheduled-service line's regional requirement.",
+    "eligible_region": "Coverage only; no booked service slot.",
+    "ineligible_region": "Requires a changed service or destination proposal."
+  },
+  "routing": {
+    "supported_but_late_physical_fulfillment": "At least Sales Director reviews a proposed date change; requested date still requires revision and human/customer acceptance.",
+    "higher_or_additional_roles": "Only when their own explicit higher sales, Finance or Legal rules trigger.",
+    "boundary": "No automatic approval, reservation, supplier/provider commitment or delivery promise."
+  }
+}

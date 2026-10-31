@@ -5,12 +5,14 @@ on:
     paths:
       - 'phase-1c-data/implementation/**'
       - 'phase-1c-data/design/**'
+      - 'phase-1c-data/evaluation/**'
       - 'phase-1c-data/README.md'
       - '.github/workflows/phase1c-postgres.yml'
   pull_request:
     paths:
       - 'phase-1c-data/implementation/**'
       - 'phase-1c-data/design/**'
+      - 'phase-1c-data/evaluation/**'
       - 'phase-1c-data/README.md'
       - '.github/workflows/phase1c-postgres.yml'
   workflow_dispatch:
@@ -70,10 +72,25 @@ jobs:
       - name: Check all 156 provisional catalogue products
         run: |
           python -m unittest -v test_render_phase1c_sellable_catalogue
+          python -m unittest -v test_audit_phase1c_product_attributes
+          python audit_phase1c_product_attributes.py > /tmp/phase1c_product_attributes_audit.json
           python render_phase1c_sellable_catalogue.py --check
+          python -m unittest -v test_audit_phase1c_catalogue_import
           psql -X -v ON_ERROR_STOP=1 -v phase1c_keep_transaction=1 \
             -f phase1c_buildable_master.sql -f phase1c_sellable_catalogue.sql \
+            -c "\\copy (SELECT product_id, catalog_version, list_price, standard_cost, billing_model, unit_of_measure, fulfillment_mode, is_sellable, attributes_json FROM products WHERE catalog_version = 'CATALOGUE_2026_V1' ORDER BY product_id) TO '/tmp/phase1c_catalogue_import.csv' CSV HEADER" \
             -c ROLLBACK
+          python audit_phase1c_catalogue_import.py /tmp/phase1c_catalogue_import.csv > /tmp/phase1c_catalogue_import_audit.json
+      - name: Preserve V1 source-to-import reconciliation
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-catalogue-import-audit
+          path: /tmp/phase1c_catalogue_import_audit.json
+      - name: Preserve V1 product attribute audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-product-attributes-audit
+          path: /tmp/phase1c_product_attributes_audit.json
       - name: Load five connected provisional deal paths
         run: |
           python -m unittest -v test_phase1c_vertical_pilot.VerticalPilotRenderTests
@@ -96,10 +113,35 @@ jobs:
             -f phase1c_buildable_master.sql -f phase1c_sellable_catalogue.sql \
             -f phase1c_vertical_pilot.sql -f phase1c_conflict_pilot.sql \
             -f phase1c_stress_pilot.sql -c ROLLBACK
-      - name: Validate typed pilot rows and controlled locations
+      - name: Load versioned dependency extension after the 36-deal pilot
+        run: |
+          python render_phase1c_dependency_pilot.py --check
+          psql -X -v ON_ERROR_STOP=1 -v phase1c_keep_transaction=1 \
+            -f phase1c_buildable_master.sql -f phase1c_sellable_catalogue.sql \
+            -f phase1c_vertical_pilot.sql -f phase1c_conflict_pilot.sql \
+            -f phase1c_stress_pilot.sql -f phase1c_dependency_pilot.sql -c ROLLBACK
+      - name: Validate typed pilot rows and dependency coverage
         run: |
           python -m unittest -v test_validate_phase1c_generated_rows
-          python validate_phase1c_generated_rows.py --load-pilot
+          python validate_phase1c_generated_rows.py --load-pilot > /tmp/phase1c_row_validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/phase1c_row_validation.json').read_text())
+          coverage = report['dependency_coverage']
+          assert report['counts']['deals'] == 38
+          assert report['counts']['products'] == 158
+          assert report['supplier_calendar_coverage']['offers_with_typed_calendar'] >= 1
+          assert not report['supplier_calendar_coverage']['offers_missing_calendar']
+          assert coverage['finding_counts']['pass'] == 1
+          assert coverage['finding_counts']['fail'] == 1
+          assert not coverage['coverage_gap']
+          PY
+      - name: Preserve typed row and dependency report
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-row-validation
+          path: /tmp/phase1c_row_validation.json
       - name: Validate independent evidence manifest contracts
         run: |
           python -m unittest -v test_validate_phase1c_evidence_manifests
@@ -113,10 +155,33 @@ jobs:
           PY
       - name: Validate typed runtime output envelopes
         run: python -m unittest -v test_validate_phase1c_runtime_outputs
+      - name: Check candidate proposal and trace boundary
+        run: python -m unittest -v test_phase1c_candidate
       - name: Fail closed on missing historical credit and AR snapshots
         run: python -m unittest -v test_phase1c_historical_credit
       - name: Fail closed on missing historical operational snapshots
         run: python -m unittest -v test_phase1c_historical_operational
+      - name: Audit historical supplier calendar coverage
+        run: |
+          python -m unittest -v test_phase1c_supplier_estimates
+          python -m unittest -v test_audit_phase1c_historical_supplier_calendars
+          python audit_phase1c_historical_supplier_calendars.py > /tmp/phase1c_historical_supplier_calendar_coverage.json
+      - name: Audit evaluation supplier calendar joins without answers
+        run: |
+          python -m unittest -v test_audit_phase1c_evaluation_supplier_calendars
+          python audit_phase1c_evaluation_supplier_calendars.py > /tmp/phase1c_evaluation_supplier_calendar_coverage.json
+          python -m json.tool /tmp/phase1c_evaluation_supplier_calendar_coverage.json
+      - name: Preserve evaluation supplier calendar join audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-evaluation-supplier-calendar-coverage
+          path: /tmp/phase1c_evaluation_supplier_calendar_coverage.json
+          if-no-files-found: error
+      - name: Preserve historical supplier calendar coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-historical-supplier-calendar-coverage
+          path: /tmp/phase1c_historical_supplier_calendar_coverage.json
       - name: Replay provisional daily stock lanes and offers
         run: python -m unittest -v test_render_phase1c_historical_stock_lanes
       - name: Replay independently proved historical inbound receipts
@@ -143,6 +208,10 @@ jobs:
         run: |
           python -m unittest -v test_validate_phase1c_scenario_matrix
           python validate_phase1c_scenario_matrix.py
+      - name: Check separate provisional evaluation authoring examples
+        run: |
+          python -m unittest -v test_validate_phase1c_evaluation_draft test_phase1c_evaluation_input_sources
+          python validate_phase1c_evaluation_draft.py
       - name: Preflight connected pilot rows and SQL constraints
         run: |
           python validate_phase1c_pilot.py
@@ -157,13 +226,45 @@ jobs:
           python -m unittest -v test_validate_phase1c_bom_portfolio
           python -m unittest -v test_audit_phase1c_build_readiness
           python audit_phase1c_build_readiness.py > /tmp/phase1c_build_readiness.json
+          python -m unittest -v test_audit_phase1c_price_distribution
+          python audit_phase1c_price_distribution.py > /tmp/phase1c_price_distribution.json
+          python -m unittest -v test_audit_phase1c_price_unit_exposure
+          python audit_phase1c_price_unit_exposure.py > /tmp/phase1c_price_unit_exposure.json
+          python -m unittest -v test_audit_phase1c_v1_price_basis_review
+          python audit_phase1c_v1_price_basis_review.py > /tmp/phase1c_v1_price_basis_ledger.json
+          python -m unittest -v test_experiment_phase1c_margin_spread
+          python experiment_phase1c_margin_spread.py > /tmp/phase1c_margin_spread_experiment.json
           python -m unittest -v test_validate_phase1c_technical_fit_pilot
           python validate_phase1c_technical_fit_pilot.py
+          python -m unittest -v test_validate_phase1c_technical_fit_draft
+          python validate_phase1c_technical_fit_draft.py > /tmp/phase1c_technical_fit_draft.json
           python -m unittest -v test_phase1c_component_units
           python -m unittest -v test_phase1c_digital_units
           python -m unittest -v test_phase1c_horizon
           python validate_phase1c_assembly_pilot.py
           python -m unittest -v test_validate_phase1c_assembly_pilot
+      - name: Preserve bounded margin sensitivity experiment
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-margin-spread-experiment
+          path: /tmp/phase1c_margin_spread_experiment.json
+      - name: Preserve provisional price distribution audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-price-distribution
+          path: /tmp/phase1c_price_distribution.json
+      - name: Preserve source-only price unit exposure
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-price-unit-exposure
+          path: /tmp/phase1c_price_unit_exposure.json
+          if-no-files-found: error
+      - name: Preserve V1 price and cost basis review ledger
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-v1-price-basis-review
+          path: /tmp/phase1c_v1_price_basis_ledger.json
+          if-no-files-found: error
       - name: Compare reader results with 14 reference scenarios
         run: python -m unittest -v test_phase1c_reader
       - name: Validate and compile synthetic policy profiles
@@ -172,10 +273,53 @@ jobs:
           python compile_phase1c_policy.py --output /tmp/phase1c_compiled_rules.sql
           psql -X -v ON_ERROR_STOP=1 -f /tmp/phase1c_compiled_rules.sql
           psql -X -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN IF (SELECT count(*) FROM deal_desk.pricing_rules) <> 33 OR (SELECT count(*) FROM deal_desk.policy_rules) <> 51 OR (SELECT count(*) FROM deal_desk.approval_rules) <> 21 THEN RAISE EXCEPTION 'Incomplete compiled policy rows'; END IF; END \$\$;"
+      - name: Import and read 100 provisional generated-test submissions
+        run: |
+          python render_phase1c_generated_test_batch.py --check
+          PHASE1C_BATCH_DIAGNOSTIC=/tmp/phase1c_generated_test_diagnostic.json PHASE1C_CASE_REVIEW=/tmp/phase1c_generated_case_review.json PHASE1C_DEVELOPMENT_EXCLUSIONS=/tmp/phase1c_development_exclusions.json python -m unittest -v test_phase1c_generated_test_batch
+          python -m json.tool /tmp/phase1c_generated_test_diagnostic.json
+      - name: Preserve provisional 100-case diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-generated-test-diagnostic
+          path: /tmp/phase1c_generated_test_diagnostic.json
+      - name: Preserve provisional case review observations
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-generated-case-review
+          path: /tmp/phase1c_generated_case_review.json
+      - name: Preserve development source exclusion registry
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-development-source-exclusions
+          path: /tmp/phase1c_development_exclusions.json
+      - name: Audit global dependency impact on existing submissions
+        run: |
+          python -m unittest -v test_audit_phase1c_dependency_scope
+          python audit_phase1c_dependency_scope.py --output /tmp/phase1c_dependency_scope.json
+      - name: Preserve dependency scope evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-dependency-scope
+          path: /tmp/phase1c_dependency_scope.json
+      - name: Audit compatibility rule families in development and evaluation inputs
+        run: |
+          python -m unittest -v test_audit_phase1c_compatibility_scope
+          python audit_phase1c_compatibility_scope.py > /tmp/phase1c_compatibility_scope.json
+      - name: Preserve compatibility source scope
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-compatibility-scope
+          path: /tmp/phase1c_compatibility_scope.json
       - name: Diagnose 400 historical baseline decisions
         run: |
           python -m unittest -v test_render_phase1c_historical_service_coverage
-          python audit_phase1c_historical_baseline.py --output /tmp/phase1c_historical_baseline.json
+          python audit_phase1c_historical_baseline.py --output /tmp/phase1c_historical_baseline.json --exclusion-output /tmp/phase1c_historical_source_exclusions.json
+      - name: Preserve source-only historical exclusion registry
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-historical-source-exclusions
+          path: /tmp/phase1c_historical_source_exclusions.json
       - name: Preserve provisional historical diagnostic
         if: always()
         uses: actions/upload-artifact@v4
@@ -195,8 +339,10 @@ jobs:
         run: python -m unittest -v test_phase1c_historical_inputs
       - name: Freeze dated historical credit and AR views
         run: python -m unittest -v test_render_phase1c_historical_credit
-      - name: Read thirteen source conflict cases
-        run: python -m unittest -v test_phase1c_conflict_pilot.ConflictReaderTests
+      - name: Read thirteen source conflict cases and isolated generated dependency pair
+        run: |
+          python render_phase1c_dependency_pilot.py
+          python -m unittest -v test_phase1c_conflict_pilot.ConflictReaderTests
       - name: Check mixed pilot replay and contention
         run: python -m unittest -v test_phase1c_stress_pilot.StressReaderTests
       - name: Measure pilot decisions and source provenance
@@ -210,3 +356,244 @@ jobs:
         run: python -m unittest -v test_phase1c_policy_decision
       - name: Test deal decision gates against 14 reference runs
         run: python -m unittest -v test_phase1c_deal_decision
+      - name: Persist and validate one deterministic development execution
+        run: PHASE1C_RUNTIME_REPORT=/tmp/phase1c_development_runtime.json python -m unittest -v test_phase1c_development_runtime
+      - name: Preserve development execution proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-development-runtime
+          path: /tmp/phase1c_development_runtime.json
+          if-no-files-found: error
+      - name: Recheck a proposed partial delivery against PostgreSQL sources
+        run: python -m unittest -v test_phase1c_candidate_reader
+      - name: Author separate provisional evaluation input packets
+        run: |
+          python render_phase1c_evaluation_cases.py --check
+          createdb deal_desk_evaluation_inputs
+          psql -X -v ON_ERROR_STOP=1 -d deal_desk_evaluation_inputs -f schema.sql
+          psql -X -v ON_ERROR_STOP=1 -d deal_desk_evaluation_inputs -f /tmp/phase1c_compiled_rules.sql
+          EVALUATION_DATABASE_URL=postgresql://postgres:phase1c_ci_only@localhost:5432/deal_desk_evaluation_inputs PHASE1C_EVALUATION_PACKETS=/tmp/phase1c_evaluation_packets PHASE1C_EVALUATION_PACKETS_V1=/tmp/phase1c_evaluation_packets_v1 python -m unittest -v test_phase1c_evaluation_cases
+      - name: Preserve provisional evaluation inputs without answers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-provisional-evaluation-inputs
+          path: /tmp/phase1c_evaluation_packets
+          if-no-files-found: error
+      - name: Replay supplemental Configuration inputs without answer labels
+        run: |
+          python render_phase1c_configuration_extension.py --check
+          EVALUATION_DATABASE_URL=postgresql://postgres:phase1c_ci_only@localhost:5432/deal_desk_evaluation_inputs PHASE1C_CONFIGURATION_PACKETS=/tmp/phase1c_configuration_packets python -m unittest -v test_phase1c_configuration_extension
+      - name: Preserve supplemental Configuration source and reader packets
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-configuration-extension-v1
+          path: |
+            phase-1c-data/evaluation/configuration-extension/v1/source_cases.json
+            phase-1c-data/evaluation/configuration-extension/v1/authoring_manifest.json
+            /tmp/phase1c_configuration_packets
+          if-no-files-found: error
+      - name: Keep supplemental preflight cases out of six-specialist review
+        run: |
+          PHASE1C_CONFIGURATION_PACKETS=/tmp/phase1c_configuration_packets python -m unittest -v test_phase1c_configuration_review_scope
+          python phase1c_configuration_review_scope.py --packet-directory /tmp/phase1c_configuration_packets --candidate-index-output /tmp/phase1c_configuration_candidate_index.json --blank-review-output /tmp/phase1c_configuration_blank_review.json > /tmp/phase1c_configuration_review_scope.json
+          python -m json.tool /tmp/phase1c_configuration_review_scope.json
+      - name: Preserve blank Configuration review scope, without answers
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-configuration-review-scope
+          path: |
+            /tmp/phase1c_configuration_review_scope.json
+            /tmp/phase1c_configuration_candidate_index.json
+            /tmp/phase1c_configuration_blank_review.json
+          if-no-files-found: error
+      - name: Validate supplemental 039 model-assisted draft against pinned sources
+        run: |
+          python phase1c_evaluation_review.py --index /tmp/phase1c_configuration_candidate_index.json --review-file ../evaluation/configuration-extension/v1/reviews/model_assisted_039_draft.json --packet-directory /tmp/phase1c_configuration_packets > /tmp/phase1c_configuration_039_draft_validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/phase1c_configuration_039_draft_validation.json').read_text())
+          assert report == {'errors': [], 'pending_cases': 0, 'complete_draft_cases': 1, 'independently_reviewed_answers': 0}
+          print(json.dumps(report, sort_keys=True))
+          PY
+      - name: Preserve supplemental draft validation without accepting an answer
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-configuration-039-draft-validation
+          path: /tmp/phase1c_configuration_039_draft_validation.json
+          if-no-files-found: error
+      - name: Audit configuration coverage of pinned v2 inputs without assigning answers
+        run: |
+          python -m unittest -v test_audit_phase1c_evaluation_configuration_coverage
+          python audit_phase1c_evaluation_configuration_coverage.py --index ../evaluation/provisional_packet_index.json --packet-directory /tmp/phase1c_evaluation_packets > /tmp/phase1c_v2_configuration_coverage.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/phase1c_v2_configuration_coverage.json').read_text())
+          assert report['input_index_sha256'] == '7deac5b7a9337a49e3a64b60ca99cd1c0118bb9cfa61ea9abe73b3cacfa444dc'
+          assert report['verified_packet_provider_hashes'] == 72
+          assert report['case_count'] == report['line_count'] == len(report['single_line_cases']) == 36
+          assert report['inactive_or_unsellable_cases'] == []
+          assert report['undeclared_selected_option_cases'] == []
+          assert report['make_to_order_without_matching_bom_cases'] == []
+          assert report['nonempty_configuration_cases'] == [f'EVAL-PREP-{i:03d}' for i in range(13, 27)]
+          assert report['active_compatibility_rule_types'] == ['installation_eligibility']
+          assert report['explicit_ineligible_region_cases'] == ['EVAL-PREP-029', 'EVAL-PREP-030']
+          assert report['independently_reviewed_answers'] == 0
+          PY
+      - name: Preserve source-only v2 configuration coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-v2-configuration-coverage
+          path: /tmp/phase1c_v2_configuration_coverage.json
+          if-no-files-found: error
+      - name: Check reviewer-only draft workspace boundary
+        run: |
+          python -m unittest -v test_phase1c_evaluation_review
+          python phase1c_evaluation_review.py --check-template > /tmp/phase1c_review_workspace_validation.json
+          python -m json.tool /tmp/phase1c_review_workspace_validation.json
+      - name: Preserve review workspace counts without answers
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-review-workspace-validation
+          path: /tmp/phase1c_review_workspace_validation.json
+          if-no-files-found: error
+      - name: Check reviewer-only human disposition intake
+        run: |
+          python -m unittest -v test_phase1c_evaluation_acceptance
+          python phase1c_evaluation_acceptance.py --check-empty > /tmp/phase1c_acceptance_intake_validation.json
+          python -m json.tool /tmp/phase1c_acceptance_intake_validation.json
+      - name: Validate separate model review drafts against pinned facts
+        run: |
+          python phase1c_evaluation_review.py --index ../evaluation/archive/v1/provisional_packet_index.json --review-file ../evaluation/reviews/model_review_draft.json --packet-directory /tmp/phase1c_evaluation_packets_v1 > /tmp/phase1c_model_review_validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/phase1c_model_review_validation.json').read_text())
+          assert report['errors'] == []
+          assert report['complete_draft_cases'] == 36
+          assert report['pending_cases'] == 0
+          assert report['independently_reviewed_answers'] == 0
+          print(json.dumps(report, sort_keys=True))
+          PY
+      - name: Preserve model-draft validation without accepting answers
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-model-review-validation
+          path: /tmp/phase1c_model_review_validation.json
+          if-no-files-found: error
+      - name: Audit evaluation contract facts without assigning answers
+        run: |
+          python -m unittest -v test_phase1c_evaluation_contract
+          python audit_phase1c_evaluation_contract.py --packet-directory /tmp/phase1c_evaluation_packets --index ../evaluation/provisional_packet_index.json > /tmp/phase1c_evaluation_contract_audit.json
+          python audit_phase1c_evaluation_contract.py --packet-directory /tmp/phase1c_evaluation_packets --index ../evaluation/provisional_packet_index.json > /tmp/phase1c_evaluation_contract_audit_replay.json
+          cmp /tmp/phase1c_evaluation_contract_audit.json /tmp/phase1c_evaluation_contract_audit_replay.json
+          sha256sum /tmp/phase1c_evaluation_contract_audit.json
+      - name: Preserve source facts for evaluation contract decisions
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-evaluation-contract-audit
+          path: /tmp/phase1c_evaluation_contract_audit.json
+          if-no-files-found: error
+      - name: Preserve original v1 review sources separately
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-provisional-evaluation-inputs-v1
+          path: /tmp/phase1c_evaluation_packets_v1
+          if-no-files-found: error
+      - name: Validate renewed v2 model drafts without accepting answers
+        run: |
+          python phase1c_evaluation_review.py --review-file ../evaluation/reviews/model_review_v2_draft.json --packet-directory /tmp/phase1c_evaluation_packets > /tmp/phase1c_v2_model_review_validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/phase1c_v2_model_review_validation.json').read_text())
+          assert report == {'errors': [], 'pending_cases': 0, 'complete_draft_cases': 36, 'independently_reviewed_answers': 0}
+          print(json.dumps(report, sort_keys=True))
+          PY
+      - name: Preserve v2 model review counts without answer release
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-v2-model-review-validation
+          path: /tmp/phase1c_v2_model_review_validation.json
+          if-no-files-found: error
+      - name: Reconstruct primary-author corrected draft without accepting answers
+        run: |
+          python phase1c_evaluation_review.py --review-file ../evaluation/reviews/model_review_v2_draft.json --packet-directory /tmp/phase1c_evaluation_packets --amendments ../evaluation/reviews/v2_author_amendments.json --write-amended-review /tmp/phase1c_v2_author_assisted_review.json > /tmp/phase1c_v2_author_assisted_validation.json
+          python -m json.tool /tmp/phase1c_v2_author_assisted_validation.json
+      - name: Preserve reviewer-only author-assisted draft and validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-v2-author-assisted-review
+          path: |
+            /tmp/phase1c_v2_author_assisted_review.json
+            /tmp/phase1c_v2_author_assisted_validation.json
+          if-no-files-found: error
+      - name: Reconcile model-assisted diagnostic corrections without answer acceptance
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          from phase1c_evaluation_review import apply_review_amendments, render, validate_review_workspace
+
+          root = Path('../evaluation')
+          original_bytes = (root / 'reviews/model_review_v2_draft.json').read_bytes()
+          pin = hashlib.sha256(original_bytes).hexdigest()
+          index = json.loads((root / 'provisional_packet_index.json').read_text())
+          original = json.loads(original_bytes)
+          author = json.loads((root / 'reviews/v2_author_amendments.json').read_text())
+          codex = json.loads((root / 'reviews/v2_codex_diagnostic_corrections.json').read_text())
+          assert author['source_review_sha256'] == codex['source_review_sha256'] == pin
+          author_ids = {row['case_id'] for row in author['cases']}
+          codex_ids = {row['case_id'] for row in codex['cases']}
+          assert len(author_ids) == 6 and len(codex_ids) == 22 and author_ids.isdisjoint(codex_ids)
+          combined = apply_review_amendments(original, index, author, source_review_sha256=pin)
+          combined = apply_review_amendments(combined, index, codex, source_review_sha256=pin)
+          report = validate_review_workspace(combined, index, packet_directory='/tmp/phase1c_evaluation_packets')
+          assert report == {'errors': [], 'pending_cases': 0, 'complete_draft_cases': 36, 'independently_reviewed_answers': 0}
+          by_id = {row['case_id']: row for row in combined['cases']}
+          assert all(by_id[cid]['reviewer']['method'] == 'model_assisted' for cid in author_ids | codex_ids)
+          assert all(by_id[cid]['reviewer']['method'] == 'model' for cid in set(by_id) - author_ids - codex_ids)
+          assert all('cancelled receipt' not in ' '.join(by_id[f'EVAL-PREP-{n:03d}']['overall']['human_actions']) for n in (9, 10))
+          assert all('no executable approval route' in by_id[cid]['findings']['Approval']['rationale'].lower() for cid in codex_ids)
+          Path('/tmp/phase1c_v2_combined_diagnostic.json').write_text(render(combined))
+          Path('/tmp/phase1c_v2_combined_diagnostic_validation.json').write_text(render(report))
+          PY
+      - name: Preserve reviewer-only combined diagnostic and validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-v2-combined-diagnostic
+          path: |
+            /tmp/phase1c_v2_combined_diagnostic.json
+            /tmp/phase1c_v2_combined_diagnostic_validation.json
+          if-no-files-found: error
+      - name: Validate provisional Credit v3 source overlay and controls
+        run: |
+          cd ../evaluation
+          python build_credit_v3.py --check
+          python -m unittest -v test_build_credit_v3 test_credit_evidence_gate
+          python build_v3_technical_matrix.py --packets /tmp/phase1c_evaluation_packets --check
+      - name: Replay Credit controls in a separate empty database
+        run: |
+          createdb deal_desk_credit_controls
+          psql -X -v ON_ERROR_STOP=1 -d deal_desk_credit_controls -f schema.sql
+          psql -X -v ON_ERROR_STOP=1 -d deal_desk_credit_controls -f /tmp/phase1c_compiled_rules.sql
+          PYTHONPATH=../evaluation EVALUATION_DATABASE_URL=postgresql://postgres:phase1c_ci_only@localhost:5432/deal_desk_credit_controls PHASE1C_CREDIT_PACKETS=/tmp/phase1c_credit_packets python -m unittest -v test_phase1c_credit_controls
+      - name: Verify blinded source packages without running a model
+        run: |
+          cd ../evaluation/second_model_review
+          python -m unittest -v test_workflow
+          python workflow.py prepare --original-packets /tmp/phase1c_evaluation_packets --configuration-packets /tmp/phase1c_configuration_packets --credit-packets /tmp/phase1c_credit_packets --output /tmp/phase1c_blind_sources
+      - name: Inventory Phase 1C release gates after source and review checks
+        run: |
+          python -m unittest -v test_audit_phase1c_pre_release_gates
+          python audit_phase1c_pre_release_gates.py --check-current > /tmp/phase1c_pre_release_gates.json
+          python -m json.tool /tmp/phase1c_pre_release_gates.json
+      - name: Preserve provisional pre-release gate inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1c-pre-release-gates
+          path: /tmp/phase1c_pre_release_gates.json
+          if-no-files-found: error

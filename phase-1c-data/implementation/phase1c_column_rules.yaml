@@ -57,21 +57,21 @@ tables:
       basis: CAT+SYN
       generation: Product-specific typed attribute template from catalogue calibration
       validation: JSON object; required keys, units and option combinations per archetype must be validated
-      review_before_generation: Contract defined in phase1c_data_contract.yaml; implement and test archetype-specific row validation and option compatibility.
+      resolved_by: Scoped synthetic V1 and isolated V2 disposition on 22 October 2026 in phase1c_product_field_review.md. audit_phase1c_product_attributes checks all 156 V1 rows against mode-specific JSON rules, 36 declared component specs, 24 active BOMs and 25 alternatives for synthetic fit, and guards both V2 dependency product clones against attribute drift. The generated-row validator and source-to-import PostgreSQL reconciliation check loaded product attributes; BOM selection chooses only declared alternatives. This is internal fictional fit, not manufacturer certification or unrestricted arbitrary configuration compatibility. Reopen if catalogue, BOM, component specs, V2 extension or configurable option scope changes.
     list_price:
       sql_type: NUMERIC(14,2)
       nullable: false
       basis: CAT+SYN
       generation: Sample category EUR price band and chosen unit; components may have zero list
       validation: Active sellable price positive and within relevant unit/category band; preserve price-anchor date
-      review_before_generation: Recheck catalogue sample dates, currency, unit and category comparability.
+      resolved_by: Ali selected the bounded fictional V1 EUR tax-exclusive per-stored-unit convention on 22 October 2026; see phase1c_v1_price_basis_decision.md and phase1c_product_field_review.md. The 156-row source-to-import PostgreSQL check, audit_phase1c_price_distribution and audit_phase1c_v1_price_basis_review reconcile all 120 sellable prices and preserve 36 category-default unit mismatches, zero per-SKU observation/effective dates and 400 pre-calibration historical submissions. Category bands are synthetic generator inputs, not unit-specific observed comparables or historical market prices. Reopen for changed prices, units, tax/date assumptions or external-comparability claims; version affected inputs.
     standard_cost:
       sql_type: NUMERIC(14,2)
       nullable: false
       basis: SYN+DER
       generation: Independent category margin draw or BOM materials plus labor and overhead
       validation: Nonnegative; component cost positive; assembled expected material scrap cost remains unrounded, plus labor/overhead within 5%; portfolio realized margin target checked
-      review_before_generation: Prove category/BOM costs and achieved portfolio margin from pilot rows.
+      resolved_by: Ali retained fixed category-p50 synthetic costs for 102 generated V1 sellable rows on 15 October 2026 and selected the fictional tax-exclusive per-stored-unit V1 convention on 22 October; see phase1c_product_field_review.md and phase1c_v1_price_basis_decision.md. audit_phase1c_price_distribution recomputes all 102 costs, verifies positive costs of all 36 components and reports achieved category margins. The 18 explicit buildable costs have BOM rollup checks; the 156-row source-to-import PostgreSQL reconciliation confirms loaded values. These are synthetic standard costs, not supplier procurement quotes; narrow p50 spread and workstation margin above category p90 remain disclosed. Reopen for changed algorithm, cost source, units or catalogue version and replay affected inputs.
     billing_model:
       sql_type: TEXT
       nullable: false
@@ -208,7 +208,7 @@ tables:
       basis: SYN
       generation: Explicit working weekdays/holiday convention per supplier
       validation: Typed JSON object; lead-workday calculation uses this calendar, not generic date addition
-      review_before_generation: The eight-table pilot checks supplier weekdays and lead-workday arithmetic; integrate it with full generated rows and source-specific freshness/evidence.
+      resolved_by: Scoped first-release disposition on 22 October 2026 in phase1c_supplier_calendar_review.md. Imported development and v2 evaluation suppliers have typed calendars with linked-offer and reader checks (test_phase1c_generated_test_batch, audit_phase1c_evaluation_supplier_calendars, test_phase1c_evaluation_cases, test_phase1c_supplier_estimates). The 162 pinned historical offers have no calendar or complete lead bounds and are explicitly outside dated-offer coverage; audit_phase1c_historical_supplier_calendars and its negative tests require zero historical dated estimates. Regional calendar dates are fictional and uncommitted, not supplier promises. Reopen if historical dated routes enter scope or source/calendar/lead values change.
   pricing_rules:
     pricing_rule_id:
       sql_type: TEXT
@@ -453,7 +453,7 @@ tables:
       basis: SYN+CAT
       generation: Versioned typed configuration/region predicate
       validation: JSON object; executable grammar and missing-key result defined before generation
-      review_before_generation: Predicate shape and installation regions are defined in phase1c_data_contract.yaml; complete dependency coverage and row execution.
+      resolved_by: Scoped first-release disposition on 22 October 2026 and bounded supplemental 039 V2 dependency field disposition on 30 October 2026 in phase1c_compatibility_field_review.md. Original v2 evaluation rows contain only regional installation eligibility; the separate supplemental 039 whole-deal V2 requires_product blocker has exact pinned source, selected reader failure and removal mutation in phase1c_postgres_verification_2026-10-30.md. The V2 development pair remains separate. Excludes_product, attribute_constraint and required_deal_field remain validator/unit coverage only and outside released generated rule-family claims. Neither regional eligibility nor a dependency rule proves an appointment, approval or delivery promise. Reopen for other rule families, V1 dependencies, changed source facts or a wider generated scope. This field disposition does not accept any case answer.
     severity:
       sql_type: TEXT
       nullable: false

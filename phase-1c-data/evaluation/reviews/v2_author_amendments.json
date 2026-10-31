@@ -1,0 +1,439 @@
+{
+  "cases": [
+    {
+      "case_id": "EVAL-PREP-019",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Author-assisted correction: the specific timely procurement/production alternative first needs supplier, workshop and dispatch commitments. Routine Regional_Manager routing is provisional information for a valid, fully rechecked proposal; no executable approval is granted now. The supplied quote/value/payment/credit/clause facts add no higher sales, Finance or Legal trigger. Sales Director review applies if a later customer date is proposed, rather than solely because a different PO arrives late."
+        },
+        "Availability": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/lines/0"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/evidence_age"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/bom/0"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/bom_lines"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/inventory"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/requirements"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/production_capacity"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/inbound_supply"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/supplier_offers"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/shipping_lanes/0"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/gates/needs_commitment"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Author-assisted correction: no submitted field selects the October PO as the only route. Its late receipt and missing post-receipt capacity cannot establish a finished delivery, but the matching active earlier offer supports a specific conditional alternative. Maximum lead: compute receipt Sep8, assembly Sep8, test Sep9 (1.5 hours each within seven-hour daily slots), conditional arrival Sep10 on the one-workday lane, matching the existing Sep10 request. Supplier receipt commitment, production booking, other material/configuration checks and completion-day dispatch before cutoff remain outstanding. This illustrative uncommitted route preserves the submitted customer quantity/date; it grants no reservation or delivery promise."
+        },
+        "Policy": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/policy_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal/terms_json"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/gates"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/service_scope"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing/supported_but_late_physical_fulfillment"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Author-assisted correction: evaluate each supported route against the existing requested quantity/date, rather than treating a late alternative PO as a mandatory customer-date revision. The earlier conditional route is timely under the explicitly stated schedule, subject to source commitments and actual dispatch. R1 Sales Director date-change escalation applies if a later customer date is proposed; it is not triggered solely by the presence of one late PO. Other raw commercial findings are retained; no new exception or waiver is authorized."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Ask the supplier to commit the earlier compute receipt and the workshop/warehouse to commit the complete timely operation and dispatch schedule while preserving the customer quantity/date.",
+          "Verify other BOM materials/configuration and cutoff timing; do not treat this illustrative projection as a booking or delivery promise.",
+          "If this timely route cannot be committed, obtain the necessary new capacity evidence or submit a customer-accepted revised proposal; rerun all six responsibilities."
+        ],
+        "rationale": "Author-assisted proposed gate, awaiting substantive acceptance: needs_commitment for the specifically described timely alternative, not an assertion that all supply routes are confirmed or that the late October route becomes timely. Maximum lead: compute receipt Sep8, assembly Sep8, test Sep9 (1.5 hours each within seven-hour daily slots), conditional arrival Sep10 on the one-workday lane, matching the existing Sep10 request. No source field binds the submission to the late PO. Retain missing later-capacity evidence for the October/worst-lead alternatives as route-specific uncertainty; source, operation and dispatch commitments must be obtained and rechecked before reliance.",
+        "unresolved_questions": [
+          "Will the supplier, workshop and warehouse commit the particular timely alternative?",
+          "Does the reviewer accept using the documented feasible conditional route for the whole-deal gate, rather than selecting only the late confirmed PO?"
+        ]
+      },
+      "packet_sha256": "5549aa868e8a561b376e19e05e7ac29482e5e69194f884cb1011bbde8fe96632",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    {
+      "case_id": "EVAL-PREP-020",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Author-assisted correction: the specific timely procurement/production alternative first needs supplier, workshop and dispatch commitments. Routine Regional_Manager routing is provisional information for a valid, fully rechecked proposal; no executable approval is granted now. The supplied quote/value/payment/credit/clause facts add no higher sales, Finance or Legal trigger. Sales Director review applies if a later customer date is proposed, rather than solely because a different PO arrives late."
+        },
+        "Availability": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/lines/0"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/evidence_age"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/bom/0"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/bom_lines"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/inventory"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/requirements"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/production_capacity"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/inbound_supply"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/supplier_offers"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/shipping_lanes/0"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/gates/needs_commitment"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Author-assisted correction: no submitted field selects the October PO as the only route. Its late receipt and missing post-receipt capacity cannot establish a finished delivery, but the matching active earlier offer supports a specific conditional alternative. Modal lead: compute receipt Sep7, assembly Sep7, test Sep8 (2.5 hours each within eight-hour daily slots), conditional arrival Sep10 on the two-workday lane, before the existing Sep11 request. Maximum lead gives Sep9 receipt but lacks a later test observation under the conservative separate-day schedule; do not invent Sep10 capacity. Supplier receipt commitment, production booking, other material/configuration checks and completion-day dispatch before cutoff remain outstanding. This illustrative uncommitted route preserves the submitted customer quantity/date; it grants no reservation or delivery promise."
+        },
+        "Policy": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/policy_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal/terms_json"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/gates"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/service_scope"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing/supported_but_late_physical_fulfillment"
+            }
+          ],
+          "finding": "human_review_required",
+          "rationale": "Author-assisted correction: evaluate each supported route against the existing requested quantity/date, rather than treating a late alternative PO as a mandatory customer-date revision. The earlier conditional route is timely under the explicitly stated schedule, subject to source commitments and actual dispatch. R1 Sales Director date-change escalation applies if a later customer date is proposed; it is not triggered solely by the presence of one late PO. Other raw commercial findings are retained; no new exception or waiver is authorized."
+        }
+      },
+      "overall": {
+        "decision_status": "needs_commitment",
+        "human_actions": [
+          "Ask the supplier to commit the earlier compute receipt and the workshop/warehouse to commit the complete timely operation and dispatch schedule while preserving the customer quantity/date.",
+          "Verify other BOM materials/configuration and cutoff timing; do not treat this illustrative projection as a booking or delivery promise.",
+          "If this timely route cannot be committed, obtain the necessary new capacity evidence or submit a customer-accepted revised proposal; rerun all six responsibilities."
+        ],
+        "rationale": "Author-assisted proposed gate, awaiting substantive acceptance: needs_commitment for the specifically described timely alternative, not an assertion that all supply routes are confirmed or that the late October route becomes timely. Modal lead: compute receipt Sep7, assembly Sep7, test Sep8 (2.5 hours each within eight-hour daily slots), conditional arrival Sep10 on the two-workday lane, before the existing Sep11 request. Maximum lead gives Sep9 receipt but lacks a later test observation under the conservative separate-day schedule; do not invent Sep10 capacity. No source field binds the submission to the late PO. Retain missing later-capacity evidence for the October/worst-lead alternatives as route-specific uncertainty; source, operation and dispatch commitments must be obtained and rechecked before reliance.",
+        "unresolved_questions": [
+          "Will the supplier, workshop and warehouse commit the particular timely alternative?",
+          "Does the reviewer accept using the documented feasible conditional route for the whole-deal gate, rather than selecting only the late confirmed PO?",
+          "If only the maximum-lead receipt is available, what supported operation/cutoff evidence replaces the missing later test slot?"
+        ]
+      },
+      "packet_sha256": "6edee7da614ce168e3422a3f1d013da26769f97e8378cacb107f0a55b036957b",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    {
+      "case_id": "EVAL-PREP-031",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/gates/blocked"
+            }
+          ],
+          "finding": "issue_identified",
+          "rationale": "Author-assisted correction: current executable approval route is empty while this submission is hard-blocked. Credit exposure exceeds the 15% hard cap; no ordinary sales or Finance-exception route may waive it. After an allowed corrected submission clears the hard block, perform a fresh six-responsibility assessment before deriving a route. Any earlier Regional_Manager/Sales_Director mention is hypothetical information for a later valid proposal, not a required executable approval step now. No approval, reservation, source commitment or delivery promise is granted."
+        }
+      },
+      "overall": {
+        "decision_status": "blocked",
+        "human_actions": [
+          "Finance and Sales must reduce exposure or establish a revised authorized limit and submit a new compliant review; no approval of current exposure.",
+          "No executable approval route exists for this hard-blocked submission; do not send the current deal to an ordinary sales or exception approver.",
+          "After an allowed corrected submission clears the credit exposure prohibition, rerun all six responsibilities and determine the applicable human route. Allocation and dispatch still require their separate human commitments after the deal is eligible."
+        ],
+        "rationale": "Draft EVAL-PREP-031: blocked follows declared precedence among blocked, approval_required. At WH-EU-CENTRAL, free stock = 5.000−0.000 = 5.000; demand is 2. Snapshot 2026-09-01 11:06:00+00:00 is 1.416667 hours old at the run. Net stock covers the order. Run time is 2026-09-01T14:31:00+02:00, before 16:00:00 cutoff; permitted weekday dispatch on 2026-09-01 plus 1 transit workdays gives indicative arrival 2026-09-02, before requested 2026-09-10. No allocation or delivery promise follows from this calculation. Hard pricing/exposure prohibition controls despite adequate physical stock. All six responsibility findings remain part of this model draft; independent acceptance is outstanding. Author-assisted clarification: the current hard block withholds every executable approval route. Any sales role mentioned in the original draft refers only to a future corrected submission after a fresh assessment; no waiver or approval is granted.",
+        "unresolved_questions": []
+      },
+      "packet_sha256": "cba1d10ad0a15512a5a75a9c1a34b2f852e49bd2831b61388bf568c253c284ce",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    {
+      "case_id": "EVAL-PREP-032",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/gates/blocked"
+            }
+          ],
+          "finding": "issue_identified",
+          "rationale": "Author-assisted correction: current executable approval route is empty while this submission is hard-blocked. Credit exposure exceeds the 15% hard cap; no ordinary sales or Finance-exception route may waive it. After an allowed corrected submission clears the hard block, perform a fresh six-responsibility assessment before deriving a route. Any earlier Regional_Manager/Sales_Director mention is hypothetical information for a later valid proposal, not a required executable approval step now. No approval, reservation, source commitment or delivery promise is granted."
+        }
+      },
+      "overall": {
+        "decision_status": "blocked",
+        "human_actions": [
+          "Finance and Sales must reduce exposure or establish a revised authorized limit and submit a new compliant review; no approval of current exposure.",
+          "No executable approval route exists for this hard-blocked submission; do not send the current deal to an ordinary sales or exception approver.",
+          "After an allowed corrected submission clears the credit exposure prohibition, rerun all six responsibilities and determine the applicable human route. Allocation and dispatch still require their separate human commitments after the deal is eligible."
+        ],
+        "rationale": "Draft EVAL-PREP-032: blocked follows declared precedence among blocked, approval_required. At WH-EU-CENTRAL, free stock = 8.000−1.000 = 7.000; demand is 4. Snapshot 2026-09-01 10:57:00+00:00 is 1.583333 hours old at the run. Net stock covers the order. Run time is 2026-09-01T14:32:00+02:00, before 16:00:00 cutoff; permitted weekday dispatch on 2026-09-01 plus 2 transit workdays gives indicative arrival 2026-09-03, before requested 2026-09-11. No allocation or delivery promise follows from this calculation. Hard pricing/exposure prohibition controls despite adequate physical stock. All six responsibility findings remain part of this model draft; independent acceptance is outstanding. Author-assisted clarification: the current hard block withholds every executable approval route. Any sales role mentioned in the original draft refers only to a future corrected submission after a fresh assessment; no waiver or approval is granted.",
+        "unresolved_questions": []
+      },
+      "packet_sha256": "b571f69cfc5c0fb853ddb627283bebb7d07c84b276b78ef6f87568f871ead564",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    {
+      "case_id": "EVAL-PREP-033",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/gates/blocked"
+            }
+          ],
+          "finding": "issue_identified",
+          "rationale": "Author-assisted correction: current executable approval route is empty while this submission is hard-blocked. Category margin shortfall exceeds the two-point exception limit; ordinary discount escalation cannot waive that prohibition. After an allowed corrected submission clears the hard block, perform a fresh six-responsibility assessment before deriving a route. Any earlier Regional_Manager/Sales_Director mention is hypothetical information for a later valid proposal, not a required executable approval step now. No approval, reservation, source commitment or delivery promise is granted."
+        }
+      },
+      "overall": {
+        "decision_status": "blocked",
+        "human_actions": [
+          "Sales must submit a compliant price and rerun margin/policy review; do not route the prohibited price as approvable.",
+          "No executable approval route exists for this hard-blocked submission; do not send the current deal to an ordinary sales or exception approver.",
+          "After an allowed corrected submission clears the margin prohibition, rerun all six responsibilities and determine the applicable human route. Allocation and dispatch still require their separate human commitments after the deal is eligible."
+        ],
+        "rationale": "Draft EVAL-PREP-033: blocked follows declared precedence among blocked, approval_required. At WH-EU-CENTRAL, free stock = 5.000−0.000 = 5.000; demand is 2. Snapshot 2026-09-01 11:08:00+00:00 is 1.416667 hours old at the run. Net stock covers the order. Run time is 2026-09-01T14:33:00+02:00, before 16:00:00 cutoff; permitted weekday dispatch on 2026-09-01 plus 1 transit workdays gives indicative arrival 2026-09-02, before requested 2026-09-10. No allocation or delivery promise follows from this calculation. Hard pricing/exposure prohibition controls despite adequate physical stock. All six responsibility findings remain part of this model draft; independent acceptance is outstanding. Author-assisted clarification: the current hard block withholds every executable approval route. Any sales role mentioned in the original draft refers only to a future corrected submission after a fresh assessment; no waiver or approval is granted.",
+        "unresolved_questions": []
+      },
+      "packet_sha256": "fb304c768fd99fddf3ff2108d17d3de3fc88af056846d431eab40c97c0458276",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    {
+      "case_id": "EVAL-PREP-034",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/approval_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/rules/pricing_rules"
+            },
+            {
+              "document": "packet",
+              "pointer": "/source_rows/deal"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/routing"
+            },
+            {
+              "document": "packet",
+              "pointer": "/business_contract/gates/blocked"
+            }
+          ],
+          "finding": "issue_identified",
+          "rationale": "Author-assisted correction: current executable approval route is empty while this submission is hard-blocked. Category margin shortfall exceeds the two-point exception limit; ordinary discount escalation cannot waive that prohibition. After an allowed corrected submission clears the hard block, perform a fresh six-responsibility assessment before deriving a route. Any earlier Regional_Manager/Sales_Director mention is hypothetical information for a later valid proposal, not a required executable approval step now. No approval, reservation, source commitment or delivery promise is granted."
+        }
+      },
+      "overall": {
+        "decision_status": "blocked",
+        "human_actions": [
+          "Sales must submit a compliant price and rerun margin/policy review; do not route the prohibited price as approvable.",
+          "No executable approval route exists for this hard-blocked submission; do not send the current deal to an ordinary sales or exception approver.",
+          "After an allowed corrected submission clears the margin prohibition, rerun all six responsibilities and determine the applicable human route. Allocation and dispatch still require their separate human commitments after the deal is eligible."
+        ],
+        "rationale": "Draft EVAL-PREP-034: blocked follows declared precedence among blocked, approval_required. At WH-EU-CENTRAL, free stock = 8.000−1.000 = 7.000; demand is 4. Snapshot 2026-09-01 10:59:00+00:00 is 1.583333 hours old at the run. Net stock covers the order. Run time is 2026-09-01T14:34:00+02:00, before 16:00:00 cutoff; permitted weekday dispatch on 2026-09-01 plus 2 transit workdays gives indicative arrival 2026-09-03, before requested 2026-09-11. No allocation or delivery promise follows from this calculation. Hard pricing/exposure prohibition controls despite adequate physical stock. All six responsibility findings remain part of this model draft; independent acceptance is outstanding. Author-assisted clarification: the current hard block withholds every executable approval route. Any sales role mentioned in the original draft refers only to a future corrected submission after a fresh assessment; no waiver or approval is granted.",
+        "unresolved_questions": []
+      },
+      "packet_sha256": "b1eeb756af73dae3752b97d81d98974c6aa81447f5462e862261777d8d1803da",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    }
+  ],
+  "input_index_sha256": "7deac5b7a9337a49e3a64b60ca99cd1c0118bb9cfa61ea9abe73b3cacfa444dc",
+  "reviewer": {
+    "identity": "Primary author: source verification and targeted correction of v2 model draft",
+    "independence_statement": "Primary author read the delivered model draft, approved business contract and source facts, then recomputed arithmetic/conditional schedules. This is not a blind or independent review, expert verification or answer acceptance. Unchanged cases retain original model provenance. This later amendment also corrected inherited overall human actions in hard-blocked cases 031–034; it remains primary-author/model-assisted and unaccepted.",
+    "method": "model_assisted",
+    "reviewed_at": "2026-10-14T21:56:26.944Z"
+  },
+  "schema_version": 1,
+  "source_review_sha256": "9cdffe708cf4fab3ddc022132e60a4aaf2c1f036cc832c01691673203657bc72",
+  "status": "author_assisted_amendments_not_accepted_answers"
+}

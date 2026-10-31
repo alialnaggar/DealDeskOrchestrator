@@ -1,0 +1,94 @@
+{
+  "answer_key_agent_visible": false,
+  "cases": [
+    {
+      "case_id": "EVAL-PREP-039",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [
+            {"document": "packet", "pointer": "/source_rows/rules/approval_rules"},
+            {"document": "packet", "pointer": "/source_rows/compatibility/0"},
+            {"document": "packet", "pointer": "/business_contract/routing"}
+          ],
+          "finding": "human_review_required",
+          "rationale": "The missing add-on is a blocker, so no executable approval route exists for this submitted configuration. The EUR 3084.60 quote and 3% discount do not themselves trigger a higher value or discount sales band; the routine Regional_Manager role would be considered only after a corrected proposal is fully checked. Rule rows describe required human roles, not approvals already granted."
+        },
+        "Availability": {
+          "evidence_refs": [
+            {"document": "packet", "pointer": "/source_rows/lines/0"},
+            {"document": "packet", "pointer": "/source_rows/inventory/0"},
+            {"document": "packet", "pointer": "/source_rows/shipping_lanes/0"},
+            {"document": "packet", "pointer": "/source_rows/deal"},
+            {"document": "packet", "pointer": "/run_context/as_of_at"},
+            {"document": "packet", "pointer": "/business_contract/evidence_age"}
+          ],
+          "finding": "no_issue_identified",
+          "rationale": "For the submitted laptop alone, free stock is 5 minus 0 allocated, covering quantity 2. The 10:36 UTC snapshot is 1 hour 25 minutes old at the 12:01 UTC run. At the Berlin warehouse the run precedes the 16:00 local dispatch cutoff on Tuesday 1 September; one transit workday indicates arrival 2 September, earlier than the requested 10 September. This does not establish stock or delivery for the missing add-on, reserve either product, or promise dispatch. Availability must be checked again for any revised complete configuration."
+        },
+        "Configuration": {
+          "evidence_refs": [
+            {"document": "packet", "pointer": "/run_context/catalog_version_used"},
+            {"document": "packet", "pointer": "/source_rows/lines/0"},
+            {"document": "packet", "pointer": "/source_rows/compatibility/0"}
+          ],
+          "finding": "issue_identified",
+          "rationale": "The active CATALOGUE_2026_V2 whole-deal requires_product rule EVALCFG-003-REQUIRES-ADDON names the submitted laptop as source and product 005-V2 as required target, with blocker severity. The only submitted line is product 004-V2; no target line is present. The submitted configuration fails this explicit dependency even though the existing line is active and sellable."
+        },
+        "Credit": {
+          "evidence_refs": [
+            {"document": "packet", "pointer": "/source_rows/credit"},
+            {"document": "packet", "pointer": "/source_rows/customer"},
+            {"document": "packet", "pointer": "/source_rows/receivables"},
+            {"document": "packet", "pointer": "/source_rows/lines/0"},
+            {"document": "packet", "pointer": "/business_contract/evidence_age"}
+          ],
+          "finding": "no_issue_identified",
+          "rationale": "Customer and credit identity match; both account and credit status are Active. The complete receivables snapshot is empty. EUR 125.00 unbilled commitments plus the full submitted quote of EUR 3084.60 give EUR 3209.60 exposure, below the EUR 260000.00 limit. The commitment observation is 1 hour 25 minutes old at the run, within the declared 24-hour bound. A corrected quote with an add-on requires a new exposure check."
+        },
+        "Policy": {
+          "evidence_refs": [
+            {"document": "packet", "pointer": "/source_rows/rules/policy_rules"},
+            {"document": "packet", "pointer": "/source_rows/deal/terms_json"},
+            {"document": "packet", "pointer": "/source_rows/compatibility/0"},
+            {"document": "packet", "pointer": "/business_contract/gates"}
+          ],
+          "finding": "no_issue_identified",
+          "rationale": "The existing line's 3% discount and 15.463918% gross margin do not trigger the baseline hard caps or its 8% category margin floor. Active account and credit, allowed 30-day terms and the standard clause do not show a separate commercial policy violation. The Configuration blocker still controls the whole-deal gate; this policy finding cannot waive it. Rerun applicable rules after any quote revision."
+        },
+        "Pricing": {
+          "evidence_refs": [
+            {"document": "packet", "pointer": "/source_rows/lines/0"},
+            {"document": "packet", "pointer": "/source_rows/rules/pricing_rules"},
+            {"document": "packet", "pointer": "/business_contract/costing"}
+          ],
+          "finding": "no_issue_identified",
+          "rationale": "For the one submitted line, 2 times EUR 1542.30 is EUR 3084.60 revenue; 2 times EUR 1303.80 is EUR 2607.60 catalogue cost, leaving EUR 477.00 gross profit. The discount from EUR 1590.00 list is 3% and gross margin is 15.463918%, above the 8% end-user computing floor. This calculation excludes the missing add-on and is not a price for a corrected complete deal."
+        }
+      },
+      "overall": {
+        "decision_status": "blocked",
+        "human_actions": [
+          "Sales must correct the submitted configuration by including the required V2 add-on or select another supported product, then submit the changed proposal for complete rechecking.",
+          "Recalculate the revised quote, supply, credit, policies and human route; confirm allocation and delivery only through the authorized human process."
+        ],
+        "rationale": "The active whole-deal dependency is a Configuration blocker. Adequate source facts for the submitted laptop and its commercial terms do not make the incomplete deal approvable. This is a model-assisted candidate interpretation of the pinned source, not an accepted expected answer or an authorization to approve, reserve or promise delivery.",
+        "unresolved_questions": [
+          "Whether this supplemental V2 dependency case enters the bounded release evaluation scope and triggers an explicit compatibility field review."
+        ]
+      },
+      "packet_sha256": "83f65e17b9bfddee6bd32f76742678f3bf60c8e4ffea94d2d3d6479f717b2b99",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "review_status": "draft_complete",
+      "reviewer": {
+        "identity": "OpenAI Codex assistant in Ali's Phase 1C working session",
+        "independence_statement": "Model-assisted source review. The pinned 039 source packet was inspected first; existing v2 model drafts for 001 and 031 were subsequently consulted for route wording and format. No human adjudication, independent answer acceptance or agent scoring is claimed.",
+        "method": "model_assisted",
+        "reviewed_at": "2026-10-23T02:02:49Z"
+      }
+    }
+  ],
+  "independently_reviewed_answers": 0,
+  "input_index_sha256": "2eefeb2b933f0dd6376637d10ac74b72c7dc5a0cafebe7f40b49030ebb8286c1",
+  "schema_version": 1,
+  "status": "review_workspace_not_released_answers"
+}

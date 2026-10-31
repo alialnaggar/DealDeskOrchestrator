@@ -10,25 +10,28 @@ from pathlib import Path
 import json
 
 import yaml
+from validate_phase1c_technical_fit_draft import validate as validate_synthetic_fit
 
 
 HERE = Path(__file__).resolve().parent
 
 
-def audit(portfolio, costs, config):
+def audit(portfolio, costs, config, fit_draft):
     products = {p["product_id"]: p for p in portfolio["products"]}
     headers = {b["bom_id"]: b for b in portfolio["bom_headers"]}
     lines = defaultdict(list)
     for line in portfolio["bom_lines"]:
         lines[line["bom_id"]].append(line)
 
-    # Platform membership is already checked by validate_portfolio. Actual
-    # electrical/mechanical fit needs explicit per-part specifications.
+    # These fields must be in the catalogue read by the runtime, not solely
+    # in a companion file. The full check also compares both representations.
     required_specs = {
-        "compute_kit": ("storage_host_interface", "rated_watts"),
-        "storage_drive": ("host_interface", "form_factor"),
-        "network_power_kit": ("network_interface", "psu_output_watts"),
-        "enclosure_kit": ("supported_form_factor", "power_budget_watts"),
+        "compute_kit": ("storage_host_interface", "network_slot_interface",
+                        "board_form_factor", "rated_watts"),
+        "storage_drive": ("host_interface", "form_factor", "rated_watts"),
+        "network_power_kit": ("network_interface", "psu_output_watts", "rated_watts"),
+        "enclosure_kit": ("supported_board_form_factors", "supported_drive_form_factors",
+                          "drive_slots", "power_budget_watts", "cooling_capacity_watts"),
     }
     missing = {}
     for component in (p for p in products.values() if p["fulfillment_mode"] == "component"):
@@ -38,9 +41,9 @@ def audit(portfolio, costs, config):
         if absent:
             missing[component["product_id"]] = absent
 
-    # Even populated fields would need cross-part checks and source evidence;
-    # presence alone cannot certify that a configuration fits.
-    affected = sorted(bid for bid in lines if bid in headers)
+    fit = validate_synthetic_fit(portfolio, fit_draft)
+    affected = ([] if fit["synthetic_fit_check_passed"] else
+                sorted(bid for bid in lines if bid in headers))
     margin_limits = config["commercial_supply"]["standard_cost"][
         "target_list_margin_percent_by_category"]
     outliers = []
@@ -59,6 +62,8 @@ def audit(portfolio, costs, config):
     return {
         "component_specifications_missing": missing,
         "boms_awaiting_detailed_compatibility": affected,
+        "synthetic_fit_checked_boms": fit["checked_boms"] if not affected else 0,
+        "synthetic_fit_errors": fit["errors"],
         "margin_outliers_above_proposed_p90": outliers,
         "price_comparability_verified": False,
         "component_sourcing_verified": False,
@@ -70,4 +75,5 @@ if __name__ == "__main__":
     portfolio = json.loads((HERE / "phase1c_portfolio_draft.json").read_text())
     costs = json.loads((HERE / "phase1c_build_cost_draft.json").read_text())
     config = yaml.safe_load((HERE / "calibration_config.yaml").read_text())
-    print(json.dumps(audit(portfolio, costs, config), indent=2))
+    fit_draft = json.loads((HERE / "phase1c_technical_fit_draft.json").read_text())
+    print(json.dumps(audit(portfolio, costs, config, fit_draft), indent=2))

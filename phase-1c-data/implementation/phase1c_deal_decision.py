@@ -95,7 +95,8 @@ def assemble_deal_decision(bundle):
             date = fact.get("earliest_full_date")
             if status == "late_alternative" or (status == "feasible_uncommitted"
                                                  and fact.get("shipping_by_request") is False):
-                revisions.append({"line_id": line_id, "code": "requested_date_not_supported"})
+                if "candidate_trace" not in bundle:
+                    revisions.append({"line_id": line_id, "code": "requested_date_not_supported"})
             elif status == "infeasible" or fact.get("production_status") == "infeasible_without_replenishment":
                 revisions.append({"line_id": line_id, "code": "supply_or_capacity_shortfall"})
             elif status in ("unknown", "pending_production_check"):
@@ -104,6 +105,19 @@ def assemble_deal_decision(bundle):
                 commitments.append({"line_id": line_id, "code": "supply_or_production_not_committed"})
             elif status != "confirmed_by_date":
                 evidence_gaps.append(f"fulfillment_status_unsupported:{line_id}")
+            if "candidate_trace" in bundle:
+                assessment = bundle["candidate_trace"]["assessment"]
+                status = assessment["status"]
+                source_ids = [source for part in assessment["slices"] for source in part["source_ids"]]
+                if status == "supply_supported_unreserved":
+                    # A later slice changes the customer request, even when
+                    # supply evidence exists. Human/customer acceptance remains open.
+                    revisions.append({"line_id": line_id,
+                                      "code": "partial_delivery_requires_customer_acceptance"})
+                else:
+                    evidence_gaps.append(f"candidate_delivery_not_verified:{line_id}")
+                    revisions.append({"line_id": line_id,
+                                      "code": "partial_delivery_requires_customer_acceptance"})
         installation = fact.get("installation") if line["installation_requested"] else "not_requested"
         if installation == "ineligible":
             config_blocks.append({"line_id": line_id, "code": "installation_ineligible"})
@@ -116,6 +130,9 @@ def assemble_deal_decision(bundle):
                             "earliest_full_date": date, "installation": installation,
                             "source_ids": sorted(set(source_ids)),
                             "tentative": status == "feasible_uncommitted"})
+        if "candidate_trace" in bundle and line["fulfillment_mode"] in PHYSICAL_MODES:
+            fulfillment[-1]["candidate_slices"] = bundle["candidate_trace"]["assessment"]["slices"]
+            fulfillment[-1]["original_requested_date"] = bundle["deal"]["requested_delivery_date"]
 
     for finding in bundle["facts"].get("compatibility", []):
         if finding["status"] in ("fail", "unsupported"):
@@ -166,7 +183,7 @@ def assemble_deal_decision(bundle):
         "approval_routing": {"required_roles": commercial["required_approvals"] if status == "approval_required" else [],
                              "route_withheld": status != "approval_required"},
     }
-    return {"run_id": bundle["run"]["run_id"], "deal_id": bundle["deal"]["deal_id"],
+    result = {"run_id": bundle["run"]["run_id"], "deal_id": bundle["deal"]["deal_id"],
             "as_of_at": bundle["run"]["as_of_at"],
             "policy_set_code": bundle["run"]["applied_policy_set_code"],
             "catalog_version": bundle["run"]["catalog_version_used"],
@@ -176,3 +193,9 @@ def assemble_deal_decision(bundle):
             "required_approvals": specialists["approval_routing"]["required_roles"],
             "commercial_rule_hits": rule_hits,
             "note": "A required role is a review route, not an actual approval; no supply is reserved."}
+    if "candidate_trace" in bundle:
+        result["candidate_trace"] = bundle["candidate_trace"]
+        result["customer_constraints_unmet"] = ["original_requested_delivery_date"]
+        result["note"] += " Candidate is a comparison for human/customer review, not a revised submission."
+    return result
+

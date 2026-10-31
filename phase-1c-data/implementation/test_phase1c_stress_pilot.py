@@ -101,6 +101,21 @@ class StressReaderTests(unittest.TestCase):
         self.assertFalse(any(source.startswith("STRESS-") for source in
                              assemble_deal_decision(baseline)["specialists"]["availability"][0]["source_ids"]))
 
+    def test_v2_extension_does_not_change_any_of_36_v1_decisions(self):
+        numbers = [*range(260001, 260019), *range(270001, 270019)]
+        before = {number: assemble_deal_decision(self.read(number)) for number in numbers}
+        self.conn.execute("SAVEPOINT dependency_v2_scope")
+        try:
+            for statement in re.findall(r"^(?:INSERT INTO|UPDATE deals SET) .*?;",
+                                        (HERE / "phase1c_dependency_pilot.sql").read_text(),
+                                        re.M | re.S):
+                self.conn.execute(statement)
+            after = {number: assemble_deal_decision(self.read(number)) for number in numbers}
+            self.assertEqual(after, before)
+        finally:
+            self.conn.execute("ROLLBACK TO SAVEPOINT dependency_v2_scope")
+            self.conn.execute("RELEASE SAVEPOINT dependency_v2_scope")
+
 
 if __name__ == "__main__":
     unittest.main()

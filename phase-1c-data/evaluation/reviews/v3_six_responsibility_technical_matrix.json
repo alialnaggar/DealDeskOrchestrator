@@ -1,0 +1,2394 @@
+{
+  "accepted_answers": 0,
+  "base_v2_index_sha256": "7deac5b7a9337a49e3a64b60ca99cd1c0118bb9cfa61ea9abe73b3cacfa444dc",
+  "cases": [
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "STOCK-READY",
+      "case_id": "EVAL-PREP-001",
+      "overall_technical_gate_proposal": "approval_required",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Fresh free stock supports the submitted quantity subject to dispatch confirmation.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 3918.80 + commitments EUR 125.00 = exposure EUR 4043.80, limit EUR 260000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 3918.80, list EUR 4040.00, standard cost EUR 3312.80, quoted gross margin 15.46%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "80d4cb16172cefca0d1f4779b14edfb0fc729efb025c2179010d2942fc527e63",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "85c264210845ba4958ba95b24038170bbc0f1ee2fe936c3feb3306989b12096a"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "STOCK-READY",
+      "case_id": "EVAL-PREP-002",
+      "overall_technical_gate_proposal": "approval_required",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Fresh free stock supports the submitted quantity subject to dispatch confirmation.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 7595.20 + commitments EUR 250.00 = exposure EUR 7845.20, limit EUR 270000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 7595.20, list EUR 8080.00, standard cost EUR 6625.60, quoted gross margin 12.77%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "5d97ab2af7731f3014ed507b3384f4c3e06bb0ea135af53aa9e1a0b66a0e2663",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "ecc38197a2ac75f5c1e2c44a00c98e4bb09ecad92aded6e21e08b10031be78db"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "STOCK-ALLOCATED",
+      "case_id": "EVAL-PREP-003",
+      "overall_technical_gate_proposal": "needs_revision",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "All observed stock is allocated; the submitted delivery needs a changed proposal or new evidence.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 3918.80 + commitments EUR 375.00 = exposure EUR 4293.80, limit EUR 280000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 3918.80, list EUR 4040.00, standard cost EUR 3312.80, quoted gross margin 15.46%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "9072b3083ed5d48ef5da028d57803e57f98cc3d4b8deeaf5233f1c1a2425a4dc",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "90f21c43f31e9f1dcb6284e35b2999155afa5f3ca1c37a8e8f6c54c9fe174e00"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "STOCK-ALLOCATED",
+      "case_id": "EVAL-PREP-004",
+      "overall_technical_gate_proposal": "needs_revision",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "All observed stock is allocated; the submitted delivery needs a changed proposal or new evidence.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 7595.20 + commitments EUR 500.00 = exposure EUR 8095.20, limit EUR 290000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 7595.20, list EUR 8080.00, standard cost EUR 6625.60, quoted gross margin 12.77%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "9022895e0db8deff0a619db263983329f48bd0f726e8071c01930d83ffaebe95",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "a8dbd54e2cee27cfae776f6199e79d36e360cf2b6163d5f8d6c6f1d360d368a3"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "STOCK-STALE",
+      "case_id": "EVAL-PREP-005",
+      "overall_technical_gate_proposal": "needs_evidence",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "The stock observation is stale; refresh before claiming availability or shortage.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "evidence_needed"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 3918.80 + commitments EUR 625.00 = exposure EUR 4543.80, limit EUR 300000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 3918.80, list EUR 4040.00, standard cost EUR 3312.80, quoted gross margin 15.46%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "7137474bf7e6187188d59fee9520c9b161ea5f9bc61cfdd353622e23e6f2f8e9",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "907bbeddd810598152cfc526450347ed082453f1637a8245970e4b38b9ac5e57"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "STOCK-STALE",
+      "case_id": "EVAL-PREP-006",
+      "overall_technical_gate_proposal": "needs_evidence",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "The stock observation is stale; refresh before claiming availability or shortage.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "evidence_needed"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 7595.20 + commitments EUR 750.00 = exposure EUR 8345.20, limit EUR 310000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 7595.20, list EUR 8080.00, standard cost EUR 6625.60, quoted gross margin 12.77%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "2c75667976cbb6317ffd20169c6db67dad9c41b2c0c087e8fe3385324c3d4c39",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "6220e24c73d9c4d7f1bc61c26e58390353e39699143a9b766830a074ba8de814"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "SUPPLY-CONFIRMED",
+      "case_id": "EVAL-PREP-007",
+      "overall_technical_gate_proposal": "approval_required",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Confirmed receipt supports a dated route; the separate offer is uncommitted.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 5645.40 + commitments EUR 875.00 = exposure EUR 6520.40, limit EUR 320000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 5645.40, list EUR 5820.00, standard cost EUR 4772.40, quoted gross margin 15.46%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "5a619d81fe9007918ba20fa442b738b7ebfa5cb0e7b68933b16c5c80469af1c1",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "8a8ed227f3e0a1d5f400f5820d11961c241d125f8109ea685b265eb7e47deb93"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "SUPPLY-CONFIRMED",
+      "case_id": "EVAL-PREP-008",
+      "overall_technical_gate_proposal": "approval_required",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Confirmed receipt supports a dated route; the separate offer is uncommitted.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 10941.60 + commitments EUR 1000.00 = exposure EUR 11941.60, limit EUR 330000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 10941.60, list EUR 11640.00, standard cost EUR 9544.80, quoted gross margin 12.77%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "3f3b255a69738a832a23d8a5fa579a51eb56c583ffba31dd6a66d6a812808731",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "4c1bb8f20a8064e8cea9c0c332bac3e7b37001e9e94ec4e553ab2755bf9963cd"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "SUPPLY-OFFER-ONLY",
+      "case_id": "EVAL-PREP-009",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Only an uncommitted offer supports a possible route; obtain supplier and dispatch commitments.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 5645.40 + commitments EUR 1125.00 = exposure EUR 6770.40, limit EUR 340000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 5645.40, list EUR 5820.00, standard cost EUR 4772.40, quoted gross margin 15.46%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "bed348a585b9cbcaaca8e2a2082b6289bc1125b998672b441a4fda4cb43fb8f9",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "258cc9d217aa0e5ba3e504103e41e3d4bb0e897535dcf536ee6319dc924ddbde"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "SUPPLY-OFFER-ONLY",
+      "case_id": "EVAL-PREP-010",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Only an uncommitted offer supports a possible route; obtain supplier and dispatch commitments.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 10941.60 + commitments EUR 1250.00 = exposure EUR 12191.60, limit EUR 350000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 10941.60, list EUR 11640.00, standard cost EUR 9544.80, quoted gross margin 12.77%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "b02e36696b1192229fa3f3f8a03b24571310c29f199642efa53f3574679612b8",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "0b517ecbaf6ea9f44d6f274cad6ce2d7d602ee8ff7ff46f3037d58c7b489e896"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "SUPPLY-CANCELLED",
+      "case_id": "EVAL-PREP-011",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Cancelled receipt is unusable; a separate offer needs a new commitment.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 5645.40 + commitments EUR 1375.00 = exposure EUR 7020.40, limit EUR 360000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 5645.40, list EUR 5820.00, standard cost EUR 4772.40, quoted gross margin 15.46%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "0f4e90857be2efdda23742539c542b55a85dfe4f3fe7601a6b473dd7be354d13",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "23ff6b92460f38459c4223464d8720afb1946b7211d96c87579d5dffbf978811"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "SUPPLY-CANCELLED",
+      "case_id": "EVAL-PREP-012",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Cancelled receipt is unusable; a separate offer needs a new commitment.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 10941.60 + commitments EUR 1500.00 = exposure EUR 12441.60, limit EUR 370000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 10941.60, list EUR 11640.00, standard cost EUR 9544.80, quoted gross margin 12.77%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "1769145a278a4356b8d887b26b729d9a9375aab260c92f9775c89183b5b7b562",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "439d21a9ef2973437d9b186e9042437c6bf0febff328b2e82a1c8ffc7f16db67"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "BUILD-READY",
+      "case_id": "EVAL-PREP-013",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Materials and capacity are observed, but no workshop or dispatch slot is booked.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 2037.00 + commitments EUR 1625.00 = exposure EUR 3662.00, limit EUR 380000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 2037.00, list EUR 2100.00, standard cost EUR 1430.00, quoted gross margin 29.80%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "24762884769d0c1a0d3e7c9be832d81629bc2279b2c45e58c1c54ba4ed958e76",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "9ef239370dd6cbabc0369373ef398a3ce536369cdf98b07f9ed4a9d0a46db5fc"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "BUILD-READY",
+      "case_id": "EVAL-PREP-014",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Materials and capacity are observed, but no workshop or dispatch slot is booked.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 3948.00 + commitments EUR 1750.00 = exposure EUR 5698.00, limit EUR 390000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 3948.00, list EUR 4200.00, standard cost EUR 2860.00, quoted gross margin 27.56%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "cfbb2be9d60cafb45e44c6e877d0cb012a7bf0445a6e97d7ae6a084402c5a9f9",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "d1d6b5ab62ba1e15301db82341e127c3b8dc6df992f620af324310db69040bc4"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "BUILD-SUBSTITUTE",
+      "case_id": "EVAL-PREP-015",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Alternate component receipt needs exact BOM choice and workshop/dispatch commitments.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 2037.00 + commitments EUR 1875.00 = exposure EUR 3912.00, limit EUR 400000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 2037.00, list EUR 2100.00, standard cost EUR 1430.00, quoted gross margin 29.80%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "b6b40a791af78f504f9143b689e14c83d7935efc51c12bb46318e989ac685433",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "528d9b30b325b635df74915e1688efa08ae38b5f84838c70bda91e83bde4c6dc"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "BUILD-SUBSTITUTE",
+      "case_id": "EVAL-PREP-016",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Alternate component receipt needs exact BOM choice and workshop/dispatch commitments.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 3948.00 + commitments EUR 2000.00 = exposure EUR 5948.00, limit EUR 410000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 3948.00, list EUR 4200.00, standard cost EUR 2860.00, quoted gross margin 27.56%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "8f1fe69b6d6d4f5e2f2757422678304422f3b3c34d4f9e6f60b3ba304877bfea",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "de544a00e862255ee631141713a1cf04e7a09b158940c9e781ab77f9a09ed6a5"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "BUILD-CAPACITY-STALE",
+      "case_id": "EVAL-PREP-017",
+      "overall_technical_gate_proposal": "needs_evidence",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Workshop capacity is stale; current capacity cannot be inferred.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "evidence_needed"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 2037.00 + commitments EUR 2125.00 = exposure EUR 4162.00, limit EUR 420000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 2037.00, list EUR 2100.00, standard cost EUR 1430.00, quoted gross margin 29.80%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "c497769337268bf292bbc2fae6d897c22ca88cebf292ad514c27d76937165504",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "66fde7ef71e0ffa038d24d4e505f9fa746ed54c8f629fc3f2f9b6ab9a24291f2"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "BUILD-CAPACITY-STALE",
+      "case_id": "EVAL-PREP-018",
+      "overall_technical_gate_proposal": "needs_evidence",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Workshop capacity is stale; current capacity cannot be inferred.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "evidence_needed"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 3948.00 + commitments EUR 2250.00 = exposure EUR 6198.00, limit EUR 430000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 3948.00, list EUR 4200.00, standard cost EUR 2860.00, quoted gross margin 27.56%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "68af2a45af0deb79e4f22f771ef0c33ac34c408b40fd1ff85cd21d5f03d84e32",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "c3e9ce922f65e3e0cc8672c32b29e701e47e18ef3fe95d5b344d99c52d88199c"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "BUILD-HORIZON",
+      "case_id": "EVAL-PREP-019",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Late confirmed PO is not the requested route; earlier offer and workshop route need commitments.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 2037.00 + commitments EUR 2375.00 = exposure EUR 4412.00, limit EUR 440000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 2037.00, list EUR 2100.00, standard cost EUR 1430.00, quoted gross margin 29.80%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "5549aa868e8a561b376e19e05e7ac29482e5e69194f884cb1011bbde8fe96632",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "b80e075b04ab2213d4804da3175d09bfa857911ed92cbbeb87b170132f7da738"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "BUILD-HORIZON",
+      "case_id": "EVAL-PREP-020",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Ali's recorded conditional modal route is a review assumption; maximum lead and October PO do not establish requested-date capacity.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 3948.00 + commitments EUR 2500.00 = exposure EUR 6448.00, limit EUR 450000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 3948.00, list EUR 4200.00, standard cost EUR 2860.00, quoted gross margin 27.56%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Case 020 modal route is an author business interpretation, not acceptance.",
+      "v2_packet_sha256": "6edee7da614ce168e3422a3f1d013da26769f97e8378cacb107f0a55b036957b",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "6fb0f128ee2c8d6661dc2b551c5f9f06ab45304694d1e0157c0dbfea43b16b48"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "DIGITAL-PROVED",
+      "case_id": "EVAL-PREP-021",
+      "overall_technical_gate_proposal": "approval_required",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Binding digital pool and separate full-term proof support only a proposed activation.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/digital_capacity",
+            "provider:/records"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 16528.80 + commitments EUR 2625.00 = exposure EUR 19153.80, limit EUR 460000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 24; quote EUR 16528.80, list EUR 17040.00, standard cost EUR 10564.80, quoted gross margin 36.08%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "34dedd161be0b150512d0ffde9af5bbc5a10f35069fb4bce5d685939e24696e7",
+      "v2_provider_file_sha256": "5677b084ef5ddb0c58611b1168d20fed2c342443319f0288832902a4fd14cd8e",
+      "v3_scope_sha256": "1191027377b0d4179960b4c48e0a63dd508fd02debf5017f32918b8ef1db09fc"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "DIGITAL-PROVED",
+      "case_id": "EVAL-PREP-022",
+      "overall_technical_gate_proposal": "approval_required",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Binding digital pool and separate full-term proof support only a proposed activation.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/digital_capacity",
+            "provider:/records"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 32035.20 + commitments EUR 2750.00 = exposure EUR 34785.20, limit EUR 470000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 48; quote EUR 32035.20, list EUR 34080.00, standard cost EUR 21129.60, quoted gross margin 34.04%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "23326392a8a4a34d689ebd3713f36851289a5e15e3c027f880dd11bf39e9e652",
+      "v2_provider_file_sha256": "d7fedee60d5c0c44f5cafc7ee310b92614e9b2ca034a32f45fbef67f49b7a5dc",
+      "v3_scope_sha256": "83efb6030df719310e62e419323188cebfd0b9aeb66c5d806ced784defa5d0f5"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "DIGITAL-NO-PROOF",
+      "case_id": "EVAL-PREP-023",
+      "overall_technical_gate_proposal": "needs_evidence",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Pool reference without separate matching provider proof is insufficient.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/digital_capacity",
+            "provider:/records"
+          ],
+          "technical_recommendation": "evidence_needed"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 16528.80 + commitments EUR 2875.00 = exposure EUR 19403.80, limit EUR 480000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 24; quote EUR 16528.80, list EUR 17040.00, standard cost EUR 10564.80, quoted gross margin 36.08%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "c5cfd05dae6ede4235d26832147c6b7dd567c1d859042375a560c18c8a6fc6cd",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "2f7f538905ab869e487913654ac6069f178e60d37147a548e9666ff9b8f85c11"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "DIGITAL-NO-PROOF",
+      "case_id": "EVAL-PREP-024",
+      "overall_technical_gate_proposal": "needs_evidence",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Pool reference without separate matching provider proof is insufficient.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/digital_capacity",
+            "provider:/records"
+          ],
+          "technical_recommendation": "evidence_needed"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 32035.20 + commitments EUR 3000.00 = exposure EUR 35035.20, limit EUR 490000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 48; quote EUR 32035.20, list EUR 34080.00, standard cost EUR 21129.60, quoted gross margin 34.04%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "49ef1ed5fe79aa1309fd40fd27b5d0af52107663f757e05438d1feeb7bef90c5",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "b76db477babebab47a724a7052e099324da633ee0ede859d18e5ec0544c9a699"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "DIGITAL-EXPIRED",
+      "case_id": "EVAL-PREP-025",
+      "overall_technical_gate_proposal": "needs_evidence",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Provider proof does not cover the full anniversary term.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/digital_capacity",
+            "provider:/records"
+          ],
+          "technical_recommendation": "evidence_needed"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 16528.80 + commitments EUR 3125.00 = exposure EUR 19653.80, limit EUR 500000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 24; quote EUR 16528.80, list EUR 17040.00, standard cost EUR 10564.80, quoted gross margin 36.08%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "ac14c1af1b88d315144641bf63b96a2710bdecf7722d5c3ca6527148f0f916b0",
+      "v2_provider_file_sha256": "26dd6a192219baf145e37b4400fbb9caa2fa1b45050694110ab53bdebe439b09",
+      "v3_scope_sha256": "4c8711f246a9ca07f6f56b88c12d167ad6c13e314b08f063f85d61086c81e6a5"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "DIGITAL-EXPIRED",
+      "case_id": "EVAL-PREP-026",
+      "overall_technical_gate_proposal": "needs_evidence",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Provider proof does not cover the full anniversary term.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/digital_capacity",
+            "provider:/records"
+          ],
+          "technical_recommendation": "evidence_needed"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 32035.20 + commitments EUR 3250.00 = exposure EUR 35285.20, limit EUR 510000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 48; quote EUR 32035.20, list EUR 34080.00, standard cost EUR 21129.60, quoted gross margin 34.04%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "3c7a7004edc958b61868b59fe9f55d3b96538145d7a302690fba425f80b14b55",
+      "v2_provider_file_sha256": "1efe0169c024fe6a3c6dcca833b31af595415e0d07aa7d27c294950a30544a3e",
+      "v3_scope_sha256": "91c72874f0aec7d13709d3c303523d4f49c99cbd82e1dbba5f4ecf0db06f959e"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "SERVICE-COVERED",
+      "case_id": "EVAL-PREP-027",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Regional coverage is eligible but no service appointment is booked.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 42408.40 + commitments EUR 3375.00 = exposure EUR 45783.40, limit EUR 520000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 42408.40, list EUR 43720.00, standard cost EUR 22734.40, quoted gross margin 46.39%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "c894adb22258cccd0cb207265b07d79afaa52f555721c5973fb39f0090c44eb2",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "874a149e63905683175a463a8ec0dedcb347c623c104baed871b8e3e698f472f"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "SERVICE-COVERED",
+      "case_id": "EVAL-PREP-028",
+      "overall_technical_gate_proposal": "needs_commitment",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Regional coverage is eligible but no service appointment is booked.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 82193.60 + commitments EUR 3500.00 = exposure EUR 85693.60, limit EUR 530000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 82193.60, list EUR 87440.00, standard cost EUR 45468.80, quoted gross margin 44.68%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "b66bd7a6ad845e3595aa8cf9af1dd00931c671e70f29f50f3e9a33ddb1e5aaa3",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "f33dfa9f8bba89caecfc9d2285bd8aa36a54483ee81575c76b232499d59c71b2"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "SERVICE-OUTSIDE",
+      "case_id": "EVAL-PREP-029",
+      "overall_technical_gate_proposal": "needs_revision",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Regional service rule is ineligible for the submitted destination.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Check submitted product, selected options, version and dependencies; ineligible service attribution needs a reviewer choice.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 42408.40 + commitments EUR 3625.00 = exposure EUR 46033.40, limit EUR 540000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 42408.40, list EUR 43720.00, standard cost EUR 22734.40, quoted gross margin 46.39%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "804c94095b50d86bea226db6e27f0afca3c818b619a1c12624c49bb066b8ca30",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "a72061ece6366788b65772823ce18a6608aa63d2eca95eff96218e95f1478d8b"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "SERVICE-OUTSIDE",
+      "case_id": "EVAL-PREP-030",
+      "overall_technical_gate_proposal": "needs_revision",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Regional service rule is ineligible for the submitted destination.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Check submitted product, selected options, version and dependencies; ineligible service attribution needs a reviewer choice.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 82193.60 + commitments EUR 3750.00 = exposure EUR 85943.60, limit EUR 550000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check compiled policy predicates and avoid duplicating an Availability limitation as a separate policy finding.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "requires_adjudication"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 82193.60, list EUR 87440.00, standard cost EUR 45468.80, quoted gross margin 44.68%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "a4dda68a57028c87c6be5c6799a34b896db7cfbe88f3e5908aa13a5ddcc6044e",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "6ca0853620be4bb8093a8e1ac5fb8be4b38c2368ab151a78ea644a14fdaeec9a"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "CREDIT-LIMIT",
+      "case_id": "EVAL-PREP-031",
+      "overall_technical_gate_proposal": "blocked",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "Blocked proposal has no executable approval route; retain conditional human actions only.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Stock appears fresh; the separate credit cap controls the overall gate.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 3918.80 + commitments EUR 900.00 = exposure EUR 4818.80, limit EUR 1000.00. Exposure exceeds the credit cap; blocked route requires verification.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check credit cap, hard price floor or legal-review clause against the compiled predicates.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 3918.80, list EUR 4040.00, standard cost EUR 3312.80, quoted gross margin 15.46%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "cba1d10ad0a15512a5a75a9c1a34b2f852e49bd2831b61388bf568c253c284ce",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "f1c59e6772b9c7ba0801bcda60b297d8f861eee0602f642b5d570d7299060201"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "CREDIT-LIMIT",
+      "case_id": "EVAL-PREP-032",
+      "overall_technical_gate_proposal": "blocked",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "Blocked proposal has no executable approval route; retain conditional human actions only.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Stock appears fresh; the separate credit cap controls the overall gate.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 7595.20 + commitments EUR 900.00 = exposure EUR 8495.20, limit EUR 1000.00. Exposure exceeds the credit cap; blocked route requires verification.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check credit cap, hard price floor or legal-review clause against the compiled predicates.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 7595.20, list EUR 8080.00, standard cost EUR 6625.60, quoted gross margin 12.77%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "b571f69cfc5c0fb853ddb627283bebb7d07c84b276b78ef6f87568f871ead564",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "3059b100579c619b7b9cd94ed4c89d792045c602c950e2f8b1da595b84cd3182"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "PRICE-FLOOR",
+      "case_id": "EVAL-PREP-033",
+      "overall_technical_gate_proposal": "blocked",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "Blocked proposal has no executable approval route; retain conditional human actions only.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Stock appears fresh; the separate price floor controls the overall gate.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 3345.92 + commitments EUR 4125.00 = exposure EUR 7470.92, limit EUR 580000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check credit cap, hard price floor or legal-review clause against the compiled predicates.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 3345.92, list EUR 4040.00, standard cost EUR 3312.80, quoted gross margin 0.99%. Hard category margin floor requires deterministic rule confirmation.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "fb304c768fd99fddf3ff2108d17d3de3fc88af056846d431eab40c97c0458276",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "e578997a5e9b8a5000a74a050dc998f5efd8a891cdb79a3827390220388f3bd3"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "PRICE-FLOOR",
+      "case_id": "EVAL-PREP-034",
+      "overall_technical_gate_proposal": "blocked",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "Blocked proposal has no executable approval route; retain conditional human actions only.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Stock appears fresh; the separate price floor controls the overall gate.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 6691.84 + commitments EUR 4250.00 = exposure EUR 10941.84, limit EUR 590000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check credit cap, hard price floor or legal-review clause against the compiled predicates.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 6691.84, list EUR 8080.00, standard cost EUR 6625.60, quoted gross margin 0.99%. Hard category margin floor requires deterministic rule confirmation.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "b1eeb756af73dae3752b97d81d98974c6aa81447f5462e862261777d8d1803da",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "a12baaaa5b0d6d7ac3a7ef185e8054bd30bc998bed07b73b0214c5608e0ad862"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "POLICY-CLAUSE",
+      "case_id": "EVAL-PREP-035",
+      "overall_technical_gate_proposal": "approval_required",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Stock appears fresh; the legal clause controls review routing.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 3918.80 + commitments EUR 4375.00 = exposure EUR 8293.80, limit EUR 600000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check credit cap, hard price floor or legal-review clause against the compiled predicates.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 2; quote EUR 3918.80, list EUR 4040.00, standard cost EUR 3312.80, quoted gross margin 15.46%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "f0c176218620587c5c317da15ffa0bc450dd91f5a92b76418d500ffe8c91c43e",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "3ac9effe8a572e8cb552a632b7bf97e37400bcf1b8e4b3bad6b63a50291db4ba"
+    },
+    {
+      "acceptance_recommendation": "hold_for_accountable_case_level_review",
+      "archetype": "POLICY-CLAUSE",
+      "case_id": "EVAL-PREP-036",
+      "overall_technical_gate_proposal": "approval_required",
+      "six_responsibilities": {
+        "Approval": {
+          "source_basis": "A human route is conditional on resolving evidence, revision and commitments; no approval has been granted.",
+          "source_pointers": [
+            "packet:/source_rows/rules/approval_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "human_review_required"
+        },
+        "Availability": {
+          "source_basis": "Stock appears fresh; the legal clause controls review routing.",
+          "source_pointers": [
+            "packet:/source_rows/deal",
+            "packet:/run_context/as_of_at",
+            "packet:/source_rows/inventory",
+            "packet:/source_rows/inbound_supply",
+            "packet:/source_rows/supplier_offers",
+            "packet:/source_rows/production_capacity",
+            "packet:/source_rows/shipping_lanes"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Configuration": {
+          "source_basis": "Submitted line and version inspected; no generic dependency row in this original case.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/compatibility"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Credit": {
+          "source_basis": "v3 fictional complete-zero AR/payment scope for this customer/cutoff; quote EUR 7595.20 + commitments EUR 4500.00 = exposure EUR 12095.20, limit EUR 610000.00. No real-world zero-balance or favorable-payment-history claim.",
+          "source_pointers": [
+            "packet:/source_rows/credit",
+            "packet:/source_rows/receivables",
+            "packet:/source_rows/payments",
+            "scope:/credit_evidence_scope"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        },
+        "Policy": {
+          "source_basis": "Check credit cap, hard price floor or legal-review clause against the compiled predicates.",
+          "source_pointers": [
+            "packet:/source_rows/rules/policy_rules",
+            "packet:/source_rows/deal/terms_json"
+          ],
+          "technical_recommendation": "issue_identified"
+        },
+        "Pricing": {
+          "source_basis": "Quantity 4; quote EUR 7595.20, list EUR 8080.00, standard cost EUR 6625.60, quoted gross margin 12.77%. Check active pricing thresholds before final disposition.",
+          "source_pointers": [
+            "packet:/source_rows/lines/0",
+            "packet:/source_rows/rules/pricing_rules"
+          ],
+          "technical_recommendation": "no_issue_identified"
+        }
+      },
+      "unresolved_review": "Specialist findings, exact rule IDs, negative evidence and action wording require accountable review.",
+      "v2_packet_sha256": "16613466401ae6f31669f98b31def900dc317269406211d7f8fa0ae13b08bdc5",
+      "v2_provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "v3_scope_sha256": "b02910d9bd6e65e499d2f6f6e87555b0d1d5810ea0c9693020ddbf63cd3c1187"
+    }
+  ],
+  "original_case_count": 36,
+  "review_provenance": {
+    "independent_human_adjudication": false,
+    "method": "model_assisted",
+    "reviewed_at": "2026-10-30",
+    "source": "pinned v2 PostgreSQL export and provisional v3 Credit scope"
+  },
+  "schema_version": 1,
+  "status": "model_assisted_source_first_technical_recommendations_not_accepted_answers",
+  "v3_credit_scope_sha256": "7655c6f82dcbe8679f8d6369748c3a81e777b186e7c2b69ba9fe4b41076d711a"
+}

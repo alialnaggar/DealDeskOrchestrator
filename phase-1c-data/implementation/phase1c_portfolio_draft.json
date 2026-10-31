@@ -1716,7 +1716,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "workstation"
-        ]
+        ],
+        "storage_host_interface": "M2_NVME",
+        "network_slot_interface": "PCIE_X4",
+        "board_form_factor": "MICRO_ATX",
+        "rated_watts": 180
       }
     },
     {
@@ -1732,7 +1736,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "workstation"
-        ]
+        ],
+        "storage_host_interface": "M2_NVME",
+        "network_slot_interface": "PCIE_X4",
+        "board_form_factor": "MICRO_ATX",
+        "rated_watts": 190
       }
     },
     {
@@ -1748,7 +1756,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "workstation"
-        ]
+        ],
+        "storage_host_interface": "M2_NVME",
+        "network_slot_interface": "PCIE_X4",
+        "board_form_factor": "MICRO_ATX",
+        "rated_watts": 175
       }
     },
     {
@@ -1764,7 +1776,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "storage_host_interface": "U2_NVME",
+        "network_slot_interface": "PCIE_X8",
+        "board_form_factor": "SERVER_BOARD",
+        "rated_watts": 280
       }
     },
     {
@@ -1780,7 +1796,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "storage_host_interface": "U2_NVME",
+        "network_slot_interface": "PCIE_X8",
+        "board_form_factor": "SERVER_BOARD",
+        "rated_watts": 295
       }
     },
     {
@@ -1796,7 +1816,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "storage_host_interface": "U2_NVME",
+        "network_slot_interface": "PCIE_X8",
+        "board_form_factor": "SERVER_BOARD",
+        "rated_watts": 310
       }
     },
     {
@@ -1812,7 +1836,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "storage_host_interface": "U2_NVME",
+        "network_slot_interface": "PCIE_X8",
+        "board_form_factor": "SERVER_BOARD",
+        "rated_watts": 300
       }
     },
     {
@@ -1828,7 +1856,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "storage_host_interface": "U2_NVME",
+        "network_slot_interface": "PCIE_X8",
+        "board_form_factor": "SERVER_BOARD",
+        "rated_watts": 320
       }
     },
     {
@@ -1844,7 +1876,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "storage_host_interface": "U2_NVME",
+        "network_slot_interface": "PCIE_X8",
+        "board_form_factor": "SERVER_BOARD",
+        "rated_watts": 330
       }
     },
     {
@@ -1860,7 +1896,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "storage_system"
-        ]
+        ],
+        "storage_host_interface": "SAS_12G",
+        "network_slot_interface": "PCIE_X8",
+        "board_form_factor": "STORAGE_BOARD",
+        "rated_watts": 130
       }
     },
     {
@@ -1876,7 +1916,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "storage_system"
-        ]
+        ],
+        "storage_host_interface": "SAS_12G",
+        "network_slot_interface": "PCIE_X8",
+        "board_form_factor": "STORAGE_BOARD",
+        "rated_watts": 140
       }
     },
     {
@@ -1892,7 +1936,11 @@
         "component_role": "compute_kit",
         "supported_platforms": [
           "storage_system"
-        ]
+        ],
+        "storage_host_interface": "SAS_12G",
+        "network_slot_interface": "PCIE_X8",
+        "board_form_factor": "STORAGE_BOARD",
+        "rated_watts": 150
       }
     },
     {
@@ -1908,7 +1956,10 @@
         "component_role": "storage_drive",
         "supported_platforms": [
           "workstation"
-        ]
+        ],
+        "host_interface": "M2_NVME",
+        "form_factor": "M2_2280",
+        "rated_watts": 7
       }
     },
     {
@@ -1924,7 +1975,10 @@
         "component_role": "storage_drive",
         "supported_platforms": [
           "workstation"
-        ]
+        ],
+        "host_interface": "M2_NVME",
+        "form_factor": "M2_2280",
+        "rated_watts": 7
       }
     },
     {
@@ -1940,7 +1994,10 @@
         "component_role": "storage_drive",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "host_interface": "U2_NVME",
+        "form_factor": "U2_25",
+        "rated_watts": 10
       }
     },
     {
@@ -1956,7 +2013,10 @@
         "component_role": "storage_drive",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "host_interface": "U2_NVME",
+        "form_factor": "U2_25",
+        "rated_watts": 11
       }
     },
     {
@@ -1972,7 +2032,10 @@
         "component_role": "storage_drive",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "host_interface": "U2_NVME",
+        "form_factor": "U2_25",
+        "rated_watts": 12
       }
     },
     {
@@ -1988,7 +2051,10 @@
         "component_role": "storage_drive",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "host_interface": "U2_NVME",
+        "form_factor": "U2_25",
+        "rated_watts": 13
       }
     },
     {
@@ -2004,7 +2070,10 @@
         "component_role": "storage_drive",
         "supported_platforms": [
           "storage_system"
-        ]
+        ],
+        "host_interface": "SAS_12G",
+        "form_factor": "LFF_35",
+        "rated_watts": 12
       }
     },
     {
@@ -2020,7 +2089,10 @@
         "component_role": "storage_drive",
         "supported_platforms": [
           "storage_system"
-        ]
+        ],
+        "host_interface": "SAS_12G",
+        "form_factor": "LFF_35",
+        "rated_watts": 13
       }
     },
     {
@@ -2036,7 +2108,10 @@
         "component_role": "storage_drive",
         "supported_platforms": [
           "storage_system"
-        ]
+        ],
+        "host_interface": "SAS_12G",
+        "form_factor": "LFF_35",
+        "rated_watts": 14
       }
     },
     {
@@ -2052,7 +2127,10 @@
         "component_role": "network_power_kit",
         "supported_platforms": [
           "workstation"
-        ]
+        ],
+        "network_interface": "PCIE_X4",
+        "psu_output_watts": 450,
+        "rated_watts": 20
       }
     },
     {
@@ -2068,7 +2146,10 @@
         "component_role": "network_power_kit",
         "supported_platforms": [
           "workstation"
-        ]
+        ],
+        "network_interface": "PCIE_X4",
+        "psu_output_watts": 500,
+        "rated_watts": 25
       }
     },
     {
@@ -2084,7 +2165,10 @@
         "component_role": "network_power_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "network_interface": "PCIE_X8",
+        "psu_output_watts": 800,
+        "rated_watts": 45
       }
     },
     {
@@ -2100,7 +2184,10 @@
         "component_role": "network_power_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "network_interface": "PCIE_X8",
+        "psu_output_watts": 850,
+        "rated_watts": 48
       }
     },
     {
@@ -2116,7 +2203,10 @@
         "component_role": "network_power_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "network_interface": "PCIE_X8",
+        "psu_output_watts": 900,
+        "rated_watts": 51
       }
     },
     {
@@ -2132,7 +2222,10 @@
         "component_role": "network_power_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "network_interface": "PCIE_X8",
+        "psu_output_watts": 950,
+        "rated_watts": 54
       }
     },
     {
@@ -2148,7 +2241,10 @@
         "component_role": "network_power_kit",
         "supported_platforms": [
           "storage_system"
-        ]
+        ],
+        "network_interface": "PCIE_X8",
+        "psu_output_watts": 600,
+        "rated_watts": 35
       }
     },
     {
@@ -2164,7 +2260,10 @@
         "component_role": "network_power_kit",
         "supported_platforms": [
           "storage_system"
-        ]
+        ],
+        "network_interface": "PCIE_X8",
+        "psu_output_watts": 650,
+        "rated_watts": 39
       }
     },
     {
@@ -2180,7 +2279,10 @@
         "component_role": "network_power_kit",
         "supported_platforms": [
           "storage_system"
-        ]
+        ],
+        "network_interface": "PCIE_X8",
+        "psu_output_watts": 700,
+        "rated_watts": 43
       }
     },
     {
@@ -2196,7 +2298,16 @@
         "component_role": "enclosure_kit",
         "supported_platforms": [
           "workstation"
-        ]
+        ],
+        "supported_board_form_factors": [
+          "MICRO_ATX"
+        ],
+        "supported_drive_form_factors": [
+          "M2_2280"
+        ],
+        "drive_slots": 2,
+        "power_budget_watts": 500,
+        "cooling_capacity_watts": 450
       }
     },
     {
@@ -2212,7 +2323,16 @@
         "component_role": "enclosure_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "supported_board_form_factors": [
+          "SERVER_BOARD"
+        ],
+        "supported_drive_form_factors": [
+          "U2_25"
+        ],
+        "drive_slots": 4,
+        "power_budget_watts": 1000,
+        "cooling_capacity_watts": 900
       }
     },
     {
@@ -2228,7 +2348,16 @@
         "component_role": "enclosure_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "supported_board_form_factors": [
+          "SERVER_BOARD"
+        ],
+        "supported_drive_form_factors": [
+          "U2_25"
+        ],
+        "drive_slots": 4,
+        "power_budget_watts": 1000,
+        "cooling_capacity_watts": 900
       }
     },
     {
@@ -2244,7 +2373,16 @@
         "component_role": "enclosure_kit",
         "supported_platforms": [
           "server"
-        ]
+        ],
+        "supported_board_form_factors": [
+          "SERVER_BOARD"
+        ],
+        "supported_drive_form_factors": [
+          "U2_25"
+        ],
+        "drive_slots": 4,
+        "power_budget_watts": 1000,
+        "cooling_capacity_watts": 900
       }
     },
     {
@@ -2260,7 +2398,16 @@
         "component_role": "enclosure_kit",
         "supported_platforms": [
           "storage_system"
-        ]
+        ],
+        "supported_board_form_factors": [
+          "STORAGE_BOARD"
+        ],
+        "supported_drive_form_factors": [
+          "LFF_35"
+        ],
+        "drive_slots": 6,
+        "power_budget_watts": 750,
+        "cooling_capacity_watts": 650
       }
     },
     {
@@ -2276,7 +2423,16 @@
         "component_role": "enclosure_kit",
         "supported_platforms": [
           "storage_system"
-        ]
+        ],
+        "supported_board_form_factors": [
+          "STORAGE_BOARD"
+        ],
+        "supported_drive_form_factors": [
+          "LFF_35"
+        ],
+        "drive_slots": 6,
+        "power_budget_watts": 750,
+        "cooling_capacity_watts": 650
       }
     }
   ],

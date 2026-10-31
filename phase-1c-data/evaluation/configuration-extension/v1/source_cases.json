@@ -1,0 +1,1011 @@
+{
+  "base_evaluation_input_version": 2,
+  "base_source_definition_sha256": "1b7e0dffb3eaae8ee7c7e4bcd82aba0d55da11321198ce8c54e1581fae6740cc",
+  "business_contract": {
+    "approval": {
+      "at": "2026-10-14T19:04:52Z",
+      "by": "Ali",
+      "decisions": [
+        "F1",
+        "C1",
+        "C2",
+        "G1",
+        "S1",
+        "R1"
+      ],
+      "instruction": "approve contnue",
+      "proposal_commit": "1b97d2326e7f3e574eacb9b9c29703d9c982be41",
+      "scope": "Versioned evaluation input and renewed review; no schema change, calibration freeze or answer acceptance."
+    },
+    "contract_id": "DDO-EVALUATION-CONTRACT-V2",
+    "costing": {
+      "basis": "Per catalogue unit, fictional tax-exclusive values; no additional freight/tax adjustment in these cases.",
+      "currency": "EUR",
+      "missing_cost_parameters": "No independent labour/overhead reconstruction or reconciled BOM rollup may be claimed when cost_parameters is null.",
+      "procurement_offer_cost": "Same-product declared standard cost for these cases; supports uncommitted procurement, does not replace quote-margin cost.",
+      "quote_margin_cost": "Versioned submitted-line catalogue standard_cost",
+      "workstation_loaded_standard_cost_eur": "715.00"
+    },
+    "digital_term": {
+      "claim": "Conservative simulation convention; not legal contract interpretation.",
+      "coverage": "covers_from <= activation date and covers_until >= anniversary end date",
+      "end": "activation date plus contract_months using calendar months, clamped to last day of shorter month",
+      "start": "requested_activation_date"
+    },
+    "evaluation_input_version": 2,
+    "evidence_age": {
+      "future_timestamps_allowed": false,
+      "interpretation": "Older, future or missing observations do not establish current availability/exposure; request refreshed evidence rather than infer impossibility. Provider proof also needs matching identity, quantity, term, binding dates and validity. These are fictional conventions, not externally validated service levels.",
+      "provider_verification_max_elapsed_days": 7,
+      "snapshot_max_elapsed_hours": 24,
+      "snapshot_sources": [
+        "inventory",
+        "production_capacity",
+        "digital_capacity",
+        "credit_commitments"
+      ],
+      "upper_boundary_inclusive": true
+    },
+    "gates": {
+      "approval_required": "Applicable human review route can be presented; approval has not been granted.",
+      "blocked": "Hard prohibition or invalid configuration.",
+      "multiple_findings": "Retain subordinate findings and human actions when a higher-precedence gate applies; distinguish missing supply from a feasible uncommitted alternative.",
+      "needs_commitment": "A feasible conditional alternative needs a supplier, provider, production or service commitment.",
+      "needs_evidence": "Adequate current facts are missing.",
+      "needs_revision": "Submitted quantity, date or region cannot be supported as submitted and requires a changed proposal.",
+      "precedence": [
+        "blocked",
+        "needs_revision",
+        "needs_evidence",
+        "needs_commitment",
+        "approval_required"
+      ]
+    },
+    "routing": {
+      "boundary": "No automatic approval, reservation, supplier/provider commitment or delivery promise.",
+      "higher_or_additional_roles": "Only when their own explicit higher sales, Finance or Legal rules trigger.",
+      "supported_but_late_physical_fulfillment": "At least Sales Director reviews a proposed date change; requested date still requires revision and human/customer acceptance."
+    },
+    "schema_version": 1,
+    "service_scope": {
+      "eligible_region": "Coverage only; no booked service slot.",
+      "ineligible_region": "Requires a changed service or destination proposal.",
+      "installation_requested_false": "Removes an additional installation request, not a scheduled-service line's regional requirement.",
+      "regional_rule_type": "installation_eligibility",
+      "uses": [
+        "requested installation eligibility",
+        "scheduled-service regional coverage"
+      ]
+    },
+    "status": "approved_synthetic_business_conventions_not_released_answers"
+  },
+  "cases": [
+    {
+      "case_id": "EVAL-PREP-037",
+      "provider_manifest": {
+        "records": [],
+        "schema_version": 1
+      },
+      "tables": {
+        "customer_credit_profiles": [
+          {
+            "commitment_evidence_ref": "EVALCFG-001-CREDIT",
+            "commitments_as_of_at": "2026-09-01T10:48:00+00:00",
+            "credit_limit": 380000,
+            "credit_status": "Active",
+            "customer_id": "EVALCFG-001-CUSTOMER",
+            "default_payment_terms_days": 30,
+            "last_review_date": "2026-08-25",
+            "risk_rating": "Low",
+            "unbilled_committed_amount": 1625
+          }
+        ],
+        "customers": [
+          {
+            "account_status": "Active",
+            "country_code": "DE",
+            "customer_code": "EVALCFG-001-CUSTOMER",
+            "customer_id": "EVALCFG-001-CUSTOMER",
+            "customer_name": "Synthetic evaluation buyer 013",
+            "customer_since": "2024-06-01",
+            "industry": "manufacturing",
+            "region": "DE-NW",
+            "size_segment": "SMB"
+          }
+        ],
+        "deal_lines": [
+          {
+            "configuration_json": {
+              "selected_options": [
+                "unsupported"
+              ]
+            },
+            "deal_id": "EVALCFG-001-DEAL",
+            "deal_line_id": "EVALCFG-001-LINE",
+            "line_number": 1,
+            "product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-009",
+            "quantity": 2,
+            "quoted_unit_price": "1018.50",
+            "requested_activation_date": null
+          }
+        ],
+        "deal_runs": [
+          {
+            "applied_policy_set_code": "BASELINE_2026",
+            "as_of_at": "2026-09-01T12:13:00+00:00",
+            "catalog_version_used": "CATALOGUE_2026_V1",
+            "config_hash": "283e5512cc42fc8529eadcbde505f7e20dff8ae55e94cde5e3356c397575e912",
+            "data_snapshot_ref": "EVALCFG-001-SOURCES",
+            "deal_id": "EVALCFG-001-DEAL",
+            "input_snapshot_json": {
+              "deal_id": "EVALCFG-001-DEAL"
+            },
+            "original_policy_set_code": "BASELINE_2026",
+            "run_id": "00000000-0000-4000-8000-000000370001",
+            "run_status": "queued",
+            "started_at": "2026-09-01T12:13:00+00:00"
+          }
+        ],
+        "deals": [
+          {
+            "catalog_version": "CATALOGUE_2026_V1",
+            "currency_code": "EUR",
+            "customer_id": "EVALCFG-001-CUSTOMER",
+            "dataset_type": "evaluation",
+            "deal_id": "EVALCFG-001-DEAL",
+            "deal_name": "Synthetic configuration extension 001",
+            "deal_status": "Draft",
+            "destination_country_code": "DE",
+            "destination_region": "DE-NW",
+            "policy_set_code": "BASELINE_2026",
+            "requested_delivery_date": "2026-09-10",
+            "salesperson_id": "SALES-036",
+            "shipping_service_code": "standard",
+            "submitted_at": "2026-09-01T08:13:00+00:00",
+            "terms_json": {
+              "allow_partial_delivery": false,
+              "contract_clause_codes": [
+                "standard"
+              ],
+              "payment_terms_days": 30
+            }
+          }
+        ],
+        "inventory": [
+          {
+            "inventory_id": "EVALCFG-001-INV-COMP-COMPUTE-001",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "COMP-COMPUTE-001",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 7,
+            "snapshot_at": "2026-09-01T10:48:00+00:00"
+          },
+          {
+            "inventory_id": "EVALCFG-001-INV-COMP-STORAGE-001",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "COMP-STORAGE-001",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 9,
+            "snapshot_at": "2026-09-01T10:48:00+00:00"
+          },
+          {
+            "inventory_id": "EVALCFG-001-INV-COMP-NETWORK_AND_POWER-001",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "COMP-NETWORK_AND_POWER-001",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 7,
+            "snapshot_at": "2026-09-01T10:48:00+00:00"
+          },
+          {
+            "inventory_id": "EVALCFG-001-INV-COMP-CHASSIS_AND_OTHER-001",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "COMP-CHASSIS_AND_OTHER-001",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 7,
+            "snapshot_at": "2026-09-01T10:48:00+00:00"
+          },
+          {
+            "inventory_id": "EVALCFG-001-INV-COMP-NETWORK_AND_POWER-002",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "COMP-NETWORK_AND_POWER-002",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 7,
+            "snapshot_at": "2026-09-01T10:48:00+00:00"
+          }
+        ],
+        "production_capacity": [
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-02",
+            "capacity_id": "EVALCFG-001-CAP-1-assembly",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-1-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "test",
+            "capacity_date": "2026-09-02",
+            "capacity_id": "EVALCFG-001-CAP-1-test",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-1-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-03",
+            "capacity_id": "EVALCFG-001-CAP-2-assembly",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-2-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "test",
+            "capacity_date": "2026-09-03",
+            "capacity_id": "EVALCFG-001-CAP-2-test",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-2-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-04",
+            "capacity_id": "EVALCFG-001-CAP-3-assembly",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-3-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "test",
+            "capacity_date": "2026-09-04",
+            "capacity_id": "EVALCFG-001-CAP-3-test",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-3-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 0,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-05",
+            "capacity_id": "EVALCFG-001-CAP-4-assembly",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-4-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 0,
+            "capability_code": "test",
+            "capacity_date": "2026-09-05",
+            "capacity_id": "EVALCFG-001-CAP-4-test",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-4-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 0,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-06",
+            "capacity_id": "EVALCFG-001-CAP-5-assembly",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-5-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 0,
+            "capability_code": "test",
+            "capacity_date": "2026-09-06",
+            "capacity_id": "EVALCFG-001-CAP-5-test",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-5-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-07",
+            "capacity_id": "EVALCFG-001-CAP-6-assembly",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-6-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "test",
+            "capacity_date": "2026-09-07",
+            "capacity_id": "EVALCFG-001-CAP-6-test",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-6-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-08",
+            "capacity_id": "EVALCFG-001-CAP-7-assembly",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-7-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "test",
+            "capacity_date": "2026-09-08",
+            "capacity_id": "EVALCFG-001-CAP-7-test",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-7-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-09",
+            "capacity_id": "EVALCFG-001-CAP-8-assembly",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-8-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 7,
+            "capability_code": "test",
+            "capacity_date": "2026-09-09",
+            "capacity_id": "EVALCFG-001-CAP-8-test",
+            "evidence_ref": "EVALCFG-001-WORKSHOP-8-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:48:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          }
+        ],
+        "shipping_lanes": [
+          {
+            "cutoff_local_time": "16:00:00",
+            "destination_country_code": "DE",
+            "destination_region": "DE-NW",
+            "dispatch_weekdays_json": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "lane_id": "EVALCFG-001-LANE",
+            "origin_location_id": "WH-EU-CENTRAL",
+            "origin_time_zone": "Europe/Berlin",
+            "shipping_service_code": "standard",
+            "transit_workdays": 1
+          }
+        ],
+        "suppliers": [
+          {
+            "country_code": "NL",
+            "order_calendar_json": {
+              "holiday_dates": [],
+              "time_zone": "Europe/Amsterdam",
+              "working_weekdays": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            },
+            "status": "active",
+            "supplier_code": "EVALCFG-001-SUPPLIER",
+            "supplier_id": "EVALCFG-001-SUPPLIER",
+            "supplier_name": "Synthetic source owner 013"
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-038",
+      "provider_manifest": {
+        "records": [],
+        "schema_version": 1
+      },
+      "tables": {
+        "customer_credit_profiles": [
+          {
+            "commitment_evidence_ref": "EVALCFG-002-CREDIT",
+            "commitments_as_of_at": "2026-09-01T10:39:00+00:00",
+            "credit_limit": 390000,
+            "credit_status": "Active",
+            "customer_id": "EVALCFG-002-CUSTOMER",
+            "default_payment_terms_days": 30,
+            "last_review_date": "2026-08-25",
+            "risk_rating": "Low",
+            "unbilled_committed_amount": 1750
+          }
+        ],
+        "customers": [
+          {
+            "account_status": "Active",
+            "country_code": "DE",
+            "customer_code": "EVALCFG-002-CUSTOMER",
+            "customer_id": "EVALCFG-002-CUSTOMER",
+            "customer_name": "Synthetic evaluation buyer 014",
+            "customer_since": "2024-06-01",
+            "industry": "professional_services",
+            "region": "DE-NW",
+            "size_segment": "Mid-Market"
+          }
+        ],
+        "deal_lines": [
+          {
+            "configuration_json": {
+              "selected_options": [
+                "standard",
+                "alternate"
+              ]
+            },
+            "deal_id": "EVALCFG-002-DEAL",
+            "deal_line_id": "EVALCFG-002-LINE",
+            "line_number": 1,
+            "product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-009",
+            "quantity": 4,
+            "quoted_unit_price": "987.00",
+            "requested_activation_date": null
+          }
+        ],
+        "deal_runs": [
+          {
+            "applied_policy_set_code": "BASELINE_2026",
+            "as_of_at": "2026-09-01T12:14:00+00:00",
+            "catalog_version_used": "CATALOGUE_2026_V1",
+            "config_hash": "283e5512cc42fc8529eadcbde505f7e20dff8ae55e94cde5e3356c397575e912",
+            "data_snapshot_ref": "EVALCFG-002-SOURCES",
+            "deal_id": "EVALCFG-002-DEAL",
+            "input_snapshot_json": {
+              "deal_id": "EVALCFG-002-DEAL"
+            },
+            "original_policy_set_code": "BASELINE_2026",
+            "run_id": "00000000-0000-4000-8000-000000370002",
+            "run_status": "queued",
+            "started_at": "2026-09-01T12:14:00+00:00"
+          }
+        ],
+        "deals": [
+          {
+            "catalog_version": "CATALOGUE_2026_V1",
+            "currency_code": "EUR",
+            "customer_id": "EVALCFG-002-CUSTOMER",
+            "dataset_type": "evaluation",
+            "deal_id": "EVALCFG-002-DEAL",
+            "deal_name": "Synthetic configuration extension 002",
+            "deal_status": "Draft",
+            "destination_country_code": "DE",
+            "destination_region": "DE-NW",
+            "policy_set_code": "BASELINE_2026",
+            "requested_delivery_date": "2026-09-11",
+            "salesperson_id": "SALES-036",
+            "shipping_service_code": "standard",
+            "submitted_at": "2026-09-01T08:14:00+00:00",
+            "terms_json": {
+              "allow_partial_delivery": true,
+              "contract_clause_codes": [
+                "standard"
+              ],
+              "payment_terms_days": 30
+            }
+          }
+        ],
+        "inventory": [
+          {
+            "inventory_id": "EVALCFG-002-INV-COMP-COMPUTE-001",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "COMP-COMPUTE-001",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 11,
+            "snapshot_at": "2026-09-01T10:39:00+00:00"
+          },
+          {
+            "inventory_id": "EVALCFG-002-INV-COMP-STORAGE-001",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "COMP-STORAGE-001",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 15,
+            "snapshot_at": "2026-09-01T10:39:00+00:00"
+          },
+          {
+            "inventory_id": "EVALCFG-002-INV-COMP-NETWORK_AND_POWER-001",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "COMP-NETWORK_AND_POWER-001",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 11,
+            "snapshot_at": "2026-09-01T10:39:00+00:00"
+          },
+          {
+            "inventory_id": "EVALCFG-002-INV-COMP-CHASSIS_AND_OTHER-001",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "COMP-CHASSIS_AND_OTHER-001",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 11,
+            "snapshot_at": "2026-09-01T10:39:00+00:00"
+          },
+          {
+            "inventory_id": "EVALCFG-002-INV-COMP-NETWORK_AND_POWER-002",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "COMP-NETWORK_AND_POWER-002",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 11,
+            "snapshot_at": "2026-09-01T10:39:00+00:00"
+          }
+        ],
+        "production_capacity": [
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-02",
+            "capacity_id": "EVALCFG-002-CAP-1-assembly",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-1-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "test",
+            "capacity_date": "2026-09-02",
+            "capacity_id": "EVALCFG-002-CAP-1-test",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-1-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-03",
+            "capacity_id": "EVALCFG-002-CAP-2-assembly",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-2-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "test",
+            "capacity_date": "2026-09-03",
+            "capacity_id": "EVALCFG-002-CAP-2-test",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-2-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-04",
+            "capacity_id": "EVALCFG-002-CAP-3-assembly",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-3-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "test",
+            "capacity_date": "2026-09-04",
+            "capacity_id": "EVALCFG-002-CAP-3-test",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-3-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 0,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-05",
+            "capacity_id": "EVALCFG-002-CAP-4-assembly",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-4-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 0,
+            "capability_code": "test",
+            "capacity_date": "2026-09-05",
+            "capacity_id": "EVALCFG-002-CAP-4-test",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-4-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 0,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-06",
+            "capacity_id": "EVALCFG-002-CAP-5-assembly",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-5-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 0,
+            "capability_code": "test",
+            "capacity_date": "2026-09-06",
+            "capacity_id": "EVALCFG-002-CAP-5-test",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-5-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-07",
+            "capacity_id": "EVALCFG-002-CAP-6-assembly",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-6-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "test",
+            "capacity_date": "2026-09-07",
+            "capacity_id": "EVALCFG-002-CAP-6-test",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-6-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-08",
+            "capacity_id": "EVALCFG-002-CAP-7-assembly",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-7-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "test",
+            "capacity_date": "2026-09-08",
+            "capacity_id": "EVALCFG-002-CAP-7-test",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-7-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "assembly",
+            "capacity_date": "2026-09-09",
+            "capacity_id": "EVALCFG-002-CAP-8-assembly",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-8-assembly",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "workforce",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          },
+          {
+            "allocated_capacity_hours": 0,
+            "available_capacity_hours": 8,
+            "capability_code": "test",
+            "capacity_date": "2026-09-09",
+            "capacity_id": "EVALCFG-002-CAP-8-test",
+            "evidence_ref": "EVALCFG-002-WORKSHOP-8-test",
+            "location_id": "WH-EU-CENTRAL",
+            "resource_type": "equipment",
+            "snapshot_at": "2026-09-01T10:39:00+00:00",
+            "status": "active",
+            "time_zone": "Europe/Berlin"
+          }
+        ],
+        "shipping_lanes": [
+          {
+            "cutoff_local_time": "16:00:00",
+            "destination_country_code": "DE",
+            "destination_region": "DE-NW",
+            "dispatch_weekdays_json": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "lane_id": "EVALCFG-002-LANE",
+            "origin_location_id": "WH-EU-CENTRAL",
+            "origin_time_zone": "Europe/Berlin",
+            "shipping_service_code": "standard",
+            "transit_workdays": 2
+          }
+        ],
+        "suppliers": [
+          {
+            "country_code": "NL",
+            "order_calendar_json": {
+              "holiday_dates": [],
+              "time_zone": "Europe/Amsterdam",
+              "working_weekdays": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            },
+            "status": "active",
+            "supplier_code": "EVALCFG-002-SUPPLIER",
+            "supplier_id": "EVALCFG-002-SUPPLIER",
+            "supplier_name": "Synthetic source owner 014"
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "EVAL-PREP-039",
+      "provider_manifest": {
+        "records": [],
+        "schema_version": 1
+      },
+      "tables": {
+        "compatibility_rules": [
+          {
+            "catalog_version": "CATALOGUE_2026_V2",
+            "compatibility_rule_id": "EVALCFG-003-REQUIRES-ADDON",
+            "condition_json": {
+              "operator": "present"
+            },
+            "message": "Add-on required",
+            "priority": 1,
+            "rule_name": "Synthetic missing add-on",
+            "rule_type": "requires_product",
+            "scope_type": "whole_deal",
+            "severity": "blocker",
+            "source_product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-004-V2",
+            "target_product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-005-V2"
+          }
+        ],
+        "customer_credit_profiles": [
+          {
+            "commitment_evidence_ref": "EVALCFG-003-CREDIT",
+            "commitments_as_of_at": "2026-09-01T10:36:00+00:00",
+            "credit_limit": 260000,
+            "credit_status": "Active",
+            "customer_id": "EVALCFG-003-CUSTOMER",
+            "default_payment_terms_days": 30,
+            "last_review_date": "2026-08-25",
+            "risk_rating": "Low",
+            "unbilled_committed_amount": 125
+          }
+        ],
+        "customers": [
+          {
+            "account_status": "Active",
+            "country_code": "DE",
+            "customer_code": "EVALCFG-003-CUSTOMER",
+            "customer_id": "EVALCFG-003-CUSTOMER",
+            "customer_name": "Synthetic evaluation buyer 001",
+            "customer_since": "2024-06-01",
+            "industry": "manufacturing",
+            "region": "DE-NW",
+            "size_segment": "SMB"
+          }
+        ],
+        "deal_lines": [
+          {
+            "configuration_json": {},
+            "deal_id": "EVALCFG-003-DEAL",
+            "deal_line_id": "EVALCFG-003-LINE",
+            "line_number": 1,
+            "product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-004-V2",
+            "quantity": 2,
+            "quoted_unit_price": "1542.30",
+            "requested_activation_date": null
+          }
+        ],
+        "deal_runs": [
+          {
+            "applied_policy_set_code": "BASELINE_2026",
+            "as_of_at": "2026-09-01T12:01:00+00:00",
+            "catalog_version_used": "CATALOGUE_2026_V2",
+            "config_hash": "283e5512cc42fc8529eadcbde505f7e20dff8ae55e94cde5e3356c397575e912",
+            "data_snapshot_ref": "EVALCFG-003-SOURCES",
+            "deal_id": "EVALCFG-003-DEAL",
+            "input_snapshot_json": {
+              "deal_id": "EVALCFG-003-DEAL"
+            },
+            "original_policy_set_code": "BASELINE_2026",
+            "run_id": "00000000-0000-4000-8000-000000370003",
+            "run_status": "queued",
+            "started_at": "2026-09-01T12:01:00+00:00"
+          }
+        ],
+        "deals": [
+          {
+            "catalog_version": "CATALOGUE_2026_V2",
+            "currency_code": "EUR",
+            "customer_id": "EVALCFG-003-CUSTOMER",
+            "dataset_type": "evaluation",
+            "deal_id": "EVALCFG-003-DEAL",
+            "deal_name": "Synthetic missing-dependency extension 003",
+            "deal_status": "Draft",
+            "destination_country_code": "DE",
+            "destination_region": "DE-NW",
+            "policy_set_code": "BASELINE_2026",
+            "requested_delivery_date": "2026-09-10",
+            "salesperson_id": "SALES-036",
+            "shipping_service_code": "standard",
+            "submitted_at": "2026-09-01T08:01:00+00:00",
+            "terms_json": {
+              "allow_partial_delivery": false,
+              "contract_clause_codes": [
+                "standard"
+              ],
+              "payment_terms_days": 30
+            }
+          }
+        ],
+        "inventory": [
+          {
+            "inventory_id": "EVALCFG-003-INV-SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-001",
+            "location_id": "WH-EU-CENTRAL",
+            "product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-004-V2",
+            "quantity_allocated": 0,
+            "quantity_on_hand": 5,
+            "snapshot_at": "2026-09-01T10:36:00+00:00"
+          }
+        ],
+        "shipping_lanes": [
+          {
+            "cutoff_local_time": "16:00:00",
+            "destination_country_code": "DE",
+            "destination_region": "DE-NW",
+            "dispatch_weekdays_json": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "lane_id": "EVALCFG-003-LANE",
+            "origin_location_id": "WH-EU-CENTRAL",
+            "origin_time_zone": "Europe/Berlin",
+            "shipping_service_code": "standard",
+            "transit_workdays": 1
+          }
+        ],
+        "suppliers": [
+          {
+            "country_code": "NL",
+            "order_calendar_json": {
+              "holiday_dates": [],
+              "time_zone": "Europe/Amsterdam",
+              "working_weekdays": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            },
+            "status": "active",
+            "supplier_code": "EVALCFG-003-SUPPLIER",
+            "supplier_id": "EVALCFG-003-SUPPLIER",
+            "supplier_name": "Synthetic source owner 001"
+          }
+        ]
+      }
+    }
+  ],
+  "extension_contract_sha256": "d7c6b05775022b50a17e94fc01f356a7f53ae5911930e7213d96f426a9c417b4",
+  "extension_id": "configuration-v1",
+  "schema_version": 1
+}

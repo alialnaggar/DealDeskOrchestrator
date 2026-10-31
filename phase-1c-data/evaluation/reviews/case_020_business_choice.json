@@ -1,0 +1,26 @@
+{
+  "case_id": "EVAL-PREP-020",
+  "decision_date": "2026-10-22",
+  "decision_owner": "Ali Alnaggar",
+  "decision_method": "Explicit selection of the modal-route option in the Phase 1C review conversation",
+  "decision_status": "selected_business_interpretation_not_accepted_case_answer",
+  "source_definition_sha256": "1b7e0dffb3eaae8ee7c7e4bcd82aba0d55da11321198ce8c54e1581fae6740cc",
+  "packet_sha256": "6edee7da614ce168e3422a3f1d013da26769f97e8378cacb107f0a55b036957b",
+  "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+  "selected_interpretation": "The Sep 7 modal component receipt, Sep 7 assembly and Sep 8 test support a specific conditional route to an indicative Sep 10 arrival for the submitted four units and Sep 11 requested date.",
+  "gate_for_review": "needs_commitment",
+  "conditions": [
+    "Supplier confirmation of the four-unit component order and lead date",
+    "Workshop assembly and test slots committed for the selected route",
+    "Dispatch and transit confirmed before customer delivery is represented as committed",
+    "Fresh six-responsibility review before any executable human approval route"
+  ],
+  "unsupported_routes": [
+    "Maximum six-workday lead lacks a Sep 10 test observation and cannot establish requested-date delivery",
+    "The October confirmed PO lacks post-receipt production capacity for the submitted date"
+  ],
+  "accepted_case_answer": false,
+  "independently_reviewed_answers": 0,
+  "answer_key_agent_visible": false,
+  "ready_for_generation": false
+}

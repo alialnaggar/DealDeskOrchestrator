@@ -1,0 +1,235 @@
+{
+  "spec_version": "FIT_DRAFT_2026_10_12",
+  "catalog_version": "CATALOGUE_2026_V1",
+  "basis": "declared_synthetic_engineering_assumptions_not_manufacturer_certification",
+  "component_specs": {
+    "COMP-COMPUTE-001": {
+      "storage_host_interface": "M2_NVME",
+      "network_slot_interface": "PCIE_X4",
+      "board_form_factor": "MICRO_ATX",
+      "rated_watts": 180
+    },
+    "COMP-COMPUTE-002": {
+      "storage_host_interface": "M2_NVME",
+      "network_slot_interface": "PCIE_X4",
+      "board_form_factor": "MICRO_ATX",
+      "rated_watts": 190
+    },
+    "COMP-COMPUTE-003": {
+      "storage_host_interface": "M2_NVME",
+      "network_slot_interface": "PCIE_X4",
+      "board_form_factor": "MICRO_ATX",
+      "rated_watts": 175
+    },
+    "COMP-COMPUTE-004": {
+      "storage_host_interface": "U2_NVME",
+      "network_slot_interface": "PCIE_X8",
+      "board_form_factor": "SERVER_BOARD",
+      "rated_watts": 280
+    },
+    "COMP-COMPUTE-005": {
+      "storage_host_interface": "U2_NVME",
+      "network_slot_interface": "PCIE_X8",
+      "board_form_factor": "SERVER_BOARD",
+      "rated_watts": 295
+    },
+    "COMP-COMPUTE-006": {
+      "storage_host_interface": "U2_NVME",
+      "network_slot_interface": "PCIE_X8",
+      "board_form_factor": "SERVER_BOARD",
+      "rated_watts": 310
+    },
+    "COMP-COMPUTE-007": {
+      "storage_host_interface": "U2_NVME",
+      "network_slot_interface": "PCIE_X8",
+      "board_form_factor": "SERVER_BOARD",
+      "rated_watts": 300
+    },
+    "COMP-COMPUTE-008": {
+      "storage_host_interface": "U2_NVME",
+      "network_slot_interface": "PCIE_X8",
+      "board_form_factor": "SERVER_BOARD",
+      "rated_watts": 320
+    },
+    "COMP-COMPUTE-009": {
+      "storage_host_interface": "U2_NVME",
+      "network_slot_interface": "PCIE_X8",
+      "board_form_factor": "SERVER_BOARD",
+      "rated_watts": 330
+    },
+    "COMP-COMPUTE-010": {
+      "storage_host_interface": "SAS_12G",
+      "network_slot_interface": "PCIE_X8",
+      "board_form_factor": "STORAGE_BOARD",
+      "rated_watts": 130
+    },
+    "COMP-COMPUTE-011": {
+      "storage_host_interface": "SAS_12G",
+      "network_slot_interface": "PCIE_X8",
+      "board_form_factor": "STORAGE_BOARD",
+      "rated_watts": 140
+    },
+    "COMP-COMPUTE-012": {
+      "storage_host_interface": "SAS_12G",
+      "network_slot_interface": "PCIE_X8",
+      "board_form_factor": "STORAGE_BOARD",
+      "rated_watts": 150
+    },
+    "COMP-STORAGE-001": {
+      "host_interface": "M2_NVME",
+      "form_factor": "M2_2280",
+      "rated_watts": 7
+    },
+    "COMP-STORAGE-002": {
+      "host_interface": "M2_NVME",
+      "form_factor": "M2_2280",
+      "rated_watts": 7
+    },
+    "COMP-STORAGE-003": {
+      "host_interface": "U2_NVME",
+      "form_factor": "U2_25",
+      "rated_watts": 10
+    },
+    "COMP-STORAGE-004": {
+      "host_interface": "U2_NVME",
+      "form_factor": "U2_25",
+      "rated_watts": 11
+    },
+    "COMP-STORAGE-005": {
+      "host_interface": "U2_NVME",
+      "form_factor": "U2_25",
+      "rated_watts": 12
+    },
+    "COMP-STORAGE-006": {
+      "host_interface": "U2_NVME",
+      "form_factor": "U2_25",
+      "rated_watts": 13
+    },
+    "COMP-STORAGE-007": {
+      "host_interface": "SAS_12G",
+      "form_factor": "LFF_35",
+      "rated_watts": 12
+    },
+    "COMP-STORAGE-008": {
+      "host_interface": "SAS_12G",
+      "form_factor": "LFF_35",
+      "rated_watts": 13
+    },
+    "COMP-STORAGE-009": {
+      "host_interface": "SAS_12G",
+      "form_factor": "LFF_35",
+      "rated_watts": 14
+    },
+    "COMP-NETWORK_AND_POWER-001": {
+      "network_interface": "PCIE_X4",
+      "psu_output_watts": 450,
+      "rated_watts": 20
+    },
+    "COMP-NETWORK_AND_POWER-002": {
+      "network_interface": "PCIE_X4",
+      "psu_output_watts": 500,
+      "rated_watts": 25
+    },
+    "COMP-NETWORK_AND_POWER-003": {
+      "network_interface": "PCIE_X8",
+      "psu_output_watts": 800,
+      "rated_watts": 45
+    },
+    "COMP-NETWORK_AND_POWER-004": {
+      "network_interface": "PCIE_X8",
+      "psu_output_watts": 850,
+      "rated_watts": 48
+    },
+    "COMP-NETWORK_AND_POWER-005": {
+      "network_interface": "PCIE_X8",
+      "psu_output_watts": 900,
+      "rated_watts": 51
+    },
+    "COMP-NETWORK_AND_POWER-006": {
+      "network_interface": "PCIE_X8",
+      "psu_output_watts": 950,
+      "rated_watts": 54
+    },
+    "COMP-NETWORK_AND_POWER-007": {
+      "network_interface": "PCIE_X8",
+      "psu_output_watts": 600,
+      "rated_watts": 35
+    },
+    "COMP-NETWORK_AND_POWER-008": {
+      "network_interface": "PCIE_X8",
+      "psu_output_watts": 650,
+      "rated_watts": 39
+    },
+    "COMP-NETWORK_AND_POWER-009": {
+      "network_interface": "PCIE_X8",
+      "psu_output_watts": 700,
+      "rated_watts": 43
+    },
+    "COMP-CHASSIS_AND_OTHER-001": {
+      "supported_board_form_factors": [
+        "MICRO_ATX"
+      ],
+      "supported_drive_form_factors": [
+        "M2_2280"
+      ],
+      "drive_slots": 2,
+      "power_budget_watts": 500,
+      "cooling_capacity_watts": 450
+    },
+    "COMP-CHASSIS_AND_OTHER-002": {
+      "supported_board_form_factors": [
+        "SERVER_BOARD"
+      ],
+      "supported_drive_form_factors": [
+        "U2_25"
+      ],
+      "drive_slots": 4,
+      "power_budget_watts": 1000,
+      "cooling_capacity_watts": 900
+    },
+    "COMP-CHASSIS_AND_OTHER-003": {
+      "supported_board_form_factors": [
+        "SERVER_BOARD"
+      ],
+      "supported_drive_form_factors": [
+        "U2_25"
+      ],
+      "drive_slots": 4,
+      "power_budget_watts": 1000,
+      "cooling_capacity_watts": 900
+    },
+    "COMP-CHASSIS_AND_OTHER-004": {
+      "supported_board_form_factors": [
+        "SERVER_BOARD"
+      ],
+      "supported_drive_form_factors": [
+        "U2_25"
+      ],
+      "drive_slots": 4,
+      "power_budget_watts": 1000,
+      "cooling_capacity_watts": 900
+    },
+    "COMP-CHASSIS_AND_OTHER-005": {
+      "supported_board_form_factors": [
+        "STORAGE_BOARD"
+      ],
+      "supported_drive_form_factors": [
+        "LFF_35"
+      ],
+      "drive_slots": 6,
+      "power_budget_watts": 750,
+      "cooling_capacity_watts": 650
+    },
+    "COMP-CHASSIS_AND_OTHER-006": {
+      "supported_board_form_factors": [
+        "STORAGE_BOARD"
+      ],
+      "supported_drive_form_factors": [
+        "LFF_35"
+      ],
+      "drive_slots": 6,
+      "power_budget_watts": 750,
+      "cooling_capacity_watts": 650
+    }
+  }
+}

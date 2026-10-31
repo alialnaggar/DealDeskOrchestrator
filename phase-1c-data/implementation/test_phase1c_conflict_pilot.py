@@ -9,6 +9,8 @@ import unittest
 import yaml
 
 from render_phase1c_conflict_pilot import build, CASE_MAP
+from render_phase1c_dependency_pilot import build as build_dependency, CASES as DEPENDENCY_CASES, RULE_ID as DEPENDENCY_RULE
+from validate_phase1c_generated_rows import audit_dependency_coverage, load_rows
 
 try:
     import psycopg
@@ -37,6 +39,13 @@ class ConflictRenderTests(unittest.TestCase):
         self.assertTrue(locations)
         self.assertLessEqual(locations, set(args[3]["controlled_vocabularies"]["location_codes"]))
         self.assertIn("'WH-EU-WEST', 'Europe/Amsterdam'", sql)
+
+    def test_versioned_dependency_sql_is_pinned_without_answers(self):
+        sql = build_dependency()
+        self.assertEqual(sql, (HERE / "phase1c_dependency_pilot.sql").read_text())
+        self.assertEqual(sql.count("INSERT INTO products "), 2)
+        self.assertEqual(sql.count("INSERT INTO deals "), 2)
+        self.assertNotIn("expected_decision", sql)
 
 
 @unittest.skipUnless(psycopg is not None and os.environ.get("DATABASE_URL"),
@@ -123,6 +132,45 @@ class ConflictReaderTests(unittest.TestCase):
                 self.assertEqual(fact["fulfillment_status"], "unknown")
                 self.assertEqual(fact["production_unknown_reason"], reason)
                 self.assertEqual(assemble_deal_decision(bundle)["status"], "needs_evidence")
+
+    def test_versioned_dependency_pass_and_block_preserve_v1_outcome(self):
+        baseline = assemble_deal_decision(self.read("CREDIT-LIMIT"))
+        sql = build_dependency()
+        self.assertEqual(sql, build_dependency())
+        self.conn.execute("SAVEPOINT dependency_v2")
+        try:
+            for statement in re.findall(r"^(?:INSERT INTO|UPDATE deals SET) .*?;",
+                                        sql, re.M | re.S):
+                self.conn.execute(statement)
+            self.assertEqual(self.conn.execute(
+                "SELECT count(*) FROM deal_desk.products WHERE catalog_version='CATALOGUE_2026_V2'"
+            ).fetchone()[0], 2)
+            self.assertEqual(assemble_deal_decision(self.read("CREDIT-LIMIT")), baseline)
+            for index, include_target in DEPENDENCY_CASES:
+                run_id = f"00000000-0000-4000-8000-{270000 + index:012d}"
+                bundle = read_run(self.conn, run_id, commercial_rule_mode="compiled")
+                finding = next(f for f in bundle["facts"]["compatibility"]
+                               if f["compatibility_rule_id"] == DEPENDENCY_RULE)
+                decision = assemble_deal_decision(bundle)
+                self.assertEqual(finding["status"], "pass" if include_target else "fail")
+                blocks = [b for b in decision["blocks"]
+                          if b.get("rule_id") == DEPENDENCY_RULE]
+                self.assertEqual(bool(blocks), not include_target)
+                self.assertEqual(decision["status"] == "blocked", not include_target)
+                self.assertEqual(bundle["facts"]["lines"][0]["fulfillment_status"],
+                                 "confirmed_by_date")
+            rows = load_rows(self.conn)
+            coverage = audit_dependency_coverage(rows)
+            self.assertEqual(coverage["finding_counts"]["pass"], 1)
+            self.assertEqual(coverage["finding_counts"]["fail"], 1)
+            self.assertFalse(coverage["coverage_gap"])
+        finally:
+            self.conn.execute("ROLLBACK TO SAVEPOINT dependency_v2")
+            self.conn.execute("RELEASE SAVEPOINT dependency_v2")
+        self.assertEqual(assemble_deal_decision(self.read("CREDIT-LIMIT")), baseline)
+        self.assertEqual(self.conn.execute(
+            "SELECT count(*) FROM deal_desk.compatibility_rules "
+            "WHERE compatibility_rule_id=%s", (DEPENDENCY_RULE,)).fetchone()[0], 0)
 
 
 if __name__ == "__main__":

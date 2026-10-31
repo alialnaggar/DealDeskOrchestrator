@@ -17,6 +17,8 @@ import re
 import psycopg
 
 from phase1c_deal_decision import assemble_deal_decision
+from phase1c_evaluation_input import (build_historical_exclusion_manifest,
+                                      excluded_ids_from_manifest)
 from phase1c_reader import read_run
 from render_phase1c_historical_credit import load_resolver as load_credit
 from render_phase1c_historical_digital import (
@@ -100,11 +102,12 @@ def summarize(decisions):
     }
 
 
-def run(database_url):
+def run(database_url, *, exclusion_output=None):
     credit = load_credit()
     operational = load_operational()
     digital_resolver = load_digital()
     decisions = []
+    historical_bundles = [] if exclusion_output else None
     mto = Counter()
     digital_counts = Counter()
     supplier_counts = Counter()
@@ -122,6 +125,8 @@ def run(database_url):
                     commercial_rule_mode="compiled")
                 if bundle["run"]["data_snapshot_ref"] != snapshot_id:
                     raise ValueError(f"run/snapshot mismatch: {n}")
+                if historical_bundles is not None:
+                    historical_bundles.append(bundle)
                 for line, fact in zip(bundle["lines"], bundle["facts"]["lines"]):
                     if line["fulfillment_mode"] == "supplier_finished":
                         product = line["product_id"]
@@ -162,6 +167,15 @@ def run(database_url):
                 decisions.append(assemble_deal_decision(bundle))
         finally:
             conn.rollback()
+    if historical_bundles is not None:
+        manifest = build_historical_exclusion_manifest(historical_bundles)
+        excluded_ids_from_manifest(
+            manifest, expected_run_count=400, expected_deal_count=400,
+            expected_status="historical_reader_selected_sources_not_evaluation_answers")
+        pinned = json.loads((HERE / "phase1c_historical_source_exclusions.json").read_text())
+        if manifest != pinned:
+            raise ValueError("Historical source exclusion registry differs from pinned reader output")
+        Path(exclusion_output).write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     result = summarize(decisions)
     result["make_to_order_diagnostics"] = dict(sorted(mto.items()))
     result["digital_diagnostics"] = dict(sorted(digital_counts.items()))
@@ -179,10 +193,11 @@ def run(database_url):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--exclusion-output", help="Separate source-only historical exclusion registry")
     args = parser.parse_args()
     if not os.environ.get("DATABASE_URL"):
         raise SystemExit("DATABASE_URL is required")
-    report = run(os.environ["DATABASE_URL"])
+    report = run(os.environ["DATABASE_URL"], exclusion_output=args.exclusion_output)
     Path(args.output).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"historical_deals": report["historical_deals"],
                       "status_counts": report["status_counts"],
@@ -196,3 +211,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

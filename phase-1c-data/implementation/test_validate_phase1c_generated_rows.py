@@ -7,7 +7,7 @@ import unittest
 
 import yaml
 
-from validate_phase1c_generated_rows import validate_rows
+from validate_phase1c_generated_rows import validate_rows, audit_dependency_coverage
 
 HERE = Path(__file__).resolve().parent
 CONTRACT = yaml.safe_load((HERE / "phase1c_data_contract.yaml").read_text())
@@ -21,6 +21,7 @@ def example():
                       "unit_of_measure": "device", "is_active": True, "is_sellable": True}],
         "suppliers": [{"supplier_id": "SUP-1", "order_calendar_json": {
             "working_weekdays": [1, 2, 3, 4, 5], "holiday_dates": [], "time_zone": "Europe/Amsterdam"}}],
+        "supplier_items": [{"supplier_item_id": "OFFER-1", "supplier_id": "SUP-1"}],
         "inventory": [{"inventory_id": "INV-1", "location_id": "WH-EU-CENTRAL"}],
         "purchase_orders": [], "inbound_supply": [],
         "production_capacity": [{"capacity_id": "CAP-1", "location_id": "WH-EU-CENTRAL",
@@ -45,7 +46,45 @@ def example():
 
 class GeneratedRowTests(unittest.TestCase):
     def test_connected_typed_rows(self):
-        self.assertEqual(validate_rows(example(), CONTRACT)["errors"], [])
+        result = validate_rows(example(), CONTRACT)
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["supplier_calendar_coverage"]["offers_with_typed_calendar"], 1)
+        self.assertEqual(result["dependency_coverage"]["configured_dependency_rules"], 0)
+        self.assertTrue(result["dependency_coverage"]["coverage_gap"])
+
+    def test_offer_without_typed_supplier_calendar_is_attributed(self):
+        rows = example()
+        rows["suppliers"][0]["order_calendar_json"] = {}
+        result = validate_rows(rows, CONTRACT)
+        self.assertEqual(result["supplier_calendar_coverage"]["offers_missing_calendar"], ["OFFER-1"])
+        self.assertTrue(any("supplier_items.OFFER-1: typed supplier calendar missing" in e
+                            for e in result["errors"]))
+
+    def test_dependency_coverage_counts_real_applicability_and_failures(self):
+        rows = example()
+        rows["compatibility_rules"] = [{
+            "compatibility_rule_id": "REQ-1", "rule_type": "requires_product",
+            "scope_type": "whole_deal", "source_product_id": "BUILD-1",
+            "target_product_id": "ADD-ON", "condition_json": {"operator": "present"},
+            "severity": "blocker", "message": "Needs add-on"}]
+        result = audit_dependency_coverage(rows)
+        self.assertEqual(result["configured_dependency_rules"], 1)
+        self.assertEqual(result["applicable_deal_rule_checks"], 1)
+        self.assertEqual(result["finding_counts"]["fail"], 1)
+        self.assertFalse(result["coverage_gap"])
+        rows["compatibility_rules"][0]["source_product_id"] = "ANOTHER-PRODUCT"
+        result = audit_dependency_coverage(rows)
+        self.assertEqual(result["finding_counts"]["not_applicable"], 1)
+        self.assertTrue(result["coverage_gap"])
+
+    def test_unlisted_catalogue_version_cannot_enter_generated_rows(self):
+        rows = example()
+        rows["products"][0]["catalog_version"] = "CATALOGUE_2026_V2"
+        rows["deals"][0]["catalog_version"] = "CATALOGUE_2026_V1"
+        errors = validate_rows(rows, CONTRACT)["errors"]
+        self.assertTrue(any("unlisted catalogue extension" in error for error in errors))
+        self.assertTrue(any("product/deal catalogue versions differ" in error
+                            for error in errors))
 
     def test_unknown_location_zone_option_and_unresolved_evidence_fail(self):
         rows = example()

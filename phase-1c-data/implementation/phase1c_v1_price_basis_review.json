@@ -1,0 +1,18 @@
+{
+  "status": "approved_bounded_synthetic_v1_convention_not_calibration_release",
+  "decision": "Ali selected bounded synthetic V1 convention on 22 October 2026; this does not approve market comparability, historical price validity or evaluation answers.",
+  "catalog_version": "CATALOGUE_2026_V1",
+  "currency": "EUR",
+  "quote_arithmetic_basis": "Fictional tax-exclusive list price and standard cost per stored product unit; no freight or tax adjustment is included in catalogue margin arithmetic.",
+  "temporal_interpretation": "The current reader uses one static versioned V1 catalogue across simulated historical and evaluation cutoffs. This is a synthetic scenario convention, not evidence of historical market prices or a per-SKU effective interval.",
+  "public_anchor_role": "Taxonomy and broad synthetic generator-band design only; no individual fictional SKU has a verified like-for-like external price or procurement cost.",
+  "date_fields": {
+    "catalogue_calibration_date_role": "research/configuration date, not a SKU observation or validity date",
+    "fx_reference_date_role": "normalization input for sampled USD anchors, not a price-effective date",
+    "portfolio_as_of_at_role": "draft portfolio snapshot timestamp, not a universal price-effective date",
+    "sku_observation_dates": "unrecorded",
+    "sku_price_effective_intervals": "unrecorded"
+  },
+  "scope_boundary": "The approved v2 evaluation costing convention is case-scoped; this V1 proposal does not modify its contract, source definitions or hashes.",
+  "ready_for_generation": false
+}

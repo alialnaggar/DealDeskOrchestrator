@@ -355,6 +355,20 @@ def validate_payload(kind, payload, contract, *, mode=None, product_attributes=N
                 allowed_operators = spec.get("allowed_operators_by_rule_type", {}).get(rule_type, [])
                 if payload["operator"] not in allowed_operators:
                     errors.append("compatibility condition operator is invalid")
+            if rule_type == "attribute_constraint":
+                path = payload.get("attribute")
+                if not isinstance(path, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*", path):
+                    errors.append("attribute condition path is invalid")
+                operator = payload.get("operator")
+                if operator == "exists" and type(payload.get("expected")) is not bool:
+                    errors.append("attribute exists condition needs boolean expected")
+                if operator == "in" and (not isinstance(payload.get("expected"), list)
+                                         or not payload["expected"]):
+                    errors.append("attribute in condition needs nonempty expected list")
+            if rule_type == "required_deal_field":
+                path = payload.get("field")
+                if not isinstance(path, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*", path):
+                    errors.append("required deal field path is invalid")
             if rule_type == "installation_eligibility":
                 country = payload.get("country_code")
                 if (country not in contract["controlled_vocabularies"]["countries"] or
@@ -444,3 +458,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
