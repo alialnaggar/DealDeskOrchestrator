@@ -416,7 +416,7 @@ def build_m21_graph(original, config, adapter, models, *, _capability=None,
     if diagnostic_credit_only and not hosted:
         raise ValueError("M2.1 credit diagnostic needs hosted capability")
     if development_selection is not None and (not hosted or
-            development_selection not in (("policy", "approval_routing"),
+            development_selection not in (("credit",), ("policy", "approval_routing"),
                 tuple(TOOLS))):
         raise ValueError("M2.1 development selection unavailable")
     if set(models) != set(TOOLS):
@@ -478,7 +478,7 @@ def build_m21_graph(original, config, adapter, models, *, _capability=None,
     else:
         builder.add_node("handoff", handoff)
         builder.add_edge(START, "credit")
-    if diagnostic_credit_only:
+    if diagnostic_credit_only or development_selection == ("credit",):
         # Never project an incomplete three-specialist AI reviewer package.
         builder.add_edge("credit", END)
     elif development_selection != ("policy", "approval_routing"):
@@ -584,7 +584,7 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
     if authorized is not True or free_tier_billing_disabled is not True:
         raise ValueError("M2.1 explicit hosted/account authorization required")
     if development_selection is not None and (development_selection not in (
-            ("policy", "approval_routing"), tuple(TOOLS)) or os.environ.get(
+            ("credit",), ("policy", "approval_routing"), tuple(TOOLS)) or os.environ.get(
                 "DEALDESK_GROQ_DEV_ENABLE") != "1"):
         raise ValueError("M2.1 standing development opt-in required")
     from .groq_preflight import credential_shape
@@ -603,6 +603,7 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
             or manifest.get("version") != ("m21-original-after-candidate-standing-dev-v1" if
                 candidate_development else "m21-credit-terminal-standing-dev-v1" if
                 development_selection == tuple(TOOLS) else
+                "m21-credit-isolated-standing-dev-v1" if development_selection == ("credit",) else
                 "m21-policy-route-standing-dev-v1" if development_selection else
                 "m21-credit-http400-diagnostic-v1" if
                 diagnostic_credit_only else "m21-week3-proposal-v1")
@@ -623,13 +624,15 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
             or manifest["maximum_posts_per_specialist"] != 2
             or any(type(manifest.get(k)) is not int or manifest[k] != v for k, v in {
                 "maximum_posts_per_case": 6 if development_selection == tuple(TOOLS) else
+                    2 if development_selection == ("credit",) else
                     4 if development_selection else
                     2 if diagnostic_credit_only else 6,
                 "maximum_posts_total": 6 if development_selection == tuple(TOOLS) else
+                    2 if development_selection == ("credit",) else
                     4 if development_selection else
                     2 if diagnostic_credit_only else 6,
                 "maximum_completion_tokens_per_post": 1024 if
-                    development_selection == tuple(TOOLS) else 512,
+                    development_selection in (("credit",), tuple(TOOLS)) else 512,
                 "maximum_serialized_request_bytes_per_post": 8192,
                 "reported_total_token_post_send_stop": HOSTED_REPORTED_TOKEN_STOP,
                 "maximum_inspections_per_specialist": 1}.items())
@@ -638,7 +641,10 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
             or set(manifest["cases"][0]) != {"case_id", "assessment_id", "run_id",
                 "bundle_sha256", "source_input_digest", "as_of_at", "data_snapshot_ref"}
             or manifest["cases"][0]["case_id"] not in (
-                "B01", "B05", "N01", "N03", "CREDIT-LIMIT", "POLICY-CLAUSE")
+                "B01", "B05", "N01", "N03", "CREDIT-LIMIT", "POLICY-CLAUSE",
+                "CR01", "CR02", "CR03")
+            or (manifest["cases"][0]["case_id"] in ("CR01", "CR02", "CR03")
+                and development_selection != ("credit",))
             or type(manifest.get("execution_context")) is not dict
             or set(manifest["execution_context"]) != {"fixture_database",
                 "checkpoint_database", "owner_directory", "fresh_databases_required"}
@@ -683,7 +689,9 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
                 "B01": "M18-D-B01", "B05": "M18-D-B05", "N01": "M18-D-N01",
                 "N03": "M18-D-N03",
                 "CREDIT-LIMIT": "CONFLICT-DEAL-13",
-                "POLICY-CLAUSE": "CONFLICT-DEAL-15"}[case["case_id"]]):
+                "POLICY-CLAUSE": "CONFLICT-DEAL-15", "CR01": "M21CD-D-CR01",
+                "CR02": "M21CD-D-CR02", "CR03": "M21CD-D-CR03"}[
+                    case["case_id"]]):
         raise EvidenceMismatch("M2.1 hosted pinned source/manifest identity changed")
     if (not isinstance(owner_dir, Path) or not owner_dir.is_absolute()
             or owner_dir.is_symlink() or str(owner_dir) != manifest[
@@ -744,6 +752,7 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
             raise EvidenceMismatch("M2.1 owner directory contains unknown campaign receipt")
         if len([x for x in receipts if x.get("status") == "reserved"]) > (
                 6 if development_selection == tuple(TOOLS) else
+                2 if development_selection == ("credit",) else
                 4 if development_selection else 2 if diagnostic_credit_only else 6):
             raise EvidenceMismatch("M2.1 hosted campaign reservation ceiling changed")
         for item in receipts:
@@ -778,7 +787,7 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
                 model._manifest_hash = approved_manifest_sha256
                 model._credential_sha256 = owner["credential_sha256"]
                 model._capture_http_error = bool(diagnostic_credit_only or development_selection)
-                model._credit_typed_final = development_selection == tuple(TOOLS)
+                model._credit_typed_final = development_selection in (("credit",), tuple(TOOLS))
             build_m21_graph(original, config, adapter, models,
                 _capability=_HOSTED_CAPABILITY,
                 diagnostic_credit_only=diagnostic_credit_only,

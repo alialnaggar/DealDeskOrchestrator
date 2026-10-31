@@ -35,6 +35,8 @@ from dealdesk_phase2.phase1c_adapter import Phase1CAdapter
 from dealdesk_phase2.typed_final_hosted import DEV_ENABLE_ENV, run_groq_development
 from dealdesk_phase2.typed_final_hosted import _database_identity
 from m18_case_setup import CASES
+from m21_credit_case_setup import (CASES as CREDIT_CASES, install_credit_cases,
+    verify_credit_case)
 from run_week4_disposable import provision_and_run, require_disposable_cluster
 
 
@@ -59,9 +61,9 @@ def _fulfillment_error_summary(state):
 
 
 def _m21_campaign(graph, config, adapter, *, case_id, owner, root, key,
-                  policy_routing_only=False, typed_credit=False,
+                  policy_routing_only=False, typed_credit=False, credit_only=False,
                   manifest_path=None):
-    """Full campaign or isolated Policy → Routing development investigation."""
+    """Full campaign or isolated original-only specialist investigation."""
     template = (Path(__file__).resolve().parents[2] / "evaluation" /
         "week3-hosted-validation-proposal.json")
     manifest = json.loads(template.read_text())
@@ -79,15 +81,19 @@ def _m21_campaign(graph, config, adapter, *, case_id, owner, root, key,
         "SELECT current_database(), oid FROM pg_database WHERE datname=current_database()"
         ).fetchone()
     manifest.update(status="standing_development" if (policy_routing_only or
-        typed_credit) else
+        typed_credit or credit_only) else
         "authorized_one_case", version="m21-policy-route-standing-dev-v1" if
         policy_routing_only else "m21-original-after-candidate-standing-dev-v1" if
-        candidate_context is not None else "m21-credit-terminal-standing-dev-v1" if
+        candidate_context is not None else "m21-credit-isolated-standing-dev-v1" if
+        credit_only else "m21-credit-terminal-standing-dev-v1" if
         typed_credit else manifest["version"],
-        **({"order": ["policy", "approval_routing"],
-            "allowed_tools": {name: M21_TOOLS[name] for name in (
-                "policy", "approval_routing")}, "maximum_posts_total": 4,
-            "maximum_posts_per_case": 4} if policy_routing_only else
+        **({"order": ["credit"] if credit_only else ["policy", "approval_routing"],
+            "allowed_tools": {name: M21_TOOLS[name] for name in (("credit",) if
+                credit_only else ("policy", "approval_routing"))},
+            "maximum_posts_total": 2 if credit_only else 4,
+            "maximum_posts_per_case": 2 if credit_only else 4,
+            "maximum_completion_tokens_per_post": 1024 if credit_only else 512}
+            if policy_routing_only or credit_only else
            {"maximum_posts_total": 6,
             **({"maximum_completion_tokens_per_post": 1024} if typed_credit else {})}),
         cases=[{"case_id": case_id, "assessment_id": ctx.assessment_id,
@@ -123,7 +129,8 @@ def _m21_campaign(graph, config, adapter, *, case_id, owner, root, key,
             approved_manifest_sha256=digest, authorized=True, owner_dir=owner,
             free_tier_billing_disabled=True,
             development_selection=("policy", "approval_routing") if
-                policy_routing_only else tuple(M21_TOOLS) if typed_credit else None)
+                policy_routing_only else ("credit",) if credit_only else
+                tuple(M21_TOOLS) if typed_credit else None)
     finally:
         os.environ.pop("GROQ_SECONDARY_API_KEY", None)
     return digest, state
@@ -203,9 +210,11 @@ def main():
     cli.add_argument("--account-id", required=True)
     cli.add_argument("--specialist", choices=("pricing", "credit", "fulfillment",
                                           "m21_campaign", "policy_routing",
-                                          "full_typed_credit", "six_campaign"),
+                                           "full_typed_credit", "six_campaign",
+                                           "credit_isolated"),
                      default="pricing")
-    cli.add_argument("--case", choices=("B01", "B05", "N01", "N03"), default="B05")
+    cli.add_argument("--case", choices=("B01", "B05", "N01", "N03",
+        "CR01", "CR02", "CR03"), default="B05")
     args = cli.parse_args()
     if os.environ.get(DEV_ENABLE_ENV) != "1":
         raise ValueError("groq_development_opt_in_required")
@@ -214,6 +223,11 @@ def main():
     os.environ["DEALDESK_GROQ_ACCOUNT_ID"] = args.account_id
     if args.specialist == "credit" and args.case != "B05":
         raise ValueError("groq_development_credit_case_not_prepared")
+    if args.case in {item.case_id for item in CREDIT_CASES} and args.specialist != "credit_isolated":
+        raise ValueError("credit_development_case_requires_isolated_path")
+    if args.specialist == "credit_isolated" and args.case not in {
+            item.case_id for item in CREDIT_CASES}:
+        raise ValueError("credit_isolated_requires_credit_case")
     if args.specialist in ("fulfillment", "six_campaign") and args.case not in (
             "B01", "B05", "N01"):
         raise ValueError("groq_development_fulfillment_case_not_prepared")
@@ -236,9 +250,12 @@ def main():
         params = {k: v for k, v in admin.items() if k != "dbname"}
         business_dsn = make_conninfo(**params, dbname=fixture["business_database"])
         checkpoint_dsn = make_conninfo(**params, dbname=checkpoint_name)
+        if args.specialist == "credit_isolated":
+            with psycopg.connect(business_dsn) as connection:
+                install_credit_cases(connection)
         owner = root / "owner"
         owner.mkdir(mode=0o700)
-        case = next(x for x in CASES if x.case_id == args.case)
+        case = next(x for x in (*CASES, *CREDIT_CASES) if x.case_id == args.case)
         assessment = "GROQ-DEV-" + uuid4().hex
         result["assessment"] = assessment
         result["business_database"] = fixture["business_database"]
@@ -249,6 +266,11 @@ def main():
         with thesis_checkpointer(checkpoint_dsn) as saver:
             graph = build_original_graph(adapter, lambda: psycopg.connect(business_dsn), saver)
             original = graph.invoke(initial_state(assessment, case.run_id), config)
+            if args.specialist == "credit_isolated":
+                pinned = pinned_from_state(original)
+                pool = adapter.validate_pinned_context(pinned)
+                verify_credit_case(pool, original["specialist_results"]["credit"],
+                    args.case)
             if args.specialist == "six_campaign":
                 result["invoked"] = True
                 result["fixed_review_status"] = original["review_status"]
@@ -340,7 +362,7 @@ def main():
                     for row in state.get("tool_access_ledger", [])
                     if row.get("status") == "completed"]
             elif args.specialist in ("m21_campaign", "policy_routing",
-                                     "full_typed_credit"):
+                                      "full_typed_credit", "credit_isolated"):
                 result["invoked"] = True
                 result["fixed_review_status"] = original["review_status"]
                 try:
@@ -348,7 +370,8 @@ def main():
                         case_id=args.case, owner=owner,
                         root=root, key=key,
                         policy_routing_only=args.specialist == "policy_routing",
-                        typed_credit=args.specialist == "full_typed_credit")
+                        typed_credit=args.specialist == "full_typed_credit",
+                        credit_only=args.specialist == "credit_isolated")
                     result["manifest_sha256"] = digest
                 except Exception as exc:
                     result["error_class"] = type(exc).__name__
