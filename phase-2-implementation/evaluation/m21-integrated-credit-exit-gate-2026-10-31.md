@@ -1,5 +1,54 @@
 # M2.1 integrated Credit development and exit gate — 31 October 2026
 
+## Guarded Configuration probe and fresh UC02 continuation — 31 October 2026
+
+**Exit recommendation: C — keep M2.1 open.** This section supersedes only the
+*next-step status* in the dated sections below; their original receipts, test
+counts and conclusions at the time are retained. No terminal or uncertain
+assessment was replayed. Hosted testing stopped after the following two fresh
+assessments; neither is a reliability sample or proof that Configuration v4
+caused an improvement.
+
+The development-only `configuration_probe` uses the existing typed-final
+Configuration inspection, strict final parser/evidence validator, original
+source boundary, checkpoint, private manifest/receipt, rate coordinator and
+no-replay guard. The manifest binds N01/UC02, a fresh assessment, the pinned
+Phase 1C source and prompt hashes, `standing_configuration_probe` and an
+explicit probe flag. It allows **at most two POSTs** and **1,536 configured
+completion tokens**, returns before Pricing and is rejected by the normal
+Pricing and production-disabled routes. The UC02 overlay was preflighted
+against the disposable source: stale commitments, no selected AR/payment,
+fixed Credit `unknown` and original review `needs_revision`. It did not alter
+the Phase 1C pin, original submitted deal, evaluation cases, fixed rules or
+validator. Offline fake sends exercised a valid finding and abstention,
+rejected float and invented citation, an uncertain send, manifest/budget and
+CLI scope rejection, checkpoint restart without another send, and absence of
+downstream specialist invocation. No paid model or alternative LLM transport
+was introduced.
+
+| Fresh assessment, not a replay | Observed outcome |
+| --- | --- |
+| Configuration-only N01/UC02 `GROQ-DEV-3aaa3e576c1d440495cd683e545448ca` (checkpoint `groq_dev_checkpoint_6ed96c1e6db44f88`) | Configuration inspected only `product:M18-P-N01` and returned a **completed, validated finding** with five exact product claims: `catalog_version`, `fulfillment_mode`, `is_active`, `is_sellable`, `product_id`. Receipt shows two reserved/returned sends. No Pricing, Fulfillment, Credit, Policy or Routing AI, no candidate; fixed Credit remained `unknown`, review `needs_revision`. |
+| Integrated N01/UC02 `GROQ-DEV-7d9898ab709c4727920a17d8b814b905` (checkpoint `groq_dev_checkpoint_b0586b8b99f44ea9`) | All six AI stages completed **without a candidate**. Credit inspected only original `credit_profile:M18-C-N01` and returned a **validated finding**, citing `credit_status=Review`, `credit_limit=5000.00`, `fixed_commitments_fresh=false`, `risk_rating=High` and `unbilled_committed_amount=300.00`. No selected AR/payment evidence was returned, so no zero-balance or clearance claim was warranted. Fixed Credit remained `unknown`, review `needs_revision`; original-only review was present. |
+
+**Business example and authority:** the N01 deal's Review customer has stale
+commitments and no selected transaction rows in this synthetic UC02 source.
+AI reported the returned profile facts; fixed rules still could not determine
+Credit, and neither a candidate nor a deal approval, waiver or delivery promise
+followed. Offline UC02 can validly abstain; the hosted Credit finding here is
+**not an abstention**. The complete discoverable Phase 2 suite passed on five
+newly isolated business and three newly isolated checkpoint PostgreSQL
+databases: **340 run, 340 passed, 0 failed, 0 skipped**. CI is a separate gate.
+
+**Remaining exit gates:** the historical HC03 Configuration terminal rejection
+and intermittent Fulfillment HTTP 400 still lack a demonstrated cause. These
+two fresh runs did not reproduce either failure, but cannot establish runtime
+repeatability. Hosted incomplete-evidence Credit *finding* is demonstrated;
+hosted incomplete-evidence **abstention** is not. Independently accepted
+evaluation answers and predeclared comparisons are still required before
+accuracy or production-readiness claims. Preserve original/candidate isolation,
+fixed verification, private receipts, no unsafe replay and human approval.
+
 ## UC02 scalar-only Configuration contract review — 31 October 2026
 
 **Exit recommendation: C — keep M2.1 open.** The dated hosted results below

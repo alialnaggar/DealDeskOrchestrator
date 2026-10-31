@@ -20,7 +20,8 @@ from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
 from dealdesk_phase2.checkpoint import thesis_checkpointer
-from dealdesk_phase2.groq_development import build_manifest, record_manifest
+from dealdesk_phase2.groq_development import (build_manifest,
+    build_configuration_probe_manifest, record_manifest)
 from dealdesk_phase2.graph_state import pinned_from_state
 from dealdesk_phase2.groq_error_diagnostic import safe_fields
 from dealdesk_phase2.hybrid_pack import _canonical
@@ -211,9 +212,9 @@ def main():
     cli.add_argument("--pg-lib", type=Path, required=True)
     cli.add_argument("--account-id", required=True)
     cli.add_argument("--specialist", choices=("pricing", "credit", "fulfillment",
-                                          "m21_campaign", "policy_routing",
+                                           "m21_campaign", "policy_routing",
                                            "full_typed_credit", "six_campaign",
-                                           "credit_isolated"),
+                                            "credit_isolated", "configuration_probe"),
                      default="pricing")
     cli.add_argument("--case", choices=("B01", "B05", "N01", "N03",
         "CR01", "CR02", "CR03"), default="B05")
@@ -236,8 +237,13 @@ def main():
             "B01", "B05", "N01"):
         raise ValueError("groq_development_fulfillment_case_not_prepared")
     if args.credit_variant and (args.specialist != "six_campaign" or
-            INTEGRATED_VARIANTS[args.credit_variant] != args.case):
+            INTEGRATED_VARIANTS[args.credit_variant] != args.case) and not (
+            args.specialist == "configuration_probe" and args.case == "N01" and
+            args.credit_variant == "UC02"):
         raise ValueError("integrated_credit_requires_matching_six_campaign")
+    if args.specialist == "configuration_probe" and (
+            args.case != "N01" or args.credit_variant != "UC02"):
+        raise ValueError("configuration_probe_requires_n01_uc02")
     require_disposable_cluster(args.cluster_dsn)
     # Credential preflight happens before provisioning and is never logged.
     key = with_local_groq_key({}, credential="secondary")["GROQ_API_KEY"]
@@ -301,7 +307,43 @@ def main():
                 result["credit_variant"] = args.credit_variant
                 result["fixed_credit_finding"] = original["specialist_results"][
                     "credit"]["finding"]
-            if args.specialist == "six_campaign":
+            if args.specialist == "configuration_probe":
+                manifest, digest = build_configuration_probe_manifest(graph, config,
+                    adapter, case_id=args.case, account_id=args.account_id,
+                    owner_dir=owner)
+                path = root / "configuration-probe-manifest.json"
+                fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL |
+                    os.O_NOFOLLOW, 0o600)
+                with os.fdopen(fd, "w") as output:
+                    output.write(_canonical(manifest) + "\n")
+                    output.flush()
+                    os.fsync(output.fileno())
+                record_manifest(owner, manifest, digest)
+                result["manifest_sha256"] = digest
+                result["fixed_review_status"] = original["review_status"]
+                os.environ.pop("GROQ_API_KEY", None)
+                os.environ["GROQ_SECONDARY_API_KEY"] = key
+                result["invoked"] = True
+                try:
+                    run_groq_development(graph, config, adapter, manifest=manifest,
+                        manifest_sha256=digest, specialist="pricing", owner_dir=owner,
+                        configuration_probe=True)
+                except Exception as exc:
+                    result["error_class"] = type(exc).__name__
+                finally:
+                    os.environ.pop("GROQ_SECONDARY_API_KEY", None)
+                    key = None
+                state = graph.get_state(config).values
+                row = state.get("m20_ai_results", {}).get("configuration", {})
+                result["configuration_result"] = {k: row.get(k) for k in (
+                    "execution", "reason", "model_output_category", "validated_claims")}
+                result["model_attempts"] = [{k: attempt.get(k) for k in (
+                    "specialist", "ordinal", "status", "action_kind", "usage")}
+                    for attempt in state.get("m20_model_attempts", [])]
+                result["completed_evidence_refs"] = [event.get("returned_refs", [])
+                    for event in state.get("tool_access_ledger", []) if event.get(
+                        "status") == "completed"]
+            elif args.specialist == "six_campaign":
                 result["invoked"] = True
                 result["fixed_review_status"] = original["review_status"]
                 try:

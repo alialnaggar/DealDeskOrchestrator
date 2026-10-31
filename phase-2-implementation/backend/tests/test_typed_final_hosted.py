@@ -115,6 +115,24 @@ def fixture_approval(owner, data, digest):
 
 
 class GateUnit(unittest.TestCase):
+    def test_configuration_probe_cli_requires_exact_uc02_before_credential_or_db(self):
+        import sys
+        import run_groq_development as runner
+        common = ["runner", "--cluster-dsn", "unused-admin", "--phase1c",
+            "/tmp/opencode/dealdesk-phase1c-pinned", "--pg-bin", "/tmp/opencode",
+            "--pg-lib", "/tmp/opencode", "--account-id", "synthetic-free-tier",
+            "--specialist", "configuration_probe", "--case"]
+        with patch.dict(os.environ, {"DEALDESK_GROQ_DEV_ENABLE": "1"}), patch.object(
+                runner, "with_local_groq_key") as credential, patch.object(
+                runner, "require_disposable_cluster") as cluster:
+            for args in (("N01",), ("B01", "--credit-variant", "UC02"),
+                         ("N01", "--credit-variant", "HC03")):
+                with self.subTest(args=args), patch.object(sys, "argv", common + list(args)):
+                    with self.assertRaises(ValueError):
+                        runner.main()
+            credential.assert_not_called()
+            cluster.assert_not_called()
+
     def test_groq_development_is_opt_in_and_does_not_enable_production(self):
         from dealdesk_phase2.typed_final_hosted import (DEV_ENABLE_ENV,
             run_groq_development)
@@ -230,6 +248,139 @@ class HostedMockPostgres(unittest.TestCase):
         finally:
             with psycopg.connect(admin, autocommit=True) as connection:
                 connection.execute("DROP DATABASE " + checkpoint_name)
+
+    def test_configuration_probe_two_posts_strict_terminal_and_restart(self):
+        """Actual guarded sender path with offline doubles, never a provider call."""
+        from dealdesk_phase2.groq_development import (build_configuration_probe_manifest,
+            record_manifest)
+        from dealdesk_phase2.typed_final_hosted import (DEV_ENABLE_ENV,
+            run_groq_development, configuration_probe_budget)
+        self.assertEqual(configuration_probe_budget()["maximum_posts_per_case"], 2)
+        self.assertEqual(configuration_probe_budget()[
+            "maximum_configured_completion_per_case"], 1536)
+        source = psycopg.conninfo.conninfo_to_dict(os.environ["M20_CHECKPOINT_DATABASE_URL"])
+        admin = psycopg.conninfo.make_conninfo(**{**source, "dbname": "postgres"})
+        for outcome in ("finding", "abstain", "float", "fabricated", "unknown_send"):
+            with self.subTest(outcome=outcome):
+                checkpoint_name = "config_probe_" + uuid4().hex[:16]
+                dsn = psycopg.conninfo.make_conninfo(**{**source,
+                    "dbname": checkpoint_name})
+                with psycopg.connect(admin, autocommit=True) as connection:
+                    connection.execute("CREATE DATABASE " + checkpoint_name)
+                try:
+                    with tempfile.TemporaryDirectory(dir="/tmp/opencode") as directory:
+                        root = Path(directory)
+                        owner = root / "owner"
+                        owner.mkdir(mode=0o700)
+                        case = next(x for x in CASES if x.case_id == "N01")
+                        identifier = "CONFIG-PROBE-TEST-" + uuid4().hex
+                        config = {"configurable": {"thread_id": identifier}}
+                        with thesis_checkpointer(dsn) as saver:
+                            graph = build_original_graph(self.adapter, self.connect, saver)
+                            baseline = graph.invoke(initial_state(identifier, case.run_id),
+                                config)
+                            data, digest = build_configuration_probe_manifest(graph,
+                                config, self.adapter, case_id="N01",
+                                account_id="synthetic-free-tier", owner_dir=owner)
+                            self.assertEqual(data["status"], "standing_configuration_probe")
+                            self.assertTrue(data["configuration_probe"])
+                            record_manifest(owner, data, digest)
+                            sent = []
+                            def fake_post(url, key, header, body, **kwargs):
+                                sent.append(body)
+                                self.assertLessEqual(len(sent), 2)
+                                self.assertTrue(kwargs["capture_http_error"])
+                                if len(sent) == 1:
+                                    task = json.loads(body["messages"][1]["content"])
+                                    self.assertEqual(task["input"]["specialist"],
+                                        "configuration")
+                                    self.assertEqual({t["function"]["name"] for t in body[
+                                        "tools"]}, {"inspect_configuration_line",
+                                                "submit_finding", "abstain"})
+                                    return tool_response("inspect_configuration_line",
+                                        {"line_id": "M18-L-N01"})
+                                self.assertNotIn("tools", body)
+                                if outcome == "unknown_send":
+                                    raise ProviderError("transport_failure")
+                                task = json.loads(body["messages"][1]["content"])
+                                record = task["observations"][0]["records"][0]
+                                claim = {"ref": "product:invented" if outcome ==
+                                    "fabricated" else record["ref"],
+                                    "field": "is_sellable", "value_json": "1.0" if
+                                    outcome == "float" else "true"}
+                                payload = {"version": VERSION,
+                                    "kind": "abstain" if outcome == "abstain" else "finding",
+                                    "claims": [] if outcome == "abstain" else [claim],
+                                    "reason_code": "model_uncertainty" if outcome ==
+                                    "abstain" else "none", "uncertainty_reasons": []}
+                                return {"choices": [{"finish_reason": "stop",
+                                    "message": {"content": json.dumps(payload)}}],
+                                    "usage": {"prompt_tokens": 300,
+                                              "completion_tokens": 80}}
+                            with patch.dict(os.environ, {DEV_ENABLE_ENV: "1",
+                                    "GROQ_SECONDARY_API_KEY": "gsk_" + "x" * 47}), patch(
+                                    "dealdesk_phase2.live_models._post",
+                                    side_effect=fake_post) as sender:
+                                with self.assertRaises(ValueError):
+                                    run_groq_development(graph, config, self.adapter,
+                                        manifest=data, manifest_sha256=digest,
+                                        specialist="pricing", owner_dir=owner)
+                                sender.assert_not_called()
+                                with self.assertRaises(ValueError):
+                                    run_groq_development(graph, config, self.adapter,
+                                        manifest={**data, "budgets": {**data["budgets"],
+                                            "maximum_posts_per_case": 4}},
+                                        manifest_sha256=digest,
+                                        specialist="pricing", owner_dir=owner,
+                                        configuration_probe=True)
+                                sender.assert_not_called()
+                                if outcome in ("finding", "abstain"):
+                                    result = run_groq_development(graph, config,
+                                        self.adapter, manifest=data,
+                                        manifest_sha256=digest, specialist="pricing",
+                                        owner_dir=owner, configuration_probe=True)
+                                    self.assertEqual(result["execution"],
+                                        "completed" if outcome == "finding" else
+                                        "abstained")
+                                else:
+                                    with self.assertRaises(EvidenceMismatch):
+                                        run_groq_development(graph, config,
+                                            self.adapter, manifest=data,
+                                            manifest_sha256=digest, specialist="pricing",
+                                            owner_dir=owner, configuration_probe=True)
+                                self.assertEqual(sender.call_count, 2)
+                                state = graph.get_state(config).values
+                                self.assertEqual(state["specialist_results"],
+                                    baseline["specialist_results"])
+                                self.assertEqual(set(state["m20_ai_results"]),
+                                    {"configuration"})
+                                self.assertFalse(state.get("typed_final_results"))
+                                self.assertFalse(state.get("m21_ai_results"))
+                                self.assertFalse(state.get("ai_fulfillment_result"))
+                                self.assertEqual(state["candidate_status"], "not_started")
+                                self.assertEqual([r["tool"] for r in state[
+                                    "tool_access_ledger"] if r["status"] == "completed"],
+                                    ["inspect_configuration_line"])
+                                with thesis_checkpointer(dsn) as reopened:
+                                    restarted = build_original_graph(self.adapter,
+                                        self.connect, reopened)
+                                    if outcome in ("finding", "abstain"):
+                                        self.assertEqual(run_groq_development(restarted,
+                                            config, self.adapter, manifest=data,
+                                            manifest_sha256=digest, specialist="pricing",
+                                            owner_dir=owner, configuration_probe=True),
+                                            result)
+                                    else:
+                                        with self.assertRaises(EvidenceMismatch):
+                                            run_groq_development(restarted, config,
+                                                self.adapter, manifest=data,
+                                                manifest_sha256=digest,
+                                                specialist="pricing", owner_dir=owner,
+                                                configuration_probe=True)
+                                self.assertEqual(sender.call_count, 2)
+                finally:
+                    with psycopg.connect(admin, autocommit=True) as connection:
+                        connection.execute("DROP DATABASE " + checkpoint_name)
 
     def run_case(self, specialist="credit", plan=1, wrong=None, tamper=None):
         identifier = "TYPED-HOSTED-MOCK-" + uuid4().hex

@@ -19,6 +19,7 @@ from .phase1c_adapter import PHASE1C_COMMIT
 from .tool_permissions import PERMISSION_VERSION
 from .typed_final_hosted import (APPROVAL_NAME, MANIFEST_VERSION, SCHEMA_SHA256,
     INSPECTION_WIRE_VERSION, INSPECTION_PROMPT_VERSION, budgets,
+    configuration_probe_budget,
     inspection_instruction, _validate_manifest)
 
 
@@ -65,6 +66,22 @@ def build_manifest(original, config, adapter, *, case_id, specialist, plan,
     digest = sha256(_canonical(manifest).encode()).hexdigest()
     _validate_manifest(manifest, digest, specialist, owner_dir, pinned, config,
                        development=True)
+    return manifest, digest
+
+
+def build_configuration_probe_manifest(original, config, adapter, *, case_id,
+                                       account_id, owner_dir):
+    """N01-only, development-only subset of the existing guarded Pricing path."""
+    if case_id != "N01":
+        raise ValueError("configuration_probe_requires_n01")
+    manifest, _ = build_manifest(original, config, adapter, case_id=case_id,
+        specialist="pricing", plan=1, account_id=account_id, owner_dir=owner_dir)
+    manifest = {**manifest, "status": "standing_configuration_probe",
+        "configuration_probe": True, "budgets": configuration_probe_budget()}
+    digest = sha256(_canonical(manifest).encode()).hexdigest()
+    _validate_manifest(manifest, digest, "pricing", owner_dir,
+        pinned_from_state(original.get_state(config).values), config,
+        development=True, configuration_probe=True)
     return manifest, digest
 
 

@@ -102,6 +102,16 @@ def budgets(specialist, inspection_plan, *, development=False):
         "reported_total_token_post_send_stop": MAX_REPORTED_TOKENS}
 
 
+def configuration_probe_budget():
+    """Same guarded Configuration caps; no Pricing reservation is permitted."""
+    base = budgets("pricing", 1, development=True)
+    return {**base, "maximum_posts_per_case": 2,
+        "maximum_posts_per_specialist": 2,
+        "maximum_configured_completion_per_case": 1536,
+        "maximum_configured_completion_per_specialist": 1536,
+        "maximum_final_completion_tokens": 1024}
+
+
 def full_m21_budget():
     """Non-executable planning bound: Credit + unchanged Policy/Routing."""
     return {"posts": 6, "configured_completion_tokens": 3584,
@@ -109,18 +119,27 @@ def full_m21_budget():
 
 
 def _validate_manifest(manifest, digest, specialist, owner, pinned, config,
-                       *, development=False):
+                       *, development=False, configuration_probe=False):
+    if configuration_probe and (development is not True or specialist != "pricing"):
+        raise ValueError("configuration_probe_requires_development_pricing_boundary")
     if (type(manifest) is not dict or set(manifest) != (MANIFEST_KEYS |
-            {"configuration_final_prompt_sha256"} if development else MANIFEST_KEYS) or
+            ({"configuration_final_prompt_sha256", "configuration_probe"} if
+                configuration_probe else {"configuration_final_prompt_sha256"} if
+                development else set())) or
+            configuration_probe and manifest.get("configuration_probe") is not True or
             type(digest) is not str or len(digest) != 64 or
             sha256(_canonical(manifest).encode()).hexdigest() != digest or
             manifest["version"] != MANIFEST_VERSION or
-            manifest["status"] != ("standing_development" if development else
-                                   "authorized_one_case") or
+            manifest["status"] != ("standing_configuration_probe" if configuration_probe
+                else "standing_development" if development else
+                                    "authorized_one_case") or
             manifest["specialist"] != specialist or
             type(manifest["inspection_plan"]) is not int or
-            manifest["budgets"] != budgets(specialist, manifest["inspection_plan"],
-                development=development) or
+            manifest["budgets"] != (configuration_probe_budget() if
+                configuration_probe and manifest["inspection_plan"] == 1 else
+                budgets(specialist, manifest["inspection_plan"],
+                    development=development)) or
+            configuration_probe and manifest["inspection_plan"] != 1 or
             set(manifest["budgets"]) != BUDGET_KEYS or
             manifest["phase1c_pin"] != PHASE1C_COMMIT or
             manifest["provider"] != "groq" or manifest["model"] != GROQ_MODEL or
@@ -441,7 +460,7 @@ def _checkpoint_send_lock(original):
 
 def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sha256,
     specialist, owner_dir, send, credential_digest, exclusive_databases,
-    development=False):
+    development=False, configuration_probe=False):
     """Internal composition layer; only the gated entry creates a live sender.
 
     Tests exercise this with a synthetic sender from backend/tests, never _post.
@@ -450,11 +469,14 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
     """
     if not isinstance(owner_dir, Path) or not owner_dir.is_absolute():
         raise ValueError("typed_hosted_private_owner_required")
+    if configuration_probe and not development:
+        raise ValueError("configuration_probe_development_only")
     snapshot = original.get_state(config)
     pinned = pinned_from_state(snapshot.values)
     adapter.validate_pinned_context(pinned)
     _validate_manifest(manifest, approved_manifest_sha256, specialist, owner_dir,
-                       pinned, config, development=development)
+                       pinned, config, development=development,
+                       configuration_probe=configuration_probe)
     if snapshot.next or snapshot.values.get("stop_reason"):
         raise EvidenceMismatch("typed_hosted_original_incomplete")
     ctx = pinned.context
@@ -463,7 +485,8 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
         locked_pinned = pinned_from_state(locked.values)
         adapter.validate_pinned_context(locked_pinned)
         _validate_manifest(manifest, approved_manifest_sha256, specialist, owner_dir,
-                            locked_pinned, config, development=development)
+                            locked_pinned, config, development=development,
+                            configuration_probe=configuration_probe)
         if (locked.next or locked.values.get("stop_reason") or
                 locked.values != snapshot.values or locked_pinned != pinned or
                 locked.config.get("configurable", {}).get("checkpoint_id") !=
@@ -482,7 +505,8 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
             adapter.validate_pinned_context(latest_pinned)
             _validate_manifest(manifest, approved_manifest_sha256, specialist,
                                 owner_dir, latest_pinned, config,
-                                development=development)
+                                development=development,
+                                configuration_probe=configuration_probe)
             _database_identity(original, manifest, exclusive=exclusive_databases)
             ledger = latest.values.get("tool_access_ledger", [])
             if (latest.next or latest.values.get("stop_reason") or
@@ -493,9 +517,10 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
                     ledger[:len(ledger_baseline)] != ledger_baseline or
                     any(type(event) is not dict or event.get("identity", {}).get(
                         "assessment_id") != ctx.assessment_id or
-                        event.get("identity", {}).get("specialist") not in (
-                            ("configuration", "pricing") if specialist == "pricing"
-                            else ("credit",)) for event in ledger[len(ledger_baseline):]) or
+                         event.get("identity", {}).get("specialist") not in (
+                             ("configuration",) if configuration_probe else
+                             ("configuration", "pricing") if specialist == "pricing"
+                             else ("credit",)) for event in ledger[len(ledger_baseline):]) or
                     latest.values.get("typed_final_hosted_start") != owner):
                 raise EvidenceMismatch("typed_hosted_state_changed_before_send")
             return latest.config["configurable"]["checkpoint_id"]
@@ -565,6 +590,13 @@ def _run_assessment(original, config, adapter, *, manifest, approved_manifest_sh
                     result.get("model_turns") != len(completed) or
                     result.get("provider") != "groq" or not completed):
                 raise EvidenceMismatch("typed_hosted_configuration_not_completed")
+            if configuration_probe:
+                if (len(reserved) > 2 or original.get_state(config).values.get(
+                        "typed_final_attempts") or original.get_state(config).values.get(
+                        "typed_final_results") or original.get_state(config).values.get(
+                        "m20_ai_results", {}).get("pricing")):
+                    raise EvidenceMismatch("typed_hosted_configuration_probe_scope_changed")
+                return result
         else:
             if refreshed.get("m20_ai_results") or refreshed.get("m20_model_attempts"):
                 raise EvidenceMismatch("typed_hosted_credit_prior_m20_attempts")
@@ -613,7 +645,7 @@ def run_typed_final_hosted(original, config, adapter, *, manifest, approved_mani
 
 
 def run_groq_development(original, config, adapter, *, manifest, manifest_sha256,
-                         specialist, owner_dir):
+                         specialist, owner_dir, configuration_probe=False):
     """Standing free-tier development, explicitly opted in for each local process.
 
     The private manifest record is an audit binding, not a fresh human approval.
@@ -626,7 +658,9 @@ def run_groq_development(original, config, adapter, *, manifest, manifest_sha256
     key = os.environ.get("GROQ_SECONDARY_API_KEY")
     if credential_shape(key) != "credential_shape_ok":
         raise ValueError("groq_development_secondary_credential_unavailable")
-    if (type(manifest) is not dict or manifest.get("status") != "standing_development"):
+    if (type(manifest) is not dict or manifest.get("status") != (
+            "standing_configuration_probe" if configuration_probe else
+            "standing_development")):
         raise ValueError("groq_development_manifest_required")
     def send(body):
         return _post("https://api.groq.com/openai/v1/chat/completions",
@@ -636,4 +670,5 @@ def run_groq_development(original, config, adapter, *, manifest, manifest_sha256
     return _run_assessment(original, config, adapter, manifest=manifest,
         approved_manifest_sha256=manifest_sha256, specialist=specialist,
         owner_dir=owner_dir, send=send, credential_digest=sha256(key.encode()).hexdigest(),
-        exclusive_databases=True, development=True)
+        exclusive_databases=True, development=True,
+        configuration_probe=configuration_probe)
