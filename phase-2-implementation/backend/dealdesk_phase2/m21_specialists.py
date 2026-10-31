@@ -638,7 +638,7 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
             or set(manifest["cases"][0]) != {"case_id", "assessment_id", "run_id",
                 "bundle_sha256", "source_input_digest", "as_of_at", "data_snapshot_ref"}
             or manifest["cases"][0]["case_id"] not in (
-                "B01", "B05", "N03", "CREDIT-LIMIT", "POLICY-CLAUSE")
+                "B01", "B05", "N01", "N03", "CREDIT-LIMIT", "POLICY-CLAUSE")
             or type(manifest.get("execution_context")) is not dict
             or set(manifest["execution_context"]) != {"fixture_database",
                 "checkpoint_database", "owner_directory", "fresh_databases_required"}
@@ -680,7 +680,8 @@ def run_m21_evaluation(original, config, adapter, models, *, manifest: dict,
             or ctx.data_snapshot_ref != case["data_snapshot_ref"]
             or config.get("configurable", {}).get("thread_id") != ctx.assessment_id
             or pinned.context.original_deal_id != {
-                "B01": "M18-D-B01", "B05": "M18-D-B05", "N03": "M18-D-N03",
+                "B01": "M18-D-B01", "B05": "M18-D-B05", "N01": "M18-D-N01",
+                "N03": "M18-D-N03",
                 "CREDIT-LIMIT": "CONFLICT-DEAL-13",
                 "POLICY-CLAUSE": "CONFLICT-DEAL-15"}[case["case_id"]]):
         raise EvidenceMismatch("M2.1 hosted pinned source/manifest identity changed")

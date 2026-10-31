@@ -205,7 +205,7 @@ def main():
                                           "m21_campaign", "policy_routing",
                                           "full_typed_credit", "six_campaign"),
                      default="pricing")
-    cli.add_argument("--case", choices=("B01", "B05", "N03"), default="B05")
+    cli.add_argument("--case", choices=("B01", "B05", "N01", "N03"), default="B05")
     args = cli.parse_args()
     if os.environ.get(DEV_ENABLE_ENV) != "1":
         raise ValueError("groq_development_opt_in_required")
@@ -215,7 +215,7 @@ def main():
     if args.specialist == "credit" and args.case != "B05":
         raise ValueError("groq_development_credit_case_not_prepared")
     if args.specialist in ("fulfillment", "six_campaign") and args.case not in (
-            "B01", "B05"):
+            "B01", "B05", "N01"):
         raise ValueError("groq_development_fulfillment_case_not_prepared")
     require_disposable_cluster(args.cluster_dsn)
     # Credential preflight happens before provisioning and is never logged.

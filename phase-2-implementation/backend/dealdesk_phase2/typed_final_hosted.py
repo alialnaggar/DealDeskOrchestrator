@@ -157,9 +157,10 @@ def _validate_manifest(manifest, digest, specialist, owner, pinned, config,
             "source_input_digest": ctx.source_input_digest,
             "as_of_at": ctx.as_of_at.isoformat(),
             "data_snapshot_ref": ctx.data_snapshot_ref} or
-            case["case_id"] not in ("B01", "B05", "N03", "CREDIT-LIMIT") or
+            case["case_id"] not in ("B01", "B05", "N01", "N03", "CREDIT-LIMIT") or
             case["subject_id"] != {"B01": "M18-D-B01", "B05": "M18-D-B05",
-                "N03": "M18-D-N03", "CREDIT-LIMIT": "CONFLICT-DEAL-13"}[
+                "N01": "M18-D-N01", "N03": "M18-D-N03",
+                "CREDIT-LIMIT": "CONFLICT-DEAL-13"}[
                     case["case_id"]] or
             config.get("configurable", {}).get("thread_id") != ctx.assessment_id):
         raise EvidenceMismatch("typed_hosted_case_identity_changed")

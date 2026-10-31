@@ -107,7 +107,10 @@ class M21HostedGatePostgres(unittest.TestCase):
     def test_full_six_original_ai_with_fixed_checked_candidate_offline(self):
         self._six_campaign_offline(binding=True)
 
-    def _six_campaign_offline(self, *, binding=False):
+    def test_n01_six_original_ai_without_candidate_after_forbidden_partial_offline(self):
+        self._six_campaign_offline(case_id="N01")
+
+    def _six_campaign_offline(self, *, binding=False, case_id="B01"):
         """Fresh PostgreSQL checkpoint; all six model transports are offline doubles."""
         from dealdesk_phase2.checkpoint import thesis_checkpointer
         from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
@@ -124,7 +127,20 @@ class M21HostedGatePostgres(unittest.TestCase):
                 root.chmod(0o700)
                 (root / "owner").mkdir(mode=0o700)  # same setup as the real CLI
                 with thesis_checkpointer(dedicated) as saver:
-                    graph, config, before, _ = self.original(saver)
+                    if case_id == "N01":
+                        run_id = next(x.run_id for x in CASES if x.case_id == case_id)
+                        config = {"configurable": {"thread_id": "DEV-N01-" + uuid4().hex}}
+                        graph = build_original_graph(self.adapter, self.connect, saver)
+                        before = graph.invoke(initial_state(config["configurable"][
+                            "thread_id"], run_id), config)
+                    else:
+                        graph, config, before, _ = self.original(saver, case_id)
+                    if case_id == "N01":
+                        from dealdesk_phase2.graph_state import pinned_from_state
+                        from dealdesk_phase2.fulfillment_agent import eligible_line
+                        pool = self.adapter.validate_pinned_context(pinned_from_state(before))
+                        self.assertIs(pool["deal"]["terms_json"]["allow_partial_delivery"], False)
+                        self.assertEqual(eligible_line(before, pool)[1], "eligible")
                     calls = []
                     model_visibility = []
                     def fake_post(url, key, header, body, **kwargs):
@@ -184,13 +200,13 @@ class M21HostedGatePostgres(unittest.TestCase):
                                     "fields"][field])}], "reason_code": "none",
                                 "uncertainty_reasons": []})}}],
                             "usage": {"prompt_tokens": 200, "completion_tokens": 60}}
-                    run_id = next(x.run_id for x in CASES if x.case_id == "B01")
+                    run_id = next(x.run_id for x in CASES if x.case_id == case_id)
                     with patch.dict(os.environ, {"DEALDESK_GROQ_DEV_ENABLE": "1"}), patch(
                             "dealdesk_phase2.live_models._post", side_effect=fake_post), patch(
                             "dealdesk_phase2.m21_groq_contract._post", side_effect=fake_post):
                         try:
                             status = _six_campaign(graph, config, self.adapter,
-                                case_id="B01", account_id="synthetic-test-account", root=root,
+                                case_id=case_id, account_id="synthetic-test-account", root=root,
                                 key="gsk_offline_test_placeholder_123456789", run_id=run_id)
                         except EvidenceMismatch:
                             if not binding:
@@ -210,6 +226,10 @@ class M21HostedGatePostgres(unittest.TestCase):
                     self.assertEqual(state["specialist_results"], before["specialist_results"])
                     self.assertEqual(state["candidate_status"],
                         "fixed_checked" if binding else "not_started")
+                    if case_id == "N01":
+                        self.assertEqual(state.get("candidate_records", {}), {})
+                        self.assertEqual(state["reviewer_package"].get("candidates", []), [])
+                        self.assertEqual(state["m21_review"]["subject_id"], "M18-D-N01")
                     if binding:
                         candidate = next(iter(state["candidate_records"].values()))
                         self.assertEqual(candidate["fixed_supply_status"],

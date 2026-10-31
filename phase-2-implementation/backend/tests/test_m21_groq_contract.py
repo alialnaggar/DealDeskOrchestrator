@@ -102,6 +102,42 @@ class M21GroqWire(unittest.TestCase):
         model._credit_typed_final = False
         self.assertIn("tools", model.prepare_request(self.input, ()))
 
+    def test_credit_v2_distinct_ar_payment_evidence_and_empty_pool_abstention(self):
+        from dealdesk_phase2.groq_typed_final import parse_response as parse_final
+        from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
+        model = GroqM21Model("credit")
+        model._credit_typed_final = True
+        body = model.prepare_request(self.input, (self.observation,))
+        self.assertIn("credit-observation-v2", body["messages"][0]["content"])
+        self.assertNotIn("Pricing:", body["messages"][0]["content"])
+        self.assertNotIn("PRIVATE-INVOICE", _canonical(body))
+        _, visible, mapping = model_view(self.input, (self.observation,))
+        receivable = next(row for row in visible[0]["records"] if row["ref"].startswith(
+            "receivable:"))
+        response = {"usage": {"prompt_tokens": 300, "completion_tokens": 80},
+            "choices": [{"finish_reason": "stop", "message": {"content": json.dumps({
+                "version": FINAL_VERSION, "kind": "finding", "claims": [{"ref": receivable[
+                    "ref"], "field": "outstanding_amount", "value_json": '"20.00"'}],
+                "uncertainty_reasons": [], "reason_code": "none"})}}]}
+        self.assertEqual(parse_final(response, input=self.input, observations=(
+            self.observation,))["claims"], [{"ref": mapping[receivable["ref"]],
+                "field": "outstanding_amount", "value": "20.00"}])
+        missing = {**self.observation, "records": [], "returned_refs": []}
+        empty_body = model.prepare_request(self.input, (missing,))
+        self.assertEqual(json.loads(empty_body["messages"][1]["content"])[
+            "observations"][0]["records"], [])
+        response["choices"][0]["message"]["content"] = json.dumps({
+            "version": FINAL_VERSION, "kind": "abstain", "claims": [],
+            "uncertainty_reasons": [], "reason_code": "insufficient_evidence"})
+        self.assertEqual(parse_final(response, input=self.input, observations=(missing,)),
+            {"kind": "abstain", "reason_code": "insufficient_evidence"})
+        response["choices"][0]["message"]["content"] = json.dumps({
+            "version": FINAL_VERSION, "kind": "finding", "claims": [{"ref": receivable[
+                "ref"], "field": "outstanding_amount", "value_json": '"20.00"'}],
+            "uncertainty_reasons": [], "reason_code": "none"})
+        with self.assertRaises(ValueError):
+            parse_final(response, input=self.input, observations=(missing,))
+
     def test_fabricated_fields_refs_values_and_malformed_or_abstained_response(self):
         _, visible, _ = model_view(self.input, (self.observation,))
         ref = visible[0]["records"][0]["ref"]
