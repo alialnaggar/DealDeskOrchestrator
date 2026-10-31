@@ -178,6 +178,33 @@ class M21GroqWire(unittest.TestCase):
             self.assertEqual(caught.exception.category, expected)
             self.assertNotIn("PRIVATE", str(caught.exception))
 
+    def test_cr01_cr03_safe_categories_are_not_unique_root_causes(self):
+        """Offline reproductions, NOT the missing provider response bodies."""
+        from dealdesk_phase2.groq_typed_final import (FinalResponseError,
+            parse_response as parse_final)
+        from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
+        from dealdesk_phase2.m21_redaction import model_view
+        public, visible, _ = model_view(self.input, (self.observation,))
+        for arguments in ({"subject_id": "OTHER"},
+                          {"subject_id": public["subject_id"], "extra": True}):
+            with self.subTest(arguments=arguments), self.assertRaises(
+                    ToolResponseError) as caught:
+                parse_response(tool_response(TOOLS["credit"], arguments), self.input, ())
+            self.assertEqual(caught.exception.category, "action_arguments")
+        for claim in ({"ref": visible[0]["records"][1]["ref"],
+                       "field": "outstanding_amount", "value_json": '"21.00"'},
+                      {"ref": "receivable:unreturned", "field": "outstanding_amount",
+                       "value_json": '"20.00"'}):
+            reply = {"usage": {"prompt_tokens": 300, "completion_tokens": 80},
+                "choices": [{"finish_reason": "stop", "message": {"content": json.dumps({
+                    "version": FINAL_VERSION, "kind": "finding", "claims": [claim],
+                    "uncertainty_reasons": [], "reason_code": "none"})}}]}
+            with self.subTest(claim=claim), self.assertRaises(
+                    FinalResponseError) as caught:
+                parse_final(reply, input=self.input, observations=(self.observation,))
+            self.assertEqual(caught.exception.category, "terminal_semantics_or_evidence")
+            self.assertNotIn("PRIVATE", str(caught.exception))
+
     def test_policy_routing_keep_only_returned_fixed_refs(self):
         for name, record in (("policy", {"ref": "policy_rule:PO-1", "fields": {
                 "rule_id": "PO-1", "required_action": "approval_required"}}),

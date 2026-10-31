@@ -1,5 +1,10 @@
 # M2.1 isolated Credit evidence development — 31 October 2026
 
+**Later disposition:** Ali discontinued Gemma and removed its uncommitted
+tests; the [subsequent complete fresh-PostgreSQL local suite](m21-gemma-retirement-credit-diagnostics-2026-10-31.md)
+passes 331/331 with no skips. The failures/skips below describe only the
+earlier test environment, not the current suite.
+
 **Development observations, not accepted-answer evaluation.** The pinned
 Phase 1C checkout remains `90c0bc8e285ee69262c7db826b786096a77ad004`.
 Three additional `M21CD-*` cases exist only in separately provisioned local

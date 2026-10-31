@@ -23,6 +23,7 @@ from dealdesk_phase2.hybrid_pack import _canonical
 from dealdesk_phase2.m21_groq_contract import GroqM21Model
 from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
 from run_groq_development import _m21_campaign
+from m18_case_setup import install_disposable_cases
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from dealdesk_phase2.phase1c_adapter import Phase1CAdapter
 from m21_credit_case_setup import CASES, ids, install_credit_cases, verify_credit_case
@@ -31,6 +32,24 @@ from m21_credit_case_setup import CASES, ids, install_credit_cases, verify_credi
 @unittest.skipUnless(os.getenv("M21_CREDIT_DATABASE_URL") and os.getenv(
     "DEALDESK_PHASE1C_CHECKOUT"), "separately provisioned disposable PostgreSQL required")
 class CreditCasePostgres(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        db = os.environ["M21_CREDIT_DATABASE_URL"]
+        with psycopg.connect(db) as conn:
+            baseline = conn.execute("SELECT count(*) FROM deal_desk.deals WHERE "
+                "deal_id LIKE 'M18-D-%'").fetchone()[0]
+            if baseline == 0:
+                install_disposable_cases(conn)
+            elif baseline != 9:
+                raise ValueError("isolated Credit database has incomplete M18 baseline")
+        with psycopg.connect(db) as conn:
+            count = conn.execute("SELECT count(*) FROM deal_desk.deals WHERE "
+                "deal_id LIKE 'M21CD-D-%'").fetchone()[0]
+            if count == 0:
+                install_credit_cases(conn)
+            elif count != 3:
+                raise ValueError("isolated Credit database has incomplete Credit fixtures")
+
     def test_selected_sources_and_fixed_results(self):
         db = os.environ["M21_CREDIT_DATABASE_URL"]
         adapter = Phase1CAdapter(Path(os.environ["DEALDESK_PHASE1C_CHECKOUT"]))
@@ -39,12 +58,8 @@ class CreditCasePostgres(unittest.TestCase):
             before = conn.execute("SELECT deal_id, customer_id FROM deal_desk.deals "
                 "WHERE deal_id LIKE 'M18-D-%' ORDER BY deal_id").fetchall()
             self.assertEqual(len(before), 9)
-            count = conn.execute("SELECT count(*) FROM deal_desk.deals WHERE "
-                "deal_id LIKE 'M21CD-D-%'").fetchone()[0]
-            if count == 0:
-                install_credit_cases(conn)
-            else:
-                self.assertEqual(count, 3)
+            self.assertEqual(conn.execute("SELECT count(*) FROM deal_desk.deals "
+                "WHERE deal_id LIKE 'M21CD-D-%'").fetchone()[0], 3)
         expected = {
             "CR01": ("calculated", True, Decimal("9160.00"), Decimal("60.00"),
                      Decimal("40.00"), "Partially Paid", ()),

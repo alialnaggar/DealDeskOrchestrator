@@ -41,6 +41,7 @@ jobs:
       M20_CHECKPOINT_DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m20_ai_checkpoint
       M20_E2E_DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m20_e2e
       M20_E2E_CHECKPOINT_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m20_e2e_checkpoint
+      M21_CREDIT_DATABASE_URL: postgresql://postgres:phase2_ci_only@localhost:5432/deal_desk_m21_credit_dev
       DEALDESK_PHASE1C_CHECKOUT: ${{ github.workspace }}/phase1c-pinned
       PYTHONPATH: phase-2-implementation/backend
     steps:
@@ -98,7 +99,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -d deal_desk_campaign_reference -f /tmp/phase2_m1_compiled_rules.sql
       - name: Create isolated M2.0 business and checkpoint fixtures
         run: |
-          for db in deal_desk_m20_ai deal_desk_m20_e2e; do
+          for db in deal_desk_m20_ai deal_desk_m20_e2e deal_desk_m21_credit_dev; do
             createdb "$db"
             psql -X -v ON_ERROR_STOP=1 -d "$db" -f phase1c-pinned/phase-1c-data/implementation/schema.sql
             (cd phase1c-pinned/phase-1c-data/implementation && PGDATABASE="$db" python -c 'from test_phase1c_reader import load_fixture_rows; load_fixture_rows()')

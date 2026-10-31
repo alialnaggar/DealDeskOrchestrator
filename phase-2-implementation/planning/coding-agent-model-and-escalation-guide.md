@@ -37,14 +37,14 @@ For a new milestone, start a **fresh OpenCode/OpenACP conversation/session** thr
 ## Next bounded work
 
 1. Implement the approved **same-specialist Fulfillment correction prototype** using offline model doubles, checkpoint-safe attempt accounting, bounded feedback, full revalidation, and disposable PostgreSQL tests.
-2. After offline acceptance and independent review, assess **Gemma 4** as a potential replacement for the current Groq `openai/gpt-oss-120b` thesis-runtime model. This is a **planned evaluation, not an approved or completed provider migration**. Verify actual Gemma 4 model identifiers, host availability, tool calling, structured output, latency, cost and evidence/audit behavior before selecting a deployment. Preserve Groq baseline and provider independence. Do not change all six specialists at once without evidence.
-3. Proceed to M2.0 Configuration/Pricing specialist implementation after the compatibility decision.
+2. Continue bounded Groq free-tier reliability tests and offline M2.1 Credit contract work. Gemma 4 is permanently discontinued; the future paid OpenAI production strategy requires separate approval for model, adapter, cost and security. Preserve provider-independent specialist boundaries.
+3. Continue M2.0/M2.1 specialist implementation under their current approved gates; do not couple it to a discontinued provider migration.
 
 ## Safety and source-of-truth rules
 
 - GitHub repository is authoritative; inspect current branch head and approved Phase 2 blueprint before coding.
 - Preserve pinned Phase 1C reader SHA unless explicitly approved otherwise.
 - Deterministic rules/tools remain authoritative; models do not approve deals or bypass human review.
-- Do not use live Groq, Gemma, or paid runtime APIs without explicit experiment approval and budget.
+- Use live Groq only under its approved free-tier development gates; do not use paid runtime APIs without explicit approval and budget. No Gemma calls.
 - Keep unrelated Phase 1C and Odoo/n8n infrastructure untouched.
 - Prefer a coherent, testable increment over many tiny PRs; stop for material architectural changes.

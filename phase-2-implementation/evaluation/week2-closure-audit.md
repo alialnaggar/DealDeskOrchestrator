@@ -43,25 +43,11 @@ authorized hosted validation; Week 3 offline progress cannot close Week 2.
 | [Configuration + Pricing](../backend/dealdesk_phase2/m20_groq.py) `system_instruction` / `request_body`; separately gated [continuation](../backend/dealdesk_phase2/m20_specialists.py) | Common non-overridable system constraints plus distinct domain sections, `PROMPT_VERSION=m20-config-pricing-system-v2`, wire `m20-groq-native-tools-v1`, contract `m20-ai-investigation-v1`; line/run input and returned observations stay in user/tool roles. Each uses only its named `inspect_*_line`, `submit_finding` with exact JSON-serialized values, or `abstain` (`insufficient_evidence`, `model_uncertainty`, `unsupported_capability`). Fixed checks, not AI, own validity/margin/approval. | [System isolation, schema, serialization, attempt-version and no-replay tests](../backend/tests/test_m20_groq.py), [claim/permission tests](../backend/tests/test_m20_specialists.py). New version is **not** the B01 deployed prompt, which was the older generic instruction. Fresh hosted use requires new approval. |
 | [Credit, Policy, Routing offline doubles](../backend/dealdesk_phase2/m21_specialists.py) | Typed input and `prompt_version=m21-original-evidence-v1` tag plus three scoped reads and exact returned scalar claims; **no actual model-facing system message or hosted adapter exists**. | [Offline tests](../backend/tests/test_m21_specialists.py). Do not call this a runtime system prompt or a Week 2 live validation. |
 
-## Gemma disposition
+## Gemma disposition — superseded 31 October 2026
 
-There are **no tracked Gemma Python modules, tests, imports or Gemma CI steps**
-in the active backend/workflows; tracked runtime paths use the opt-in Groq
-adapters or offline doubles. The Gemma modules and three tests in
-`backend/dealdesk_phase2/gemma_*.py`, `live_gemma_validation.py` and
-`backend/tests/test_gemma_*.py` are **untracked**; two tracked documents
-(`phase-2-implementation/README.md` and `planning/decision-log.md`) have
-uncommitted Gemma edits. The untracked Gemma experiment imports the tracked
-iterative model/prompt helper, so it is real **working-tree code** even though
-it is neither the tracked default backend nor configured in CI. It is not
-safe to delete as part of this change. There is no tracked obsolete Gemma
-runtime/configuration file to remove. The
-[Gemma decision/history](../planning/decision-log.md#p2-gemma--development-only-gemma-4-exception-24-october-2026)
-records one bounded failed development trial, not an active default; the
-[historical result](gemma4-bounded-live-validation.md) is useful evidence.
-**Recommendation:** Retain committed decision history and sanitized results;
-after the owner confirms the untracked experiment can be discarded and no
-other session is using it, inventory each file and agree a deletion or
-archival commit removing only unused experimental runtime/config/tests. Do
-not discard this unrelated uncommitted work, silently reinterpret the historical Gemma approval, or infer
-that the planned paid OpenAI production API is already funded or integrated.
+At the time of this Week 2 audit the Gemma experiment was uncommitted and
+out of scope. Ali subsequently explicitly authorized its permanent removal;
+the adapter, tests and obsolete trial documentation were removed. The
+[superseding decision](../planning/decision-log.md#p2-gemma-discontinuation--31-october-2026)
+governs current provider selection. This dated audit is not a request to
+restore the experiment or evidence of a funded OpenAI production API.

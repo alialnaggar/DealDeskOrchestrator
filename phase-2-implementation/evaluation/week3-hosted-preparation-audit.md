@@ -119,25 +119,13 @@ unreturned fields, malformed functions, false/zero coercion and unexpected
 extra source columns; a mocked HTTP 400 remains sanitized without reading
 the provider's error body. They do not establish actual hosted model quality.
 
-## Exact seven skipped tests in fresh full local discovery
+## Historical seven skips — superseded 31 October 2026
 
-All skips are from **unrelated uncommitted Gemma** tests whose read-only
-historical synthetic checkpoints were not supplied to this fresh isolated
-suite. They do not represent an untested M2.1 or Week 4 test *in this suite*,
-but the missing historical Gemma checkpoint validation remains a separate
-Gemma migration coverage gap; it is not evidence that Week 4 candidate
-integration, cross-model evaluation, role-visible routing or nonempty AR
-history are covered.
-
-| Test (module/class/method) | Exact `unittest` skip reason |
-| --- | --- |
-| `test_gemma_late_diagnostic.SavedLateDecisionDiagnostics.test_all_saved_late_wires_match_and_tampering_fails_without_http` | `Requires existing synthetic read-only checkpoint databases; no model access` |
-| `test_gemma_late_diagnostic.SavedLateDecisionDiagnostics.test_isolated_v5_preparation_never_writes_or_sends` | `Requires existing synthetic read-only checkpoint databases; no model access` |
-| `test_gemma_one_shot.IsolatedOneShotSafety.test_audit_sync_failure_and_unknown_send_failure_are_terminal` | `Existing read-only synthetic checkpoint required; never live HTTP` |
-| `test_gemma_one_shot.IsolatedOneShotSafety.test_crash_after_send_or_reservation_never_retransmits` | `Existing read-only synthetic checkpoint required; never live HTTP` |
-| `test_gemma_one_shot.IsolatedOneShotSafety.test_http_timeout_and_token_exhaustion_remain_terminal` | `Existing read-only synthetic checkpoint required; never live HTTP` |
-| `test_gemma_one_shot.IsolatedOneShotSafety.test_tamper_and_wrong_destination_fail_before_audit_or_send` | `Existing read-only synthetic checkpoint required; never live HTTP` |
-| `test_gemma_one_shot.IsolatedOneShotSafety.test_valid_ready_single_exact_wire_and_sealed_original_unchanged` | `Existing read-only synthetic checkpoint required; never live HTTP` |
+The seven skips in the **dated run below** belonged to the now-discontinued,
+uncommitted Gemma diagnostic. Their modules and saved trial artifacts have
+been removed with Ali's authorization. They are not current-suite skips;
+this historical count does not establish Week 4 candidate integration,
+cross-model evaluation, role-visible routing or nonempty AR coverage.
 
 **Local checks:** Four focused no-network Week 3 redaction/Groq-wire tests
 passed. Full `unittest discover -v` against **seven newly created isolated

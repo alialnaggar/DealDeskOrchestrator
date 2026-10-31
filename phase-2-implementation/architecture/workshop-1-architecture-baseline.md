@@ -31,6 +31,8 @@ The newer typed partial-delivery candidate, reader-backed correlation, trace, da
 
 ## Detailed design still open
 
+**Provider disposition (31 October 2026):** Gemma is permanently discontinued and has no active adapter or planned comparison. This does not change the LangGraph/fixed-rule architecture, the guarded Groq development runtime or the separately approved future OpenAI production direction; paid API use remains unauthorized.
+
 1. Exact LangGraph version, state type, node contracts, edges and execution topology.
 2. Transaction/snapshot consistency or exact reconstruction across graph nodes, plus source fingerprints.
 3. Checkpointing/persistence and resumption; no additional infrastructure is implied.
