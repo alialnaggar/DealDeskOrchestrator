@@ -8,7 +8,8 @@ from unittest.mock import patch
 from dealdesk_phase2.groq_typed_final import (MAX_COMPLETION_TOKENS,
     FinalResponseError, configuration_final_body, parse_configuration_final,
     request_body, request_sha256, parse_response, DEVELOPMENT_FINAL_INSTRUCTION,
-    CREDIT_DEVELOPMENT_FINAL_INSTRUCTION, REJECTION_DIAGNOSTIC_VERSION)
+    CREDIT_DEVELOPMENT_FINAL_INSTRUCTION, CONFIG_FINAL_INSTRUCTION,
+    REJECTION_DIAGNOSTIC_VERSION)
 from dealdesk_phase2.typed_final_contract import InvalidTerminal, VERSION, decode, schema
 from dealdesk_phase2.m21_redaction import model_view
 from test_terminal_final_offline_design import fixture, finding, response
@@ -101,20 +102,30 @@ class TypedFinalContractImpl(unittest.TestCase):
             configuration_final_body(input, ())
 
     def test_configuration_safe_rejection_categories_are_not_historical_causes(self):
-        self.assertEqual(REJECTION_DIAGNOSTIC_VERSION, "typed-final-rejection-v2")
+        self.assertEqual(REJECTION_DIAGNOSTIC_VERSION, "typed-final-rejection-v3")
+        for text in ("groq-configuration-terminal-system-v4-scalar-only",
+                     "JSON string, integer, boolean or null", "never 12.0",
+                     "configuration_json or attributes_json objects",
+                     "If no exact field is supportable, abstain"):
+            self.assertIn(text, CONFIG_FINAL_INSTRUCTION)
         input = {"specialist": "configuration", "permitted_tool":
             "inspect_configuration_line", "line_ids": ["M18-L-N01"]}
         obs = ({"tool": "inspect_configuration_line", "execution": "completed",
             "returned_refs": ["product:M18-P-N01"], "records": [{"ref":
             "product:M18-P-N01", "fields": {"is_active": True,
-                "is_sellable": True, "fulfillment_mode": "stocked_finished"}}]},)
+                "is_sellable": True, "fulfillment_mode": "stocked_finished",
+                "mock_integer": 12, "mock_nullable": None}}]},)
         good = final_payload("product:M18-P-N01", "is_sellable", True)
         for altered, expected in (
                 ({**good, "version": "PRIVATE-UNKNOWN"}, "schema_version"),
                 ({**good, "claims": [*good["claims"], *good["claims"]]},
                     "duplicate_claims"),
                 ({**good, "claims": [{**good["claims"][0],
-                    "value_json": "1.0"}]}, "claim_value_type"),
+                    "value_json": "1.0"}]}, "claim_value_type_float"),
+                ({**good, "claims": [{**good["claims"][0],
+                    "value_json": "[]"}]}, "claim_value_type_array"),
+                ({**good, "claims": [{**good["claims"][0],
+                    "value_json": "{}"}]}, "claim_value_type_object"),
                 ({**good, "uncertainty_reasons": [23]},
                     "finding_uncertainty_shape")):
             with self.subTest(category=expected), self.assertRaises(
@@ -124,6 +135,14 @@ class TypedFinalContractImpl(unittest.TestCase):
             self.assertNotIn("PRIVATE", str(caught.exception))
         self.assertEqual(parse_configuration_final(response(good), input, obs)[
             "claims"][0]["value"], True)
+        self.assertEqual(parse_configuration_final(response(final_payload(
+            "product:M18-P-N01", "fulfillment_mode", "stocked_finished")), input,
+            obs)["claims"][0]["value"], "stocked_finished")
+        for field, value in (("mock_integer", 12), ("mock_nullable", None)):
+            with self.subTest(supported_type=field):
+                self.assertEqual(parse_configuration_final(response(final_payload(
+                    "product:M18-P-N01", field, value)), input, obs)["claims"][0][
+                        "value"], value)
         abstain = {"version": VERSION, "kind": "abstain", "claims": [],
             "uncertainty_reasons": [], "reason_code": "model_uncertainty"}
         self.assertEqual(parse_configuration_final(response(abstain), input, obs)[

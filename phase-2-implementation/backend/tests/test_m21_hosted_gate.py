@@ -154,7 +154,7 @@ class M21HostedGatePostgres(unittest.TestCase):
                     with self.assertRaises(FinalResponseError) as caught:
                         parse_configuration_final(reply(ref, "configuration_json",
                             records[0]["fields"]["configuration_json"]), input, obs)
-                    self.assertEqual(caught.exception.category, "claim_value_type")
+                    self.assertEqual(caught.exception.category, "claim_value_type_object")
 
     def test_full_six_development_graph_continuations_offline(self):
         self._six_campaign_offline()

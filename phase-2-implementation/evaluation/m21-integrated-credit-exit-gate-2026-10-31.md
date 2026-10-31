@@ -1,5 +1,55 @@
 # M2.1 integrated Credit development and exit gate — 31 October 2026
 
+## UC02 scalar-only Configuration contract review — 31 October 2026
+
+**Exit recommendation: C — keep M2.1 open.** The dated hosted results below
+remain unchanged. The UC02 `claim_value_type` label shows only that at least
+one decoded model claim had an unsupported JSON type. It does **not** retain
+which claim, field, type or value was emitted; it does not explain the earlier
+HC03 terminal rejection. No assessment was replayed.
+
+**Confirmed interface ambiguity:** the terminal wire schema declares
+`value_json` a string containing JSON, but deliberately cannot encode the
+decoded claim's business-allowed type. The provider-independent semantic
+validator accepts only exact returned strings, integers, booleans or null,
+not floats, arrays or objects. The v3 Configuration instruction said “12 for
+a number,” which could reasonably imply a JSON float; the actual B01/N01
+inspection exposes `configuration_json` and `attributes_json` objects as
+context although whole-object citations cannot pass the validator. This is
+a real instruction/source mismatch, **not proof** that the UC02 model cited
+one of those fields or that the earlier HC03 error had the same cause.
+
+The Configuration-only terminal instruction is now
+`groq-configuration-terminal-system-v4-scalar-only`: it names the four
+permitted decoded types, excludes float/array/object values and whole
+configuration/attributes objects, keeps exact `value_json` quoting and a
+legitimate abstention. It is versioned and manifest-hashed automatically;
+the generic terminal schema, fixed rules, evidence-binding and strict
+acceptance validator are unchanged. The sanitized rejection classifier is
+now `typed-final-rejection-v3`, distinguishing only `float`, `array` or
+`object` **type categories** on rejected claims. It stores no path, raw
+field/value, provider body or free-form prompt and cannot reclassify earlier
+receipts. Tests cover bool/string/int/null acceptance, float/array/object
+rejection, B01/N01 exact refs and no invented or cross-subject claims.
+
+**Hosted gate:** the current guarded development CLI has no
+Configuration-only specialist mode. The general typed-final development
+gate accepts Pricing (which sends Configuration **and** Pricing), while the
+M2.0 gate requires both Configuration and Pricing models. Sending through
+either is not the requested one-case Configuration-only diagnostic; adding
+a new hosted capability solely to force a trial would expand the trusted
+authorization/manifest surface. Accordingly **no new hosted Configuration
+probe or integrated UC02 assessment was sent**. A targeted new assessment
+must wait for a separately tested, bounded Configuration-only guard or an
+equally narrow predeclared diagnostic. Previous RC01/HC03 integrated success
+does not prove the v4 prompt improves Configuration runtime reliability;
+hosted incomplete-evidence Credit abstention remains **not demonstrated**.
+Historical intermittent Fulfillment HTTP 400 and independent accepted
+Phase 1C answers remain open. The **complete discoverable Phase 2 suite**
+passed on five newly isolated business and three newly isolated checkpoint
+PostgreSQL databases: **338 run, 338 passed, 0 failed, 0 skipped**. This is
+local testing; GitHub Actions status was not verified here.
+
 ## Configuration diagnostic and fresh integrated follow-up — 31 October 2026
 
 **Current disposition remains C: keep M2.1 open.** The original exit table
