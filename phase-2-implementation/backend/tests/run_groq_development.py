@@ -37,6 +37,8 @@ from dealdesk_phase2.typed_final_hosted import _database_identity
 from m18_case_setup import CASES
 from m21_credit_case_setup import (CASES as CREDIT_CASES, install_credit_cases,
     verify_credit_case)
+from m21_integrated_credit_setup import (VARIANTS as INTEGRATED_VARIANTS,
+    install_integrated_credit, verify_integrated_credit)
 from run_week4_disposable import provision_and_run, require_disposable_cluster
 
 
@@ -215,6 +217,8 @@ def main():
                      default="pricing")
     cli.add_argument("--case", choices=("B01", "B05", "N01", "N03",
         "CR01", "CR02", "CR03"), default="B05")
+    cli.add_argument("--credit-variant", choices=tuple(INTEGRATED_VARIANTS),
+        help="Exclusive six-campaign synthetic Credit overlay; never Phase 1C")
     args = cli.parse_args()
     if os.environ.get(DEV_ENABLE_ENV) != "1":
         raise ValueError("groq_development_opt_in_required")
@@ -231,6 +235,9 @@ def main():
     if args.specialist in ("fulfillment", "six_campaign") and args.case not in (
             "B01", "B05", "N01"):
         raise ValueError("groq_development_fulfillment_case_not_prepared")
+    if args.credit_variant and (args.specialist != "six_campaign" or
+            INTEGRATED_VARIANTS[args.credit_variant] != args.case):
+        raise ValueError("integrated_credit_requires_matching_six_campaign")
     require_disposable_cluster(args.cluster_dsn)
     # Credential preflight happens before provisioning and is never logged.
     key = with_local_groq_key({}, credential="secondary")["GROQ_API_KEY"]
@@ -253,6 +260,10 @@ def main():
         if args.specialist == "credit_isolated":
             with psycopg.connect(business_dsn) as connection:
                 install_credit_cases(connection)
+        if args.credit_variant:
+            with psycopg.connect(business_dsn) as connection:
+                install_integrated_credit(connection, case_id=args.case,
+                    variant=args.credit_variant)
         owner = root / "owner"
         owner.mkdir(mode=0o700)
         case = next(x for x in (*CASES, *CREDIT_CASES) if x.case_id == args.case)
@@ -271,6 +282,25 @@ def main():
                 pool = adapter.validate_pinned_context(pinned)
                 verify_credit_case(pool, original["specialist_results"]["credit"],
                     args.case)
+            if args.credit_variant:
+                pinned = pinned_from_state(original)
+                pool = adapter.validate_pinned_context(pinned)
+                verify_integrated_credit(pool, original["specialist_results"]["credit"],
+                    case_id=args.case, variant=args.credit_variant)
+                # The variant and its fixed/source preflight are durable before
+                # the first send; no variant switch within this assessment.
+                fd = os.open(root / "credit-variant.json", os.O_WRONLY | os.O_CREAT |
+                    os.O_EXCL | os.O_NOFOLLOW, 0o600)
+                with os.fdopen(fd, "w") as output:
+                    output.write(_canonical({"case_id": args.case,
+                        "variant": args.credit_variant, "assessment_id": assessment,
+                        "bundle_sha256": pinned.context.bundle_sha256,
+                        "source_input_digest": pinned.context.source_input_digest}) + "\n")
+                    output.flush()
+                    os.fsync(output.fileno())
+                result["credit_variant"] = args.credit_variant
+                result["fixed_credit_finding"] = original["specialist_results"][
+                    "credit"]["finding"]
             if args.specialist == "six_campaign":
                 result["invoked"] = True
                 result["fixed_review_status"] = original["review_status"]
@@ -304,6 +334,9 @@ def main():
                     # retains the bounded phase/size/schema metadata.
                     result["stage_errors"]["fulfillment"] = _fulfillment_error_summary(state)
                 result["candidate_status"] = state.get("candidate_status")
+                result["credit_result"] = {k: state.get("m21_ai_results", {}).get(
+                    "credit", {}).get(k) for k in ("execution", "reason",
+                    "model_output_category", "validated_claims")}
                 result["m21_review_present"] = bool(state.get("m21_review"))
                 result["completed_evidence_refs"] = [row.get("returned_refs", [])
                     for row in state.get("tool_access_ledger", []) if row.get("status") == "completed"]

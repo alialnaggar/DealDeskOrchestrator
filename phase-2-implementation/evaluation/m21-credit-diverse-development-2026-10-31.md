@@ -1,5 +1,11 @@
 # M2.1 isolated Credit evidence development — 31 October 2026
 
+**Next integrated gate:** the [separate integrated Credit exit assessment](m21-integrated-credit-exit-gate-2026-10-31.md)
+records one fresh six-stage fixed-checked candidate with transactional Credit,
+one N01-based pre-Credit Configuration validation failure, three integrated
+offline scenarios and the recommendation to **keep M2.1 open**. Do not
+reinterpret the isolated results below as complete six-stage reliability.
+
 **Later disposition:** Ali discontinued Gemma and removed its uncommitted
 tests; the [subsequent complete fresh-PostgreSQL local suite](m21-gemma-retirement-credit-diagnostics-2026-10-31.md)
 passes 331/331 with no skips. The failures/skips below describe only the

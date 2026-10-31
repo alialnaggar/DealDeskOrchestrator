@@ -19,6 +19,8 @@ from dealdesk_phase2.hybrid_contracts import HybridContractError
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from dealdesk_phase2.phase1c_adapter import EvidenceMismatch, Phase1CAdapter
 from m18_case_setup import CASES, install_disposable_cases
+from m21_integrated_credit_setup import (install_integrated_credit,
+    verify_integrated_credit)
 
 try:
     import psycopg
@@ -110,7 +112,68 @@ class M21HostedGatePostgres(unittest.TestCase):
     def test_n01_six_original_ai_without_candidate_after_forbidden_partial_offline(self):
         self._six_campaign_offline(case_id="N01")
 
-    def _six_campaign_offline(self, *, binding=False, case_id="B01"):
+    def test_integrated_credit_reconciled_candidate_offline(self):
+        self._integrated_six_offline("B01", "RC01", binding=True)
+
+    def test_integrated_credit_held_no_candidate_offline(self):
+        self._integrated_six_offline("N01", "HC03")
+
+    def test_integrated_credit_incomplete_no_candidate_offline(self):
+        self._integrated_six_offline("N01", "UC02")
+
+    def _integrated_six_offline(self, case_id, variant, *, binding=False):
+        from dealdesk_phase2.graph_state import pinned_from_state
+        from psycopg import sql
+        from copy import deepcopy
+        parts = psycopg.conninfo.conninfo_to_dict(os.environ["M20_DATABASE_URL"])
+        admin = psycopg.conninfo.make_conninfo(**{**parts, "dbname": "postgres"})
+        name = "m21_integrated_" + uuid4().hex[:16]
+        with psycopg.connect(admin, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE DATABASE {} TEMPLATE {}").format(
+                sql.Identifier(name), sql.Identifier(parts["dbname"])))
+        original_connect = self.connect
+        target = psycopg.conninfo.make_conninfo(**{**parts, "dbname": name})
+        try:
+            self.connect = lambda: psycopg.connect(target)
+            with self.connect() as db:
+                install_integrated_credit(db, case_id=case_id, variant=variant)
+            from dealdesk_phase2.checkpoint import thesis_checkpointer
+            checkpoint_name = "m21_preflight_" + uuid4().hex[:16]
+            checkpoint = psycopg.conninfo.make_conninfo(**{**parts,
+                "dbname": checkpoint_name})
+            with psycopg.connect(admin, autocommit=True) as db:
+                db.execute(sql.SQL("CREATE DATABASE {}").format(
+                    sql.Identifier(checkpoint_name)))
+            try:
+                with thesis_checkpointer(checkpoint) as saver:
+                    selected = next(c for c in CASES if c.case_id == case_id)
+                    assessment = "DEV-PREFLIGHT-" + uuid4().hex
+                    graph = build_original_graph(self.adapter, self.connect, saver)
+                    before = graph.invoke(initial_state(assessment, selected.run_id),
+                        {"configurable": {"thread_id": assessment}})
+                    pool = self.adapter.validate_pinned_context(pinned_from_state(before))
+                    fixed = before["specialist_results"]["credit"]
+                    verify_integrated_credit(pool, fixed, case_id=case_id, variant=variant)
+                    corrupted = deepcopy(pool)
+                    if variant == "UC02":
+                        corrupted["credit"]["customer_id"] = "other"
+                    else:
+                        corrupted["payments"][0]["invoice_number"] = "other"
+                    with self.assertRaises(ValueError):
+                        verify_integrated_credit(corrupted, fixed, case_id=case_id,
+                            variant=variant)
+                self._six_campaign_offline(binding=binding, case_id=case_id,
+                    credit_variant=variant)
+            finally:
+                with psycopg.connect(admin, autocommit=True) as db:
+                    db.execute(sql.SQL("DROP DATABASE {}").format(
+                        sql.Identifier(checkpoint_name)))
+        finally:
+            self.connect = original_connect
+            with psycopg.connect(admin, autocommit=True) as db:
+                db.execute(sql.SQL("DROP DATABASE {}").format(sql.Identifier(name)))
+
+    def _six_campaign_offline(self, *, binding=False, case_id="B01", credit_variant=None):
         """Fresh PostgreSQL checkpoint; all six model transports are offline doubles."""
         from dealdesk_phase2.checkpoint import thesis_checkpointer
         from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
@@ -189,6 +252,30 @@ class M21HostedGatePostgres(unittest.TestCase):
                             return response(name, args)
                         observation = json.loads(body["messages"][1]["content"])[
                             "observations"][0]
+                        if domain == "credit" and credit_variant == "UC02":
+                            return {"choices": [{"finish_reason": "stop", "message": {
+                                "content": json.dumps({"version": FINAL_VERSION,
+                                    "kind": "abstain", "claims": [],
+                                    "reason_code": "insufficient_evidence",
+                                    "uncertainty_reasons": []})}}],
+                                "usage": {"prompt_tokens": 200, "completion_tokens": 60}}
+                        if domain == "credit" and credit_variant in ("RC01", "HC03"):
+                            fields = (("credit_profile", "credit_status"),
+                                ("receivable", "outstanding_amount"),
+                                ("payment", "paid_amount"))
+                            selected = [next(r for r in observation["records"] if
+                                r["ref"].startswith(kind + ":")) for kind, _ in fields]
+                            self.assertEqual(selected[1]["invoice_match_key"],
+                                selected[2]["invoice_match_key"])
+                            self.assertNotIn("M21IC-INVOICE", _canonical(body))
+                            claims = [{"ref": r["ref"], "field": field,
+                                "value_json": json.dumps(r["fields"][field])} for
+                                r, (_, field) in zip(selected, fields)]
+                            return {"choices": [{"finish_reason": "stop", "message": {
+                                "content": json.dumps({"version": FINAL_VERSION,
+                                    "kind": "finding", "claims": claims,
+                                    "reason_code": "none", "uncertainty_reasons": []})}}],
+                                "usage": {"prompt_tokens": 200, "completion_tokens": 60}}
                         field = {"configuration": "is_sellable", "pricing":
                             "fixed_margin_pct", "credit": "credit_status"}[domain]
                         record = next(row for row in observation["records"] if
@@ -244,8 +331,18 @@ class M21HostedGatePostgres(unittest.TestCase):
                     self.assertEqual(state["typed_final_results"]["pricing"]["execution"],
                                      "completed")
                     self.assertEqual({name: row["execution"] for name, row in
-                        state["m21_ai_results"].items()}, {name: "completed" for
-                        name in TOOLS})
+                        state["m21_ai_results"].items()}, {name: (
+                            "abstained" if name == "credit" and credit_variant == "UC02"
+                            else "completed") for name in TOOLS})
+                    if credit_variant == "UC02":
+                        self.assertEqual(state["m21_ai_results"]["credit"][
+                            "validated_claims"], [])
+                        self.assertEqual(state["m21_ai_results"]["credit"][
+                            "reason"], "insufficient_evidence")
+                    elif credit_variant:
+                        self.assertEqual({c["field"] for c in state[
+                            "m21_ai_results"]["credit"]["validated_claims"]},
+                            {"credit_status", "outstanding_amount", "paid_amount"})
                     self.assertEqual(state["m21_review"]["assessment_id"],
                                      config["configurable"]["thread_id"])
                     self.assertEqual(state["m21_review"]["subject_id"],
