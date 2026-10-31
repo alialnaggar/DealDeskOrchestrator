@@ -131,6 +131,10 @@ class CreditCasePostgres(unittest.TestCase):
                 self.assertEqual(set(mapping.values()), set(observation["returned_refs"]))
                 self.assertNotIn(ref["AR"], str(redacted))
                 self.assertNotIn(ref["PAY"], str(redacted))
+                if paid is not None:
+                    self.assertEqual(redacted[0]["records"][1]["invoice_match_key"],
+                        redacted[0]["records"][2]["invoice_match_key"])
+                    self.assertNotIn("invoice_match_key", redacted[0]["records"][1]["fields"])
                 if case.case_id == "CR02":
                     self.assertFalse(records[0]["fields"]["fixed_commitments_fresh"])
                     self.assertEqual(len(records), 1)

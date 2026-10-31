@@ -16,6 +16,7 @@ _CREDIT_FIELDS = frozenset(("credit_limit", "unbilled_committed_amount",
     "next_review_date", "fixed_commitments_fresh"))
 _AR_FIELDS = frozenset(("as_of_date", "due_date", "outstanding_amount", "status"))
 _PAYMENT_FIELDS = frozenset(("paid_date", "paid_amount", "due_date"))
+CREDIT_VIEW_VERSION = "credit-invoice-match-v1"
 
 
 def alias(bundle_sha256: str, kind: str, original: str) -> str:
@@ -34,6 +35,8 @@ def model_view(input: dict, observations: tuple[dict, ...]) -> tuple[dict, tuple
         "phase1c_run_id", "bundle_sha256", "source_input_digest", "as_of_at",
         "specialist", "fixed_execution", "fixed_finding", "permitted_tool")}
     public["subject_id"] = alias(digest, "subject", input["subject_id"])
+    if specialist == "credit":
+        public["credit_view_version"] = CREDIT_VIEW_VERSION
     # Do not send customer ID, applied policy set, raw snapshot identifier,
     # invoice number, payment match or commitment evidence reference.
     ref_map = {}
@@ -69,8 +72,16 @@ def model_view(input: dict, observations: tuple[dict, ...]) -> tuple[dict, tuple
             if ref in ref_map and ref_map[ref] != original:
                 raise ValueError("m21_redaction_alias_collision")
             ref_map[ref] = original
-            records.append({"ref": ref, "fields": {key: value for key, value in
-                record["fields"].items() if key in allowed}})
+            shown = {"ref": ref, "fields": {key: value for key, value in
+                record["fields"].items() if key in allowed}}
+            if specialist == "credit" and kind in ("receivable", "payment"):
+                invoice = record["fields"].get("invoice_number")
+                if type(invoice) is not str or not invoice:
+                    raise ValueError("m21_redaction_missing_invoice_match_source")
+                # Model-visible correlation only; this is not an evidence field
+                # and cannot be submitted as a citable source value.
+                shown["invoice_match_key"] = alias(digest, "invoice", invoice)
+            records.append(shown)
         returned = [alias(digest, ref.split(":", 1)[0], ref)
                     for ref in observation["returned_refs"]]
         if (set(returned) != {r["ref"] for r in records} or len(returned) != len(records)

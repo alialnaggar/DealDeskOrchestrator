@@ -88,8 +88,17 @@ class ProposalContracts(unittest.TestCase):
                                  INSPECTION_WIRE_VERSION)
                 self.assertEqual(proposal["inspection_prompt_version"],
                                  INSPECTION_PROMPT_VERSION)
-                self.assertEqual(proposal["inspection_prompt_sha256"], sha256(
-                    inspection_instruction(specialist).encode()).hexdigest())
+                if specialist == "credit":
+                    # Frozen, non-authorizing v1 proposal; the active Credit-only
+                    # inspection is now explicitly versioned v2. Never rewrite
+                    # historical proposal hashes to fit a newer prompt.
+                    self.assertEqual(proposal["inspection_prompt_sha256"],
+                        "e9a230c09fc8a046f883490a9108b589a53c761041d0db52f103cdb4c48c6e57")
+                    self.assertNotEqual(proposal["inspection_prompt_sha256"], sha256(
+                        inspection_instruction(specialist).encode()).hexdigest())
+                else:
+                    self.assertEqual(proposal["inspection_prompt_sha256"], sha256(
+                        inspection_instruction(specialist).encode()).hexdigest())
                 self.assertEqual(proposal["configuration_wire_version"], CONFIG_WIRE)
                 self.assertEqual(proposal["configuration_prompt_version"], CONFIG_PROMPT)
                 self.assertEqual(proposal["configuration_prompt_sha256"], sha256(

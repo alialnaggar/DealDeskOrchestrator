@@ -11,7 +11,11 @@ from .hybrid_pack import _canonical
 PROMPT_VERSION = "m21-original-system-v1"
 
 _DOMAINS = {
-    "credit": ("Investigate only the pinned original customer's selected, dated credit "
+    "credit": ("credit-inspection-v2. First choose inspect_customer_credit_evidence "
+        "with exactly subject_id copied from the current input's opaque subject_id; "
+        "never use the raw customer ID, a deal-line ID or a guessed identifier. "
+        "You may abstain without inspection if no supported observation is possible. "
+        "Investigate only the pinned original customer's selected, dated credit "
         "profile and receivables with inspect_customer_credit_evidence. Fixed rules own "
         "exposure, limits, freshness and holds. Never change credit or imply clearance. "
         "If evidence is absent, stale or uncertain, abstain or cite the gap; do not invent "

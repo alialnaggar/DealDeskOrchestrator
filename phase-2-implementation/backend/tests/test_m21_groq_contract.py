@@ -51,6 +51,10 @@ class M21GroqWire(unittest.TestCase):
             self.assertNotIn(private, _canonical([public, visible]))
         self.assertEqual(len(refs), 3)
         self.assertEqual(set(visible[0]["returned_refs"]), set(refs))
+        self.assertEqual(public["credit_view_version"], "credit-invoice-match-v1")
+        self.assertEqual(visible[0]["records"][1]["invoice_match_key"],
+                         visible[0]["records"][2]["invoice_match_key"])
+        self.assertNotIn("invoice_match_key", visible[0]["records"][1]["fields"])
         body = request_body(self.input, ())
         self.assertEqual(body["model"], GROQ_MODEL)
         self.assertEqual(body["messages"][0]["role"], "system")
@@ -102,13 +106,86 @@ class M21GroqWire(unittest.TestCase):
         model._credit_typed_final = False
         self.assertIn("tools", model.prepare_request(self.input, ()))
 
-    def test_credit_v2_distinct_ar_payment_evidence_and_empty_pool_abstention(self):
+    def test_credit_invoice_match_is_context_only_and_never_validated_as_a_claim(self):
+        from dealdesk_phase2.groq_typed_final import (FinalResponseError,
+            parse_response as parse_final)
+        from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
+        public, visible, _ = model_view(self.input, (self.observation,))
+        payment = visible[0]["records"][2]
+        receivable = visible[0]["records"][1]
+        self.assertEqual(payment["invoice_match_key"], receivable["invoice_match_key"])
+        self.assertNotIn("PRIVATE-INVOICE", _canonical(visible))
+        def final(claims):
+            return {"usage": {"prompt_tokens": 300, "completion_tokens": 80},
+                "choices": [{"finish_reason": "stop", "message": {"content": json.dumps({
+                    "version": FINAL_VERSION, "kind": "finding", "claims": claims,
+                    "uncertainty_reasons": [], "reason_code": "none"})}}]}
+        exact = [{"ref": receivable["ref"], "field": "outstanding_amount",
+                  "value_json": '"20.00"'},
+                 {"ref": payment["ref"], "field": "paid_amount",
+                  "value_json": '"5.00"'}]
+        accepted = parse_final(final(exact), input=self.input,
+            observations=(self.observation,))
+        self.assertEqual(_claims(accepted, (self.observation,)), accepted["claims"])
+        self.assertEqual(len(accepted["claims"]), 2)
+        for bad in ([{"ref": payment["ref"], "field": "invoice_match_key",
+                       "value_json": json.dumps(payment["invoice_match_key"])}],
+                    [{**exact[0], "value_json": "20"}],
+                    [{**exact[0], "value_json": '"100.00"'}]):
+            with self.subTest(bad=bad), self.assertRaises(FinalResponseError) as caught:
+                parse_final(final(bad), input=self.input,
+                    observations=(self.observation,))
+            self.assertEqual(caught.exception.category, "claim_binding")
+        other = deepcopy(self.observation)
+        other["records"][2]["fields"]["invoice_number"] = "OTHER-INVOICE"
+        self.assertNotEqual(model_view(self.input, (other,))[1][0]["records"][1][
+            "invoice_match_key"], model_view(self.input, (other,))[1][0]["records"][2][
+                "invoice_match_key"])
+        with self.assertRaises(ToolResponseError):
+            parse_response(tool_response(TOOLS["credit"], {"subject_id":
+                self.input["subject_id"]}), self.input, ())
+
+    def test_on_hold_overdue_ar_observations_and_incomplete_abstention(self):
+        from dealdesk_phase2.groq_typed_final import parse_response as parse_final
+        from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
+        observed = deepcopy(self.observation)
+        observed["records"][0]["fields"].update(credit_status="On-Hold",
+            fixed_commitments_fresh=True)
+        observed["records"][1]["fields"].update(outstanding_amount="900.00",
+            status="Overdue", due_date="2026-08-15")
+        observed["records"][2]["fields"].update(paid_amount="300.00")
+        _, visible, _ = model_view(self.input, (observed,))
+        profile, ar, payment = visible[0]["records"]
+        def reply(kind, claims, reason):
+            return {"usage": {"prompt_tokens": 400, "completion_tokens": 80},
+                "choices": [{"finish_reason": "stop", "message": {"content": json.dumps({
+                    "version": FINAL_VERSION, "kind": kind, "claims": claims,
+                    "uncertainty_reasons": [], "reason_code": reason})}}]}
+        claims = [{"ref": profile["ref"], "field": "credit_status",
+                   "value_json": '"On-Hold"'},
+                  {"ref": ar["ref"], "field": "outstanding_amount",
+                   "value_json": '"900.00"'},
+                  {"ref": payment["ref"], "field": "paid_amount",
+                   "value_json": '"300.00"'}]
+        result = parse_final(reply("finding", claims, "none"), input=self.input,
+            observations=(observed,))
+        self.assertEqual(_claims(result, (observed,)), result["claims"])
+        stale = {**observed, "records": observed["records"][:1],
+            "returned_refs": observed["returned_refs"][:1]}
+        stale["records"][0]["fields"]["fixed_commitments_fresh"] = False
+        self.assertEqual(parse_final(reply("abstain", [], "insufficient_evidence"),
+            input=self.input, observations=(stale,))["kind"], "abstain")
+        with self.assertRaises(ValueError):
+            parse_final(reply("finding", claims, "none"), input=self.input,
+                observations=(stale,))
+
+    def test_credit_v3_distinct_ar_payment_evidence_and_empty_pool_abstention(self):
         from dealdesk_phase2.groq_typed_final import parse_response as parse_final
         from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
         model = GroqM21Model("credit")
         model._credit_typed_final = True
         body = model.prepare_request(self.input, (self.observation,))
-        self.assertIn("credit-observation-v2", body["messages"][0]["content"])
+        self.assertIn("credit-observation-v3", body["messages"][0]["content"])
         self.assertNotIn("Pricing:", body["messages"][0]["content"])
         self.assertNotIn("PRIVATE-INVOICE", _canonical(body))
         _, visible, mapping = model_view(self.input, (self.observation,))
@@ -202,7 +279,7 @@ class M21GroqWire(unittest.TestCase):
             with self.subTest(claim=claim), self.assertRaises(
                     FinalResponseError) as caught:
                 parse_final(reply, input=self.input, observations=(self.observation,))
-            self.assertEqual(caught.exception.category, "terminal_semantics_or_evidence")
+            self.assertEqual(caught.exception.category, "claim_binding")
             self.assertNotIn("PRIVATE", str(caught.exception))
 
     def test_policy_routing_keep_only_returned_fixed_refs(self):
