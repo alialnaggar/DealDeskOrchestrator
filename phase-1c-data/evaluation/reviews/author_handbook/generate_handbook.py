@@ -6,6 +6,7 @@ sorted JSON; provider files are hashed as stored bytes. All 36 must validate.
 """
 from __future__ import annotations
 import hashlib, json, pathlib, re
+from datetime import datetime
 from decimal import Decimal
 
 ROOT = pathlib.Path(__file__).resolve().parent
@@ -58,6 +59,63 @@ def ptrget(packet, scope, ptr, provider):
             if key: cur=cur[int(key)] if isinstance(cur,list) else cur[key]
         return cur
     except (KeyError,IndexError,TypeError,ValueError): return None
+def age_hours(cutoff, observation):
+    a=datetime.fromisoformat(cutoff.replace('Z','+00:00'))
+    b=datetime.fromisoformat(observation.replace('Z','+00:00'))
+    return (a-b).total_seconds()/3600
+def availability_steps(src,ctx,provider,lines):
+    cutoff=ctx['as_of_at']; qty=Decimal(str(lines[0]['quantity'])); result=[]
+    for i,r in enumerate(src['inventory']):
+        free=Decimal(r['quantity_on_hand'])-Decimal(r['quantity_allocated']); age=age_hours(cutoff,r['snapshot_at'])
+        result.append(f'Inventory `/source_rows/inventory/{i}`: {r["quantity_on_hand"]} on hand − {r["quantity_allocated"]} allocated = {free} free units of `{r["product_id"]}`; observation age {age:.2f} h, '+('within' if 0<=age<=24 else 'outside')+' the inclusive 24 h freshness window. '+('Compare with '+str(qty)+' submitted units if this is the finished product.' if r['product_id']==lines[0]['product_id'] else 'For a component, multiply BOM units per finished product by submitted quantity and compare with free stock.'))
+    for i,r in enumerate(src['inbound_supply']):
+        free=Decimal(r['quantity'])-Decimal(r['quantity_allocated'])
+        result.append(f'Inbound `/source_rows/inbound_supply/{i}`: {r["quantity"]} − {r["quantity_allocated"]} = {free} unallocated units; status `{r["status"]}`, PO `{r["po_status"]}`, expected {r["expected_date"]}. Compare receipt with requested date and downstream work/shipping; a dated PO is not received stock.')
+    for i,r in enumerate(src['supplier_offers']):
+        result.append(f'Offer `/source_rows/supplier_offers/{i}`: minimum/mode/maximum {r["lead_days_min"]}/{r["lead_days_mode"]}/{r["lead_days_max"]} supplier workdays, minimum order {r["minimum_order_qty"]}, multiple {r["order_multiple"]}, validity {r["valid_from"]}–{r["valid_to"]}. This is an uncommitted route; apply its stated calendar and then production/dispatch rather than treating the modal lead as a guarantee.')
+    if src['bom_lines']:
+        for i,r in enumerate(src['bom_lines']):
+            needed=qty*Decimal(r['required_quantity_per_output'])*(Decimal(1)+Decimal(r.get('scrap_pct','0'))/100)
+            result.append(f'BOM `/source_rows/bom_lines/{i}`: {qty} finished × {r["required_quantity_per_output"]} per unit × (1 + {r.get("scrap_pct","0")}% scrap) = {needed} units of `{r["component_product_id"]}`; mandatory={r["is_mandatory"]}, substitute group={r.get("substitute_group_code")}. Compare only compatible selected rows and dated supply.')
+    if src['requirements']:
+        for i,r in enumerate(src['requirements']):
+            hours=qty*Decimal(r['hours_per_unit'])+Decimal(r['setup_hours'])
+            result.append(f'Operation `/source_rows/requirements/{i}`: {qty} × {r["hours_per_unit"]} h + {r["setup_hours"]} setup h = {hours} h for `{r["capability_code"]}`; compare separate dated resource slots, sequence and freshness. This arithmetic does not book a slot.')
+    if src['production_capacity']:
+        capabilities=sorted({r['capability_code'] for r in src['production_capacity']})
+        for cap in capabilities:
+            arr=[r for r in src['production_capacity'] if r['capability_code']==cap]
+            dates=[]
+            for r in arr:
+                free=Decimal(r['available_capacity_hours'])-Decimal(r['allocated_capacity_hours'])
+                age=age_hours(cutoff,r['snapshot_at'])
+                dates.append(f'{r["capacity_date"]}: {free} h ({"fresh" if 0<=age<=24 else "stale/future"})')
+            result.append(f'Capacity `{cap}` `/source_rows/production_capacity`: '+', '.join(dates)+'. Hours across resource types must meet their respective operation, not be indiscriminately summed.')
+    for i,r in enumerate(src['digital_capacity']):
+        free=Decimal(r['capacity_total'])-Decimal(r['quantity_allocated']); age=age_hours(cutoff,r['snapshot_at'])
+        result.append(f'Digital pool `/source_rows/digital_capacity/{i}`: {r["capacity_total"]} total − {r["quantity_allocated"]} allocated = {free} free `{r["capacity_unit"]}`; snapshot age {age:.2f} h ({"fresh" if 0<=age<=24 else "stale/future"}); status `{r["commitment_status"]}`. For a 12-month `instance_month` line, {qty}/12 = {qty/12} simultaneous instances; check the full provider term.')
+    for i,r in enumerate(provider['records']):
+        result.append(f'Provider `/records/{i}`: '+', '.join(f'{k}={v}' for k,v in r.items() if k in ('verified_at','valid_until','covers_from','covers_until','quantity','term_code','status','provider_id','product_id'))+'. Check matching identity/quantity and anniversary coverage; a later validity date does not extend the coverage end.')
+    for i,r in enumerate(src['compatibility']):
+        result.append(f'Compatibility `/source_rows/compatibility/{i}`: `{r["rule_type"]}` condition {val(r["condition_json"])} for `{r["source_product_id"]}`; exact region/eligibility is a rule result, not evidence of a booked service slot.')
+    for i,r in enumerate(src['shipping_lanes']):
+        result.append(f'Lane `/source_rows/shipping_lanes/{i}`: {r["transit_workdays"]} transit workday(s), {r["cutoff_local_time"]} local cutoff, dispatch weekdays {val(r["dispatch_weekdays_json"])} in {r["origin_time_zone"]}. An actual dispatch and customer delivery remain unconfirmed.')
+    return result or ['No positive availability record is selected; assess missing evidence and source scope rather than infer impossibility.']
+def price_rule_steps(src,lines):
+    out=[]
+    for i,l in enumerate(lines):
+        quote=Decimal(str(l['quantity']))*Decimal(l['quoted_unit_price'])
+        cost=Decimal(str(l['quantity']))*Decimal(l['standard_cost'])
+        listval=Decimal(str(l['quantity']))*Decimal(l['list_price'])
+        margin=(quote-cost)*100/quote if quote else Decimal(0)
+        discount=(listval-quote)*100/listval if listval else Decimal(0)
+        rule=next((r for r in src['rules']['pricing_rules'] if r['rule_type']=='category_margin_floor' and r['scope_value']==l['category']),None)
+        if rule:
+            floor=Decimal(str(rule['condition_json']['margin_pct_lt']))
+            diff=floor-margin
+            out.append(f'Line {i+1}: €{money(quote)} quote − €{money(cost)} standard cost = €{money(quote-cost)} gross profit; / €{money(quote)} × 100 = {margin:.6f}% margin. Rule `{rule["pricing_rule_id"]}` floor {floor}%, shortfall {max(diff,Decimal(0)):.6f} percentage points. '+('More than two points below floor is a hard block.' if diff>2 else 'Within the floor or two-point exception band; inspect any separate exception predicate.'))
+        out.append(f'Line {i+1}: (€{money(listval)} list − €{money(quote)} quote) / €{money(listval)} list × 100 = {discount:.6f}% discount. >10% Director flag={discount>10}; >20% VP flag={discount>20}; >35% hard cap={discount>35}.')
+    return out
 
 packets={}; sources={}; controls=[]
 for entry in INDEX['cases']:
@@ -145,8 +203,8 @@ for m,s in zip(MATRIX['cases'],SCOPE['cases']):
     add('\\newpage\n## Case '+n+' — '+m['archetype'].replace('-',' ').title())
     add('**A. Identity and purpose.** `'+case+'`; v2 unchanged input, v3 Credit scope. **Documented scenario archetype:** `'+m['archetype']+'` in the matrix and scope; the behavior inferred from that name must be checked against the rows below. This case tests how the six checks combine around the source distinction; paired quantities are not interchangeable. **Proposed whole-deal gate:** `'+m['overall_technical_gate_proposal']+'` (AI-assisted, pending).')
     add('**B. Submitted original deal.** '+esc(customer['customer_name'])+' (`'+customer['customer_id']+'`), account '+esc(customer['account_status'])+', segment '+esc(customer.get('size_segment'))+', country/region '+esc(customer.get('country_code'))+'/'+esc(customer.get('region'))+'. Deal `'+deal['deal_id']+'`, submitted '+deal['submitted_at']+', requested delivery '+esc(deal.get('requested_delivery_date'))+', destination '+esc(deal.get('destination_country_code'))+'/'+esc(deal.get('destination_region'))+', currency '+deal['currency_code']+', shipping `'+esc(deal.get('shipping_service_code'))+'`, terms '+esc(val(deal['terms_json']))+'. Cutoff '+ctx['as_of_at']+'.')
-    add('| Line pointer / ID | Product / mode | Quantity & unit | Unit list / quote / cost (EUR) | Configuration and activation |\n|---|---|---:|---:|---|')
-    for i,l in enumerate(lines):add('| `/source_rows/lines/'+str(i)+'` `'+l['deal_line_id']+'` | `'+l['product_code']+'` / `'+esc(l['fulfillment_mode'])+'` | '+str(l['quantity'])+' '+esc(l.get('unit_of_measure'))+' | '+esc(l['list_price'])+' / '+esc(l['quoted_unit_price'])+' / '+esc(l['standard_cost'])+' | '+esc(val(l.get('configuration_json')))+'; activation '+esc(l.get('requested_activation_date'))+'; installation '+str(l.get('installation_requested'))+' |')
+    for i,l in enumerate(lines):
+        add('- **Submitted line '+str(i+1)+'** `/source_rows/lines/'+str(i)+'`: ID `'+l['deal_line_id']+'`; product `'+l['product_code']+'`; mode `'+esc(l['fulfillment_mode'])+'`; '+str(l['quantity'])+' '+esc(l.get('unit_of_measure'))+'. Unit list €'+esc(l['list_price'])+', quote €'+esc(l['quoted_unit_price'])+', standard cost €'+esc(l['standard_cost'])+'. Configuration '+esc(val(l.get('configuration_json')))+'; activation '+esc(l.get('requested_activation_date'))+'; installation requested '+str(l.get('installation_requested'))+'.')
     add('**Deterministic calculation:** list €'+money(list_total)+'; quote €'+money(quote)+'; catalogue standard cost €'+money(cost)+'; discount '+f'{disc:.6f}'+'%; quoted gross margin '+f'{margin:.6f}'+'%. Credit: quote €'+money(quote)+' + unbilled commitments €'+money(commitments)+' + declared complete-zero AR €0 = €'+money(exposure)+'; limit €'+money(limit)+'; '+('over limit '+f'{over:.6f}'+'%' if over>0 else 'headroom €'+money(limit-exposure))+'. Read the source rows and floor predicates before accepting any threshold finding. [packet `/source_rows/lines`, `/source_rows/credit`, `/source_rows/rules`; v3 scope.]')
     add('**C. Pinned source evidence.** The rows below are the selected source at this exact cutoff. Identifiers and row pointers are given; a selected empty list is distinguished from a complete population declaration. A source row can contain extra fields in the packet, but every decision-relevant field is presented or cited.')
     for key in ['customer','credit','inventory','inbound_supply','supplier_offers','bom','bom_lines','requirements','production_capacity','digital_capacity','compatibility','shipping_lanes','receivables','payments']:
@@ -163,8 +221,13 @@ for m,s in zip(MATRIX['cases'],SCOPE['cases']):
         add('**Responsibility:** '+{'Configuration':'Check the submitted line, version, sellability and exact compatibility/dependency predicates.','Pricing':'Check full-quantity quote, discount, standard-cost margin, category floor and escalation or hard cap.','Availability':'Check stock or supply, dated production or digital proof, service coverage, shipping and original date.','Credit':'Check scoped AR/payment completeness, commitments, quote exposure, limit, status and terms.','Policy':'Apply independently triggered policy predicates; avoid counting one evidence problem as a second independent prohibition.','Approval':'Compose a provisional human route after blockers, revisions, evidence and commitments; never grant approval.'}[resp])
         add('**AI-assisted technical recommendation:** `'+r['technical_recommendation']+'`. '+r['source_basis'])
         add('**Citations and inspection:** '+', '.join('`'+x+'`' for x in r['source_pointers'])+'.')
-        if resp=='Pricing': add('**Deterministic calculation:** quote €'+money(quote)+'; discount '+f'{disc:.6f}'+'%; margin '+f'{margin:.6f}'+'%; compare with matching category-floor rule and strict discount thresholds above. A discount escalation cannot cure a hard floor shortfall.')
+        if resp=='Pricing':
+            add('**Deterministic calculation:** quote €'+money(quote)+'; discount '+f'{disc:.6f}'+'%; margin '+f'{margin:.6f}'+'%. A discount escalation cannot cure a hard floor shortfall. [packet `/source_rows/lines`, `/source_rows/rules/pricing_rules`.]')
+            for step in price_rule_steps(src,lines):add('- '+step)
         if resp=='Credit': add('**Deterministic calculation:** €'+money(quote)+' + €'+money(commitments)+' + €0 scoped receivables = €'+money(exposure)+' against €'+money(limit)+'. '+('Over-limit '+f'{over:.6f}'+'%; compare 15% exception ceiling.' if over>0 else 'Within limit; do not infer real-world payment history.')+' [packet `/source_rows/credit`, `/source_rows/receivables`, `/source_rows/payments`; v3 scope.]')
+        if resp=='Availability':
+            add('**Deterministic source walkthrough (not a commitment):**')
+            for step in availability_steps(src,ctx,pf,lines): add('- '+step)
         if resp in ('Availability','Configuration'):
             add('**Review counterargument / uncertainty:** inspect the selected row states, dates and exact rule scope above; absence of a selected alternative is not a universal impossibility claim. A feasible hypothetical alternative is uncommitted and may need customer acceptance if it changes the original deal.')
         elif resp=='Approval':add('**Review action:** state the exact applicable roles and whether the current route is executable; a `blocked` gate means no executable approval of this submission.')
