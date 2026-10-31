@@ -13,10 +13,11 @@ from .m20_specialists import TOOLS as M20_TOOLS, VERSION as M20_VERSION
 from .m21_prompts import PROMPT_VERSION as CREDIT_PROMPT_VERSION
 from .m21_redaction import model_view
 from .m21_specialists import TOOLS as M21_TOOLS, VERSION as M21_VERSION
-from .typed_final_contract import InvalidTerminal, decode, schema
+from .typed_final_contract import InvalidTerminal, VERSION as FINAL_VERSION, decode, schema
 
 
 WIRE_VERSION = "groq-pricing-credit-final-v1"
+REJECTION_DIAGNOSTIC_VERSION = "typed-final-rejection-v2"
 PROMPT_VERSION = "pricing-credit-terminal-system-v1"
 SCHEMA_NAME = "pricing_credit_terminal_v1"
 MAX_REQUEST_BYTES = 8192
@@ -245,6 +246,8 @@ def _rejection_category(response, *, input=None, observations=()):
         return "content_json"
     if type(parsed) is not dict or set(parsed) != set(schema()["required"]):
         return "schema_shape"
+    if parsed.get("version") != FINAL_VERSION:
+        return "schema_version"
     if (parsed.get("kind") not in ("finding", "abstain") or
             type(parsed.get("claims")) is not list or
             type(parsed.get("uncertainty_reasons")) is not list or
@@ -259,6 +262,10 @@ def _rejection_category(response, *, input=None, observations=()):
         return "finding_reason"
     if not 1 <= len(parsed["claims"]) <= 6:
         return "finding_claim_count"
+    if (type(parsed["uncertainty_reasons"]) is not list or
+            len(parsed["uncertainty_reasons"]) > 5 or any(type(x) is not str or
+            len(x) > 128 for x in parsed["uncertainty_reasons"])):
+        return "finding_uncertainty_shape"
     values = []
     for claim in parsed["claims"]:
         if (type(claim) is not dict or set(claim) != {"ref", "field", "value_json"}
@@ -268,6 +275,11 @@ def _rejection_category(response, *, input=None, observations=()):
             values.append(json.loads(claim["value_json"]))
         except (ValueError, UnicodeError):
             return "claim_value_json"
+    if any(type(value) not in (str, int, bool, type(None)) for value in values):
+        return "claim_value_type"
+    if len({(claim["ref"], claim["field"]) for claim in parsed["claims"]}) != len(
+            parsed["claims"]):
+        return "duplicate_claims"
     if input and input.get("specialist") in ("pricing", "configuration", "credit"):
         try:
             visible = (model_view(input, observations)[1] if input["specialist"] ==

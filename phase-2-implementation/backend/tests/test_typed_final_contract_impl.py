@@ -8,7 +8,7 @@ from unittest.mock import patch
 from dealdesk_phase2.groq_typed_final import (MAX_COMPLETION_TOKENS,
     FinalResponseError, configuration_final_body, parse_configuration_final,
     request_body, request_sha256, parse_response, DEVELOPMENT_FINAL_INSTRUCTION,
-    CREDIT_DEVELOPMENT_FINAL_INSTRUCTION)
+    CREDIT_DEVELOPMENT_FINAL_INSTRUCTION, REJECTION_DIAGNOSTIC_VERSION)
 from dealdesk_phase2.typed_final_contract import InvalidTerminal, VERSION, decode, schema
 from dealdesk_phase2.m21_redaction import model_view
 from test_terminal_final_offline_design import fixture, finding, response
@@ -99,6 +99,51 @@ class TypedFinalContractImpl(unittest.TestCase):
                 "is_sellable", True)), input, observation)
         with self.assertRaises(InvalidTerminal):
             configuration_final_body(input, ())
+
+    def test_configuration_safe_rejection_categories_are_not_historical_causes(self):
+        self.assertEqual(REJECTION_DIAGNOSTIC_VERSION, "typed-final-rejection-v2")
+        input = {"specialist": "configuration", "permitted_tool":
+            "inspect_configuration_line", "line_ids": ["M18-L-N01"]}
+        obs = ({"tool": "inspect_configuration_line", "execution": "completed",
+            "returned_refs": ["product:M18-P-N01"], "records": [{"ref":
+            "product:M18-P-N01", "fields": {"is_active": True,
+                "is_sellable": True, "fulfillment_mode": "stocked_finished"}}]},)
+        good = final_payload("product:M18-P-N01", "is_sellable", True)
+        for altered, expected in (
+                ({**good, "version": "PRIVATE-UNKNOWN"}, "schema_version"),
+                ({**good, "claims": [*good["claims"], *good["claims"]]},
+                    "duplicate_claims"),
+                ({**good, "claims": [{**good["claims"][0],
+                    "value_json": "1.0"}]}, "claim_value_type"),
+                ({**good, "uncertainty_reasons": [23]},
+                    "finding_uncertainty_shape")):
+            with self.subTest(category=expected), self.assertRaises(
+                    FinalResponseError) as caught:
+                parse_configuration_final(response(altered), input, obs)
+            self.assertEqual(caught.exception.category, expected)
+            self.assertNotIn("PRIVATE", str(caught.exception))
+        self.assertEqual(parse_configuration_final(response(good), input, obs)[
+            "claims"][0]["value"], True)
+        abstain = {"version": VERSION, "kind": "abstain", "claims": [],
+            "uncertainty_reasons": [], "reason_code": "model_uncertainty"}
+        self.assertEqual(parse_configuration_final(response(abstain), input, obs)[
+            "kind"], "abstain")
+        for altered, expected in (
+                ({**good, "claims": [final_payload("product:PRIVATE", "is_sellable",
+                    True)["claims"][0]]}, "claim_binding"),
+                ({**good, "claims": [final_payload("product:M18-P-N01",
+                    "is_sellable", False)["claims"][0]]}, "claim_binding"),
+                ({**good, "claims": [final_payload("product:M18-P-B01",
+                    "is_sellable", True)["claims"][0]]}, "claim_binding"),
+                ({**good, "claims": []}, "finding_claim_count"),
+                ({**good, "reason_code": "model_uncertainty"}, "finding_reason"),
+                ({**good, "kind": "abstain", "reason_code": "model_uncertainty"},
+                    "abstention_semantics")):
+            with self.subTest(category=expected), self.assertRaises(
+                    FinalResponseError) as caught:
+                parse_configuration_final(response(altered), input, obs)
+            self.assertEqual(caught.exception.category, expected)
+            self.assertNotIn("PRIVATE", str(caught.exception))
 
     def test_rejected_final_carries_only_bounded_category(self):
         input, rows, _, ref, field, value = fixture("pricing")

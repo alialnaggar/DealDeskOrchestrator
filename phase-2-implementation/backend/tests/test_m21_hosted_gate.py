@@ -103,6 +103,59 @@ class M21AuthorizedStatusManifest(unittest.TestCase):
     "M20_DATABASE_URL", "M20_CHECKPOINT_DATABASE_URL", "DEALDESK_PHASE1C_CHECKOUT")),
     "Fresh isolated PostgreSQL source and checkpoint databases required")
 class M21HostedGatePostgres(unittest.TestCase):
+    def test_configuration_b01_n01_actual_product_refs_and_terminal_boundaries(self):
+        """Real pinned source and checkpoint, mocked terminal; never hosted."""
+        from dealdesk_phase2.checkpoint import thesis_checkpointer
+        from dealdesk_phase2.graph_state import pinned_from_state
+        from dealdesk_phase2.m20_specialists import _source_records, TOOLS as M20_TOOLS
+        from dealdesk_phase2.groq_typed_final import (FinalResponseError,
+            parse_configuration_final)
+        from dealdesk_phase2.typed_final_contract import VERSION as FINAL_VERSION
+        with thesis_checkpointer(self.checkpoint) as saver:
+            for case_id in ("B01", "N01"):
+                with self.subTest(case_id=case_id):
+                    selected = next(c for c in CASES if c.case_id == case_id)
+                    name = "DEV-CONFIG-" + uuid4().hex
+                    config = {"configurable": {"thread_id": name}}
+                    graph = build_original_graph(self.adapter, self.connect, saver)
+                    state = graph.invoke(initial_state(name, selected.run_id), config)
+                    pool = self.adapter.validate_pinned_context(pinned_from_state(state))
+                    records = _source_records(pool, state, "configuration",
+                        selected.ids()["L"])
+                    self.assertEqual([r["ref"] for r in records], ["product:" +
+                        selected.ids()["P"]])
+                    obs = ({"tool": M20_TOOLS["configuration"], "execution": "completed",
+                        "records": records, "returned_refs": [r["ref"] for r in records]},)
+                    input = {"specialist": "configuration", "permitted_tool":
+                        M20_TOOLS["configuration"], "line_ids": [selected.ids()["L"]]}
+                    def reply(ref, field, value):
+                        return {"choices": [{"finish_reason": "stop", "message": {
+                            "content": json.dumps({"version": FINAL_VERSION,
+                                "kind": "finding", "claims": [{"ref": ref,
+                                    "field": field, "value_json": json.dumps(value)}],
+                                "reason_code": "none", "uncertainty_reasons": []})}}],
+                            "usage": {"prompt_tokens": 500, "completion_tokens": 70}}
+                    ref = records[0]["ref"]
+                    self.assertEqual(parse_configuration_final(reply(ref,
+                        "is_sellable", True), input, obs)["claims"][0]["ref"], ref)
+                    for other in ("B01", "N01"):
+                        if other != case_id:
+                            with self.assertRaises(FinalResponseError) as caught:
+                                parse_configuration_final(reply("product:M18-P-" +
+                                    other, "is_sellable", True), input, obs)
+                            self.assertEqual(caught.exception.category, "claim_binding")
+                    with self.assertRaises(FinalResponseError):
+                        parse_configuration_final(reply(ref, "is_sellable", False),
+                            input, obs)
+                    # The returned configuration object is inspectable context,
+                    # not a citable terminal scalar. Never relax the validator.
+                    self.assertIsInstance(records[0]["fields"]["configuration_json"],
+                        dict)
+                    with self.assertRaises(FinalResponseError) as caught:
+                        parse_configuration_final(reply(ref, "configuration_json",
+                            records[0]["fields"]["configuration_json"]), input, obs)
+                    self.assertEqual(caught.exception.category, "claim_value_type")
+
     def test_full_six_development_graph_continuations_offline(self):
         self._six_campaign_offline()
 

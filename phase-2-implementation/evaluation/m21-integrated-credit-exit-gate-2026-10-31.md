@@ -1,5 +1,62 @@
 # M2.1 integrated Credit development and exit gate — 31 October 2026
 
+## Configuration diagnostic and fresh integrated follow-up — 31 October 2026
+
+**Current disposition remains C: keep M2.1 open.** The original exit table
+below is a dated snapshot of the *first* HC03 attempt; the fresh outcomes
+here do not retroactively change its receipt or reveal its exact error.
+
+- **Historical HC03 receipt:** the inspection returned exactly
+  `product:M18-P-N01`; the fixed Configuration finding was `confirmed`.
+  The terminal HTTP exchange had a reserved attempt and an allowlisted
+  `terminal_semantics_or_evidence` rejection, with no validated final.
+  RC01 Configuration succeeded on the same prompt, tool and product field
+  types with a different original-subject ref. The old category covers
+  multiple possible malformed/evidence cases, so no particular raw response,
+  prompt failure, model intent or provider defect can be inferred.
+- **Confirmed *diagnostic* gap, not a proven prompt cause:** the parser's strict
+  allowed types and evidence checks were sound, but distinct parseable errors
+  all received the catch-all category. The versioned
+  `typed-final-rejection-v2` classifier now labels only rejected schema
+  versions, duplicated claim pairs, unsupported JSON claim value types and
+  malformed finding uncertainty arrays. It stores only a category, not a
+  provider body, evidence value or unrestricted prompt. The terminal schema,
+  Configuration prompt v3 and acceptance validators did **not** change.
+  B01/N01 offline tests bind to their actual pinned product refs and check
+  true/false booleans, invented and cross-subject citations, valid abstention,
+  malformed terminal output and a returned JSON configuration object that is
+  **not** an allowable scalar claim. This object is one plausible source of a
+  future type mistake, **not** evidence of what any historical model emitted.
+- **Offline final run:** complete Phase 2 local discovery on five fresh
+  isolated business and three fresh checkpoint databases: **338 run, 338
+  passed, 0 failed, 0 skipped**. This includes three earlier integrated
+  synthetic overlay cases and two new focused Configuration contract tests.
+  No paid model call. CI must be checked separately.
+
+| Fresh assessment, never a replay | Exact observed result |
+| --- | --- |
+| HC03/N01 `GROQ-DEV-6e932d797d90493fb84eefbf8b41dddb` | All six AI stages **completed** without a candidate. Configuration cited exact original product values; Fulfillment completed without proposing a fixed candidate. Credit inspected exact original profile/AR/payment and validated `credit_status=On-Hold`, `credit_limit=1500.00`, `fixed_commitments_fresh=true`, AR `outstanding_amount=900.00` and payment `paid_amount=300.00`. Fixed Credit remained `infeasible`, review `blocked`, and the original-only review was present. No hold was waived, credit cleared or deal approved. |
+| UC02/N01 `GROQ-DEV-70aacc939c0c4ab79e3352303fe88237` | Pinned source preflight established stale commitments, no selected AR/payment, fixed Credit `unknown`, review `needs_revision`. Configuration inspected `product:M18-P-N01` but its terminal response failed the new safe `claim_value_type` category; no downstream Pricing, Fulfillment, Credit, Policy or Routing AI ran, no candidate was created and no final was replayed. This category proves at least one parsed claim value was outside the strict primitive types; it does **not** identify the value, its field or the old HC03 error. |
+
+**Gate assessment by dimension:** the hosted held/overdue **no-candidate**
+path is now demonstrated once; the RC01 fixed-checked candidate path remains
+demonstrated once. Hosted **incomplete-evidence Credit uncertainty or
+abstention is still not demonstrated** because UC02 stopped upstream. Offline
+UC02 did validly abstain, which is not a negative Credit outcome. One
+successful HC03 and one different Configuration failure on the same N01
+product evidence show runtime variability, not statistical reliability.
+Neither fresh run reproduced Fulfillment HTTP 400; its historical intermittent
+failure remains unresolved. Fixed-rule, original/candidate, read-only tool,
+private receipt, no-replay and human approval boundaries remained intact.
+Formal accuracy still needs independently accepted Phase 1C answers.
+
+**Stop rule applied:** no further N01/UC02 hosted send without a specific
+source-supported Configuration fix or diagnostic method. A next iteration may
+review a *versioned* scalar-only guidance change and an offline exercise of
+its prompt hash, while keeping valid abstention and the strict parser; do not
+assert that JSON objects caused UC02 or alter the acceptance validator to
+make the model pass. Only then consider one new UC02 integrated attempt.
+
 **Recommendation: C — keep M2.1 open.** This is a bounded synthetic development
 assessment, not an accuracy study or approval of a production runtime.
 Phase 1C remains pinned to `90c0bc8e285ee69262c7db826b786096a77ad004`;
