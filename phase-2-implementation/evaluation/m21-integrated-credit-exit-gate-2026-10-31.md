@@ -1,5 +1,76 @@
 # M2.1 integrated Credit development and exit gate — 31 October 2026
 
+## M2.1 completion review — conditional development closure, 31 October 2026
+
+**Decision B: conditionally close the bounded M2.1 implementation milestone,
+not the integrated evaluation or production-readiness gate.** This supersedes
+the earlier **C** implementation disposition below in light of the later
+completed UC02 assessment. Earlier failure receipts, caveats and test counts
+remain historical facts. The criteria come from the [approved blueprint
+milestone table](../planning/master-implementation-blueprint.md#8-remaining-implementation-roadmap-and-gates),
+the [roadmap Step 5](../planning/implementation-roadmap.md#progress-and-change-control),
+the [Workshop 3 specialist boundaries](../planning/decision-log.md#workshop-3--specialist-tools-and-candidate-contracts)
+and the [approved original-only candidate continuation](../planning/decision-log.md#p2-m21-a--original-only-ai-after-fixed-candidate-29-october-2026).
+The blueprint's **M2.2** row separately assigns end-to-end evaluation,
+latency/retry budgets and accepted source-first answers; it does not specify
+perfect free-tier provider reliability as an M2.1 exit threshold. Where the
+linked anchors differ, the stated criterion below is the operative text, not
+an invented quantitative target.
+
+| Original requirement / evidence dimension | Status at M2.1 exit; exact evidence | Limit / deferred gate |
+| --- | --- | --- |
+| Three **separate** scoped Credit, Policy and Routing AI investigations with typed original-only evidence and fixed/AI attribution | **Implemented/offline-verified; real Groq demonstrated.** [Original-only contract](m21-credit-policy-routing-offline-methodology.md), `m21_specialists.py`, `week3_offline.py`; six-stage RC01/HC03/UC02 [receipts below](#guarded-configuration-probe-and-fresh-uc02-continuation--31-october-2026), commits `2af729e`, `eab4658`, `79b9678`. | Hosted findings are bounded cited observations, not six independent fixed engines, verified business conclusions or a general success rate. |
+| Credit reads same customer's dated selected profile/AR/payment, respects fresh/unknown/hold; no model-computed exposure or clearance | **Implemented/offline-verified; real Groq demonstrated** on reconciled RC01 (AR 60.00, payment 40.00), held/overdue HC03 (AR 900.00, payment 300.00) and stale/absent-transaction UC02 (profile-only finding). [Integrated outcomes](#offline-and-hosted-outcomes), [HC03 follow-up](#configuration-diagnostic-and-fresh-integrated-follow-up--31-october-2026), [UC02](#guarded-configuration-probe-and-fresh-uc02-continuation--31-october-2026); source-bound Credit-only findings in [diverse report](m21-credit-diverse-development-2026-10-31.md#fresh-credit-only-reliability-follow-up--31-october-2026), commits `7fa7e5e`, `b67271d`, `79b9678`. | UC02 finding is **not** a hosted abstention; no AR/payment in a selected pool is not proof of zero external exposure. An offline UC02 model double validly abstains. Model did not reconcile a ledger or determine clearance. |
+| Policy distinguishes fixed evaluated hits from unresolved prerequisites, cannot infer global pass/waiver | **Implemented/offline-verified; hosted scoped finding demonstrated** in integrated six-stage runs. [Policy projection and limitations](m21-credit-policy-routing-offline-methodology.md), `m21_specialists.py`; [integrated original-only review](#guarded-configuration-probe-and-fresh-uc02-continuation--31-october-2026). | Pinned Phase 1C does not expose per-rule prerequisite declarations; non-hit rules cannot be declared evaluated. Broader rule-level evaluation depends on a separately approved Phase 1C interface, **not** an M2.1 AI inference. |
+| Routing separates fixed-returned required human roles from ordinary-route eligibility; no inferred roles when withheld, no AI approval | **Implemented/offline-verified; hosted withheld-route observations demonstrated** in six-stage runs. [Routing projection](m21-credit-policy-routing-offline-methodology.md), [RC01 candidate Routing and original-only AI](#offline-and-hosted-outcomes), commit `1677112`. | Withheld route with no returned roles does **not** mean no approvers. Candidate Routing is recomputed by fixed checks on the exact candidate; AI here investigates only the original. Human approval remains exclusive. |
+| Independent blockers remain visible; candidate/original isolation, exact-subject fixed verification and reviewer handoff | **Implemented/offline-verified; hosted candidate and no-candidate paths demonstrated once each** (RC01 versus HC03/UC02). [Three overlay tests and fixed/AI outcome receipts](#minimal-integrated-coverage-and-source-boundary), [original-after-candidate report](m21-original-after-candidate-live.md), commits `1677112`, `eab4658`, `79b9678`. | Candidate was fixed-checked, not accepted, reserved or promised. Six-stage coverage does not imply production reliability. Conditional supplier offers remain unverified under the Phase 1C pin. |
+| Strict evidence/tool permissions, abstention distinct from failure, checkpoint recovery, audit and no unsafe replay | **Implemented/offline-verified; hosted fail-closed errors observed.** Fresh isolated PostgreSQL regression **340/340, 0 failures, 0 skips** at `79b9678`; [probe and full UC02 receipts](#guarded-configuration-probe-and-fresh-uc02-continuation--31-october-2026), [older failure classifications](m21-reliability-2026-10-30.md), `typed_final_hosted.py`, `hybrid_send_reservation.py`, `groq_dev_rate.py`. | Historical Configuration terminal rejection, Fulfillment HTTP 400, Routing 429 and local daily limit remain distinct. Failed/uncertain sends are never replayed; failures stop or remain errors rather than promoting AI claims. Hosted abstention on **incomplete** UC02 was not observed, though valid hosted Credit `model_uncertainty` abstentions on other profiles and offline UC02 abstention were. |
+| Specialist accuracy, end-to-end assessment accuracy and repeated-run reliability | **Deferred to M2.2/formal evaluation; not demonstrated.** The [blueprint evaluation tiers](../planning/master-implementation-blueprint.md#7-evaluation-and-research-claims) and [M2.2 row](../planning/master-implementation-blueprint.md#8-remaining-implementation-roadmap-and-gates) require accepted source-first answers, comparable cases and recovery/negative controls. | No independent accepted Phase 1C answers, predeclared matched comparison or reliable provider success-rate estimate. These are **not** claims established by 340 offline contract tests or a few synthetic hosted completions. |
+
+**Reliability disposition:** Configuration's old `terminal_semantics_or_evidence`
+and later `claim_value_type` rejections are genuine stopped runs; neither
+reveals the rejected value or proves a cause. v4 guidance and a fresh validated
+probe plus integrated UC02 do not prove a repair rate. Fulfillment's intermittent
+HTTP 400 has no safely comparable failed-request metadata establishing cause;
+successful finals with the same schema do not explain it. An earlier Routing
+429 and daily-limit stop show free-tier interruptions; the account coordinator
+reserves budget, honors cooldown and does not retry a POST. Persistent receipts,
+exclusive assessment owner, PostgreSQL checkpoints and offline interrupted-send
+tests contain duplicate-send and business-authority risk, **not availability
+risk**. A provider or terminal failure prevents a complete review, never
+silently converts into a Credit, Policy, Routing or candidate approval. These
+remain measurable M2.2 reliability risks, not evidence of an unimplemented
+M2.1 domain contract. If unsafe replay, fabricated evidence surviving to review,
+original/candidate contamination or an approval/waiver on model output is
+observed, reopen M2.1 immediately as an implementation blocker.
+
+**No further hosted call for M2.1:** the original scoped investigations and
+three distinct Credit source shapes already have live demonstrations. A new
+attempt simply to induce an incomplete-evidence abstention or establish an
+unplanned success rate does not address an unmet *original M2.1* criterion.
+Stop hosted testing here. M2.2 should first agree on a source-first accepted
+answer set, predeclared case mix, denominators and failure/latency/cost measures;
+only then request separately scoped free-tier hosted trials if needed. Never
+replay stopped assessments or treat missing AR as zero.
+
+**Next approved direction, not an approval to start implementation: M2.2
+six-responsibility integration and evaluation.** Scope: reconcile six outcomes
+and exact-subject candidate/review trace, exercise interruption/retry budgets,
+negative controls and sequential latency, and compare against a fixed-rule
+baseline. Prerequisites: independent accepted Phase 1C answers for *accuracy*
+claims; separately reviewed M2.2 case/metric plan and any hosted scope before
+new calls. Preserve the pinned Phase 1C SHA, LangGraph orchestration, evidence
+identity, strict citations, fixed authority, original/candidate separation,
+human-only approval, private receipts and no replay. Tests: offline doubles and
+fresh isolated PostgreSQL end-to-end restart, source/subject mismatch, unknown
+evidence, malformed output, quota/400, aborted send and candidate checks; then
+source-first held-out evaluation without exposing answers to agents. **Done**
+only when a separately approved M2.2 plan has reproducible end-to-end/negative
+control and reviewer-fidelity results, explicit failed-run denominators and
+measured limitations, and (for accuracy claims) independently accepted answers.
+No production reliability, API funding, deployment, Phase 1C upgrade or UI
+implementation is authorized by this M2.1 disposition.
+
 ## Guarded Configuration probe and fresh UC02 continuation — 31 October 2026
 
 **Exit recommendation: C — keep M2.1 open.** This section supersedes only the
