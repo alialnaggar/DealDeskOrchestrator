@@ -252,6 +252,7 @@ class M21HostedGatePostgres(unittest.TestCase):
                     else:
                         graph, config, before, _ = self.original(saver, case_id)
                     from dealdesk_phase2.m22_enablement import OfflineCampaign
+                    from dealdesk_phase2.m22_enablement import MeasuredIntervals, timing_observation
                     from dealdesk_phase2.m22_registry import reconcile_campaign
                     from dealdesk_phase2.graph_state import pinned_from_state
                     context = pinned_from_state(before).context
@@ -272,6 +273,22 @@ class M21HostedGatePostgres(unittest.TestCase):
                         cases=[scheduled], adapter=self.adapter)
                     registry_digest = campaign.digest
                     campaign.preflight(case_id, status="eligible")
+                    measured = MeasuredIntervals()
+                    from dealdesk_phase2.m22_hosted_readiness import (
+                        CONTRACTS, inspect_prospective_case, run_hosted_prospective)
+                    preview_root = root / "hosted-preview"
+                    preview_root.mkdir(mode=0o700)
+                    preview = OfflineCampaign.freeze(preview_root,
+                        campaign_id="PREVIEW-" + case_id, phase2_sha="f" * 40,
+                        cases=[{**scheduled, "contract_versions": CONTRACTS}],
+                        adapter=self.adapter)
+                    preview.preflight(case_id, status="eligible")
+                    self.assertEqual(inspect_prospective_case(preview, case_id,
+                        state=before)["hosted_execution"],
+                        "blocked_pending_independent_authority")
+                    with self.assertRaises(EvidenceMismatch):
+                        run_hosted_prospective(preview, case_id, authorized=True,
+                            send=lambda: self.fail("No hosted sender may be called"))
                     if case_id == "N01":
                         from dealdesk_phase2.graph_state import pinned_from_state
                         from dealdesk_phase2.fulfillment_agent import eligible_line
@@ -370,7 +387,8 @@ class M21HostedGatePostgres(unittest.TestCase):
                                 nonlocal status
                                 status = _six_campaign(graph, config, self.adapter,
                                     case_id=case_id, account_id="synthetic-test-account", root=root,
-                                    key="gsk_offline_test_placeholder_123456789", run_id=run_id)
+                                    key="gsk_offline_test_placeholder_123456789", run_id=run_id,
+                                    measurement=measured)
                                 return graph.get_state(config).values, False
                             status = None
                             campaign.execute_offline(case_id, observed_identity={
@@ -390,6 +408,15 @@ class M21HostedGatePostgres(unittest.TestCase):
                     state = graph.get_state(config).values
                     from dealdesk_phase2.m22_capture import capture_m22
                     projected = capture_m22(state, self.adapter)
+                    timing = timing_observation(projected,
+                        wall_ms=campaign.timings[case_id], stages=measured.stages,
+                        waits=measured.waits)
+                    self.assertEqual(set(measured.stages), {
+                        "configuration_pricing", "fulfillment", "credit_policy_routing"})
+                    self.assertTrue(all(type(ms) is int for ms in measured.stages.values()))
+                    self.assertIsNone(timing["stages_ms"]["configuration"])
+                    self.assertIsNone(timing["stages_ms"]["policy"])
+                    self.assertIsNone(timing["cost_usd"])
                     from dealdesk_phase2.m22_evidence_gaps import project_gap_review
                     gap_review = project_gap_review(state, self.adapter)
                     self.assertEqual(gap_review["version"], "m22-evidence-review-v1")

@@ -139,7 +139,8 @@ def _m21_campaign(graph, config, adapter, *, case_id, owner, root, key,
     return digest, state
 
 
-def _six_campaign(graph, config, adapter, *, case_id, account_id, root, key, run_id):
+def _six_campaign(graph, config, adapter, *, case_id, account_id, root, key, run_id,
+                  measurement=None):
     """Sequential original-checkpoint LangGraph continuations, stopping on any error."""
     typed_owner = root / "typed-owner"
     typed_owner.mkdir(mode=0o700)
@@ -154,8 +155,13 @@ def _six_campaign(graph, config, adapter, *, case_id, account_id, root, key, run
     record_manifest(typed_owner, manifest, digest)
     os.environ["GROQ_SECONDARY_API_KEY"] = key
     try:
-        run_groq_development(graph, config, adapter, manifest=manifest,
-            manifest_sha256=digest, specialist="pricing", owner_dir=typed_owner)
+        def config_and_pricing():
+            return run_groq_development(graph, config, adapter, manifest=manifest,
+                manifest_sha256=digest, specialist="pricing", owner_dir=typed_owner)
+        if measurement is None:
+            config_and_pricing()
+        else:
+            measurement.measure("configuration_pricing", config_and_pricing)
     finally:
         os.environ.pop("GROQ_SECONDARY_API_KEY", None)
     state = graph.get_state(config).values
@@ -179,10 +185,15 @@ def _six_campaign(graph, config, adapter, *, case_id, account_id, root, key, run
         os.fsync(output.fileno())
     os.environ["GROQ_API_KEY"] = key
     try:
-        model = LiveInvestigationModel(graph, config, pace_seconds=12,
-            enable_binding_proposals=True, decision_completion_tokens=2048)
-        run_original_investigate_and_review(graph, config, adapter, model,
-            assessment_id=pinned.context.assessment_id, run_id=run_id)
+        def fulfillment():
+            model = LiveInvestigationModel(graph, config, pace_seconds=12,
+                enable_binding_proposals=True, decision_completion_tokens=2048)
+            return run_original_investigate_and_review(graph, config, adapter, model,
+                assessment_id=pinned.context.assessment_id, run_id=run_id)
+        if measurement is None:
+            fulfillment()
+        else:
+            measurement.measure("fulfillment", fulfillment)
     finally:
         os.environ.pop("GROQ_API_KEY", None)
     state = graph.get_state(config).values
@@ -198,9 +209,14 @@ def _six_campaign(graph, config, adapter, *, case_id, account_id, root, key, run
     owner.mkdir(mode=0o700, exist_ok=True)
     if owner.is_symlink() or not owner.is_dir() or owner.stat().st_mode & 0o077:
         raise ValueError("groq_development_owner_directory_unsafe")
-    _m21_campaign(graph, config, adapter, case_id=case_id, owner=owner,
-        root=root, key=key, typed_credit=True,
-        manifest_path=root / "m21-manifest.json")
+    def credit_policy_routing():
+        return _m21_campaign(graph, config, adapter, case_id=case_id, owner=owner,
+            root=root, key=key, typed_credit=True,
+            manifest_path=root / "m21-manifest.json")
+    if measurement is None:
+        credit_policy_routing()
+    else:
+        measurement.measure("credit_policy_routing", credit_policy_routing)
     return "six_stages_completed"
 
 

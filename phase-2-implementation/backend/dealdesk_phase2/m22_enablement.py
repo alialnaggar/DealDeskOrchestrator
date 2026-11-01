@@ -168,7 +168,8 @@ def timing_observation(capture: dict, *, wall_ms=None, stages=None,
     stages, waits = stages or {}, waits or {}
     if type(stages) is not dict or type(waits) is not dict:
         raise EvidenceMismatch("Measured interval maps required")
-    if set(stages) - (set(SPECIALISTS) | {"original_graph", "review"}) or set(waits) - {
+    if set(stages) - (set(SPECIALISTS) | {"original_graph", "review",
+            "configuration_pricing", "credit_policy_routing"}) or set(waits) - {
             "rate", "local_quota"}:
         raise EvidenceMismatch("Timing interval category unavailable")
     attempts = []
@@ -182,7 +183,8 @@ def timing_observation(capture: dict, *, wall_ms=None, stages=None,
             "provider_reported_tokens": row.get("tokens")})
     return {"version": "m22-timing-v1", "assessment_id": capture.get("assessment_id"),
         "wall_ms": checked(wall_ms), "stages_ms": {
-            k: checked(stages.get(k)) for k in (*SPECIALISTS, "original_graph", "review")},
+            k: checked(stages.get(k)) for k in (*SPECIALISTS, "original_graph", "review",
+                "configuration_pricing", "credit_policy_routing")},
         "waits_ms": {k: checked(v) for k,v in waits.items()},
         "checkpoint_ms": checked(checkpoint_ms), "attempts": attempts,
         "orchestration_overhead_ms": None, "total_tokens": None,
@@ -198,7 +200,7 @@ class MeasuredIntervals:
     def measure(self, category: str, action: Callable, *, waiting=False,
                 clock=monotonic_ns):
         allowed = {"rate", "local_quota"} if waiting else set(SPECIALISTS) | {
-            "original_graph", "review"}
+            "original_graph", "review", "configuration_pricing", "credit_policy_routing"}
         target = self.waits if waiting else self.stages
         if category not in allowed or category in target or not callable(action):
             raise EvidenceMismatch("Measured span category or duplicate differs")
