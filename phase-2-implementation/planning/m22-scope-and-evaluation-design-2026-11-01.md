@@ -192,6 +192,8 @@ not an evaluation denominator or source of labels.
 
 **WP2 closure update (supersedes earlier open notes):** [Pre-execution scheduled-case registry, exact counts and offline failure audit](../evaluation/m22-wp2-capture-audit-2026-11-01.md#wp2-scheduled-registry-and-closure-review-offline) satisfy the WP2 offline acceptance gate. Manifest freeze and case preflight markers are prospective, not retroactive for earlier M2.1 campaigns. WP2 is closed **for offline engineering only**; provider reliability, full sequential latency and accepted-answer/baseline comparison await separately approved WP5 work. WP3 evidence-gap reporting is the next implementation package, without authorization to silently change source completeness or the Phase 1C pin.
 
+**WP3 implementation update (supersedes design-only proposal status):** [Versioned six-specialist evidence-gap audit](../evaluation/m22-wp3-evidence-gap-coverage-2026-11-01.md) adds an optional, read-only reviewer-package projection from the existing validated checkpoint and pinned fixed results. It separates verified narrow diagnostics, Credit/Policy/Routing interface limits and original-only AI suggestions, and isolates fixed-checked candidates. No historical checkpoint/schema, Phase 1C reader, business rule, source acceptance or reviewer approval authority changed. WP4 new evidence intake/reassessment remains separately gated and unimplemented; WP5 formal evaluation remains open.
+
 **Historical 1 November planning note (superseded by the WP1/WP2 updates above): Immediate next work package: WP1 offline test-coverage inventory**, not a new
 hosted run. This first document is the M2.2 scope/evaluation design; it is not
 WP1 implementation. M2.2 completion requires the original blueprint gate's

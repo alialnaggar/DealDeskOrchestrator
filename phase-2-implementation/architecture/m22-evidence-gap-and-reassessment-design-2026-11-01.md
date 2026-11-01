@@ -1,5 +1,7 @@
 # Proposed Week 4 extension: evidence gaps and reassessment
 
+**Implementation update (WP3 read-only boundary):** The [WP3 six-specialist source audit and contract](../evaluation/m22-wp3-evidence-gap-coverage-2026-11-01.md) implement a separate `m22-evidence-review-v1` projection over validated historical checkpoints; they do **not** persist new model-output fields, revise the pinned reader, or implement WP4. The original text below remains the design proposal and its dated WP2-open statements are historical; WP2 offline engineering subsequently closed. Suggestions are optional, anchored to an existing fixed gap and explicitly unverified. No new requirement is inferred from an empty selected pool.
+
 **1 November 2026; design only, no runtime or Phase 1C change.** Owner-approved *planning* extension to [M2.2](../planning/m22-scope-and-evaluation-design-2026-11-01.md). Typed signatures, write permissions, authoritative ingestion and delivery dates require a separate implementation review. The original [blueprint evaluation gate](../planning/master-implementation-blueprint.md#8-remaining-implementation-roadmap-and-gates) is **not replaced**. Current checkpoint/projection [audit](../evaluation/m22-wp2-capture-audit-2026-11-01.md) is read-only and WP2 is still open.
 
 ## A. Required Week 4 **design**: six bounded gap reports

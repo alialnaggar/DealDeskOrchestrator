@@ -379,6 +379,26 @@ class M21HostedGatePostgres(unittest.TestCase):
                     state = graph.get_state(config).values
                     from dealdesk_phase2.m22_capture import capture_m22
                     projected = capture_m22(state, self.adapter)
+                    from dealdesk_phase2.m22_evidence_gaps import project_gap_review
+                    gap_review = project_gap_review(state, self.adapter)
+                    self.assertEqual(gap_review["version"], "m22-evidence-review-v1")
+                    self.assertEqual(set(gap_review["original"]["specialists"]),
+                                     set(state["specialist_results"]))
+                    self.assertTrue(all("evidence_gaps" in gap_review["original"][
+                        "specialists"][name] for name in state["specialist_results"]))
+                    self.assertEqual(len(gap_review["candidates"]), int(binding))
+                    self.assertEqual(gap_review["original"]["deal_id"],
+                                     state["context"]["original_deal_id"])
+                    self.assertEqual(gap_review["original"]["specialists"]["credit"][
+                        "finding"], state["specialist_results"]["credit"]["finding"])
+                    self.assertEqual(gap_review["ai_gap_suggestions"], [])
+                    self.assertEqual(state["reviewer_package"]["version"],
+                                     gap_review["gap_review_base_version"])
+                    self.assertNotIn("evidence_gaps", state["reviewer_package"][
+                        "original"]["specialists"]["credit"])
+                    self.assertTrue(all("evidence_gaps" in gap_review["candidates"][0][
+                        "specialists"][name] for name in state["specialist_results"]) if binding
+                        else gap_review["candidates"] == [])
                     counted = reconcile_campaign(registry_root, self.adapter,
                         expected_manifest_sha256=registry_digest,
                         checkpoints={case_id: state}, receipt_root=root)
@@ -591,6 +611,7 @@ class M21HostedGatePostgres(unittest.TestCase):
                             "tool_access_ledger"):
                         self.assertEqual(resumed[field], state[field], msg=field)
                     self.assertEqual(capture_m22(resumed, self.adapter), projected)
+                    self.assertEqual(project_gap_review(resumed, self.adapter), gap_review)
                     self.assertEqual(reconcile_campaign(registry_root, self.adapter,
                         expected_manifest_sha256=registry_digest,
                         checkpoints={case_id: resumed}, receipt_root=root), counted)
