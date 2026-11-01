@@ -360,6 +360,16 @@ class M21HostedGatePostgres(unittest.TestCase):
                     state = graph.get_state(config).values
                     from dealdesk_phase2.m22_capture import capture_m22
                     projected = capture_m22(state, self.adapter)
+                    from dealdesk_phase2.m22_receipt_audit import reconcile_receipts
+                    reconciled = reconcile_receipts(state, self.adapter, allowed_root=root)
+                    self.assertEqual(reconciled["receipt_verification"],
+                                     "verified_bounded_receipts")
+                    self.assertEqual({r["family"] for r in reconciled[
+                        "receipt_bearing_attempts"]}, {"m20", "typed", "m21"})
+                    self.assertEqual(len(reconciled["receipt_bearing_attempts"]), 10)
+                    self.assertTrue(all(r["receipt"] == "returned" for r in reconciled[
+                        "receipt_bearing_attempts"]))
+                    self.assertIsNone(reconciled["provider_delivery_of_unreturned"])
                     self.assertEqual(projected["evaluation_status"], "completed")
                     self.assertEqual(set(projected["ai_original"]), set(state["specialist_results"]))
                     self.assertEqual(projected["candidate_id"] is not None, binding)
@@ -555,6 +565,41 @@ class M21HostedGatePostgres(unittest.TestCase):
                             "tool_access_ledger"):
                         self.assertEqual(resumed[field], state[field], msg=field)
                     self.assertEqual(capture_m22(resumed, self.adapter), projected)
+                    self.assertEqual(reconcile_receipts(resumed, self.adapter,
+                        allowed_root=root), reconciled)
+                    if binding and credit_variant is None:
+                        from copy import deepcopy
+                        altered = deepcopy(resumed)
+                        altered["m21_hosted_owner"]["manifest_sha256"] = "0" * 64
+                        with self.assertRaises(EvidenceMismatch):
+                            reconcile_receipts(altered, self.adapter, allowed_root=root)
+                        with self.assertRaises(EvidenceMismatch):
+                            reconcile_receipts(resumed, self.adapter,
+                                allowed_root=root / "typed-owner")
+                        record = resumed["m21_hosted_owner"]
+                        receipt = attempt_path(root / "owner", assessment_id=projected[
+                            "assessment_id"], start_digest=record["manifest_sha256"],
+                            stage="decision", ordinal=0)
+                        original_receipt = receipt.read_bytes()
+                        try:
+                            receipt.write_bytes(b"tampered\n")  # disposable test owner only
+                            with self.assertRaises(EvidenceMismatch):
+                                reconcile_receipts(resumed, self.adapter, allowed_root=root)
+                        finally:
+                            receipt.write_bytes(original_receipt)
+                        typed = resumed["typed_final_protocol"]
+                        typed_digest = sha256(_canonical(typed).encode()).hexdigest()
+                        typed_receipt = attempt_path(root / "typed-owner",
+                            assessment_id=projected["assessment_id"],
+                            start_digest=typed_digest, stage="typed_final", ordinal=0)
+                        typed_bytes = typed_receipt.read_bytes()
+                        try:
+                            typed_receipt.write_bytes(b"tampered\n")
+                            with self.assertRaises(EvidenceMismatch):
+                                reconcile_receipts(resumed, self.adapter,
+                                    allowed_root=root)
+                        finally:
+                            typed_receipt.write_bytes(typed_bytes)
         finally:
             with psycopg.connect(admin, autocommit=True) as db:
                 db.execute("DROP DATABASE " + name)
@@ -858,7 +903,8 @@ class M21HostedGatePostgres(unittest.TestCase):
 
     def test_provider_error_and_reserved_crash_terminal_after_restart(self):
         from dealdesk_phase2.checkpoint import thesis_checkpointer
-        for outcome in (ProviderError("http_400"), ProviderError("transport_timeout"),
+        for outcome in (ProviderError("http_400"), ProviderError("http_429"),
+                        ProviderError("transport_timeout"),
                         KeyboardInterrupt("offline crash")):
             with (self.subTest(outcome=type(outcome).__name__),
                   TemporaryDirectory() as directory,
@@ -898,6 +944,13 @@ class M21HostedGatePostgres(unittest.TestCase):
                     self.assertEqual(observed["receipt_verification"], "not_checked")
                     self.assertIsNone(observed["attempts"][-1]["tokens"])
                     self.assertIsNone(observed["attempts"][-1]["elapsed_ms"])
+                    from dealdesk_phase2.m22_receipt_audit import reconcile_receipts
+                    receipts = reconcile_receipts(graph.get_state(config).values,
+                        self.adapter, allowed_root=Path(directory))
+                    self.assertEqual(receipts["receipt_bearing_attempts"], [{
+                        "family": "m21", "specialist": "credit", "stage": "decision",
+                        "ordinal": 0, "receipt": "unreturned_or_uncertain"}])
+                    self.assertIsNone(receipts["provider_delivery_of_unreturned"])
 
     def test_completed_first_inspection_survives_restart_without_repeat_send(self):
         from dealdesk_phase2.checkpoint import thesis_checkpointer
