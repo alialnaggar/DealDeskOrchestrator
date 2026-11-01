@@ -229,6 +229,13 @@ def reconcile_campaign(root, adapter, *, expected_manifest_sha256,
              "no_send_stop" if status == "no_send_stopped" else
              "incomplete" if status == "attempted_incomplete" else None))
         rows.append({"case_id": case_id, "assessment_id": case["assessment_id"],
+            "original_deal_id": case["original_deal_id"],
+            "phase1c_run_id": case["phase1c_run_id"],
+            "bundle_sha256": case["bundle_sha256"],
+            "source_input_digest": case["source_input_digest"],
+            "as_of_at": case["as_of_at"],
+            "data_snapshot_ref": case["data_snapshot_ref"],
+            "contract_versions": case["contract_versions"],
             "cohort": case["cohort"], "preflight": record["status"] if record else None,
             "status": status, "failure_stage": failure_stage,
             "failure_category": failure_category,

@@ -251,8 +251,8 @@ class M21HostedGatePostgres(unittest.TestCase):
                             "thread_id"], run_id), config)
                     else:
                         graph, config, before, _ = self.original(saver, case_id)
-                    from dealdesk_phase2.m22_registry import (register_campaign,
-                        record_preflight, reconcile_campaign)
+                    from dealdesk_phase2.m22_enablement import OfflineCampaign
+                    from dealdesk_phase2.m22_registry import reconcile_campaign
                     from dealdesk_phase2.graph_state import pinned_from_state
                     context = pinned_from_state(before).context
                     registry_root = root / "campaign-registry"
@@ -267,9 +267,11 @@ class M21HostedGatePostgres(unittest.TestCase):
                         "data_snapshot_ref": context.data_snapshot_ref,
                         "contract_versions": {"capture": "m22-checkpoint-observation-v1",
                             "model": "offline_double", "prompt": "offline_six_stage"}}
-                    registry_digest = register_campaign(registry_root, campaign_id="WP2-" + case_id,
-                        phase2_sha="f" * 40, cases=[scheduled])
-                    record_preflight(registry_root, case_id=case_id, status="eligible")
+                    campaign = OfflineCampaign.freeze(registry_root,
+                        campaign_id="WP2-" + case_id, phase2_sha="f" * 40,
+                        cases=[scheduled], adapter=self.adapter)
+                    registry_digest = campaign.digest
+                    campaign.preflight(case_id, status="eligible")
                     if case_id == "N01":
                         from dealdesk_phase2.graph_state import pinned_from_state
                         from dealdesk_phase2.fulfillment_agent import eligible_line
@@ -364,9 +366,18 @@ class M21HostedGatePostgres(unittest.TestCase):
                             "dealdesk_phase2.live_models._post", side_effect=fake_post), patch(
                             "dealdesk_phase2.m21_groq_contract._post", side_effect=fake_post):
                         try:
-                            status = _six_campaign(graph, config, self.adapter,
-                                case_id=case_id, account_id="synthetic-test-account", root=root,
-                                key="gsk_offline_test_placeholder_123456789", run_id=run_id)
+                            def execute_offline():
+                                nonlocal status
+                                status = _six_campaign(graph, config, self.adapter,
+                                    case_id=case_id, account_id="synthetic-test-account", root=root,
+                                    key="gsk_offline_test_placeholder_123456789", run_id=run_id)
+                                return graph.get_state(config).values, False
+                            status = None
+                            campaign.execute_offline(case_id, observed_identity={
+                                k: scheduled[k] for k in ("assessment_id", "original_deal_id",
+                                    "phase1c_run_id", "source_input_digest", "bundle_sha256",
+                                    "as_of_at", "data_snapshot_ref", "contract_versions")},
+                                execute=execute_offline)
                         except EvidenceMismatch:
                             if not binding:
                                 raise
@@ -402,6 +413,9 @@ class M21HostedGatePostgres(unittest.TestCase):
                     counted = reconcile_campaign(registry_root, self.adapter,
                         expected_manifest_sha256=registry_digest,
                         checkpoints={case_id: state}, receipt_root=root)
+                    guarded = campaign.report(receipt_root=root)
+                    self.assertEqual(guarded["counts"], counted["counts"])
+                    self.assertIsInstance(guarded["wall_ms"][case_id], int)
                     self.assertEqual(counted["counts"]["completed"], 1)
                     self.assertEqual(counted["counts"]["scheduled"], 1)
                     self.assertEqual(counted["counts"]["provider_send_reservations"],
