@@ -358,6 +358,41 @@ class M21HostedGatePostgres(unittest.TestCase):
                                 "tool_count": len(snapshot.get("tool_access_ledger", [])),
                                 "visibility": model_visibility}))
                     state = graph.get_state(config).values
+                    from dealdesk_phase2.m22_capture import capture_m22
+                    projected = capture_m22(state, self.adapter)
+                    self.assertEqual(projected["evaluation_status"], "completed")
+                    self.assertEqual(set(projected["ai_original"]), set(state["specialist_results"]))
+                    self.assertEqual(projected["candidate_id"] is not None, binding)
+                    self.assertEqual(projected["fixed_candidate"] is not None, binding)
+                    self.assertEqual(projected["receipt_verification"], "not_checked")
+                    self.assertIsNone(projected["total_tokens"])
+                    self.assertIsNone(projected["total_latency_ms"])
+                    self.assertIsNone(projected["accuracy"])
+                    self.assertEqual(capture_m22(state, self.adapter,
+                        checkpoint_pending=True)["evaluation_status"], "stopped_or_incomplete")
+                    self.assertTrue(projected["request_count"] >= projected["returned_count"])
+                    self.assertTrue(all(row["tokens"] is None or set(row["tokens"]) == {
+                        "prompt_tokens", "completion_tokens"} for row in projected["attempts"]))
+                    from copy import deepcopy
+                    for change in (
+                            lambda x: x["context"].update(original_deal_id="wrong"),
+                            lambda x: x["reviewer_package"]["original"].update(
+                                review_status="approved"),
+                            lambda x: x["m21_ai_results"]["policy"]["validated_claims"][0].update(
+                                value="fabricated"),
+                            lambda x: x["m21_model_attempts"][0].update(
+                                subject_id="wrong"),
+                            lambda x: x["m21_model_attempts"].append({
+                                **x["m21_model_attempts"][0], "status": "returned"}),
+                            lambda x: x["m21_model_attempts"].append({
+                                **x["m21_model_attempts"][0], "status": "returned",
+                                "ordinal": 99}),
+                            lambda x: x["m21_model_attempts"].append({
+                                **x["m21_model_attempts"][0], "status": "reserved"})):
+                        forged = deepcopy(state)
+                        change(forged)
+                        with self.assertRaises((EvidenceMismatch, ValueError)):
+                            capture_m22(forged, self.adapter)
                     self.assertEqual(status, "six_stages_completed", msg={
                         "fulfillment": {k: state.get("ai_fulfillment_result", {}).get(k)
                             for k in ("execution", "error")}, "calls": len(calls),
@@ -519,6 +554,7 @@ class M21HostedGatePostgres(unittest.TestCase):
                             "m21_model_attempts", "m21_review", "reviewer_package",
                             "tool_access_ledger"):
                         self.assertEqual(resumed[field], state[field], msg=field)
+                    self.assertEqual(capture_m22(resumed, self.adapter), projected)
         finally:
             with psycopg.connect(admin, autocommit=True) as db:
                 db.execute("DROP DATABASE " + name)
@@ -849,7 +885,19 @@ class M21HostedGatePostgres(unittest.TestCase):
                         self.gated(graph, config, data, Path(directory))
                     self.assertEqual(calls, [1])
                     self.assertEqual(graph.get_state(config).values["specialist_results"],
-                                     before["specialist_results"])
+                                      before["specialist_results"])
+                    from dealdesk_phase2.m22_capture import capture_m22
+                    observed = capture_m22(graph.get_state(config).values, self.adapter)
+                    self.assertEqual(observed["evaluation_status"], "stopped_or_incomplete")
+                    self.assertEqual(observed["ai_original"]["credit"]["execution"],
+                                     "error")
+                    self.assertEqual(observed["ai_original"]["credit"][
+                        "validated_claims"], [])
+                    self.assertEqual(observed["request_count"], 1)
+                    self.assertEqual(observed["returned_count"], 0)
+                    self.assertEqual(observed["receipt_verification"], "not_checked")
+                    self.assertIsNone(observed["attempts"][-1]["tokens"])
+                    self.assertIsNone(observed["attempts"][-1]["elapsed_ms"])
 
     def test_completed_first_inspection_survives_restart_without_repeat_send(self):
         from dealdesk_phase2.checkpoint import thesis_checkpointer
