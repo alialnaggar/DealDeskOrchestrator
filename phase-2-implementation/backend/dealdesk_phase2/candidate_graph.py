@@ -72,6 +72,41 @@ def _update(state, record, event):
 
 
 def _package(state, record=None):
+    # A typed Pricing final may precede Fulfillment. Preserve its checked
+    # original-only projection when building either reviewer package shape.
+    prior = state.get("reviewer_package") or {}
+    typed_review = prior.get("typed_final_ai")
+    typed = {}
+    if typed_review is not None:
+        pricing = state.get("typed_final_results", {}).get("pricing")
+        if (not isinstance(typed_review, dict) or not isinstance(pricing, dict)
+                or typed_review.get("assessment_id") != state.get("assessment_id")
+                or typed_review.get("subject_id") != state.get("context", {}).get(
+                    "original_deal_id") or typed_review.get("specialist") != "pricing"
+                or typed_review.get("execution") != pricing.get("execution")
+                or typed_review.get("reason") != pricing.get("reason")
+                or typed_review.get("validated_claims") != pricing.get("validated_claims")
+                or typed_review.get("source_input_digest") != state.get(
+                    "context", {}).get("source_input_digest")):
+            raise EvidenceMismatch("Typed Pricing reviewer projection differs")
+        typed["typed_final_ai"] = typed_review
+        configuration = state.get("m20_ai_results", {}).get("configuration")
+        if configuration is not None:
+            if (not isinstance(configuration, dict)
+                    or configuration.get("specialist") != "configuration"
+                    or configuration.get("producer_type") != "AI"
+                    or configuration.get("assessment_id") != state.get("assessment_id")
+                    or configuration.get("subject_id") != state.get("context", {}).get(
+                        "original_deal_id")
+                    or configuration.get("bundle_sha256") != state.get(
+                        "context", {}).get("bundle_sha256")
+                    or configuration.get("source_input_digest") != state.get(
+                        "context", {}).get("source_input_digest")
+                    or configuration.get("execution") not in (
+                        "completed", "abstained", "error")):
+                raise EvidenceMismatch("Configuration reviewer projection differs")
+            typed["configuration_ai"] = {key: configuration[key] for key in (
+                "execution", "reason", "validated_claims")}
     original = {"deal_id": state.get("context", {}).get("original_deal_id"),
         "run_id": state.get("phase1c_run_id"), "review_status": state.get("review_status"),
         "specialists": {k: {"execution": v["execution"], "finding": v["finding"]}
@@ -151,7 +186,7 @@ def _package(state, record=None):
                                       if contribution.get("schema_version") == "2" else []),
         "audit_rejection_count": len(state.get("ai_claim_audit", [])) + len(rejected),
         **({"hybrid_audit": hybrid_audit} if hybrid else {}),
-        "fulfillment_correction": correction_summary,
+        "fulfillment_correction": correction_summary, **typed,
         "reviewer_action": "Human review required; no approval, reservation or delivery promise"}
 
 

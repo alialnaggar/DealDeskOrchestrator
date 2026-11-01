@@ -364,6 +364,62 @@ class M21HostedGatePostgres(unittest.TestCase):
                         "attempts": [(r.get("status"), r.get("error_code")) for r in
                             state.get("model_attempt_ledger", [])]})
                     self.assertEqual(state["specialist_results"], before["specialist_results"])
+                    from dealdesk_phase2.graph_state import SPECIALISTS, validate_result
+                    self.assertEqual(set(state["specialist_results"]), set(SPECIALISTS))
+                    for domain in SPECIALISTS:
+                        validate_result(state["specialist_results"][domain], state, domain)
+                    original_id = state["context"]["original_deal_id"]
+                    package = state["reviewer_package"]
+                    self.assertEqual(package["original"]["deal_id"], original_id)
+                    self.assertEqual(package["original"]["review_status"],
+                        state["review_status"])
+                    self.assertEqual(package["original"]["specialists"], {name: {
+                        "execution": row["execution"], "finding": row["finding"]}
+                        for name, row in state["specialist_results"].items()})
+                    self.assertEqual(package["m21_ai"], state["m21_review"])
+                    self.assertEqual(package["m21_ai"]["fixed_review_status"],
+                        state["review_status"])
+                    self.assertEqual(package["m21_ai"]["fixed_route_withheld"],
+                        state["specialist_results"]["approval_routing"]["payload"][
+                            "route_withheld"])
+                    self.assertEqual(package["m21_ai"]["subject_id"], original_id)
+                    self.assertEqual(package["configuration_ai"], {key: state[
+                        "m20_ai_results"]["configuration"][key] for key in (
+                        "execution", "reason", "validated_claims")})
+                    self.assertEqual(package["reviewer_action"],
+                        "Human review required; no approval, reservation or delivery promise")
+                    ai = {"configuration": state["m20_ai_results"]["configuration"],
+                        "pricing": state["typed_final_results"]["pricing"],
+                        **state["m21_ai_results"]}
+                    self.assertEqual(set(ai) | {"fulfillment"}, set(SPECIALISTS))
+                    for domain, result in ai.items():
+                        with self.subTest(case=case_id, variant=credit_variant,
+                                binding=binding, specialist=domain):
+                            if domain != "pricing":
+                                self.assertEqual(result["subject_id"], original_id)
+                            else:
+                                self.assertEqual(package["typed_final_ai"]["subject_id"],
+                                    original_id)
+                                self.assertEqual(package["typed_final_ai"][
+                                    "validated_claims"], result["validated_claims"])
+                            self.assertEqual(result["execution"], "abstained" if
+                                domain == "credit" and credit_variant == "UC02" else
+                                "completed")
+                            records = {row["ref"]: row["fields"] for event in state[
+                                "tool_access_ledger"] if event["status"] == "completed"
+                                and event["identity"]["specialist"] == domain
+                                for row in event["result"].get("records", []) if
+                                "ref" in row and row["ref"] in event["returned_refs"]}
+                            for claim in result["validated_claims"]:
+                                self.assertIn(claim["ref"], records)
+                                self.assertIn(claim["field"], records[claim["ref"]])
+                                value = records[claim["ref"]][claim["field"]]
+                                self.assertIs(type(claim["value"]), type(value))
+                                self.assertEqual(claim["value"], value)
+                    self.assertEqual(package["m21_ai"]["specialists"], {name: {
+                        "execution": result["execution"], "reason": result["reason"],
+                        "validated_claims": result["validated_claims"]}
+                        for name, result in state["m21_ai_results"].items()})
                     self.assertEqual(state["candidate_status"],
                         "fixed_checked" if binding else "not_started")
                     if case_id == "N01":
@@ -428,31 +484,41 @@ class M21HostedGatePostgres(unittest.TestCase):
                             "routing"]["eligible_for_ordinary_routing"] = True
                         with self.assertRaises(EvidenceMismatch):
                             checked_candidate_context(forged)
+                        forged = deepcopy(state)
+                        forged["reviewer_package"]["typed_final_ai"]["subject_id"] = (
+                            candidate["candidate_id"])
+                        with self.assertRaises(EvidenceMismatch):
+                            checked_candidate_context(forged)
+                        forged = deepcopy(state)
+                        forged["reviewer_package"]["configuration_ai"][
+                            "validated_claims"] = []
+                        with self.assertRaises(EvidenceMismatch):
+                            checked_candidate_context(forged)
                         from dealdesk_phase2.m21_specialists import _validate_m21_start
                         with self.assertRaises(EvidenceMismatch):
                             _validate_m21_start(graph, config, self.adapter)
                         self.assertEqual(state["reviewer_package"]["candidates"][0][
                             "customer_acceptance"], "pending")
                     self.assertEqual(len(calls), 12)
-                if binding:
-                    approved_manifest = json.loads((root / "m21-manifest.json").read_text())
-                    with thesis_checkpointer(dedicated) as saver:
-                        restarted = build_original_graph(self.adapter, self.connect, saver)
-                        with patch.dict(os.environ, {"DEALDESK_GROQ_DEV_ENABLE": "1",
-                                "GROQ_SECONDARY_API_KEY": "gsk_offline_test_placeholder_123456789"}), patch(
-                                "dealdesk_phase2.m21_groq_contract._post",
-                                side_effect=AssertionError("terminal assessment replayed")) as sender:
-                            resumed = run_m21_evaluation(restarted, config, self.adapter,
-                                models(), manifest=approved_manifest,
-                                approved_manifest_sha256=digest(approved_manifest),
-                                authorized=True, owner_dir=root / "owner",
-                                free_tier_billing_disabled=True,
-                                development_selection=tuple(TOOLS))
-                        sender.assert_not_called()
-                        self.assertEqual(resumed["candidate_records"],
-                                         state["candidate_records"])
-                        self.assertEqual(resumed["m21_model_attempts"],
-                                         state["m21_model_attempts"])
+                approved_manifest = json.loads((root / "m21-manifest.json").read_text())
+                with thesis_checkpointer(dedicated) as saver:
+                    restarted = build_original_graph(self.adapter, self.connect, saver)
+                    with patch.dict(os.environ, {"DEALDESK_GROQ_DEV_ENABLE": "1",
+                            "GROQ_SECONDARY_API_KEY": "gsk_offline_test_placeholder_123456789"}), patch(
+                            "dealdesk_phase2.m21_groq_contract._post",
+                            side_effect=AssertionError("terminal assessment replayed")) as sender:
+                        resumed = run_m21_evaluation(restarted, config, self.adapter,
+                            models(), manifest=approved_manifest,
+                            approved_manifest_sha256=digest(approved_manifest),
+                            authorized=True, owner_dir=root / "owner",
+                            free_tier_billing_disabled=True,
+                            development_selection=tuple(TOOLS))
+                    sender.assert_not_called()
+                    for field in ("candidate_records", "specialist_results",
+                            "m20_ai_results", "typed_final_results", "m21_ai_results",
+                            "m21_model_attempts", "m21_review", "reviewer_package",
+                            "tool_access_ledger"):
+                        self.assertEqual(resumed[field], state[field], msg=field)
         finally:
             with psycopg.connect(admin, autocommit=True) as db:
                 db.execute("DROP DATABASE " + name)

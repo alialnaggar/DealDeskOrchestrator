@@ -538,6 +538,8 @@ def checked_candidate_context(state):
             package.get("bundle_sha256") != pinned.context.bundle_sha256 or
             package.get("original") != expected_package["original"] or
             package.get("candidates") != expected_package["candidates"] or
+            package.get("typed_final_ai") != expected_package.get("typed_final_ai") or
+            package.get("configuration_ai") != expected_package.get("configuration_ai") or
             package.get("candidate_workflow_status") != "fixed_checked" or
             type(package.get("candidates")) is not list or
             len(package["candidates"]) != 1 or

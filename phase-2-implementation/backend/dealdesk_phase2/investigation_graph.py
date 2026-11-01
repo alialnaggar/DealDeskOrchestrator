@@ -434,9 +434,13 @@ def run_original_investigate_and_review(original_graph, config: dict, adapter: P
     state = original_graph.get_state(config).values
     if (state.get("assessment_id") != assessment_id or state.get("phase1c_run_id") != str(run_id)):
         raise EvidenceMismatch("Reviewer handoff restart identity differs")
-    if not state.get("reviewer_package") and not original_graph.get_state(config).next:
+    if (state.get("candidate_status") == "not_started" and
+            not original_graph.get_state(config).next and
+            "original" not in (state.get("reviewer_package") or {})):
         from .candidate_graph import original_only_package
-
+        prior = state.get("reviewer_package") or {}
+        if set(prior) - {"typed_final_ai"}:
+            raise EvidenceMismatch("Original reviewer package has unexpected partial fields")
         original_graph.update_state(config, {"reviewer_package": original_only_package(state)},
                                     as_node="finish")
         state = original_graph.get_state(config).values
