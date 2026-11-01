@@ -251,6 +251,25 @@ class M21HostedGatePostgres(unittest.TestCase):
                             "thread_id"], run_id), config)
                     else:
                         graph, config, before, _ = self.original(saver, case_id)
+                    from dealdesk_phase2.m22_registry import (register_campaign,
+                        record_preflight, reconcile_campaign)
+                    from dealdesk_phase2.graph_state import pinned_from_state
+                    context = pinned_from_state(before).context
+                    registry_root = root / "campaign-registry"
+                    registry_root.mkdir(mode=0o700)
+                    scheduled = {"case_id": case_id, "assessment_id": context.assessment_id,
+                        "original_deal_id": context.original_deal_id,
+                        "phase1c_run_id": str(context.phase1c_run_id),
+                        "cohort": "fault_injection", "case_family": "six_stage_offline",
+                        "source_input_digest": context.source_input_digest,
+                        "bundle_sha256": context.bundle_sha256,
+                        "as_of_at": context.as_of_at.isoformat(),
+                        "data_snapshot_ref": context.data_snapshot_ref,
+                        "contract_versions": {"capture": "m22-checkpoint-observation-v1",
+                            "model": "offline_double", "prompt": "offline_six_stage"}}
+                    registry_digest = register_campaign(registry_root, campaign_id="WP2-" + case_id,
+                        phase2_sha="f" * 40, cases=[scheduled])
+                    record_preflight(registry_root, case_id=case_id, status="eligible")
                     if case_id == "N01":
                         from dealdesk_phase2.graph_state import pinned_from_state
                         from dealdesk_phase2.fulfillment_agent import eligible_line
@@ -360,6 +379,13 @@ class M21HostedGatePostgres(unittest.TestCase):
                     state = graph.get_state(config).values
                     from dealdesk_phase2.m22_capture import capture_m22
                     projected = capture_m22(state, self.adapter)
+                    counted = reconcile_campaign(registry_root, self.adapter,
+                        expected_manifest_sha256=registry_digest,
+                        checkpoints={case_id: state}, receipt_root=root)
+                    self.assertEqual(counted["counts"]["completed"], 1)
+                    self.assertEqual(counted["counts"]["scheduled"], 1)
+                    self.assertEqual(counted["counts"]["provider_send_reservations"],
+                        projected["request_count"])
                     from dealdesk_phase2.m22_receipt_audit import reconcile_receipts
                     reconciled = reconcile_receipts(state, self.adapter, allowed_root=root)
                     self.assertEqual(reconciled["receipt_verification"],
@@ -565,6 +591,9 @@ class M21HostedGatePostgres(unittest.TestCase):
                             "tool_access_ledger"):
                         self.assertEqual(resumed[field], state[field], msg=field)
                     self.assertEqual(capture_m22(resumed, self.adapter), projected)
+                    self.assertEqual(reconcile_campaign(registry_root, self.adapter,
+                        expected_manifest_sha256=registry_digest,
+                        checkpoints={case_id: resumed}, receipt_root=root), counted)
                     self.assertEqual(reconcile_receipts(resumed, self.adapter,
                         allowed_root=root), reconciled)
                     if binding and credit_variant is None:
