@@ -3,6 +3,7 @@
 | Folder or file | Purpose |
 |---|---|
 | [`review/`](review/) | Current formatted Report 1 literature review draft. |
+| [`review/Chapter-3-Synthetic-Data-Methodology-Draft.md`](review/Chapter-3-Synthetic-Data-Methodology-Draft.md) | Working synthetic-data methodology chapter, with evidence-freshness explanation and eight proposed diagrams; not yet merged into the formatted Report 1 DOCX. |
 | [`research-record/Literature-Search-Study-Selection-and-Research-Gap.md`](research-record/Literature-Search-Study-Selection-and-Research-Gap.md) | Search approach, selection decisions, gap, research questions, and history. |
 | [`research-record/Multi-Agent-Orchestration-Paper-Analysis.md`](research-record/Multi-Agent-Orchestration-Paper-Analysis.md) | Detailed extraction of five orchestration studies. |
 | [`research-record/Business-Process-Governance-and-Evaluation-Study-Notes.md`](research-record/Business-Process-Governance-and-Evaluation-Study-Notes.md) | Business process, governance, domain, and evaluation extraction and synthesis. |
