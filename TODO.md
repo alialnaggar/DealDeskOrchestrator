@@ -8,10 +8,10 @@ This is the **single front-door checklist** for remaining thesis work. It comple
 
 ## Current verified baseline
 
-- Phase 1A literature review: formatted Report 1 DOCX exists at [Phase 1A review](phase-1a-literature-review/review/Deal-Desk-Orchestrator-Literature-Review-Report-1.docx); final thesis integration and reference audit are pending.
+- Phase 1A literature review: formatted Report 1 DOCX exists at [Phase 1A review](phase-1a-literature-review/review/Deal-Desk-Orchestrator-Literature-Review-Report-1.docx); combined three-chapter working DOCX generated locally, but not yet published to GitHub; reference audit remains pending.
 - Phase 1C: 24-table schema, generated masters/history, reference fixtures, 100 diagnostic submissions, 36-deal development pilot, and 36 provisional held-out **inputs** exist; **0/36 independently accepted answers** at last verified checkpoint. Formal Phase 1C release is pending.
 - Phase 2: M2.1 conditional engineering closure; substantial M2.2 offline integration, but **original M2.2 evaluation exit OPEN**. No measured final AI accuracy/superiority claim.
-- Writing: [Chapter 3 synthetic-data methodology draft](phase-1a-literature-review/review/Chapter-3-Synthetic-Data-Methodology-Draft.md) created 4 November. It is **not yet integrated into the formatted Report 1 DOCX**.
+- Writing: [Chapter 3 synthetic-data methodology draft](phase-1a-literature-review/review/Chapter-3-Synthetic-Data-Methodology-Draft.md) created 4 November and integrated into a locally generated combined DOCX. **The combined binary file has not been committed to GitHub**; diagrams and final thesis checks remain pending.
 - The [approved M3–M9 roadmap](roadmaps/phase2-m3-m9-roadmap.md) is maintained separately from this checklist.
 
 ## Current cross-phase triggers
@@ -45,16 +45,16 @@ This is the **single front-door checklist** for remaining thesis work. It comple
 
 - [x] Explain evidence freshness correctly: observations can be stale; technology products do not expire because of an observation rule.
 - [x] Separate 14 reference fixtures, 400 historical submissions, 100 diagnostics, 36 connected development-pilot deals and 36 held-out evaluation cases.
-- [ ] Audit exact counts, source schedules, configuration seeds, generated manifests and table relationships against the final Phase 1C release.
+- [ ] **Trigger: Phase 1C release candidate available.** Audit exact counts, source schedules, configuration seeds, generated manifests and table relationships against the final release.
 - [ ] Explain calibration/provenance and which values are fictional assumptions rather than real enterprise facts.
 - [ ] Include source-first independent answer review protocol; update only with genuinely accepted cases.
 - [ ] Insert figures and explanatory paragraphs; verify figure labels, source citations and consistency with actual schema.
-- [ ] Update provisional status and limitations after the Phase 1C release audit.
+- [ ] **Trigger: Phase 1C release audit completed.** Update provisional status and limitations using actual release evidence.
 
 ### D. Architecture and implementation chapters — P1
 
-- [ ] Write architecture chapter: six specialists, LangGraph orchestrator, immutable original, pinned reader, evidence boundary, deterministic verifier, candidate, human routing.
-- [ ] Write implementation chapter: interfaces, state/checkpointing, tools/permissions, provider abstraction, budgets, replay prevention, typed finals, audit, error handling.
+- [ ] **Trigger: architecture and scope frozen.** Write architecture chapter: six specialists, LangGraph orchestrator, immutable original, pinned reader, evidence boundary, deterministic verifier, candidate, human routing.
+- [ ] **Trigger: core implementation and regression evidence available.** Write implementation chapter: interfaces, state/checkpointing, tools/permissions, provider abstraction, budgets, replay prevention, typed finals, audit, error handling.
 - [ ] Distinguish target design from implemented functionality and from deferred features; tie assertions to tests/commits.
 - [ ] Provide one end-to-end worked example and explain its evidence and final review package.
 - [ ] Explain ethical/governance constraints, privacy and why AI cannot approve/waive/commit.
@@ -63,10 +63,10 @@ This is the **single front-door checklist** for remaining thesis work. It comple
 ### E. Experiment, results, discussion — P0/P1
 
 - [ ] Write prospective evaluation protocol before hosted execution: case eligibility, source pin, prompt/model versions, baseline, denominators, scoring, statistical limitations.
-- [ ] After independent authorization and actual execution, report specialist and end-to-end correctness, supported claims, abstentions, reliability, time, tokens and costs.
+- [ ] **Trigger: independently authorized hosted evaluation completed and scored.** Report specialist and end-to-end correctness, supported claims, abstentions, reliability, time, tokens and costs.
 - [ ] Analyze failures and negative results without overstating performance.
 - [ ] Write discussion, threats to validity, ethics, future work and conclusion grounded in measurements.
-- [ ] Prepare abstract and executive summary **after** results are established.
+- [ ] **Trigger: results and discussion finalized.** Prepare abstract and executive summary.
 
 ### F. Figures, tables and visual evidence — P1
 
@@ -81,6 +81,16 @@ This is the **single front-door checklist** for remaining thesis work. It comple
 - [ ] Architecture: LangGraph state/sequence diagram, six-specialist dependencies, tool/evidence permission boundary, checkpoint and uncertain-send failure path.
 - [ ] Evaluation: study flow, outcome/error taxonomy, paired baseline comparison and actual results charts (only after scoring).
 - [ ] Add captions, cross-references, legends, accessible labels and an explanation immediately after each substantive figure; avoid decorative or redundant graphics.
+
+## Final thesis submission and defense — P0/P1
+
+- [ ] **Trigger: all substantive chapters drafted.** Assemble the complete thesis, appendices, table of contents, figure/table lists, glossary if needed, and reproducibility references.
+- [ ] **Trigger: diagrams and results finalized.** Check every cross-reference, caption, figure numbering, table numbering and claim against its source or measured evidence.
+- [ ] **Trigger: complete draft ready.** Obtain supervisor review and resolve feedback with a documented revision log.
+- [ ] **Trigger: supervisor feedback resolved.** Perform citation/bibliography audit, formatting, proofreading, pagination and DOCX/PDF export inspection.
+- [ ] **Before official submission deadline.** Verify university submission requirements and submit the final artifact; retain submission confirmation.
+- [ ] **Trigger: evaluation/demo release candidate stable.** Prepare defense slides, demonstration script, screenshots/video fallback and likely examiner questions.
+- [ ] **Before defense.** Rehearse presentation timing and technical questions; verify demo environment and offline backup.
 
 ## Roadmaps (separate dated plans)
 
