@@ -27,8 +27,8 @@ This is the **single front-door checklist** for remaining thesis work. It comple
 ### A. Source document and integration — P1
 
 - [x] Draft Chapter 3 synthetic-data methodology as a source-grounded Markdown working chapter.
-- [ ] **Integrate Chapter 3 into the existing formatted Report 1 DOCX**, preserving heading styles, title/front matter, page numbers, citation format and existing LR text. **Trigger:** original DOCX available as an attachment (received); create and verify combined artifact, then publish to GitHub if supported.
-- [ ] Save the combined Word file as **Updated Thesis with Data Methodology.docx** under `phase-1a-literature-review/review/` (or an approved final thesis location) after genuine integration; retain the original.
+- [x] **Integrate Chapter 3 into the uploaded formatted Report 1 DOCX** and render-check a local combined working file (4 November 2026). The generated DOCX is available as a conversation artifact, **not yet committed to GitHub**. Figure specifications are placeholders, not inserted diagrams.
+- [ ] **Publish the verified combined Word file** as `Updated Thesis with Data Methodology.docx` under `phase-1a-literature-review/review/` on `main` using a binary-capable upload method; retain the original.
 - [ ] Confirm thesis chapter numbering against the actual Report 1 headings before finalizing Chapter 3 numbering.
 - [ ] Verify university thesis formatting/submission requirements and supervisor expectations; do not assume Report 1 format alone is final-thesis compliant.
 - [ ] Update document revision history and source commit used for each chapter.
