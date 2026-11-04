@@ -2,6 +2,76 @@
 
 This private repository is the active source of truth for the thesis. The project is organized into [Phase 1A: literature review](phase-1a-literature-review/README.md), [Phase 1B: agent architecture](phase-1b-agent-architecture/README.md), and [Phase 1C: synthetic data and implementation](phase-1c-data/README.md). New work belongs here; `alialnaggar/dealdeskdata` is a historical portfolio copy.
 
+## Approved roadmap to thesis completion — 4 November 2026
+
+**Status: APPROVED by project owner on 4 November 2026.** This is the active planning direction through the **5 January 2027 thesis submission** and January defense. Dates are targets, not completed results or unconditional commitments. The existing Phase 1A/1B/1C records, Phase 2 technical roadmap, master blueprint, decision log and dated evaluation reports remain the evidence of what was actually implemented. This roadmap does not authorize hosted model calls, source changes or business approvals.
+
+**Current baseline:** Six fixed-result projections and six bounded AI specialist stages have been demonstrated in offline integration; original/candidate separation, evidence checking, restart and reviewer controls have tested coverage. M2.1 has conditional implementation closure; M2.2 original evaluation exit is OPEN. Phase 1C held-out reference answers were 0/36 independently accepted at the last verified review. Prospective hosted campaign authorization, full semantic scoring, model upgrade and the one-correction-turn enhancement are not complete. Do not infer accuracy or provider reliability from passing offline tests.
+
+### Milestones and target dates
+
+| Milestone | Target window | Required deliverable / exit gate |
+| --- | --- | --- |
+| **M3 — Data and evaluation readiness** | 4–15 Nov | Independently accepted source-first 36-case answers; resolved disagreements and provenance; compatible Phase 1C pin decision; prospective runner, denominators, timing and matched baseline/scorer offline-tested. |
+| **M4 — Core engineering closure** | 9–18 Nov | At most one separately checkpointed correction request for eligible fully returned invalid finals; no retry of uncertain sends; negative tests, complete six-specialist regression, reliability-risk disposition. |
+| **M5 — Enhancement review and scope freeze** | 16–22 Nov | Cross-specialist enhancement inventory; rank by research value, business value, cost, safety and measurability; approve implement/defer/reject decisions; freeze functionality by **22 Nov**. |
+| **M6 — Paid OpenAI API model integration** | 20–29 Nov | Select exact model; provider adapter and six-specialist development compatibility; prompt/model/version, usage, cost and safety budgets; independently authorized hosted pilot and configuration freeze. |
+| **M7 — Formal evaluation** | 30 Nov–12 Dec | Predeclared prospective, independently authorized experiment with frozen held-out cohort; accepted-answer scoring, paired same-source supported deterministic baseline, safety/abstention/reliability/latency/cost reporting and limitations. |
+| **M8 — Final system and demonstration** | 8–18 Dec | Stable release candidate, reproducible reviewer demonstration, operator/setup guide, final fresh regression, tagged evaluated code and explicit known limitations. |
+| **M9 — Thesis submission and defense** | Parallel now–5 Jan; defense Jan | Literature/methodology/architecture/results chapters, diagrams, references, threats to validity, supervisor review, revisions, submission by **5 Jan 2027**, and defense preparation. |
+
+### Acceptance checklist by milestone
+
+**M3 — Phase 1C and evaluation prerequisites**
+- [ ] Independently review, resolve and accept the 36 source-first held-out answers; keep answer keys inaccessible to agents.
+- [ ] Audit any accepted Phase 1C release against the currently pinned reader; explicitly approve any pin change. Do not silently adopt Credit v3 or controls 040/041.
+- [ ] Finish prospective campaign membership/preflight/start and receipt reconciliation integration; retain preflight/no-send and uncertain-send denominators.
+- [ ] Finish missing-aware timing and usage capture, independent semantic scoring protocol and matched deterministic baseline eligibility.
+
+**M4 — Governed core engineering**
+- [ ] Implement **one maximum correction turn** only after a fully returned, safely correctable deterministic final-output validation rejection; sanitized reason, same authorized evidence, new identity/receipt/budget, unchanged fixed authority.
+- [ ] No correction on timeout, HTTP/transport failure, reserved-only/uncertain send, source/subject mismatch, permissions or budget stop. Revalidate once; terminate on second rejection.
+- [ ] Test invalid→valid, invalid→invalid, restart, tampering, cross-subject claims, budget stop and no-replay.
+- [ ] Review historical Configuration validation, Fulfillment HTTP 400, HTTP 429 and quota risks; do not replay old attempts. Run fresh six-specialist regression and record unresolved limitations.
+
+**M5 — Enhancement review and scope freeze**
+- [ ] Review Configuration, Pricing, Fulfillment, Credit, Policy, Routing, orchestration, evidence gaps and reviewer usability.
+- [ ] Classify ideas as **implement now**, **defer to future work**, or **reject**; document owner decision, implementation effort, safety impact and measurable research contribution.
+- [ ] Consider candidate search, cross-agent coordination, selective reassessment and reviewer explanations only if feasible and governed; WP4 source-writing/V2 remains independently security/source-owner gated.
+- [ ] Freeze feature scope by 22 November; late changes require change control and evaluation impact review.
+
+**M6 — Final model integration**
+- [ ] Choose paid OpenAI API model and configure an adapter without modifying deterministic business decisions, evidence scope or human authority.
+- [ ] Test six specialist tool/typed-final/abstention/error paths on **development** cases, not held-out answer keys.
+- [ ] Freeze model/prompt/contract versions and request/token/cost/time ceilings.
+- [ ] Review independently trusted campaign authorization, full six-stage manifests and pre-send enforcement; no hosted inference until separately authorized. Historical Groq receipts cannot be enrolled retroactively.
+
+**M7 — Formal evaluation**
+- [ ] Freeze prospective case/cohort/eligibility, source pin, model/prompts, correction policy, scorer and baseline **before** execution.
+- [ ] Report specialist and end-to-end correctness against independently accepted answers; distinguish label agreement from semantic accuracy.
+- [ ] Measure raw and surviving unsupported claims, abstention appropriateness, provider failures/uncertain sends, completion denominators, elapsed time, usage and cost with missing data explicit.
+- [ ] Compare only supported, same-case/same-source deterministic baseline capabilities; no invented baseline superiority. Report negative outcomes and threats to validity.
+- [ ] Aim to finish formal evaluation by **12 December**; if external dependencies slip, cut optional features rather than weaken evidence standards.
+
+**M8 — Release and demonstration**
+- [ ] Show original six-specialist assessment, pinned citations, gaps/abstentions, candidate six-fixed recheck, human-only route and safe failure.
+- [ ] Demonstrate checkpoint recovery and audit trail without replaying uncertain requests.
+- [ ] Complete reproducible setup, operator guide, fresh regression, release tag and known-limitations statement.
+- [ ] A polished enterprise UI or live ERP deployment is **not** a default thesis exit requirement; approve any added UI scope explicitly.
+
+**M9 — Writing and submission**
+- [ ] Draft methodology and architecture while engineering continues; write results only from measured evaluation.
+- [ ] Finish literature synthesis, design rationale, implementation, experiment, results, limitations, ethics and future work.
+- [ ] Complete diagrams, references, supervisor review, final revisions, submission and defense preparation.
+
+### Critical path, freezes and change control
+
+**Critical path:** accepted Phase 1C answers + compatible pin → trusted prospective evaluation readiness and authorization → upgraded-model development pilot → frozen formal evaluation → analyzed thesis results. M3 and M4 can overlap; thesis writing and demonstration preparation run in parallel. External supervisor/security/source-owner approvals must be obtained from the actual authorized people; this roadmap does not grant them.
+
+**Planned freezes:** functional scope by **22 Nov**; model/prompt/source/cohort/evaluation protocol immediately before formal hosted evaluation; evaluated code before final results. If a freeze changes, log the change, affected experiments and necessary reruns.
+
+**Progress reporting:** For each milestone record owner, status (not started / in progress / blocked / verified complete), blockers, last verified commit, tests and evidence links, next action and decision date. Do not mark a gate complete from design documentation alone. Preserve the historical [Phase 2 implementation roadmap](phase-2-implementation/planning/implementation-roadmap.md), [master blueprint](phase-2-implementation/planning/master-implementation-blueprint.md), [M2.2 WP5 audit](phase-2-implementation/evaluation/m22-wp5-evaluation-readiness-and-exit-gate-2026-11-01.md), and [hosted readiness gate](phase-2-implementation/evaluation/m22-hosted-readiness-gate-2026-11-01.md).
+
 # System functionality report
 
 *Design and implementation status checked 11 October 2026.* This report synthesizes the [Phase 1B specification](phase-1b-agent-architecture/agent-architecture-and-deal-flow.md) and [Phase 1C data strategy](phase-1c-data/design/data-strategy.md). **Target design and implemented functionality are different:** see the [Phase 1C release review](phase-1c-data/implementation/phase1c_release_review.md) for dated technical status.
