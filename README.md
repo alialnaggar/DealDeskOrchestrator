@@ -2,6 +2,14 @@
 
 This private repository is the active source of truth for the thesis. The project is organized into [Phase 1A: literature review](phase-1a-literature-review/README.md), [Phase 1B: agent architecture](phase-1b-agent-architecture/README.md), and [Phase 1C: synthetic data and implementation](phase-1c-data/README.md). New work belongs here; `alialnaggar/dealdeskdata` is a historical portfolio copy.
 
+## Project tracking and roadmaps
+
+- **[Thesis To-Do List](TODO.md)** — cross-phase tasks, writing, figures, references, reviews and dependency triggers; not a dated implementation schedule.
+- **[Phase 2 M3–M9 Roadmap](roadmaps/phase2-m3-m9-roadmap.md)** — dated implementation, model integration, formal evaluation and release milestones.
+- **[Historical Phase 2 implementation roadmap](phase-2-implementation/planning/implementation-roadmap.md)** — earlier detailed technical planning.
+
+Active work is developed on `phase1c-candidate-contract` and `phase2-agent-implementation`; the root tracker is maintained on `main`.
+
 # System functionality report
 
 *Design and implementation status checked 11 October 2026.* This report synthesizes the [Phase 1B specification](phase-1b-agent-architecture/agent-architecture-and-deal-flow.md) and [Phase 1C data strategy](phase-1c-data/design/data-strategy.md). **Target design and implemented functionality are different:** see the [Phase 1C release review](phase-1c-data/implementation/phase1c_release_review.md) for dated technical status.
