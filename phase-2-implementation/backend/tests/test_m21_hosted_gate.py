@@ -434,6 +434,104 @@ class M21HostedGatePostgres(unittest.TestCase):
                     state = graph.get_state(config).values
                     from dealdesk_phase2.m22_capture import capture_m22
                     projected = capture_m22(state, self.adapter)
+                    from dealdesk_phase2.recommendation_review import project_source_grounded_review
+                    from dealdesk_phase2.graph_state import SPECIALISTS
+                    human = project_source_grounded_review(state, self.adapter)
+                    self.assertEqual(json.loads(json.dumps(human)), human)
+                    self.assertNotIn("fixed_decision", human)
+                    self.assertNotIn("model_attempts", human)
+                    self.assertEqual(human["assessment_id"], config["configurable"]["thread_id"])
+                    self.assertEqual(human["original"]["subject_id"], state["context"]["original_deal_id"])
+                    self.assertEqual(human["authorization"], "human_only_not_granted")
+                    self.assertEqual(set(human["original"]["specialists"]), set(SPECIALISTS))
+                    self.assertEqual(human["candidate"] is not None, binding)
+                    self.assertEqual(human["candidate_comparison"] is not None, binding)
+                    if not binding:
+                        self.assertTrue(any(r["specialist"] == "fulfillment" and
+                            r["action_code"] == "investigate_delivery_alternative_with_human"
+                            and r["verification"] == "suggested_unverified" for r in
+                            human["recommendations"]))
+                    self.assertNotIn("M21IC-INVOICE", str(human))
+                    self.assertNotIn("credit_profile:M18-C", str(human))
+                    if binding:
+                        self.assertEqual(human["candidate"]["subject_id"],
+                            human["candidate_comparison"]["candidate_id"])
+                        self.assertEqual(human["candidate"]["specialists"]["fulfillment"][
+                            "fixed_finding"], "needs_revision")
+                        self.assertEqual(human["candidate_comparison"]["fixed_supply_status"],
+                            "supply_supported_unreserved")
+                        self.assertEqual(human["candidate_comparison"]["customer_acceptance"], "pending")
+                        self.assertEqual(human["candidate_comparison"]["reservation_status"],
+                            "not_reserved")
+                        self.assertTrue(all(row["ai_original_execution"] is None for row in
+                            human["candidate"]["specialists"].values()))
+                        if credit_variant == "RC01":
+                            self.assertEqual(human["original"]["lines"][0]["quantity"], 10)
+                            self.assertEqual(human["original"]["requested_delivery_date"],
+                                "2026-09-04")
+                            self.assertEqual(human["original"]["availability"][0][
+                                "quantity_by_requested_date"], "8.000")
+                            self.assertEqual(human["original"]["availability"][0][
+                                "earliest_full_date"], "2026-09-08")
+                            self.assertEqual([(s["quantity"], s["delivery_date"]) for s in
+                                human["candidate_comparison"]["proposed_slices"]],
+                                [(8, "2026-09-03"), (2, "2026-09-08")])
+                            self.assertEqual(human["candidate_comparison"][
+                                "addressed_original_reasons"], ["requested_date_not_supported"])
+                            self.assertEqual(human["candidate_comparison"][
+                                "remaining_revision_reasons"],
+                                ["partial_delivery_requires_customer_acceptance"])
+                            self.assertEqual(human["candidate_comparison"][
+                                "unmet_customer_constraints"], ["original_requested_delivery_date"])
+                            self.assertEqual(human["original"]["specialists"]["credit"][
+                                "fixed_finding"], "calculated")
+                            self.assertEqual({r["specialist"] for r in human[
+                                "recommendations"] if r["action_code"] ==
+                                "no_fixed_blocker_in_selected_evidence"},
+                                {"configuration", "pricing", "credit"})
+                            self.assertEqual({r["rule_ids"][0] for r in human[
+                                "recommendations"] if r["rule_ids"]}, {"PO-BASE-DELIVERY-LATE"})
+                            self.assertEqual(human["original"]["specialists"]["policy"][
+                                "fixed_rule_ids"], ["PO-BASE-DELIVERY-LATE"])
+                            self.assertIsNone(human["original"]["required_roles"])
+                            self.assertEqual(human["original"]["routing_roles_status"],
+                                "unavailable_while_route_withheld")
+                            self.assertEqual({ref.split(":")[0] for r in human[
+                                "recommendations"] for ref in r["source_refs"]},
+                                {"inventory", "inbound_supply"})
+                    from copy import deepcopy
+                    for change in (
+                            lambda x: x["context"].update(assessment_id="wrong"),
+                            lambda x: x["m21_ai_results"]["credit"].update(execution="error"),
+                            lambda x: x["m21_ai_results"].pop("policy"),
+                            lambda x: x["tool_access_ledger"][0]["identity"].update(subject_id="wrong")):
+                        forged = deepcopy(state)
+                        change(forged)
+                        with self.assertRaises((EvidenceMismatch, ValueError, KeyError)):
+                            project_source_grounded_review(forged, self.adapter)
+                    if binding:
+                        for change in (
+                                lambda x: x["candidate_records"][next(iter(x[
+                                    "candidate_records"]))]["proposed_slices"][0].update(
+                                        source_refs=["inventory:INVENTED"]),
+                                lambda x: x["candidate_records"][next(iter(x[
+                                    "candidate_records"]))].update(parent_deal_id="wrong"),
+                                lambda x: x["tool_access_ledger"].clear()):
+                            forged = deepcopy(state)
+                            change(forged)
+                            with self.assertRaises((EvidenceMismatch, ValueError, KeyError)):
+                                project_source_grounded_review(forged, self.adapter)
+                        from dealdesk_phase2.evidence_bundle import seal, unseal
+                        forged = deepcopy(state)
+                        record = next(iter(forged["candidate_records"].values()))
+                        decision = unseal(record["fixed_decision"], record["fixed_decision_sha256"])
+                        decision["candidate_trace"]["assessment"]["slices"][0]["quantity"] += 1
+                        record["fixed_decision"], record["fixed_decision_sha256"], _ = seal(decision)
+                        with self.assertRaises(EvidenceMismatch):
+                            project_source_grounded_review(forged, self.adapter)
+                    with self.assertRaises(EvidenceMismatch):
+                        project_source_grounded_review(state, self.adapter,
+                            checkpoint_pending=True)
                     timing = timing_observation(projected,
                         wall_ms=campaign.timings[case_id], stages=measured.stages,
                         waits=measured.waits)
@@ -707,6 +805,7 @@ class M21HostedGatePostgres(unittest.TestCase):
                             "tool_access_ledger"):
                         self.assertEqual(resumed[field], state[field], msg=field)
                     self.assertEqual(capture_m22(resumed, self.adapter), projected)
+                    self.assertEqual(project_source_grounded_review(resumed, self.adapter), human)
                     self.assertEqual(project_gap_review(resumed, self.adapter), gap_review)
                     self.assertEqual(reconcile_campaign(registry_root, self.adapter,
                         expected_manifest_sha256=registry_digest,
