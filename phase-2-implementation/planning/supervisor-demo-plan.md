@@ -49,3 +49,8 @@ All demo-specific changes remain on this feature branch until reviewed. Phase 1C
 | Presentation UI | **Not established** | Minimal Next.js + API feasibility, source-backed trace projection |
 
 **D0 decision rule:** RC01/B01 remains provisional until exact case data and complete output shape are inspected; prefer an existing richer development case only if it is actually supported by source, safe to run and covers at least the same boundaries. Avoid constructing a new held-out-like case solely to force a green outcome.
+
+
+## Future enhancement explicitly excluded from minimum demo
+
+The user requested that the long-term architecture remember **several specialist recommendations and incremental V0→V1→V2 candidates**. The master blueprint and implementation roadmap now track this as an **M5 decision gate**, not implemented functionality. The supervisor demo remains six original-subject AI investigations plus at most one Fulfillment binding candidate with six fixed candidate checks; no candidate-specific AI loop or automatic multi-specialist proposal composer is currently available. Do not inflate the demo's scope or falsely describe the current candidate as a composite multi-agent negotiated offer.
