@@ -1,0 +1,43 @@
+import { test, expect } from '@playwright/test';
+
+test('operator session, CSRF, fresh RC01 and UC02, persisted recovery and no secrets', async ({page,request}) => {
+  const base = 'http://127.0.0.1:3000';
+  const unauth = await request.get(`${base}/api/assessments/${'a'.repeat(32)}/status`); expect(unauth.status()).toBe(401);
+  const noCsrfLogin = await request.post(`${base}/api/auth/login`, { data:{ password:process.env.DEALDESK_UI_PASSWORD }, headers:{Origin:base} }); expect(noCsrfLogin.status()).toBe(403);
+  await page.goto('/');
+  await expect(page.getByText('SYNTHETIC FIXTURE PREVIEW', {exact:false})).toBeVisible();
+  await page.getByLabel('Operator password').fill(process.env.DEALDESK_UI_PASSWORD!);
+  await page.getByRole('button',{name:/Enter workspace/}).click();
+  await expect(page.getByRole('button',{name:/Run genuine offline assessment/}).first()).toBeVisible();
+  const loginCookie = (await page.context().cookies()).find(c => c.name === 'dd_operator'); expect(loginCookie?.httpOnly).toBe(true); expect(loginCookie?.sameSite).toBe('Strict');
+  const bad = await page.evaluate(async () => (await fetch('/api/assessments',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':'csrfattack123'},body:JSON.stringify({scenario:'B01/RC01'})})).status); expect(bad).toBe(403);
+  const csrfValue = await page.evaluate(async () => (await (await fetch('/api/auth/csrf')).json()).csrf);
+  const wrongOrigin = await page.request.post(`${base}/api/assessments`,{data:{scenario:'B01/RC01'},headers:{'X-CSRF-Token':csrfValue,'Idempotency-Key':'originattack123','Origin':'http://evil.invalid'}}); expect(wrongOrigin.status()).toBe(403);
+  for(const [index, count] of [[0,21],[1,20]] as const) {
+    await page.getByRole('button',{name:/Run genuine offline assessment/}).nth(index).click();
+    await expect(page).toHaveURL(/\/assessments\/[0-9a-f]{32}/);
+    const id = page.url().split('/').at(-1)!;
+    console.log(index===0 ? 'RC01 assessment:' : 'UC02 assessment:',id);
+    await expect(page.getByText('EVENTS RECORDED').locator('..').locator('strong')).toHaveText(String(count),{timeout:120000});
+    await expect(page.getByRole('heading',{name:'Six specialist responsibilities'})).toBeVisible();
+    await expect(page.getByRole('heading',{name: index === 0 ? 'A supported schedule is not an accepted deal.' : 'No verified candidate'})).toBeVisible();
+    if(index===0) { await expect(page.getByText('supply supported unreserved',{exact:true})).toBeVisible(); await expect(page.getByText('Customer acceptance: pending')).toBeVisible(); await expect(page.getByText('Candidate deterministic checks · V1 only')).toBeVisible(); }
+    else await expect(page.getByText(/completed offline-scripted observation is not clearance/)).toBeVisible();
+    await page.reload(); await expect(page.getByText('EVENTS RECORDED').locator('..').locator('strong')).toHaveText(String(count),{timeout:120000});
+    const [st,ev,rv]=await Promise.all([page.request.get(`${base}/api/assessments/${id}/status`),page.request.get(`${base}/api/assessments/${id}/events?after=0`),page.request.get(`${base}/api/assessments/${id}/review`)]);
+    expect(st.status()).toBe(200); expect(ev.status()).toBe(200); expect(rv.status()).toBe(200);
+    const events = (await ev.json()).events; expect(events).toHaveLength(count); expect(events.map((e:{sequence:number})=>e.sequence)).toEqual(Array.from({length:count},(_,i)=>i+1));
+    expect(events.filter((e:{kind:string})=>e.kind==='fixed_completed')).toHaveLength(6); expect(events.filter((e:{kind:string})=>e.kind==='ai_completed')).toHaveLength(6);
+    const r=await rv.json(); expect(r.authorization).toBe('human_only_not_granted'); expect(r.candidate === null).toBe(index===1);
+    if(index===0) { expect(r.candidate_comparison.proposed_slices.map((s:{quantity:number,delivery_date:string})=>[s.quantity,s.delivery_date])).toEqual([[8,'2026-09-03'],[2,'2026-09-08']]); expect(r.candidate.business_status).toBe('needs_revision'); }
+    else { expect(r.original.specialists.credit.fixed_finding).toBe('unknown'); expect(r.original.specialists.credit.ai_original_execution).toBe('completed'); }
+    const html=await page.content(); expect(html).not.toContain(process.env.DEALDESK_DEMO_TOKEN!); expect(JSON.stringify(r)).not.toContain(process.env.DEALDESK_DEMO_TOKEN!);
+    await page.screenshot({path:`/tmp/opencode/d4-${index===0?'rc01':'uc02'}.png`,fullPage:true});
+    await page.goto('/');
+  }
+  await page.setViewportSize({width:390,height:844}); await expect(page.getByRole('heading',{name:'Choose a synthetic scenario'})).toBeVisible();
+  await page.keyboard.press('Tab'); expect(await page.evaluate(()=>document.activeElement?.tagName)).not.toBe('BODY');
+  const token = await page.evaluate(async()=> (await (await fetch('/api/auth/csrf')).json()).csrf);
+  const logout = await page.evaluate(async csrf => (await fetch('/api/auth/logout',{method:'POST',headers:{'X-CSRF-Token':csrf}})).status,token); expect(logout).toBe(200);
+  await expect.poll(async()=> (await page.request.get(`${base}/api/assessments/${'a'.repeat(32)}/status`)).status()).toBe(401);
+});
