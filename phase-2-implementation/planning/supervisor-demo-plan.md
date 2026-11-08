@@ -26,3 +26,26 @@ A supervisor can watch a **fresh, traceable** execution and inspect the same ass
 ## Integration and change control
 
 All demo-specific changes remain on this feature branch until reviewed. Phase 1C stays separate; no cherry-pick/merge of unfinished Phase 1C draft without an explicit compatibility decision. Prefer existing backend/frontend conventions; inspect Next.js feasibility and required API design before implementation. Do not authorize Groq/OpenAI sends by merely merging or running the demo. M3/M4/M6/M7 critical-path work remains authoritative in root `TODO.md`. Pydantic v2 is a separate optional P1 migration, not a prerequisite for this demo.
+
+## Tool ownership and collaboration protocol (approved 8 November 2026)
+
+- **ChatGPT — project control, D0 scenario decision, architecture/review, academic methodology (D7), demo narrative, acceptance gates.** Verify repository evidence before recommending changes; do not equate documentation with runtime success.
+- **Codex — sole primary implementation owner for D1–D3 and implementation aspects of D5–D6:** inspect/reproduce backend, write narrowly scoped API and Next.js code, run isolated tests, produce exact commands/commit SHAs/results and reviewable PR. Do not start hosted calls without separate authorization.
+- **OpenCode — technical presentation and inspection (D4):** browse the actual LangGraph graph, contracts, evidence tools, deterministic verifier and checkpoints; inspect sanitized traces from the same assessment ID as Next.js. OpenCode is not itself an execution observability service. Read-only during Codex ownership; any future edits require explicit handoff.
+- **GitHub — single authoritative source:** all work on `feature/supervisor-live-demo` until reviewed. One writer at a time; Codex must sync and check working tree before editing. No simultaneous modifications by OpenCode/ChatGPT/Codex to the same files. Review commits and test evidence rather than trusting assistant summaries.
+- **Sequence:** ChatGPT D0 decision → Codex D1 offline reproducibility → review gate → Codex D2/D3 minimal API/Next.js → OpenCode D4 walkthrough → separately authorized D5 fresh hosted run → D6 rehearsal; ChatGPT drafts D7 methodology in parallel.
+- **Change boundaries:** reuse existing LangGraph and Phase 1C pin; no production approvals, reservations, unsafe source mutation, held-out answers or unapproved paid/provider calls. Separate any generally reusable fix for review before merging into the main Phase 2 branch.
+
+## D0 scenario acceptance matrix (preliminary)
+
+| Requirement | RC01/B01 observed evidence | Next verification |
+| --- | --- | --- |
+| Six original-subject hosted specialist stages | One 31 October completed development run | Inspect exact per-stage returned findings, citations and receipts |
+| Fulfillment candidate | One `fixed_checked` candidate | Inspect candidate values and whether proposal is intelligible to supervisor |
+| Six candidate checks | Six deterministic checks, **not** six candidate AI reruns | Verify statuses, changed fields and source IDs |
+| Credit evidence | Original AR/payment claims with exact linkage | Confirm visible business explanation and privacy-safe projection |
+| Business result | Original `needs_revision`; candidate requires acceptance | Do not label candidate approved, resolved or production-ready |
+| Repeatable fresh run | **Not established** | Offline disposable-DB rehearsal; later separately authorized hosted attempt |
+| Presentation UI | **Not established** | Minimal Next.js + API feasibility, source-backed trace projection |
+
+**D0 decision rule:** RC01/B01 remains provisional until exact case data and complete output shape are inspected; prefer an existing richer development case only if it is actually supported by source, safe to run and covers at least the same boundaries. Avoid constructing a new held-out-like case solely to force a green outcome.
