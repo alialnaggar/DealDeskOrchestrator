@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Review, type EventDTO } from '../lib/contracts';
-import { Comparison, HumanReview, SpecialistMatrix, Timeline } from '../components/workspace';
+import { Comparison, DecisionBrief, HumanReview, SpecialistMatrix, Timeline } from '../components/workspace';
 import { finding, names, original, sample } from './fixture';
 const parsed = Review.parse(sample);
 describe('business presentation', () => {
@@ -29,9 +29,20 @@ describe('business presentation', () => {
     const candidate = {...original,subject_kind:'candidate',subject_id:'C1',specialists:Object.fromEntries(names.map(n => [n,{...finding,ai_original_execution:null}]))};
     const comparison = { parent_subject_id:original.subject_id,candidate_id:'C1',candidate_input_digest:'digest',changed_field:'proposed_delivery_slices',original_line_id:'L1',original_quantity:10,original_requested_date:'2026-09-04',proposed_slices:[{quantity:8,delivery_date:'2026-09-03',source_refs:['inventory:I1']},{quantity:2,delivery_date:'2026-09-08',source_refs:['inbound_supply:S1']}],fixed_supply_status:'supply_supported_unreserved',reservation_status:'not_reserved',customer_acceptance:'pending',unmet_customer_constraints:['original_requested_delivery_date'],addressed_original_reasons:[],remaining_revision_reasons:['partial_delivery_requires_customer_acceptance'] };
     const data = Review.parse({...sample,candidate,candidate_comparison:comparison});
-    const {container} = render(<Comparison data={data}/>);
+    const {container} = render(<><DecisionBrief data={data}/><Comparison data={data}/></>);
     expect(container.textContent).toContain('supply supported unreserved'); expect(container.textContent).toContain('Customer acceptance: pending');
     expect(container.querySelectorAll('.checks-grid > div')).toHaveLength(6);
+    expect(screen.getByRole('heading',{name:'A later delivery needs the customer’s decision'})).toBeTruthy();
+    expect(container.textContent).toContain('10 units'); expect(container.textContent).toContain('4 Sept 2026');
+    expect(container.textContent).toContain('8 on 3 Sept 2026 + 2 on 8 Sept 2026');
+    expect(container.textContent).toContain('No stock is reserved');
+  });
+  it('summarizes unknown Credit without presenting scripted completion as clearance', () => {
+    const data = Review.parse({...sample,original:{...original,specialists:{...original.specialists,credit:{...finding,fixed_finding:'unknown'}}}});
+    const {container} = render(<DecisionBrief data={data}/>);
+    expect(container.textContent).toContain('Fixed Credit is unknown');
+    expect(container.textContent).toContain('None verified');
+    expect(container.textContent).toContain('No approval is granted here');
   });
   it('shows validated abstention and evidence gap, withholds routing and leaves actions human-only', () => {
     const review = Review.parse({...sample, original:{...sample.original,specialists:{...sample.original.specialists,credit:{...sample.original.specialists.credit,ai_original_execution:'abstained',evidence_gaps:[{requirement_id:'credit_source',reason_code:'stale',verification:'deterministic',impact_code:'unknown',next_action_code:'review'}]}}}});

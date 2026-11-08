@@ -1,5 +1,7 @@
 # D4 — supervisor console (offline, local only)
 
+For the refined supervisor-facing sequence, exact clean-start commands, timed narration and fallback, see the [D6 offline demonstration runbook](../planning/supervisor-demo-d6-offline-runbook.md). [D6 rehearsal and residual advisories](../evaluation/supervisor-demo-d6-rehearsal-2026-11-08.md) document the desktop/mobile evidence. The completed assessment now shows a source-validated decision brief first; the keyboard-operable technical trace remains available through “Inspect technical trace.”
+
 Two routes: `/` launches the two allowlisted **synthetic** assessments; `/assessments/[id]` recovers ordered PostgreSQL events and displays the source-validated review. Python is called **only from Next.js route handlers**. No browser token, direct Python request, approval, acceptance, reservation, source writer, model prose or raw checkpoint is included. D3 remains the authority for owner-scoped lookups and source validation; the browser URL is **not** authorization.
 
 ## Prerequisites
