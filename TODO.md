@@ -116,6 +116,14 @@ This is the **single front-door checklist** for remaining thesis work. It comple
 - [ ] Freeze optional functionality by **22 Nov**; record later change control.
 - **Exit evidence:** approved enhancement register and feature-freeze decision.
 
+### Supervisor feedback — Pydantic v2 contract standardization (P1; optional)
+
+- [ ] Adopt **Pydantic v2 selectively** for six specialist input/output contracts, orchestrator-to-specialist typed interfaces, and structured LLM response schemas, subject to a compatibility and regression review.
+- [ ] Inventory existing dataclass, JSON Schema and custom-validation boundaries; plan incremental migration that preserves provider-independent contracts, strict rejection behavior and backward compatibility.
+- [ ] Retain deterministic evidence verification, permission/authorization checks, business-rule validation and approval authority outside Pydantic schema validation.
+- [ ] Add equivalence/negative regression tests for accepted and rejected payloads, including malformed, extra-field and identity-mismatch cases; record the decision and implementation evidence before checking complete.
+- **Source:** supervisor recommendation discussed 8 Nov 2026; optional, not mandated. **Scheduling:** evaluate within M5 enhancement review; implement only if compatible with P0 evaluation milestones and scope freeze. No existing validation is assumed migrated.
+
 ### M6 — Paid OpenAI model integration (20–29 Nov) — P0
 
 - [ ] Choose exact paid OpenAI API model, cost ceiling and adapter; keep provider-independent contracts and deterministic authority.
