@@ -328,3 +328,13 @@ include the key, private launcher, PostgreSQL files or audit artifacts in Git.
 The fresh isolated PostgreSQL fixture/checkpoint regression ran 192 tests:
 185 passed, seven optional saved-checkpoint diagnostics skipped. CI is separate
 from this local check and the hosted smoke. No hybrid inference has been sent.
+# D3 offline assessment API
+
+The authenticated, loopback-only FastAPI demo uses the existing PostgreSQL
+checkpointer and offline LangGraph specialist continuations. For **exact pinned
+dependencies, disposable synthetic fixture setup, environment variables,
+startup command, authenticated request examples, event/review response contract
+and security limits**, see
+[`../architecture/offline-assessment-api.md`](../architecture/offline-assessment-api.md).
+No hosted-model call, approval, reservation or customer acceptance is available
+through this API. The UI is a separate future increment.
