@@ -53,6 +53,32 @@ def digest(data):
 
 
 class M21AuthorizedStatusManifest(unittest.TestCase):
+    def test_six_campaign_completion_requires_actual_handoff(self):
+        from copy import deepcopy
+        from run_groq_development import _six_campaign_completion
+        review = {"assessment_id": "A", "subject_id": "D"}
+        state = {"assessment_id": "A", "context": {"original_deal_id": "D"},
+            "candidate_status": "fixed_checked", "m20_ai_results": {
+                "configuration": {"execution": "completed"}},
+            "typed_final_results": {"pricing": {"execution": "completed"}},
+            "ai_fulfillment_result": {"execution": "completed"},
+            "m21_ai_results": {name: {"execution": "completed"} for name in TOOLS},
+            "m21_review": review, "reviewer_package": {"m21_ai": review}}
+        self.assertEqual(_six_campaign_completion(state), "six_stages_completed")
+        abstained = deepcopy(state)
+        abstained["m21_ai_results"]["credit"]["execution"] = "abstained"
+        self.assertEqual(_six_campaign_completion(abstained), "six_stages_completed")
+        for change in (lambda x: x["m21_ai_results"]["policy"].update(execution="error"),
+                       lambda x: x["m21_ai_results"].pop("approval_routing"),
+                       lambda x: x.update(m21_review=None),
+                       lambda x: x.update(stop_reason="credit:ProviderError"),
+                       lambda x: x["reviewer_package"].update(m21_ai={}),
+                       lambda x: x.update(m21_ai_results=None),
+                       lambda x: x["context"].update(original_deal_id="OTHER")):
+            stopped = deepcopy(state)
+            change(stopped)
+            self.assertEqual(_six_campaign_completion(stopped), "six_stages_incomplete")
+
     def test_fulfillment_campaign_error_summary_is_bounded_and_distinguishes_local_quota(self):
         from run_groq_development import _fulfillment_error_summary
         for code, phase, expected in (("groq_daily_limit", "decision", None),
@@ -568,6 +594,35 @@ class M21HostedGatePostgres(unittest.TestCase):
                             "customer_acceptance"], "pending")
                         self.assertFalse(state["reviewer_package"]["candidates"][0][
                             "routing"]["eligible_for_ordinary_routing"])
+                        if credit_variant == "RC01":
+                            from dealdesk_phase2.evidence_bundle import unseal
+                            original_decision = unseal(state["fixed_decision"],
+                                state["fixed_decision_sha256"])
+                            candidate_decision = unseal(candidate["fixed_decision"],
+                                candidate["fixed_decision_sha256"])
+                            self.assertEqual(original_decision["revision_reasons"], [{
+                                "line_id": "M18-L-B01", "code": "requested_date_not_supported"}])
+                            self.assertEqual(candidate_decision["revision_reasons"], [{
+                                "line_id": "M18-L-B01",
+                                "code": "partial_delivery_requires_customer_acceptance"}])
+                            self.assertEqual(original_decision["status"], "needs_revision")
+                            self.assertEqual(candidate_decision["status"], "needs_revision")
+                            self.assertEqual(state["specialist_results"]["fulfillment"][
+                                "finding"], "needs_revision")
+                            self.assertEqual(candidate["specialist_results"]["fulfillment"][
+                                "finding"], "needs_revision")
+                            for decision in (original_decision, candidate_decision):
+                                self.assertEqual(decision["blocks"], [])
+                                self.assertEqual(decision["evidence_gaps"], [])
+                                self.assertEqual(decision["specialists"]["pricing"]["rule_hits"], [])
+                                self.assertEqual(decision["specialists"]["credit"]["rule_hits"], [])
+                                self.assertEqual([hit["rule_id"] for hit in decision[
+                                    "specialists"]["policy"]["rule_hits"]],
+                                    ["PO-BASE-DELIVERY-LATE"])
+                                self.assertTrue(decision["specialists"][
+                                    "approval_routing"]["route_withheld"])
+                            self.assertEqual(candidate_decision["customer_constraints_unmet"],
+                                             ["original_requested_delivery_date"])
                     self.assertEqual(state["ai_fulfillment_result"]["execution"], "completed")
                     self.assertEqual(state["typed_final_results"]["pricing"]["execution"],
                                      "completed")

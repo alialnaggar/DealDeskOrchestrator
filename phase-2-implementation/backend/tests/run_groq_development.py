@@ -139,6 +139,31 @@ def _m21_campaign(graph, config, adapter, *, case_id, owner, root, key,
     return digest, state
 
 
+def _six_campaign_completion(state):
+    """Report completion only for a full, governed original AI handoff.
+
+    A terminal M2.1 stage may return a checkpoint rather than raising; a
+    successful function return alone is not evidence that all six finished.
+    A validated abstention is a completed assessment, not a model finding.
+    """
+    stages = ((state.get("m20_ai_results") or {}).get("configuration"),
+              (state.get("typed_final_results") or {}).get("pricing"),
+              state.get("ai_fulfillment_result"),
+              *((state.get("m21_ai_results") or {}).get(name) for name in M21_TOOLS))
+    review = state.get("m21_review")
+    package = state.get("reviewer_package")
+    if (state.get("stop_reason") or state.get("candidate_status") not in (
+            "not_started", "fixed_checked") or
+            any(not isinstance(row, dict) or row.get("execution") not in (
+                "completed", "abstained") for row in stages) or
+            not isinstance(review, dict) or not isinstance(package, dict) or
+            package.get("m21_ai") != review or
+            review.get("assessment_id") != state.get("assessment_id") or
+            review.get("subject_id") != (state.get("context") or {}).get("original_deal_id")):
+        return "six_stages_incomplete"
+    return "six_stages_completed"
+
+
 def _six_campaign(graph, config, adapter, *, case_id, account_id, root, key, run_id,
                   measurement=None):
     """Sequential original-checkpoint LangGraph continuations, stopping on any error."""
@@ -217,7 +242,7 @@ def _six_campaign(graph, config, adapter, *, case_id, account_id, root, key, run
         credit_policy_routing()
     else:
         measurement.measure("credit_policy_routing", credit_policy_routing)
-    return "six_stages_completed"
+    return _six_campaign_completion(graph.get_state(config).values)
 
 
 def main():
