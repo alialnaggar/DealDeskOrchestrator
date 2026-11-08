@@ -18,6 +18,14 @@ const comparison = z.object({ parent_subject_id: code, candidate_id: code, candi
 export const Review = z.object({ version: z.literal('source-grounded-review-v1'), assessment_id: id, phase1c_pin: code, phase1c_run_id: code, bundle_sha256: code, source_input_digest: code, original: subject, candidate: subject.nullable(), candidate_comparison: comparison.nullable(), recommendations: z.array(z.object({ specialist, action_code: code, verification: z.enum(['deterministic','suggested_unverified']), subject_id: code, source_refs: z.array(code), rule_ids: z.array(code), remaining_customer_constraints: z.array(code) }).strict()), reviewer_action: code, permitted_next_actions: z.array(code), authorization: z.literal('human_only_not_granted') }).strict().superRefine((r, ctx) => {
   if ((r.candidate === null) !== (r.candidate_comparison === null) || r.original.subject_kind !== 'original' || r.candidate?.subject_kind === 'original' || (r.candidate && (r.candidate_comparison?.candidate_id !== r.candidate.subject_id || r.candidate_comparison.parent_subject_id !== r.original.subject_id))) ctx.addIssue({ code: 'custom', message: 'Subject lineage mismatch' });
   if (r.candidate && specialists.some(s => r.candidate!.specialists[s].ai_original_execution !== null)) ctx.addIssue({ code: 'custom', message: 'Candidate AI is not part of this contract' });
+  for (const subject of [r.original, r.candidate].filter((s): s is NonNullable<typeof s> => s !== null)) {
+    if ((subject.required_roles === null) !== (subject.routing_roles_status === 'unavailable_while_route_withheld')) ctx.addIssue({code:'custom',message:'Withheld routing role status mismatch'});
+  }
+  if (r.candidate && r.candidate_comparison) {
+    const c = r.candidate_comparison;
+    const line = r.original.lines.find(l => l.line_id === c.original_line_id);
+    if (!line || line.quantity !== c.original_quantity || c.original_requested_date !== r.original.requested_delivery_date || r.candidate.requested_delivery_date !== r.original.requested_delivery_date || c.proposed_slices.reduce((sum, slice) => sum + slice.quantity, 0) !== c.original_quantity || JSON.stringify(r.candidate.lines) !== JSON.stringify(r.original.lines)) ctx.addIssue({code:'custom',message:'Original and candidate quantity/date mismatch'});
+  }
 });
 export type StatusDTO = z.infer<typeof Status>;
 export type EventDTO = z.infer<typeof Event>;

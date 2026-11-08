@@ -20,5 +20,5 @@ export async function events(id: string, last = 0): Promise<EventDTO[]> {
   throw new Error('Event history exceeded safe pagination limit');
 }
 export function matchStatus(value: StatusDTO, id: string) { if (value.assessment_id !== id) throw new Error('Assessment identity mismatch'); return value; }
-export async function csrf() { const res = await fetch('/api/auth/csrf', { cache: 'no-store' }); if (!res.ok) throw new Error('Session unavailable'); return res.json() as Promise<{ csrf: string; authenticated: boolean }>; }
+export async function csrf() { return json('/api/auth/csrf', z.object({ csrf: z.string().regex(/^[0-9a-f]{64}$/), authenticated: z.boolean() }).strict()); }
 export { Created };

@@ -84,20 +84,34 @@ def create_app(service: AssessmentService, tokens: dict[str, str]) -> FastAPI:
         # FastAPI's default error includes rejected input (possibly a credential).
         return JSONResponse({"detail": "Invalid request"}, status_code=422)
 
+    @app.exception_handler(psycopg.Error)
+    async def unavailable_database(_request, _error):
+        # Connection/SQL exceptions may contain a DSN or source details. A lost
+        # worker is never resumed here; startup marks interrupted runs uncertain.
+        return JSONResponse({"detail": "Local assessment storage unavailable"}, status_code=503)
+
     @app.middleware("http")
     async def bounded_request(request: Request, call_next):
+        if request.headers.get("host") != "127.0.0.1:8765":
+            return JSONResponse({"detail": "Invalid local host"}, status_code=400,
+                                headers={"Cache-Control": "no-store"})
         size = request.headers.get("content-length")
         if (size is None and request.method == "POST") or (size is not None and
                 (not size.isdecimal() or int(size) > 512)):
-            return JSONResponse({"detail": "Request too large"}, status_code=413)
+            return JSONResponse({"detail": "Request too large"}, status_code=413,
+                                headers={"Cache-Control": "no-store"})
         if request.method == "POST":
             chunks = bytearray()
             async for chunk in request.stream():
                 chunks.extend(chunk)
                 if len(chunks) > 512:
-                    return JSONResponse({"detail": "Request too large"}, status_code=413)
+                    return JSONResponse({"detail": "Request too large"}, status_code=413,
+                                        headers={"Cache-Control": "no-store"})
             request._body = bytes(chunks)
-        return await call_next(request)
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
 
     def owner(authorization: str = Header(default="")):
         supplied = authorization.removeprefix("Bearer ") if authorization.startswith(

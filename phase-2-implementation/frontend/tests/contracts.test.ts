@@ -15,5 +15,6 @@ describe('strict D3 / D2 contracts', () => {
     expect(Review.safeParse({...sample, candidate_comparison:{}}).success).toBe(false);
     const candidate = {...original,subject_kind:'candidate',subject_id:'C1',specialists:Object.fromEntries(names.map(n => [n,{...finding,ai_original_execution:'completed'}]))};
     expect(Review.safeParse({...sample,candidate}).success).toBe(false);
+    expect(Review.safeParse({...sample,original:{...original,required_roles:[]}}).success).toBe(false);
   });
 });

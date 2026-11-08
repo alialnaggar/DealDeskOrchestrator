@@ -10,6 +10,15 @@ describe('business presentation', () => {
     expect(screen.getByText('No verified candidate')).toBeTruthy();
     expect(screen.getByText(/completed offline-scripted observation is not clearance/)).toBeTruthy();
   });
+  it('does not invent a completed Credit observation when it abstained or is null', () => {
+    for(const execution of ['abstained', null]) {
+      const data = Review.parse({...sample,original:{...original,specialists:{...original.specialists,credit:{...finding,ai_original_execution:execution}}}});
+      const {container,unmount} = render(<Comparison data={data}/>);
+      expect(container.textContent).not.toContain('a completed offline-scripted observation');
+      expect(container.textContent).toContain(execution === 'abstained' ? 'observation abstained' : 'no offline-scripted Credit outcome is available');
+      unmount();
+    }
+  });
   it('does not turn checkpointed AI into a positive finding', () => {
     const event: EventDTO = { assessment_id:sample.assessment_id,sequence:1,kind:'ai_completed',stage:'credit',occurred_at:'2026-11-08T12:00:00Z' };
     const { container } = render(<SpecialistMatrix data={null} rows={[event]}/>);
@@ -29,6 +38,23 @@ describe('business presentation', () => {
     const { container } = render(<><SpecialistMatrix data={review} rows={[]}/><HumanReview data={review}/></>);
     expect(container.textContent).toContain('abstained'); expect(container.textContent).toContain('stale'); expect(container.textContent).toContain('route withheld'); expect(container.textContent).toContain('human only not granted');
     expect(screen.queryByRole('button', {name:/approve|reserve|accept/i})).toBeNull();
+  });
+  it('distinguishes withheld null roles from an empty eligible role list', () => {
+    const unavailable = render(<HumanReview data={parsed}/>);
+    expect(unavailable.container.textContent).toContain('Required roles: unavailable while routing is withheld');
+    unavailable.unmount();
+    const eligible = Review.parse({...sample,original:{...sample.original,routing_roles_status:'available_from_fixed_interface',required_roles:[]}});
+    const available = render(<HumanReview data={eligible}/>);
+    expect(available.container.textContent).toContain('Required roles: none returned by the fixed interface');
+    expect(available.container.textContent).not.toContain('Required roles: unavailable');
+  });
+  it('preserves long cited refs and does not invent an empty source', () => {
+    const ref='inventory:'+ 'x'.repeat(185);
+    const entry={specialist:'fulfillment',action_code:'human_review',verification:'deterministic',subject_id:original.subject_id,source_refs:[ref],rule_ids:[],remaining_customer_constraints:[]};
+    const data=Review.parse({...sample,recommendations:[entry,{...entry,source_refs:[]}]});
+    const {container}=render(<HumanReview data={data}/>);
+    expect(container.textContent).toContain(ref);
+    expect(container.querySelectorAll('.recommendations small')[1].textContent).not.toContain('sources');
   });
   it('renders real checkpoint and timestamp only from events', () => {
     render(<Timeline rows={[{ assessment_id:sample.assessment_id,sequence:1,kind:'checkpoint',stage:'original',occurred_at:'2026-11-08T12:00:00Z' }]} data={null} state={null}/>);

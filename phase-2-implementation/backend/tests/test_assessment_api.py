@@ -6,6 +6,7 @@ from time import monotonic, sleep
 import unittest
 from unittest.mock import patch
 from uuid import uuid4
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi.testclient import TestClient
 import psycopg
@@ -69,7 +70,7 @@ class OfflineAssessmentAPI(unittest.TestCase):
         cls.alice = "a" * 40
         cls.bob = "b" * 40
         cls.app = create_app(cls.service, {cls.alice: "alice", cls.bob: "bob"})
-        cls.client_context = TestClient(cls.app)
+        cls.client_context = TestClient(cls.app, base_url="http://127.0.0.1:8765")
         cls.client = cls.client_context.__enter__()
 
     @classmethod
@@ -91,11 +92,11 @@ class OfflineAssessmentAPI(unittest.TestCase):
         self.assertEqual(response.json()["status"], "accepted")
         return response.json()["assessment_id"]
 
-    def completed(self, assessment_id):
+    def completed(self, assessment_id, token=None):
         deadline = monotonic() + 45
         while monotonic() < deadline:
             response = self.client.get("/demo/assessments/" + assessment_id,
-                headers=self.headers())
+                headers=self.headers(token))
             self.assertEqual(response.status_code, 200)
             if response.json()["status"] != "running" and response.json()["status"] != "accepted":
                 return response.json()
@@ -124,6 +125,62 @@ class OfflineAssessmentAPI(unittest.TestCase):
         for suffix in ("", "/events", "/review"):
             self.assertEqual(self.client.get("/demo/assessments/" + ident + suffix,
                 headers=self.headers(self.bob)).status_code, 404)
+        self.assertEqual(self.completed(ident)["status"], "completed")
+
+    def test_simultaneous_same_key_is_single_run_and_owner_scoped(self):
+        key = "same-" + uuid4().hex
+        def submit(token, scenario="N01/UC02"):
+            return self.client.post("/demo/assessments", json={"scenario": scenario},
+                                    headers=self.headers(token, key))
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            results = list(pool.map(lambda _: submit(self.alice), range(12)))
+        self.assertEqual([r.status_code for r in results], [202] * 12)
+        ids = {r.json()["assessment_id"] for r in results}
+        self.assertEqual(len(ids), 1)
+        self.assertEqual(sum(r.json()["created"] for r in results), 1)
+        ident = ids.pop()
+        self.assertEqual(self.completed(ident)["status"], "completed")
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            conflicts = list(pool.map(lambda _: submit(self.alice, "B01/RC01"), range(4)))
+        self.assertEqual([r.status_code for r in conflicts], [409] * 4)
+        other = submit(self.bob)
+        self.assertEqual(other.status_code, 202)
+        self.assertNotEqual(other.json()["assessment_id"], ident)
+        self.assertEqual(self.completed(other.json()["assessment_id"], self.bob)["status"], "completed")
+        self.assertEqual(self.client.get(f"/demo/assessments/{ident}",
+                         headers=self.headers(self.bob)).status_code, 404)
+        with self.service.store.connect() as db:
+            self.assertEqual(db.execute("SELECT count(*) FROM dealdesk_demo.assessments "
+                "WHERE idempotency_key=%s", (key,)).fetchone()["count"], 2)
+            self.assertEqual(db.execute("SELECT count(*) FROM dealdesk_demo.assessment_events "
+                "WHERE assessment_id=%s AND kind='accepted'", (ident,)).fetchone()["count"], 1)
+
+    def test_invalid_identifiers_host_queries_and_database_outage_are_sanitized(self):
+        bad_host = self.client.get("/demo/assessments/"+"a"*32,
+            headers={**self.headers(), "Host": "evil.invalid"})
+        self.assertEqual(bad_host.status_code, 400)
+        self.assertEqual(bad_host.headers["cache-control"], "no-store")
+        for bad in ("NOT-HEX", "f"*33, "..%2Fprivate", "' OR 1=1 --"):
+            response = self.client.get("/demo/assessments/" + bad,
+                headers=self.headers())
+            self.assertEqual(response.status_code, 404, response.text)
+        for after in ("-1", "not-an-integer", "9223372036854775808"):
+            response = self.client.get("/demo/assessments/" + "f"*32 +
+                "/events?after=" + after, headers=self.headers())
+            self.assertEqual(response.status_code, 422)
+        self.assertEqual(self.client.post("/demo/assessments", json={"scenario": "N01/UC02"},
+            headers=self.headers(key="invalid key")).status_code, 422)
+        private = "password=DO-NOT-LEAK"
+        with patch.object(self.service.store, "connect",
+                side_effect=psycopg.OperationalError(private)):
+            for path in ("/demo/assessments/"+"f"*32, "/demo/assessments"):
+                response = (self.client.get(path, headers=self.headers()) if
+                    path.endswith("f"*32) else self.client.post(path,
+                    json={"scenario": "N01/UC02"}, headers=self.headers()))
+                self.assertEqual(response.status_code, 503)
+                self.assertNotIn(private, response.text)
+                self.assertEqual(response.headers["cache-control"], "no-store")
+        ident = self.create("N01/UC02")
         self.assertEqual(self.completed(ident)["status"], "completed")
 
     def test_allowlist_request_limits_and_actual_rc01_progress(self):

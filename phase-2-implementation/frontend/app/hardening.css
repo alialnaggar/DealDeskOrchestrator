@@ -1,0 +1,7 @@
+/* Dynamic source references must remain readable at narrow viewport widths. */
+.status, .authority strong, .scenario-foot, .matrix-row, .compare-card, .checks-grid > div {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.status { max-width: 100%; }
+.timeline:focus-visible { outline: 3px solid #b78d40; outline-offset: 3px; }
