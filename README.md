@@ -1,5 +1,7 @@
 # Deal Desk Orchestrator — thesis project
 
+**Current offline supervisor demonstration (D7, separate feature branch):** [evidence and thesis-document index](phase-2-implementation/evaluation/supervisor-demo-d7-evidence-index.md), [verified baseline/tag](phase-2-implementation/evaluation/supervisor-demo-d7-baseline-2026-11-09.md), [implemented architecture](phase-2-implementation/architecture/supervisor-demo-d7-implemented-architecture.md) and [offline runbook](phase-2-implementation/planning/supervisor-demo-d6-offline-runbook.md). The October system functionality report below describes its dated target/implementation status and is **not** an assertion that the D7 demo executes hosted AI or has independently measured accuracy.
+
 This private repository is the active source of truth for the thesis. The project is organized into [Phase 1A: literature review](phase-1a-literature-review/README.md), [Phase 1B: agent architecture](phase-1b-agent-architecture/README.md), and [Phase 1C: synthetic data and implementation](phase-1c-data/README.md). New work belongs here; `alialnaggar/dealdeskdata` is a historical portfolio copy.
 
 ## Project-wide roadmap and thesis to-do list

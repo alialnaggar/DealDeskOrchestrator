@@ -1,5 +1,7 @@
 # Supervisor demonstration — feasibility and execution plan
 
+**Historical D0 plan, not current execution status:** D1–D6 subsequently implemented and verified a **completely offline-scripted** local demo; the hosted-run checkbox below is *not* authorized or completed by that work. For actual boundaries and results use the [D7 evidence index](../evaluation/supervisor-demo-d7-evidence-index.md), [frozen baseline](../evaluation/supervisor-demo-d7-baseline-2026-11-09.md) and [D6 runbook](supervisor-demo-d6-offline-runbook.md). Do not interpret the unchecked boxes or historical hosted development result as evidence for a fresh paid/model run.
+
 **Status:** Planning baseline, not implemented. **Branch:** `feature/supervisor-live-demo` (branched from Phase 2 at `4de1e762f3bb6405f13b71bb28ec00a8115c7e25`). **Purpose:** demonstrate the richest genuinely supported end-to-end deal without modifying formal held-out evaluation cases.
 
 ## Evidence-backed scenario selection
