@@ -2,6 +2,8 @@
 
 **D8 evaluation-readiness continuation:** [held-out asset audit, supervisor protocol, metric definitions and read-only validator/report commands](supervisor-demo-d8-evaluation-readiness-2026-11-09.md). No held-out answer was accepted or accuracy measured in D8.
 
+**D9 source-first preparation:** [36-case source-only index](supervisor-demo-d9-source-index-2026-11-09.md), [blank six-case pilot form](supervisor-demo-d9-pilot-blank.json), [reviewer handbook](supervisor-demo-d9-review-handbook-2026-11-09.md) and [supervisor's pending decision package](supervisor-demo-d9-supervisor-decisions-2026-11-09.md). These are not an answer key or an approval.
+
 **Start here:** the reproducible **offline code** is annotated tag [`supervisor-demo-offline-v1`](supervisor-demo-d7-baseline-2026-11-09.md) at `94e4e5cbc1334bc044ab334e15055bdcfdd006a3`. D7 explanatory Markdown is on the later `feature/supervisor-live-demo` branch, **not** inside that tag. Do not run historical Groq CLI entrypoints, alter Phase 1C or infer hosted reliability from this package.
 
 | Need | Versioned source |

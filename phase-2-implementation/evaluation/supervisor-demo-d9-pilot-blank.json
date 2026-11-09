@@ -1,0 +1,277 @@
+{
+  "cases": [
+    {
+      "case_id": "EVAL-PREP-001",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Availability": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Configuration": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Credit": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Policy": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Pricing": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        }
+      },
+      "overall": {
+        "decision_status": null,
+        "human_actions": [],
+        "rationale": null,
+        "unresolved_questions": []
+      },
+      "packet_sha256": "80d4cb16172cefca0d1f4779b14edfb0fc729efb025c2179010d2942fc527e63",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "review_status": "pending",
+      "reviewer": null
+    },
+    {
+      "case_id": "EVAL-PREP-005",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Availability": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Configuration": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Credit": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Policy": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Pricing": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        }
+      },
+      "overall": {
+        "decision_status": null,
+        "human_actions": [],
+        "rationale": null,
+        "unresolved_questions": []
+      },
+      "packet_sha256": "7137474bf7e6187188d59fee9520c9b161ea5f9bc61cfdd353622e23e6f2f8e9",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "review_status": "pending",
+      "reviewer": null
+    },
+    {
+      "case_id": "EVAL-PREP-009",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Availability": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Configuration": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Credit": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Policy": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Pricing": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        }
+      },
+      "overall": {
+        "decision_status": null,
+        "human_actions": [],
+        "rationale": null,
+        "unresolved_questions": []
+      },
+      "packet_sha256": "bed348a585b9cbcaaca8e2a2082b6289bc1125b998672b441a4fda4cb43fb8f9",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "review_status": "pending",
+      "reviewer": null
+    },
+    {
+      "case_id": "EVAL-PREP-020",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Availability": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Configuration": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Credit": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Policy": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Pricing": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        }
+      },
+      "overall": {
+        "decision_status": null,
+        "human_actions": [],
+        "rationale": null,
+        "unresolved_questions": []
+      },
+      "packet_sha256": "6edee7da614ce168e3422a3f1d013da26769f97e8378cacb107f0a55b036957b",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "review_status": "pending",
+      "reviewer": null
+    },
+    {
+      "case_id": "EVAL-PREP-023",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Availability": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Configuration": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Credit": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Policy": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Pricing": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        }
+      },
+      "overall": {
+        "decision_status": null,
+        "human_actions": [],
+        "rationale": null,
+        "unresolved_questions": []
+      },
+      "packet_sha256": "c5cfd05dae6ede4235d26832147c6b7dd567c1d859042375a560c18c8a6fc6cd",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "review_status": "pending",
+      "reviewer": null
+    },
+    {
+      "case_id": "EVAL-PREP-031",
+      "findings": {
+        "Approval": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Availability": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Configuration": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Credit": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Policy": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        },
+        "Pricing": {
+          "evidence_refs": [],
+          "finding": null,
+          "rationale": null
+        }
+      },
+      "overall": {
+        "decision_status": null,
+        "human_actions": [],
+        "rationale": null,
+        "unresolved_questions": []
+      },
+      "packet_sha256": "cba1d10ad0a15512a5a75a9c1a34b2f852e49bd2831b61388bf568c253c284ce",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8",
+      "review_status": "pending",
+      "reviewer": null
+    }
+  ],
+  "input_index_sha256": "7deac5b7a9337a49e3a64b60ca99cd1c0118bb9cfa61ea9abe73b3cacfa444dc",
+  "schema_version": 1,
+  "status": "blank_pilot_subset_not_answer_key"
+}
