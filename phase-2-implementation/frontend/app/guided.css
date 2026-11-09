@@ -53,6 +53,35 @@ section[id], h2[id] { scroll-margin-top: 90px; }
 .replay-list { max-height: 300px; overflow: auto; list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
 .replay-list li { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; font-size: 12px; }
 .replay-list .seq { margin-right: 10px; }
+.business-specialists { border-top: 4px solid #0f766e; }
+.business-specialist-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 15px; list-style: none; padding: 0; margin: 18px 0; }
+.business-specialist-card { position: relative; min-width: 0; border: 1px solid #d9e5e4; border-radius: 11px; background: #fbfdfc; padding: clamp(16px,2vw,23px); box-shadow: 0 3px 12px rgb(15 23 42 / 3%); }
+.business-specialist-card:not(:nth-child(2n+1))::before { content: '→'; position: absolute; left: -13px; top: 19px; font-weight: 800; color: #0f766e; }
+.business-card-top { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.business-specialist-card h3 { margin: 15px 0 9px; font-size: clamp(17px,2vw,21px); line-height: 1.3; }
+.business-specialist-card .status { text-align: right; }
+.business-summary { min-height: 46px; line-height: 1.55; font-weight: 600; }
+.business-specialist-card details,.business-evidence details { border-top: 1px solid #e2e8f0; margin-top: 14px; padding-top: 11px; }
+.business-specialist-card summary,.business-evidence summary { color: #115e59; font-weight: 750; cursor: pointer; font-size: 13px; line-height: 1.5; }
+.business-specialist-card details p { margin: 9px 0; line-height: 1.55; font-size: 13px; overflow-wrap: anywhere; }
+.business-card-detail strong { display: block; margin: 11px 0 3px; color: #1e293b; }
+.business-card-detail ul { padding-left: 18px; margin: 7px 0; font-size: 13px; line-height: 1.8; }
+.business-card-detail a,.business-evidence a { color: #0f766e; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
+.technical-details { color: #475569; overflow-wrap: anywhere; }
+.technical-details summary { color: #475569 !important; font-weight: 600 !important; }
+.technical-details p,.technical-details li { font-size: 12px; line-height: 1.6; }
+.business-evidence { border-top: 4px solid #d97706; }
+.evidence-summary { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.evidence-summary > div { min-width: 0; border: 1px solid #e2e8f0; border-radius: 9px; padding: 20px; background: #f8fafc; }
+.evidence-summary > div:last-child { background: #fffbf3; border-color: #f3d6a7; }
+.evidence-summary h3 { font-size: 18px; margin: 0 0 14px; }
+.evidence-summary ul { list-style: none; padding: 0; margin: 0; }
+.evidence-summary li { padding: 11px 0; border-top: 1px solid #dce5e8; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.evidence-summary li strong { display: block; margin-bottom: 5px; color: #1e293b; }
+.evidence-summary li p { margin: 4px 0; }
+.evidence-summary li small { color: #475569; font-size: 12px; }
+.evidence-summary > div > p { margin: 16px 0 0; font-size: 13px; }
 @media(max-width:900px) { .capability-grid,.responsibility-flow ol { grid-template-columns: repeat(2,minmax(0,1fr)); } .responsibility-flow li::before { display: none; } .validation ul { grid-template-columns: repeat(3,minmax(0,1fr)); } }
-@media(max-width:600px) { .capability-grid,.responsibility-flow ol,.document-grid,.replay-list { grid-template-columns: 1fr; } .validation ul { grid-template-columns: repeat(2,minmax(0,1fr)); } .topbar .header-action { font-size: 11px; padding: 9px; } .document-grid dd { text-align: left; } }
+@media(max-width:780px) { .business-specialist-grid,.evidence-summary { grid-template-columns: 1fr; } .business-specialist-card::before { display: none; } }
+@media(max-width:600px) { .capability-grid,.responsibility-flow ol,.document-grid,.replay-list { grid-template-columns: 1fr; } .validation ul { grid-template-columns: repeat(2,minmax(0,1fr)); } .topbar .header-action { font-size: 11px; padding: 9px; } .document-grid dd { text-align: left; } .evidence-summary > div { padding: 16px; } }
 @media(prefers-reduced-motion:reduce) { html { scroll-behavior: auto; } }

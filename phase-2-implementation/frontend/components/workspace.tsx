@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { type EventDTO, type ReviewDTO, type StatusDTO, specialists } from '@/lib/contracts';
 import { ApiError, events, matchStatus, review, status } from './client';
-import { assessmentLabel, assessmentTone, findingTone, stageLabel } from '@/lib/presentation';
+import { assessmentLabel, assessmentTone, stageLabel } from '@/lib/presentation';
 import { DealRecord } from './deal-record';
 import { guideForCode } from '@/lib/scenario-guide';
 
@@ -27,28 +27,8 @@ export function DecisionBrief({ data }: { data: ReviewDTO }) {
     <p className="brief-boundary"><strong>Human handoff:</strong> {c ? 'Request customer acceptance of the changed date and human review.' : 'Request missing or current evidence and human review.'} {data.original.routing_roles_status === 'unavailable_while_route_withheld' ? 'Routing is withheld.' : `Routing status: ${label(data.original.routing_roles_status)}.`} {c && 'No stock is reserved.'} No approval is granted here.</p>
   </section>;
 }
-export function SpecialistMatrix({ data, rows, scenario }: { data: ReviewDTO | null; rows: EventDTO[]; scenario?: string }) {
-  return <section className="panel specialist-panel" aria-labelledby="specialists"><div className="section-heading"><div><span className="eyebrow">02 / ORIGINAL SUBJECT · V0</span><h2 id="specialists">Six specialist responsibilities</h2></div><span className="pill">Two kinds of evidence</span></div><p className="section-guide">The left column reports fixed checks. The right reports original-subject offline-scripted execution, citations and gaps. A completed stage does not mean the deal passed.</p><div className="matrix-head" aria-hidden="true"><span>SPECIALIST</span><span>DETERMINISTIC CHECK · ORIGINAL</span><span>OFFLINE-SCRIPTED STAGE · ORIGINAL</span></div>{specialists.map((name, i) => {
-    const fixed = rows.some(e => e.kind === 'fixed_completed' && e.stage === name);
-    const ai = rows.some(e => e.kind === 'ai_completed' && e.stage === name);
-    const finding = data?.original.specialists[name];
-    // Review is returned only after completion; do not display a projected
-    // finding before the persisted event for that particular stage is replayed.
-    const fixedFinding = fixed ? finding : null;
-    const scriptedFinding = ai ? finding : null;
-    return <div className="matrix-row" key={name}><div className="matrix-name"><span className="index">0{i+1}</span><strong>{names[name]}</strong></div><div className="matrix-cell"><span className="mobile-column">DETERMINISTIC CHECK</span><span className={`status ${fixed ? 'checked' : 'muted'}`}>{fixed ? 'Check ran' : 'Pending'}</span>{fixedFinding && <p className={`finding-text ${findingTone(fixedFinding.fixed_finding)}`}>{label(fixedFinding.fixed_finding)}</p>}{fixedFinding && fixedFinding.fixed_rule_ids.length > 0 && <small>Rules: {fixedFinding.fixed_rule_ids.join(', ')}</small>}</div><div className="matrix-cell"><span className="mobile-column">OFFLINE-SCRIPTED STAGE</span><span className={`status ${scriptedFinding?.ai_original_execution === 'abstained' ? 'warning' : ai ? 'checked' : 'muted'}`}>{scriptedFinding ? label(scriptedFinding.ai_original_execution || 'not available') : ai ? 'Checkpointed · outcome pending review' : 'Pending'}</span>{scriptedFinding && scriptedFinding.ai_original_citations.length > 0 && <small>Validated refs: {scriptedFinding.ai_original_citations.map((c,i) => <span key={`${c.ref}-${c.field}`}>{i > 0 ? ", " : ""}{scenario ? <Link href={`/scenarios/${scenario === "B01/RC01" ? "rc01" : "uc02"}#deal-record`}>{c.ref} ({c.field})</Link> : `${c.ref} (${c.field})`}</span>)}</small>}{scriptedFinding && scriptedFinding.evidence_gaps.length > 0 && <small className="gap-note">Missing information: {scriptedFinding.evidence_gaps.map(g => `${label(g.reason_code)} · ${label(g.requirement_id)}`).join('; ')}</small>}</div></div>;
-  })}<p className="footnote">“Completed” events confirm checkpointed execution, not a positive finding. Abstentions and evidence gaps appear only in the validated review. The candidate, if present, receives six fixed checks—not six AI reruns.</p></section>;
-}
-export function EvidenceReview({ data }: { data: ReviewDTO }) {
-  const gaps = specialists.flatMap(name => data.original.specialists[name].evidence_gaps.map(gap => ({ name, gap })));
-  const rules = specialists.flatMap(name => data.original.specialists[name].fixed_rule_ids.map(rule => ({ name, rule })));
-  return <section className="panel evidence-panel" aria-labelledby="evidence-heading">
-    <div className="section-heading"><div><span className="eyebrow">03 / EVIDENCE &amp; RULES</span><h2 id="evidence-heading">What the source supports</h2></div><span className="pill">Original request</span></div>
-    <p className="section-guide">Only validated references returned by this review are shown. No listed gap does not imply clearance.</p>
-    <div className="evidence-grid"><div><h3>Missing or uncertain evidence</h3>{gaps.length ? <ul>{gaps.map(({name,gap},i) => <li key={`${name}-${i}`}><strong>{names[name]} · {label(gap.reason_code)}</strong><span>{label(gap.requirement_id)} · next: {label(gap.next_action_code)}</span></li>)}</ul> : <p>No specialist gap entries returned for the original. Inspect the fixed findings before taking action.</p>}</div>
-      <div><h3>Fixed rule references</h3>{rules.length ? <ul>{rules.map(({name,rule},i) => <li key={`${name}-${i}`}><strong>{names[name]}</strong><span>{rule}</span></li>)}</ul> : <p>No fixed rule identifiers returned for the original.</p>}{data.original.blockers.length > 0 ? <p className="evidence-callout">Blocking findings: {data.original.blockers.map(b => label(b.code)).join(' · ')}. No override is available here.</p> : null}</div></div>
-  </section>;
-}
+export { SpecialistMatrix, EvidenceReview } from './business-findings';
+import { SpecialistMatrix, EvidenceReview } from './business-findings';
 export function Comparison({ data }: { data: ReviewDTO }) {
   const c = data.candidate_comparison; const candidate = data.candidate;
   if (!c || !candidate) return <section className="panel" aria-labelledby="comparison"><span className="eyebrow">LOOP 2 · CANDIDATE EVALUATION</span><h2 id="comparison">No verified candidate</h2><p>No alternative was verified for this assessment. Fixed Credit is {label(data.original.specialists.credit.fixed_finding)}; {data.original.specialists.credit.ai_original_execution === 'completed' ? 'a completed offline-scripted observation is not clearance' : data.original.specialists.credit.ai_original_execution === 'abstained' ? 'the offline-scripted Credit observation abstained' : 'no offline-scripted Credit outcome is available'}.</p><p>Evidence gaps: {data.original.specialists.credit.evidence_gaps.map(g => label(g.reason_code)).join(', ') || 'none reported'}.</p></section>;

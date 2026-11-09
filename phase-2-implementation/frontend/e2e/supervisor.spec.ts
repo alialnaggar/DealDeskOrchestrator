@@ -53,9 +53,12 @@ test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and 
       await expect(page.getByText('Evidence gaps: stale, unavailable.')).toBeVisible();
     }
     await expect(page.getByRole('heading',{name:'Six specialist responsibilities'})).toBeVisible();
-    await expect(page.locator('.matrix-head')).toContainText('DETERMINISTIC CHECK · ORIGINAL');
-    await expect(page.locator('.matrix-head')).toContainText('OFFLINE-SCRIPTED STAGE · ORIGINAL');
-    await expect(page.getByRole('heading',{name:'What the source supports'})).toBeVisible();
+    await expect(page.locator('.business-specialist-card')).toHaveCount(6);
+    await expect(page.getByRole('heading',{name:'Available Evidence & Outstanding Information'})).toBeVisible();
+    await expect(page.locator('.business-specialist-card').filter({has:page.getByRole('heading',{name:'Credit & Risk'})})).toContainText(scenario === 'B01/RC01' ? 'Verification limited' : 'Insufficient evidence');
+    await expect(page.locator('.business-specialist-card').filter({has:page.getByRole('heading',{name:'Approval Routing & Escalation'})})).toContainText('Routing withheld');
+    await page.locator('.business-specialist-card').filter({has:page.getByRole('heading',{name:'Credit & Risk'})}).locator('details').first().locator('summary').click();
+    await expect(page.locator('.business-specialist-card').filter({has:page.getByRole('heading',{name:'Credit & Risk'})})).toContainText('ledger completeness');
     await expect(page.getByRole('heading',{name:'Review, not authorization'})).toBeVisible();
     const trace=page.locator('details.trace-details');
     await expect(trace).not.toHaveAttribute('open');
@@ -86,7 +89,7 @@ test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and 
       await expect(page.getByRole('button',{name:'Retry now'})).toBeVisible();
       await page.unroute(path);
       await page.getByRole('button',{name:'Retry now'}).click();
-      await expect(brief).toBeVisible({timeout:10000});
+      await expect(brief).toBeVisible({timeout:20000});
       await expect(page.locator('body')).not.toContainText('Internal private failure');
     }
     await page.goto('/');

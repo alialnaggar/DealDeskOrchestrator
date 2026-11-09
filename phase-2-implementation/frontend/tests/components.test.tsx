@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 import { Review, type EventDTO } from '../lib/contracts';
 import { Comparison, DecisionBrief, EvidenceReview, HumanReview, SpecialistMatrix, Timeline } from '../components/workspace';
 import { assessmentLabel, assessmentTone } from '../lib/presentation';
 import { finding, names, original, sample } from './fixture';
 const parsed = Review.parse(sample);
+afterEach(cleanup);
 describe('business presentation', () => {
   it('distinguishes no candidate from unknown fixed Credit and completed AI', () => {
     render(<Comparison data={parsed}/>);
@@ -23,8 +24,9 @@ describe('business presentation', () => {
   it('does not turn checkpointed AI into a positive finding', () => {
     const event: EventDTO = { assessment_id:sample.assessment_id,sequence:1,kind:'ai_completed',stage:'credit',occurred_at:'2026-11-08T12:00:00Z' };
     const { container } = render(<SpecialistMatrix data={null} rows={[event]}/>);
-    expect(container.textContent).toContain('Checkpointed · outcome pending review');
-    expect(container.textContent).toContain('Pending');
+    expect(container.textContent).toContain('recorded; outcome awaiting review');
+    expect(container.textContent).toContain('Awaiting recorded check');
+    expect(container.textContent).not.toContain('Insufficient evidence');
   });
   it('shows six deterministic candidate checks, unreserved supply and pending acceptance', () => {
     const candidate = {...original,subject_kind:'candidate',subject_id:'C1',specialists:Object.fromEntries(names.map(n => [n,{...finding,ai_original_execution:null}]))};
@@ -81,8 +83,32 @@ describe('business presentation', () => {
     const gap = {requirement_id:'current_credit',reason_code:'stale',verification:'unknown',impact_code:'blocked',next_action_code:'request_current_evidence'};
     const data = Review.parse({...sample,original:{...original,specialists:{...original.specialists,credit:{...finding,fixed_rule_ids:['CR-1'],evidence_gaps:[gap]}}}});
     const {container} = render(<EvidenceReview data={data}/>);
-    expect(container.textContent).toContain('Credit & risk · stale');
-    expect(container.textContent).toContain('request current evidence');
+    expect(container.textContent).toContain('Credit & Risk · Source evidence needs attention');
+    expect(container.textContent).toContain('An unresolved stale information item');
     expect(container.textContent).toContain('CR-1');
+  });
+  it('keeps an interface limit distinct from stale business evidence', () => {
+    const gaps = [
+      {requirement_id:'credit_commitments_fresh',reason_code:'stale',verification:'verified',impact_code:'credit_uncertain',next_action_code:'request_evidence'},
+      {requirement_id:'credit_ledger_completeness',reason_code:'unavailable',verification:'interface_limit',impact_code:'credit_uncertain',next_action_code:'seek_source_contract'}
+    ];
+    const data=Review.parse({...sample,original:{...original,specialists:{...original.specialists,credit:{...finding,fixed_finding:'unknown',evidence_gaps:gaps}}}});
+    render(<EvidenceReview data={data}/>);
+    expect(screen.getByRole('heading',{name:'Available Evidence & Outstanding Information'})).toBeTruthy();
+    expect(screen.getByText(/Credit commitments are dated rather than current/)).toBeTruthy();
+    expect(screen.getByText(/Credit-ledger completeness cannot be established from this assessment interface/)).toBeTruthy();
+    expect(screen.getByText(/This does not say the customer failed a credit check/)).toBeTruthy();
+  });
+  it('does not reveal a fixed finding or scripted citation before its own recorded event', () => {
+    const data=Review.parse({...sample,original:{...original,lines:[{line_id:'M18-L-B01',quantity:10}],specialists:{...original.specialists,configuration:{...finding,fixed_finding:'confirmed',ai_original_citations:[{ref:'product:M18-P-B01',field:'is_sellable'}]}}}});
+    const fixed:EventDTO={assessment_id:data.assessment_id,sequence:1,kind:'fixed_completed',stage:'configuration',occurred_at:'2026-11-09T00:00:00Z'};
+    const ai:EventDTO={...fixed,sequence:2,kind:'ai_completed'};
+    const pending=render(<SpecialistMatrix data={data} rows={[]}/>);
+    expect(pending.container.textContent).not.toContain('selected product and configuration have no blocker');
+    pending.rerender(<SpecialistMatrix data={data} rows={[fixed]}/>);
+    expect(pending.container.textContent).toContain('selected product and configuration have no blocker');
+    expect(pending.container.textContent).not.toContain('product:M18-P-B01');
+    pending.rerender(<SpecialistMatrix data={data} rows={[fixed,ai]}/>);
+    expect(pending.container.textContent).toContain('product:M18-P-B01');
   });
 });
