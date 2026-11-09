@@ -121,19 +121,22 @@ def blank_case(row, scope_sha):
 
 
 def template(index, scope_pins, *, schema_version=2):
-    if schema_version not in (1, 2):
+    if schema_version not in (1, 2, 3):
         refuse("Unsupported review schema version")
     rows = {r["case_id"]: r for r in index["cases"]}
     reviewer = {"identity": None, "role": None, "reviewed_at": None,
                 "source_first_attestation": False, "prior_ai_answer_exposure": None,
                 "ai_assistance_used": None, "assistance_details": None,
                 "independence_limitations": None}
-    if schema_version == 2:
+    if schema_version >= 2:
         reviewer.update({"review_date": None, "review_timezone": None})
-    return {"schema_version": schema_version, "status": "human_first_pass_private_not_accepted",
+    result = {"schema_version": schema_version, "status": "human_first_pass_private_not_accepted",
             "index_sha256": d9.d8.PIN,
             "reviewer": reviewer,
             "cases": [blank_case(rows[cid], scope_pins[cid]["scope_sha256"]) for cid in IDS]}
+    if schema_version == 3:
+        result["case_review_provenance"] = {}
+    return result
 
 
 def checked_sources(root, packets=None):
@@ -211,7 +214,7 @@ def validate(form, root, workspace, *, require_complete=False):
     private_existing(workspace)
     index, pins, scopes = checked_sources(root)
     version = form.get("schema_version") if isinstance(form, dict) else None
-    if type(version) is not int or version not in (1, 2):
+    if type(version) is not int or version not in (1, 2, 3):
         refuse("Unsupported review schema version")
     blank = template(index, pins, schema_version=version)
     if not isinstance(form, dict) or set(form) != set(blank) or any(form[k] != blank[k] for k in ("schema_version", "status", "index_sha256")):
@@ -228,10 +231,28 @@ def validate(form, root, workspace, *, require_complete=False):
             if not text(reviewer[field]):
                 refuse("Reviewer identity, role and assistance/independence disclosures required")
         review_provenance(reviewer, version)
-        if (reviewer["source_first_attestation"] is not True or
-                type(reviewer["prior_ai_answer_exposure"]) is not bool or
-                type(reviewer["ai_assistance_used"]) is not bool):
-            refuse("Explicit source-first attestation and prior-exposure/assistance disclosures required")
+        if version < 3:
+            if (reviewer["source_first_attestation"] is not True or
+                    type(reviewer["prior_ai_answer_exposure"]) is not bool or
+                    type(reviewer["ai_assistance_used"]) is not bool):
+                refuse("Explicit source-first attestation and prior-exposure/assistance disclosures required")
+        elif (reviewer["source_first_attestation"] is not False or
+              reviewer["prior_ai_answer_exposure"] is not None or
+              reviewer["ai_assistance_used"] is not True):
+            refuse("Mixed-method review must use case-level exposure and source-first provenance")
+    if version == 3:
+        provenance = form["case_review_provenance"]
+        if (not isinstance(provenance, dict) or
+                set(provenance) != {c["case_id"] for c in cases if c["review_state"] == "draft_complete"}):
+            refuse("Case-level provenance must match completed drafts")
+        for entry in provenance.values():
+            if (not isinstance(entry, dict) or
+                    set(entry) != {"source_first_attestation", "prior_ai_answer_exposure", "ai_assistance_used", "method"} or
+                    type(entry["source_first_attestation"]) is not bool or
+                    (entry["prior_ai_answer_exposure"] is not None and
+                     type(entry["prior_ai_answer_exposure"]) is not bool) or
+                    entry["ai_assistance_used"] is not True or not text(entry["method"])):
+                refuse("Incomplete per-case author review provenance")
     rows = {r["case_id"]: r for r in index["cases"]}
     for case, empty in zip(cases, blank["cases"]):
         cid = case["case_id"]
@@ -329,8 +350,8 @@ def freeze(form_path, workspace, root, outdir, reviewer_name):
                "reviewer_identity_claim": reviewer_name, "reviewed_at": form["reviewer"]["reviewed_at"],
                "frozen_at": datetime.now(timezone.utc).isoformat(), "source_root_index_sha256": d9.d8.PIN,
                "case_ids": list(IDS), "independence_certified": False, "accepted": 0}
-    if form["schema_version"] == 2:
-        receipt.update({"review_provenance_version": 2, "review_date": form["reviewer"]["review_date"],
+    if form["schema_version"] >= 2:
+        receipt.update({"review_provenance_version": form["schema_version"], "review_date": form["reviewer"]["review_date"],
                         "review_timezone": form["reviewer"]["review_timezone"]})
     write_new(out / "receipt.json", receipt)
     return result | {"frozen_sha256": receipt["source_sha256"], "status": receipt["status"]}
@@ -350,11 +371,11 @@ def verify_freeze(out, root, workspace):
         refuse("Frozen first pass changed or receipt invalid")
     form = json.loads(form_path.read_text())
     version = form.get("schema_version")
-    if (version == 1 and set(receipt) != legacy_keys or version == 2 and
-            (set(receipt) != v2_keys or receipt["review_provenance_version"] != 2 or
+    if (version == 1 and set(receipt) != legacy_keys or version in (2, 3) and
+            (set(receipt) != v2_keys or receipt["review_provenance_version"] != version or
              receipt["review_date"] != form["reviewer"].get("review_date") or
              receipt["review_timezone"] != form["reviewer"].get("review_timezone")) or
-            version not in (1, 2) or receipt["reviewer_identity_claim"] != form["reviewer"]["identity"] or
+            version not in (1, 2, 3) or receipt["reviewer_identity_claim"] != form["reviewer"]["identity"] or
             receipt["reviewed_at"] != form["reviewer"]["reviewed_at"]):
         refuse("Frozen reviewer metadata differs")
     validate(form, root, workspace, require_complete=True)

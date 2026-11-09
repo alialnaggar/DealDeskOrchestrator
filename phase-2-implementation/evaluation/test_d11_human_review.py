@@ -198,6 +198,31 @@ class WorkflowTests(unittest.TestCase):
         d11.freeze(old_path, self.workspace, ROOT, old_dir, old["reviewer"]["identity"])
         self.assertNotIn("review_date", d11.verify_freeze(old_dir, ROOT, self.workspace))
 
+    def test_mixed_method_case_provenance_without_global_source_first_claim(self):
+        form = self.synthetic_complete()
+        form["schema_version"] = 3
+        form["reviewer"].update(source_first_attestation=False, prior_ai_answer_exposure=None, ai_assistance_used=True,
+                                reviewed_at=None, review_date="2026-11-09", review_timezone="Africa/Cairo")
+        form["case_review_provenance"] = {
+            case["case_id"]: {"source_first_attestation": i == 0,
+                              "prior_ai_answer_exposure": False if i == 0 else None,
+                              "ai_assistance_used": True, "method": "Synthetic mixed-method fixture; not human"}
+            for i, case in enumerate(form["cases"])}
+        self.assertEqual(d11.validate(form, ROOT, self.workspace, require_complete=True)["complete_drafts_not_accepted"], 6)
+        for mutation in (lambda x: x["case_review_provenance"].pop(x["cases"][1]["case_id"]),
+                         lambda x: x["case_review_provenance"][x["cases"][1]["case_id"]].update(
+                             source_first_attestation=None),
+                         lambda x: x["reviewer"].update(source_first_attestation=True)):
+            bad = copy.deepcopy(form)
+            mutation(bad)
+            with self.assertRaises(ValueError):
+                d11.validate(bad, ROOT, self.workspace, require_complete=True)
+        path = self.parent / "mixed_method_fixture.json"
+        path.write_text(json.dumps(form))
+        frozen = self.parent / "mixed_method_fixture_freeze"
+        d11.freeze(path, self.workspace, ROOT, frozen, form["reviewer"]["identity"])
+        self.assertEqual(d11.verify_freeze(frozen, ROOT, self.workspace)["review_provenance_version"], 3)
+
     def test_blind_workspace_has_only_sources_and_blank_fields(self):
         files = {p.relative_to(self.workspace).as_posix() for p in self.workspace.rglob("*") if p.is_file()}
         expected = {"first_pass.json"} | {
