@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "contract_id": "DDO-D13-SIX-CASE-CREDIT-COMPOSITE-V1",
+  "status": "technical_candidate_only_no_adoption_or_acceptance",
+  "pilot_case_ids": ["EVAL-PREP-001", "EVAL-PREP-005", "EVAL-PREP-009", "EVAL-PREP-020", "EVAL-PREP-023", "EVAL-PREP-031"],
+  "base_v2_index_sha256": "7deac5b7a9337a49e3a64b60ca99cd1c0118bb9cfa61ea9abe73b3cacfa444dc",
+  "base_v2_source_definition_sha256": "1b7e0dffb3eaae8ee7c7e4bcd82aba0d55da11321198ce8c54e1581fae6740cc",
+  "base_v2_business_contract_sha256": "6e6990f014e061acd61039bdc128af753fc0116d4c1e7d60dafcdfb2108f7971",
+  "overlay_index_sha256": "443cf49cd124d88f1ce42e6d1383deb292b6ec4e5b5fe738a74da3593e6e31cf",
+  "overlay_scope_sha256": "7655c6f82dcbe8679f8d6369748c3a81e777b186e7c2b69ba9fe4b41076d711a",
+  "complete_zero_meaning": "Only the fictional isolated customer invoice population at the matched cutoff is declared complete; zero selected receivable and payment rows are not external proof of zero balance or good payment behavior.",
+  "incomplete_meaning": "Unknown AR and overdue state; no credit or policy clearance may be inferred from empty selected lists.",
+  "known_exposure_policy": "Positive quote and commitments are reported as a lower bound; whether they alone suffice for hard-cap adjudication without adopted completeness or possible offsets remains a separate author/academic decision.",
+  "legacy_intake": "Unchanged; this contract does not adopt Credit v3 for Phase 1C v2 or Phase 2 runtime."
+}
