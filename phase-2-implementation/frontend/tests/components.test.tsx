@@ -47,7 +47,7 @@ describe('business presentation', () => {
   });
   it('shows validated abstention and evidence gap, withholds routing and leaves actions human-only', () => {
     const review = Review.parse({...sample, original:{...sample.original,specialists:{...sample.original.specialists,credit:{...sample.original.specialists.credit,ai_original_execution:'abstained',evidence_gaps:[{requirement_id:'credit_source',reason_code:'stale',verification:'deterministic',impact_code:'unknown',next_action_code:'review'}]}}}});
-    const { container } = render(<><SpecialistMatrix data={review} rows={[]}/><HumanReview data={review}/></>);
+    const { container } = render(<><SpecialistMatrix data={review} rows={[{assessment_id:review.assessment_id,sequence:1,occurred_at:'2026-11-09T00:00:00Z',kind:'fixed_completed',stage:'credit'},{assessment_id:review.assessment_id,sequence:2,occurred_at:'2026-11-09T00:00:01Z',kind:'ai_completed',stage:'credit'}]}/><HumanReview data={review}/></>);
     expect(container.textContent).toContain('abstained'); expect(container.textContent).toContain('stale'); expect(container.textContent).toContain('route withheld'); expect(container.textContent).toContain('human only not granted');
     expect(screen.queryByRole('button', {name:/approve|reserve|accept/i})).toBeNull();
   });

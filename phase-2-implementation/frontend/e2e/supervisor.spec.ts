@@ -4,7 +4,7 @@ test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and 
   test.setTimeout(180000);
   const root = process.env.DEALDESK_E2E_BASE_URL || 'http://127.0.0.1:3000';
   await page.goto('/');
-  await expect(page.getByRole('heading',{name:'Intelligent deal assessment.'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'From request to responsible decision.'})).toBeVisible();
   await expect(page.locator('.specialist-node')).toHaveCount(6);
   if (root === 'https://dealdeskdemo.duckdns.org') {
     await expect(page.getByLabel('Operator password')).toHaveCount(0);
@@ -15,8 +15,8 @@ test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and 
     await page.getByLabel('Operator password').fill(process.env.DEALDESK_UI_PASSWORD!);
     await page.getByRole('button', { name:/Enter workspace/ }).click();
   }
-  await expect(page.getByRole('heading',{name:'Explore two synthetic scenarios'})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Run B01/RC01 offline assessment'})).toBeEnabled();
+  await expect(page.getByRole('heading',{name:'Explore Scenarios'})).toBeVisible();
+  await expect(page.getByRole('link',{name:'Explore Scenario B01/RC01'})).toBeEnabled();
   await page.screenshot({path:'/tmp/opencode/dealdesk-home-desktop.png',fullPage:true});
   for (const [width, columns, suffix] of [[820,2,'tablet'],[390,1,'mobile']] as const) {
     await page.setViewportSize({width,height:900});
@@ -30,7 +30,11 @@ test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and 
   await page.emulateMedia({reducedMotion:'reduce'});
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
   for (const [scenario, count] of [['B01/RC01',21],['N01/UC02',20]] as const) {
-    await page.getByRole('button',{name:`Run ${scenario} offline assessment`}).click();
+    await page.getByRole('link',{name:`Explore Scenario ${scenario}`}).click();
+    await expect(page.getByRole('heading',{name:'Structured deal record'})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'Six specialists, one governed assessment'})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'No verified candidate'})).toHaveCount(0);
+    await page.getByRole('button',{name:/Run Assessment/}).click();
     await expect(page).toHaveURL(/\/assessments\/[0-9a-f]{32}/);
     const id=page.url().split('/').at(-1)!;
     await expect(page.getByRole('heading',{name:scenario === 'B01/RC01' ? 'A later delivery needs the customer’s decision' : 'Evidence is insufficient for a verified alternative'})).toBeVisible({timeout:120000});

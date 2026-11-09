@@ -6,25 +6,28 @@ async function enterDemo(page: import('@playwright/test').Page) {
     await page.getByLabel('Operator password').fill(process.env.DEALDESK_UI_PASSWORD!);
     await page.getByRole('button',{name:/Enter workspace/}).click();
   }
-  await expect(page.getByRole('button',{name:'Run B01/RC01 offline assessment'})).toBeEnabled();
+  await expect(page.getByRole('link',{name:'Explore Scenario B01/RC01'})).toBeVisible();
 }
 
 test('operator session, CSRF, fresh RC01 and UC02, persisted recovery and no secrets', async ({page,request}) => {
   const unauth = await request.get(`${base}/api/assessments/${'a'.repeat(32)}/status`); expect(unauth.status()).toBe(401);
   const noCsrfLogin = await request.post(`${base}/api/auth/login`, { data:{ password:'not-a-valid-password' }, headers:{Origin:base} }); expect([403,404]).toContain(noCsrfLogin.status());
   await enterDemo(page);
+  await page.evaluate(async () => { await fetch('/api/auth/csrf'); });
   const loginCookie = (await page.context().cookies()).find(c => c.name === 'dd_operator'); expect(loginCookie?.httpOnly).toBe(true); expect(loginCookie?.sameSite).toBe('Strict');
   const bad = await page.evaluate(async () => (await fetch('/api/assessments',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':'csrfattack123'},body:JSON.stringify({scenario:'B01/RC01'})})).status); expect(bad).toBe(403);
   const csrfValue = await page.evaluate(async () => (await (await fetch('/api/auth/csrf')).json()).csrf);
   const wrongOrigin = await page.request.post(`${base}/api/assessments`,{data:{scenario:'B01/RC01'},headers:{'X-CSRF-Token':csrfValue,'Idempotency-Key':'originattack123','Origin':'http://evil.invalid'}}); expect(wrongOrigin.status()).toBe(403);
   for(const [index, count] of [[0,21],[1,20]] as const) {
-    await page.getByRole('button',{name:`Run ${index===0?'B01/RC01':'N01/UC02'} offline assessment`}).click();
+    await page.getByRole('link',{name:`Explore Scenario ${index===0?'B01/RC01':'N01/UC02'}`}).click();
+     await expect(page.getByRole('heading',{name:'Structured deal record'})).toBeVisible();
+     await page.getByRole('button',{name:/Run Assessment/}).click();
     await expect(page).toHaveURL(/\/assessments\/[0-9a-f]{32}/);
     const id = page.url().split('/').at(-1)!;
     console.log(index===0 ? 'RC01 assessment:' : 'UC02 assessment:',id);
     await expect(page.getByText('EVENTS RECORDED').locator('..').locator('strong')).toHaveText(String(count),{timeout:120000});
     await expect(page.getByRole('heading',{name:'Six specialist responsibilities'})).toBeVisible();
-    await expect(page.getByRole('heading',{name: index === 0 ? 'A supported schedule is not an accepted deal.' : 'No verified candidate'})).toBeVisible();
+    await expect(page.getByRole('heading',{name: index === 0 ? 'Original Deal | Revised Candidate' : 'No verified candidate'})).toBeVisible();
     if(index===0) { await expect(page.getByText('supply supported unreserved',{exact:true})).toBeVisible(); await expect(page.getByText('Customer acceptance: pending',{exact:true})).toBeVisible(); await expect(page.getByText('Candidate deterministic checks · V1 only')).toBeVisible(); }
     else await expect(page.getByText(/completed offline-scripted observation is not clearance/)).toBeVisible();
     await page.reload(); await expect(page.getByText('EVENTS RECORDED').locator('..').locator('strong')).toHaveText(String(count),{timeout:120000});
@@ -57,7 +60,7 @@ test('operator session, CSRF, fresh RC01 and UC02, persisted recovery and no sec
   }
   for(const width of [390,768,1440]) {
     await page.setViewportSize({width,height:844});
-    await expect(page.getByRole('heading',{name:'Explore two synthetic scenarios'})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'Explore Scenarios'})).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
   await page.keyboard.press('Tab'); expect(await page.evaluate(()=>document.activeElement?.tagName)).not.toBe('BODY');
@@ -68,7 +71,8 @@ test('operator session, CSRF, fresh RC01 and UC02, persisted recovery and no sec
 
 test('browser hides stale decisions on interruption, invalid response and expired session', async ({page}) => {
   await enterDemo(page);
-  await page.getByRole('button',{name:'Run N01/UC02 offline assessment'}).click();
+  await page.getByRole('link',{name:'Explore Scenario N01/UC02'}).click();
+  await page.getByRole('button',{name:/Run Assessment/}).click();
   await expect(page).toHaveURL(/\/assessments\/[0-9a-f]{32}/);
   const id=page.url().split('/').at(-1)!;
   await expect(page.getByRole('heading',{name:'No verified candidate'})).toBeVisible({timeout:120000});
@@ -77,12 +81,12 @@ test('browser hides stale decisions on interruption, invalid response and expire
   await expect(page.getByRole('alert').filter({hasText:'Retrying; review withheld'})).toBeVisible({timeout:10000});
   await expect(page.getByRole('heading',{name:'No verified candidate'})).toHaveCount(0);
   await page.unroute(path);
-  await expect(page.getByRole('heading',{name:'No verified candidate'})).toBeVisible({timeout:10000});
+  await expect(page.getByRole('heading',{name:'No verified candidate'})).toBeVisible({timeout:20000});
   await page.route(path,route=>route.fulfill({status:200,contentType:'application/json',body:'{"raw_checkpoint":"PRIVATE-TRACE"}'}));
   await expect(page.getByRole('alert').filter({hasText:'response inconsistent'})).toBeVisible({timeout:10000});
   await expect(page.locator('body')).not.toContainText('PRIVATE-TRACE');
   await page.unroute(path);
-  await expect(page.getByRole('heading',{name:'No verified candidate'})).toBeVisible({timeout:10000});
+  await expect(page.getByRole('heading',{name:'No verified candidate'})).toBeVisible({timeout:20000});
   await page.context().clearCookies();
   await page.reload();
   await expect(page.getByRole('alert').filter({hasText:'Operator session expired'})).toBeVisible();

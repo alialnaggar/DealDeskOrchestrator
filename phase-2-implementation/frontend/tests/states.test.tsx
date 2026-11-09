@@ -30,8 +30,21 @@ describe('failure-state UI', () => {
     vi.mocked(events).mockResolvedValue([]);
     render(<Workspace id={id}/>);
     expect(await screen.findByText(/Execution uncertain. No automatic replay/)).toBeTruthy();
-    expect(screen.getByText('Not yet available')).toBeTruthy();
+    expect(screen.getByText('0 of 0 recorded milestones shown')).toBeTruthy();
     expect(screen.queryByText('No verified candidate')).toBeNull();
+  });
+  it('withholds final conclusions until the persisted review-ready event is replayed', async () => {
+    const data = Review.parse(sample);
+    vi.mocked(status).mockResolvedValue({ version:'demo-api-v1',assessment_id:id,scenario:'N01/UC02',mode:'offline_scripted',status:'completed',last_sequence:2,phase1c_pin:data.phase1c_pin });
+    vi.mocked(events).mockResolvedValue([
+      {assessment_id:id,sequence:1,occurred_at:'2026-11-09T00:00:00Z',kind:'accepted',stage:null},
+      {assessment_id:id,sequence:2,occurred_at:'2026-11-09T00:00:01Z',kind:'review_ready',stage:'review'}
+    ]);
+    vi.mocked(review).mockResolvedValue(data);
+    render(<Workspace id={id}/>);
+    expect(await screen.findByRole('heading',{name:'Assessment timeline'})).toBeTruthy();
+    expect(screen.queryByRole('heading',{name:'Review, not authorization'})).toBeNull();
+    expect(await screen.findByRole('heading',{name:'Review, not authorization'}, {timeout:3000})).toBeTruthy();
   });
   it('withholds stale-source results on 409', async () => {
     vi.mocked(status).mockRejectedValue(new ApiError(409,'Source changed'));
@@ -55,7 +68,7 @@ describe('failure-state UI', () => {
     vi.mocked(events).mockResolvedValue([{assessment_id:id,sequence:1,occurred_at:'2026-11-08T12:00:00Z',kind:'review_ready',stage:'review'}]);
     vi.mocked(review).mockResolvedValue(Review.parse(sample));
     render(<Workspace id={id}/>);
-    expect(await screen.findByText('No verified candidate')).toBeTruthy();
+    expect(await screen.findByRole('heading',{name:'No verified candidate'})).toBeTruthy();
     expect(screen.getByRole('heading',{name:'Review, not authorization'})).toBeTruthy();
   });
   it('hides a completed decision during a polling outage, then restores it', async () => {
@@ -64,10 +77,10 @@ describe('failure-state UI', () => {
     vi.mocked(events).mockResolvedValueOnce([{assessment_id:id,sequence:1,occurred_at:'2026-11-08T12:00:00Z',kind:'review_ready',stage:'review'}]).mockResolvedValue([]);
     vi.mocked(review).mockResolvedValue(Review.parse(sample));
     const {container} = render(<Workspace id={id}/>);
-    expect(await screen.findByText('No verified candidate')).toBeTruthy();
+    expect(await screen.findByRole('heading',{name:'No verified candidate'})).toBeTruthy();
     expect(await screen.findByRole('alert',{}, {timeout:4000})).toHaveProperty('textContent',expect.stringContaining('Retrying; review withheld'));
     expect(container.textContent).not.toContain('PRIVATE-DSN-DO-NOT-ECHO');
-    expect(screen.queryByText('No verified candidate')).toBeNull();
-    expect(await screen.findByText('No verified candidate',{}, {timeout:4000})).toBeTruthy();
+    expect(screen.queryByRole('heading',{name:'No verified candidate'})).toBeNull();
+    expect(await screen.findByRole('heading',{name:'No verified candidate'}, {timeout:4000})).toBeTruthy();
   }, 10000);
 });
