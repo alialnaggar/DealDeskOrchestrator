@@ -75,7 +75,7 @@ export function Workspace({ id }: { id: string }) {
       setState(null); setRows([]); setData(null); setLoading(false);
       const code = e instanceof ApiError ? e.status : 0;
       setNeedsLogin(code === 401);
-      setError(code === 401 ? 'Operator session expired. Sign in again to view this assessment.'
+      setError(code === 401 ? 'Operator session expired. Return to the homepage to refresh your demo session.'
         : code === 403 ? 'Access refused. Check the local operator session.'
         : code === 404 ? 'Assessment not found or unavailable to this operator.'
         : code === 409 ? 'Source evidence changed or review is unavailable. Display withheld; inspect the offline API.'
@@ -85,7 +85,7 @@ export function Workspace({ id }: { id: string }) {
   }, [id]);
   useEffect(() => { let active = true; const run = () => { if (active) void refresh(); }; run(); const timer = setInterval(run, 2500); return () => { active = false; clearInterval(timer); }; }, [refresh]);
   return <main id="main-content" className="workspace"><div className="back"><Link href="/">← All scenarios</Link><span> / ASSESSMENT WORKSPACE</span></div><section className="workspace-hero"><div><span className="eyebrow">SOURCE-GROUNDED / SUPERVISOR VIEW</span><h1>{!state ? 'Assessment workspace' : state.scenario === 'N01/UC02' ? 'Credit uncertainty' : 'Delivery revision'}</h1><p>Assessment <code>{id}</code> · Offline-scripted synthetic fixture</p></div><span aria-live="polite" className={`large-status tone-${state ? assessmentTone[state.status] : error ? 'caution' : 'info'}`}>{state ? assessmentLabel[state.status] : error ? 'Review withheld' : 'Loading'}</span></section>
-  {loading && <div role="status" className="panel">Loading persisted status and events…</div>}{error && <div className="error panel" role="alert">{error} {needsLogin ? <Link href="/">Return to operator login</Link> : <button type="button" className="retry" onClick={() => void refresh()}>Retry now</button>}</div>}
+  {loading && <div role="status" className="panel">Loading persisted status and events…</div>}{error && <div className="error panel" role="alert">{error} {needsLogin ? <Link href="/">Return to homepage</Link> : <button type="button" className="retry" onClick={() => void refresh()}>Retry now</button>}</div>}
   {state && <><div className="summary"><div><span>BUSINESS OUTCOME</span><strong>{data ? label(data.original.business_status) : 'Awaiting validated review'}</strong></div><div><span>EVENTS RECORDED</span><strong>{state.last_sequence}</strong></div><div><span>CANDIDATE</span><strong>{data ? data.candidate ? '1 · deterministic checks' : 'None verified' : 'Not yet available'}</strong></div><div><span>AUTHORITY</span><strong>Human only</strong></div></div>{(state.status === 'stopped' || state.status === 'uncertain') && <div role="alert" className="panel warning-box">Execution {state.status}. No automatic replay; request a new assessment only after human inspection.</div>}{data && <DecisionBrief data={data}/>}<SpecialistMatrix data={data} rows={rows}/>{data && <><EvidenceReview data={data}/><Comparison data={data}/><HumanReview data={data}/></>}<details className="panel trace-details"><summary>Inspect technical trace · {rows.length} persisted events</summary><Timeline rows={rows} data={data} state={state}/></details></>}
   </main>;
 }

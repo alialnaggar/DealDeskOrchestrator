@@ -11,6 +11,17 @@ vi.mock('../components/client', async original => {
 import { csrf, json } from '../components/client';
 afterEach(() => { cleanup(); vi.resetAllMocks(); sessionStorage.clear(); });
 describe('scenario launch idempotency', () => {
+  it('shows the intended architecture and both public synthetic choices without a password form', async () => {
+    vi.mocked(csrf).mockResolvedValue({ csrf:'a'.repeat(64),authenticated:true });
+    render(<Landing publicAccess />);
+    expect(screen.getByRole('heading',{name:'Intelligent deal assessment.'})).toBeTruthy();
+    expect(screen.getByText('Multi-Agent Orchestrator')).toBeTruthy();
+    expect(screen.getByText('Human Decision')).toBeTruthy();
+    expect(screen.getByText(/not six independent live AI calls/)).toBeTruthy();
+    expect(screen.queryByLabelText('Operator password')).toBeNull();
+    expect(await screen.findByRole('button',{name:'Run B01/RC01 offline assessment'})).toHaveProperty('disabled',false);
+    expect(screen.getByRole('button',{name:'Run N01/UC02 offline assessment'})).toBeTruthy();
+  });
   it('does not double-submit rapid clicks and reuses the key after a lost response', async () => {
     vi.mocked(csrf).mockResolvedValue({ csrf: 'a'.repeat(64), authenticated: true });
     let rejectFirst: (error: Error) => void = () => {};

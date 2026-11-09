@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 const sessionName = 'dd_operator';
 const loginName = 'dd_login_csrf';
 const ttl = 8 * 60 * 60 * 1000;
+// Only the explicitly configured synthetic HTTPS deployment can issue public sessions.
+export function publicSyntheticDemo() { return process.env.DEALDESK_PUBLIC_SYNTHETIC_DEMO === '1' && process.env.DEALDESK_UI_ORIGIN === 'https://dealdeskdemo.duckdns.org'; }
 function secret() { const value = process.env.DEALDESK_UI_SESSION_SECRET; if (!value || value.length < 32) throw new Error('UI session secret missing'); return value; }
 function mac(value: string) { return createHmac('sha256', secret()).update(value).digest('hex'); }
 function same(a: string, b: string) { const x = Buffer.from(a); const y = Buffer.from(b); return x.length === y.length && timingSafeEqual(x, y); }
@@ -31,9 +33,10 @@ export function issueLogin(response: NextResponse) {
   const raw = issue('login'); response.cookies.set(loginName, raw, cookie(raw, ttl / 1000));
   return mac(`csrf.${raw.split('.')[1]}`);
 }
-export function issueSession(response: NextResponse) {
+export function issueSession(response: NextResponse, clearLogin = true) {
   const raw = issue('session'); response.cookies.set(sessionName, raw, cookie(raw, ttl / 1000));
-  response.cookies.delete(loginName);
+  if (clearLogin) response.cookies.delete(loginName);
+  return mac(`csrf.${raw.split('.')[1]}`);
 }
 export function clearSession(response: NextResponse) { response.cookies.delete(sessionName); }
 export function csrfToken(nonce: string) { return mac(`csrf.${nonce}`); }

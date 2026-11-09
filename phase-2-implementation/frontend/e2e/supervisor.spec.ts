@@ -4,11 +4,27 @@ test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and 
   test.setTimeout(180000);
   const root = process.env.DEALDESK_E2E_BASE_URL || 'http://127.0.0.1:3000';
   await page.goto('/');
-  await page.screenshot({path:'/tmp/opencode/dealdesk-launcher-login.png',fullPage:true});
-  await page.getByLabel('Operator password').fill(process.env.DEALDESK_UI_PASSWORD!);
-  await page.getByRole('button', { name:/Enter workspace/ }).click();
-  await expect(page.getByRole('heading',{name:'Choose a synthetic scenario'})).toBeVisible();
-  await page.screenshot({path:'/tmp/opencode/dealdesk-launcher-scenarios.png',fullPage:true});
+  await expect(page.getByRole('heading',{name:'Intelligent deal assessment.'})).toBeVisible();
+  await expect(page.locator('.specialist-node')).toHaveCount(6);
+  if (root === 'https://dealdeskdemo.duckdns.org') {
+    await expect(page.getByLabel('Operator password')).toHaveCount(0);
+    await expect(page.getByRole('button',{name:/sign in|log in|enter workspace/i})).toHaveCount(0);
+    expect((await page.request.post(`${root}/api/auth/login`,{data:{password:'public-mode-disabled'}})).status()).toBe(404);
+  }
+  if (await page.getByLabel('Operator password').count()) {
+    await page.getByLabel('Operator password').fill(process.env.DEALDESK_UI_PASSWORD!);
+    await page.getByRole('button', { name:/Enter workspace/ }).click();
+  }
+  await expect(page.getByRole('heading',{name:'Explore two synthetic scenarios'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Run B01/RC01 offline assessment'})).toBeEnabled();
+  await page.screenshot({path:'/tmp/opencode/dealdesk-home-desktop.png',fullPage:true});
+  for (const [width, columns, suffix] of [[820,2,'tablet'],[390,1,'mobile']] as const) {
+    await page.setViewportSize({width,height:900});
+    await expect.poll(() => page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(await page.locator('.specialist-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(columns);
+    await page.screenshot({path:`/tmp/opencode/dealdesk-home-${suffix}.png`,fullPage:true});
+  }
+  await page.setViewportSize({width:1440,height:900});
   await page.keyboard.press('Tab');
   await expect(page.locator(':focus')).toBeVisible();
   await page.emulateMedia({reducedMotion:'reduce'});

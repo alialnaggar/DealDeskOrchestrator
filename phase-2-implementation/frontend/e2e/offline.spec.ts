@@ -1,14 +1,18 @@
 import { test, expect } from '@playwright/test';
+const base = process.env.DEALDESK_E2E_BASE_URL || 'http://127.0.0.1:3000';
+async function enterDemo(page: import('@playwright/test').Page) {
+  await page.goto('/');
+  if (await page.getByLabel('Operator password').count()) {
+    await page.getByLabel('Operator password').fill(process.env.DEALDESK_UI_PASSWORD!);
+    await page.getByRole('button',{name:/Enter workspace/}).click();
+  }
+  await expect(page.getByRole('button',{name:'Run B01/RC01 offline assessment'})).toBeEnabled();
+}
 
 test('operator session, CSRF, fresh RC01 and UC02, persisted recovery and no secrets', async ({page,request}) => {
-  const base = 'http://127.0.0.1:3000';
   const unauth = await request.get(`${base}/api/assessments/${'a'.repeat(32)}/status`); expect(unauth.status()).toBe(401);
-  const noCsrfLogin = await request.post(`${base}/api/auth/login`, { data:{ password:process.env.DEALDESK_UI_PASSWORD }, headers:{Origin:base} }); expect(noCsrfLogin.status()).toBe(403);
-  await page.goto('/');
-  await expect(page.getByText('SYNTHETIC FIXTURE PREVIEW', {exact:false})).toBeVisible();
-  await page.getByLabel('Operator password').fill(process.env.DEALDESK_UI_PASSWORD!);
-  await page.getByRole('button',{name:/Enter workspace/}).click();
-  await expect(page.getByRole('button',{name:'Run B01/RC01 offline assessment'})).toBeVisible();
+  const noCsrfLogin = await request.post(`${base}/api/auth/login`, { data:{ password:'not-a-valid-password' }, headers:{Origin:base} }); expect([403,404]).toContain(noCsrfLogin.status());
+  await enterDemo(page);
   const loginCookie = (await page.context().cookies()).find(c => c.name === 'dd_operator'); expect(loginCookie?.httpOnly).toBe(true); expect(loginCookie?.sameSite).toBe('Strict');
   const bad = await page.evaluate(async () => (await fetch('/api/assessments',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':'csrfattack123'},body:JSON.stringify({scenario:'B01/RC01'})})).status); expect(bad).toBe(403);
   const csrfValue = await page.evaluate(async () => (await (await fetch('/api/auth/csrf')).json()).csrf);
@@ -53,7 +57,7 @@ test('operator session, CSRF, fresh RC01 and UC02, persisted recovery and no sec
   }
   for(const width of [390,768,1440]) {
     await page.setViewportSize({width,height:844});
-    await expect(page.getByRole('heading',{name:'Choose a synthetic scenario'})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'Explore two synthetic scenarios'})).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
   await page.keyboard.press('Tab'); expect(await page.evaluate(()=>document.activeElement?.tagName)).not.toBe('BODY');
@@ -63,9 +67,7 @@ test('operator session, CSRF, fresh RC01 and UC02, persisted recovery and no sec
 });
 
 test('browser hides stale decisions on interruption, invalid response and expired session', async ({page}) => {
-  await page.goto('/');
-  await page.getByLabel('Operator password').fill(process.env.DEALDESK_UI_PASSWORD!);
-  await page.getByRole('button',{name:/Enter workspace/}).click();
+  await enterDemo(page);
   await page.getByRole('button',{name:'Run N01/UC02 offline assessment'}).click();
   await expect(page).toHaveURL(/\/assessments\/[0-9a-f]{32}/);
   const id=page.url().split('/').at(-1)!;
@@ -85,5 +87,5 @@ test('browser hides stale decisions on interruption, invalid response and expire
   await page.reload();
   await expect(page.getByRole('alert').filter({hasText:'Operator session expired'})).toBeVisible();
   await expect(page.getByRole('heading',{name:'No verified candidate'})).toHaveCount(0);
-  await expect(page.getByRole('link',{name:'Return to operator login'})).toBeVisible();
+  await expect(page.getByRole('link',{name:'Return to homepage'})).toBeVisible();
 });
