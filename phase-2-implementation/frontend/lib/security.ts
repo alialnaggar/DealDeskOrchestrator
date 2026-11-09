@@ -8,7 +8,7 @@ const ttl = 8 * 60 * 60 * 1000;
 function secret() { const value = process.env.DEALDESK_UI_SESSION_SECRET; if (!value || value.length < 32) throw new Error('UI session secret missing'); return value; }
 function mac(value: string) { return createHmac('sha256', secret()).update(value).digest('hex'); }
 function same(a: string, b: string) { const x = Buffer.from(a); const y = Buffer.from(b); return x.length === y.length && timingSafeEqual(x, y); }
-function cookie(value: string, maxAge: number) { return { value, httpOnly: true, sameSite: 'strict' as const, secure: false, path: '/', maxAge }; } // HTTP loopback only; no public TLS deployment.
+function cookie(value: string, maxAge: number) { return { value, httpOnly: true, sameSite: 'strict' as const, secure: new URL(process.env.DEALDESK_UI_ORIGIN || 'http://127.0.0.1:3000').protocol === 'https:', path: '/', maxAge }; }
 function issue(prefix: string) { const payload = `${prefix}.${randomBytes(32).toString('hex')}.${Date.now() + ttl}`; return `${payload}.${mac(payload)}`; }
 function validate(raw: string | undefined, prefix: string) {
   if (!raw) return null;

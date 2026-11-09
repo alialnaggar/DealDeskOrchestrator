@@ -8,8 +8,23 @@ function request(raw: string, name = 'dd_operator', origin = base) {
   return new NextRequest(base + '/api/assessments', { method:'POST', headers: { Cookie:`${name}=${raw}`, Host:'127.0.0.1:3000', Origin:origin } });
 }
 beforeEach(() => { process.env.DEALDESK_UI_SESSION_SECRET = 'test-local-session-secret-with-at-least-32-bytes'; process.env.DEALDESK_UI_PASSWORD = 'test-local-password-with-at-least-32-bytes'; });
-afterEach(() => { vi.restoreAllMocks(); delete process.env.DEALDESK_UI_SESSION_SECRET; delete process.env.DEALDESK_UI_PASSWORD; });
+afterEach(() => { vi.restoreAllMocks(); delete process.env.DEALDESK_UI_SESSION_SECRET; delete process.env.DEALDESK_UI_PASSWORD; delete process.env.DEALDESK_UI_ORIGIN; });
 describe('operator session and CSRF', () => {
+  it('uses Secure cookies and exact origin/host verification behind the HTTPS proxy', () => {
+    const origin = 'https://dealdeskdemo.duckdns.org';
+    process.env.DEALDESK_UI_ORIGIN = origin;
+    const login = NextResponse.json({}); issueLogin(login);
+    expect(login.headers.get('set-cookie')).toContain('Secure');
+    const response = NextResponse.json({}); issueSession(response);
+    expect(response.headers.get('set-cookie')).toContain('Secure');
+    const raw = response.cookies.get('dd_operator')!.value;
+    const valid = new NextRequest(origin+'/api/assessments', { method:'POST', headers:{Cookie:`dd_operator=${raw}`,Host:'dealdeskdemo.duckdns.org',Origin:origin,'X-CSRF-Token':csrfToken(session(request(raw))!)} });
+    const nonce = session(valid);
+    expect(nonce).toBeTruthy();
+    expect(csrfOK(new NextRequest(origin+'/api/assessments',{method:'POST',headers:{Cookie:`dd_operator=${raw}`,Host:'dealdeskdemo.duckdns.org',Origin:origin,'X-CSRF-Token':csrfToken(nonce!)}}),nonce!)).toBe(true);
+    expect(csrfOK(new NextRequest(origin+'/api/assessments',{method:'POST',headers:{Cookie:`dd_operator=${raw}`,Host:'127.0.0.1:3000',Origin:origin,'X-CSRF-Token':csrfToken(nonce!)}}),nonce!)).toBe(false);
+    expect(csrfOK(new NextRequest(origin+'/api/assessments',{method:'POST',headers:{Cookie:`dd_operator=${raw}`,Host:'dealdeskdemo.duckdns.org',Origin:'http://dealdeskdemo.duckdns.org','X-CSRF-Token':csrfToken(nonce!)}}),nonce!)).toBe(false);
+  });
   it('signs an HttpOnly Strict session; rejects tampering, expiry and wrong Origin', () => {
     const now = Date.now(); vi.spyOn(Date,'now').mockReturnValue(now);
     const response = NextResponse.json({}); issueSession(response);
