@@ -152,6 +152,15 @@ class WorkflowTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Missing, duplicate or unknown rule identifier"):
             d11.validate(form, ROOT, self.workspace, require_complete=True)
 
+    def test_overall_gate_without_numbered_rule_needs_business_contract_citation(self):
+        form = self.synthetic_complete()
+        form["cases"][1]["overall"]["rule_ids"] = []
+        with self.assertRaisesRegex(ValueError, "Missing, duplicate or unknown rule identifier"):
+            d11.validate(form, ROOT, self.workspace, require_complete=True)
+        form["cases"][1]["overall"]["citations"].append(
+            {"document": "packet", "pointer": "/business_contract/gates"})
+        self.assertEqual(d11.validate(form, ROOT, self.workspace, require_complete=True)["complete_drafts_not_accepted"], 6)
+
     def test_v2_date_only_and_v1_precise_time_are_distinct_and_supported(self):
         form = self.synthetic_complete()
         self.assertEqual(form["schema_version"], 2)

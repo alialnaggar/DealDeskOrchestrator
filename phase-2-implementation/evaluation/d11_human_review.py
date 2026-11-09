@@ -287,7 +287,15 @@ def validate(form, root, workspace, *, require_complete=False):
                 any(not text(x) for x in overall["human_actions"])):
             refuse("Overall gate/deferral, rationale, uncertainty, method question and actions required")
         refs(overall["citations"], documents)
-        rules(overall["rule_ids"], known)
+        # Evidence/commitment gates are specified by the source business
+        # contract, not necessarily a numbered Pricing/Policy/Approval rule.
+        # Require a direct contract citation when no case-local ID applies.
+        gate_contract_cited = any(
+            r["document"] == "packet" and
+            (r["pointer"] == "/business_contract/gates" or
+             r["pointer"].startswith("/business_contract/gates/"))
+            for r in overall["citations"])
+        rules(overall["rule_ids"], known, allow_empty=gate_contract_cited)
         routes = overall["conditional_interpretations"]
         if not isinstance(routes, list) or (cid == "EVAL-PREP-020" and len(routes) < 2):
             refuse("020 requires at least two explicit conditional interpretations")
