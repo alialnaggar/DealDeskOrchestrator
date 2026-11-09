@@ -29,6 +29,15 @@ test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and 
   await expect(page.locator(':focus')).toBeVisible();
   await page.emulateMedia({reducedMotion:'reduce'});
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
+  await page.addInitScript(() => {
+    window.addEventListener('DOMContentLoaded', () => {
+      const observer=new MutationObserver(() => {
+        if (document.querySelector('.decision-brief, .business-evidence') && ![...document.querySelectorAll('.replay-list li')].some(li=>li.textContent?.includes('Review available')))
+          sessionStorage.setItem('dealdesk.audit.premature','yes');
+      });
+      observer.observe(document.documentElement,{childList:true,subtree:true});
+    });
+  });
   for (const [scenario, count] of [['B01/RC01',21],['N01/UC02',20]] as const) {
     await page.getByRole('link',{name:`Explore Scenario ${scenario}`}).click();
     await expect(page.getByRole('heading',{name:'Structured deal record'})).toBeVisible();
@@ -45,12 +54,12 @@ test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and 
     if(scenario === 'B01/RC01') {
       await expect(brief).toContainText('10 units'); await expect(brief).toContainText('4 Sept 2026');
       await expect(brief).toContainText('8 on 3 Sept 2026 + 2 on 8 Sept 2026');
-      await expect(brief).toContainText('No stock is reserved'); await expect(brief).toContainText('Customer acceptance: pending');
-      await expect(page.getByRole('heading',{name:'Candidate deterministic checks · V1 only'})).toBeVisible();
+      await expect(brief).toContainText('No stock is reserved'); await expect(brief).toContainText('Customer acceptance is pending');
+      await expect(page.getByRole('heading',{name:'Six rule-based checks of the proposed schedule'})).toBeVisible();
     } else {
-      await expect(brief).toContainText('Fixed Credit is unknown'); await expect(brief).toContainText('None verified');
+      await expect(brief).toContainText('recorded commitments are stale'); await expect(brief).toContainText('Original delivery date not supported'); await expect(brief).toContainText('None verified');
       await expect(page.getByRole('heading',{name:'No verified candidate'})).toBeVisible();
-      await expect(page.getByText('Evidence gaps: stale, unavailable.')).toBeVisible();
+      await expect(page.getByText(/This is neither a failed credit check nor clearance/)).toBeVisible();
     }
     await expect(page.getByRole('heading',{name:'Six specialist responsibilities'})).toBeVisible();
     await expect(page.locator('.business-specialist-card')).toHaveCount(6);
@@ -60,6 +69,10 @@ test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and 
     await page.locator('.business-specialist-card').filter({has:page.getByRole('heading',{name:'Credit & Risk'})}).locator('details').first().locator('summary').click();
     await expect(page.locator('.business-specialist-card').filter({has:page.getByRole('heading',{name:'Credit & Risk'})})).toContainText('ledger completeness');
     await expect(page.getByRole('heading',{name:'Review, not authorization'})).toBeVisible();
+    expect(await page.evaluate(()=>sessionStorage.getItem('dealdesk.audit.premature'))).toBeNull();
+    await expect(page.locator('[aria-labelledby="human"] .authority')).toContainText('no approval granted');
+    await expect(page.locator('[aria-labelledby="human"] .authority')).not.toContainText('human only not granted');
+    await expect(brief).not.toContainText('8.000');
     const trace=page.locator('details.trace-details');
     await expect(trace).not.toHaveAttribute('open');
     await trace.locator('summary').focus(); await page.keyboard.press('Enter');

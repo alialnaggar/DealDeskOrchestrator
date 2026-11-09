@@ -27,9 +27,9 @@ test('operator session, CSRF, fresh RC01 and UC02, persisted recovery and no sec
     console.log(index===0 ? 'RC01 assessment:' : 'UC02 assessment:',id);
     await expect(page.getByText('EVENTS RECORDED').locator('..').locator('strong')).toHaveText(String(count),{timeout:120000});
     await expect(page.getByRole('heading',{name:'Six specialist responsibilities'})).toBeVisible();
-    await expect(page.getByRole('heading',{name: index === 0 ? 'Original Deal | Revised Candidate' : 'No verified candidate'})).toBeVisible();
-    if(index===0) { await expect(page.getByText('supply supported unreserved',{exact:true})).toBeVisible(); await expect(page.getByText('Customer acceptance: pending',{exact:true})).toBeVisible(); await expect(page.getByText('Candidate deterministic checks · V1 only')).toBeVisible(); }
-    else await expect(page.getByText(/completed offline-scripted observation is not clearance/)).toBeVisible();
+     await expect(page.getByRole('heading',{name: index === 0 ? 'Original request and checked alternative' : 'No verified candidate'})).toBeVisible();
+     if(index===0) { await expect(page.getByText('Proposed supply supported; not reserved',{exact:true})).toBeVisible(); await expect(page.getByText('Customer acceptance pending',{exact:true})).toBeVisible(); await expect(page.getByText('Six rule-based checks of the proposed schedule')).toBeVisible(); }
+     else await expect(page.getByText(/completed recorded specialist observation is not clearance/)).toBeVisible();
     await page.reload(); await expect(page.getByText('EVENTS RECORDED').locator('..').locator('strong')).toHaveText(String(count),{timeout:120000});
     const [st,ev,rv]=await Promise.all([page.request.get(`${base}/api/assessments/${id}/status`),page.request.get(`${base}/api/assessments/${id}/events?after=0`),page.request.get(`${base}/api/assessments/${id}/review`)]);
     expect(st.status()).toBe(200); expect(ev.status()).toBe(200); expect(rv.status()).toBe(200);

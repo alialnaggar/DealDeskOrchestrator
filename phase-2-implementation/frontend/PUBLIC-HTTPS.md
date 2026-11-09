@@ -21,6 +21,8 @@ Approved exception to the former loopback-only **browser access** policy: `https
 
 **Reboot limitation:** The current Python API and disposable PostgreSQL test cluster were already launched outside systemd. Caddy, frontend and bridge relay restart automatically, but a **full VM reboot has not been tested and the backend/fixture may need the existing D3/D6 runbook to be restarted** before assessments work. Do not claim an unattended end-to-end reboot recovery until that is separately verified. Avoid modifying shared databases or the existing n8n/Odoo services for this demo.
 
+**Final audit recovery check (2026-11-09):** Restarted only `dealdesk-supervisor.service`; the passwordless HTTPS homepage and persisted assessments remained readable afterwards, and Caddy, n8n and Odoo continued responding. Inspected the API process and the disposable PostgreSQL cluster: the API runs from a manually started shell, and the demo database is a manually started Unix-socket-only PostgreSQL process with data under `/tmp/opencode/dealdesk-remediation-pgdata`. Neither has a dedicated enabled boot unit. This is *not* evidence of unattended backend or database recovery after a process failure or full VM reboot. No database, API, shared container or VM restart was attempted during the audit.
+
 ## Verification and safe rollback
 
 ```sh
