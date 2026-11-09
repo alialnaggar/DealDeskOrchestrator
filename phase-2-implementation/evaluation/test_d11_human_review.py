@@ -143,6 +143,15 @@ class WorkflowTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "already exists"):
             d11.private_new(self.workspace)
 
+    def test_ruleless_configuration_and_availability_do_not_invent_ids(self):
+        form = self.synthetic_complete()
+        for role in ("Configuration", "Availability"):
+            form["cases"][0]["findings"][role]["rule_ids"] = []
+        self.assertEqual(d11.validate(form, ROOT, self.workspace, require_complete=True)["complete_drafts_not_accepted"], 6)
+        form["cases"][0]["findings"]["Pricing"]["rule_ids"] = []
+        with self.assertRaisesRegex(ValueError, "Missing, duplicate or unknown rule identifier"):
+            d11.validate(form, ROOT, self.workspace, require_complete=True)
+
     def test_blind_workspace_has_only_sources_and_blank_fields(self):
         files = {p.relative_to(self.workspace).as_posix() for p in self.workspace.rglob("*") if p.is_file()}
         expected = {"first_pass.json"} | {

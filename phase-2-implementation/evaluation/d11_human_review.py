@@ -168,8 +168,9 @@ def refs(value, documents, *, required=True):
             raise ValueError("Citation does not resolve") from exc
 
 
-def rules(value, known):
-    if not isinstance(value, list) or not value or len(value) != len(set(value)) or any(x not in known for x in value):
+def rules(value, known, *, allow_empty=False):
+    if (not isinstance(value, list) or (not value and not allow_empty)
+            or len(value) != len(set(value)) or any(x not in known for x in value)):
         refuse("Missing, duplicate or unknown rule identifier")
 
 
@@ -237,7 +238,10 @@ def validate(form, root, workspace, *, require_complete=False):
                     finding["code"] not in CODES or any(not text(finding[k]) for k in ("rationale", "calculations", "uncertainty"))):
                 refuse("Finding/code/calculation/rationale/uncertainty incomplete")
             refs(finding["citations"], documents)
-            rules(finding["rule_ids"], known)
+            # The v2 source has pricing, policy and approval rule IDs, but no
+            # Configuration/Availability rule registry. Never fabricate a
+            # business-rule ID for a responsibility with no applicable rule.
+            rules(finding["rule_ids"], known, allow_empty=role in ("Configuration", "Availability"))
         overall = case["overall"]
         if (not isinstance(overall, dict) or set(overall) != set(empty["overall"]) or
                 overall["status"] not in ("proposed", "deferred") or
