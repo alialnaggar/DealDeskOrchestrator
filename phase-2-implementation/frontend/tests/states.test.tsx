@@ -25,6 +25,14 @@ describe('failure-state UI', () => {
     expect(await screen.findByText(/Execution stopped. No automatic replay/)).toBeTruthy();
     expect(screen.queryByText('No verified candidate')).toBeNull();
   });
+  it('keeps an uncertain run and an empty event history separate from a validated review', async () => {
+    vi.mocked(status).mockResolvedValue({ version:'demo-api-v1',assessment_id:id,scenario:'N01/UC02',mode:'offline_scripted',status:'uncertain',last_sequence:0,phase1c_pin:'pin' });
+    vi.mocked(events).mockResolvedValue([]);
+    render(<Workspace id={id}/>);
+    expect(await screen.findByText(/Execution uncertain. No automatic replay/)).toBeTruthy();
+    expect(screen.getByText('Not yet available')).toBeTruthy();
+    expect(screen.queryByText('No verified candidate')).toBeNull();
+  });
   it('withholds stale-source results on 409', async () => {
     vi.mocked(status).mockRejectedValue(new ApiError(409,'Source changed'));
     render(<Workspace id={'b'.repeat(32)}/>);

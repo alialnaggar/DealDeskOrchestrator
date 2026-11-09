@@ -2,10 +2,17 @@ import { expect, test } from '@playwright/test';
 
 test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and technical trace', async ({ page }) => {
   test.setTimeout(180000);
-  const root = 'http://127.0.0.1:3000';
+  const root = process.env.DEALDESK_E2E_BASE_URL || 'http://127.0.0.1:3000';
   await page.goto('/');
+  await page.screenshot({path:'/tmp/opencode/dealdesk-launcher-login.png',fullPage:true});
   await page.getByLabel('Operator password').fill(process.env.DEALDESK_UI_PASSWORD!);
   await page.getByRole('button', { name:/Enter workspace/ }).click();
+  await expect(page.getByRole('heading',{name:'Choose a synthetic scenario'})).toBeVisible();
+  await page.screenshot({path:'/tmp/opencode/dealdesk-launcher-scenarios.png',fullPage:true});
+  await page.keyboard.press('Tab');
+  await expect(page.locator(':focus')).toBeVisible();
+  await page.emulateMedia({reducedMotion:'reduce'});
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
   for (const [scenario, count] of [['B01/RC01',21],['N01/UC02',20]] as const) {
     await page.getByRole('button',{name:`Run ${scenario} offline assessment`}).click();
     await expect(page).toHaveURL(/\/assessments\/[0-9a-f]{32}/);
@@ -26,8 +33,9 @@ test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and 
       await expect(page.getByText('Evidence gaps: stale, unavailable.')).toBeVisible();
     }
     await expect(page.getByRole('heading',{name:'Six specialist responsibilities'})).toBeVisible();
-    await expect(page.getByText('FIXED FINDING · ORIGINAL')).toBeVisible();
-    await expect(page.getByText('OFFLINE-SCRIPTED OBSERVATION · ORIGINAL')).toBeVisible();
+    await expect(page.locator('.matrix-head')).toContainText('DETERMINISTIC CHECK · ORIGINAL');
+    await expect(page.locator('.matrix-head')).toContainText('OFFLINE-SCRIPTED STAGE · ORIGINAL');
+    await expect(page.getByRole('heading',{name:'What the source supports'})).toBeVisible();
     await expect(page.getByRole('heading',{name:'Review, not authorization'})).toBeVisible();
     const trace=page.locator('details.trace-details');
     await expect(trace).not.toHaveAttribute('open');
@@ -37,9 +45,12 @@ test('fresh supervisor walkthrough: source-grounded brief, mobile, recovery and 
     await trace.locator('summary').click();
     await page.screenshot({path:`/tmp/opencode/d6-${scenario === 'B01/RC01' ? 'rc01' : 'uc02'}-desktop.png`,fullPage:true});
     await page.setViewportSize({width:390,height:844});
-    expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect.poll(() => page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await expect(brief).toBeVisible();
     await page.screenshot({path:`/tmp/opencode/d6-${scenario === 'B01/RC01' ? 'rc01' : 'uc02'}-mobile.png`,fullPage:true});
+    await page.setViewportSize({width:1440,height:900});
+    await page.setViewportSize({width:768,height:900});
+    await expect.poll(() => page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.setViewportSize({width:1440,height:900});
     await page.reload(); await expect(brief).toBeVisible();
     const [events,review]=await Promise.all([page.request.get(`${root}/api/assessments/${id}/events?after=0`),page.request.get(`${root}/api/assessments/${id}/review`)]);

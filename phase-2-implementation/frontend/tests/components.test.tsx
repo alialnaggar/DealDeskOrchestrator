@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Review, type EventDTO } from '../lib/contracts';
-import { Comparison, DecisionBrief, HumanReview, SpecialistMatrix, Timeline } from '../components/workspace';
+import { Comparison, DecisionBrief, EvidenceReview, HumanReview, SpecialistMatrix, Timeline } from '../components/workspace';
+import { assessmentLabel, assessmentTone } from '../lib/presentation';
 import { finding, names, original, sample } from './fixture';
 const parsed = Review.parse(sample);
 describe('business presentation', () => {
@@ -69,6 +70,19 @@ describe('business presentation', () => {
   });
   it('renders real checkpoint and timestamp only from events', () => {
     render(<Timeline rows={[{ assessment_id:sample.assessment_id,sequence:1,kind:'checkpoint',stage:'original',occurred_at:'2026-11-08T12:00:00Z' }]} data={null} state={null}/>);
-    expect(screen.getByText('checkpoint')).toBeTruthy(); expect(screen.getByText(/8 Nov 2026/)).toBeTruthy();
+    expect(screen.getByText('Checkpoint stored')).toBeTruthy(); expect(screen.getByText(/8 Nov 2026/)).toBeTruthy();
+  });
+  it('never labels completed execution as clearance', () => {
+    expect(assessmentLabel.completed).toContain('review required');
+    expect(assessmentTone.completed).toBe('neutral');
+    expect(assessmentLabel.uncertain).toContain('uncertain');
+  });
+  it('shows only validated original evidence and explicit missing information', () => {
+    const gap = {requirement_id:'current_credit',reason_code:'stale',verification:'unknown',impact_code:'blocked',next_action_code:'request_current_evidence'};
+    const data = Review.parse({...sample,original:{...original,specialists:{...original.specialists,credit:{...finding,fixed_rule_ids:['CR-1'],evidence_gaps:[gap]}}}});
+    const {container} = render(<EvidenceReview data={data}/>);
+    expect(container.textContent).toContain('Credit & risk · stale');
+    expect(container.textContent).toContain('request current evidence');
+    expect(container.textContent).toContain('CR-1');
   });
 });

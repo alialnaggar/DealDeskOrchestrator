@@ -55,6 +55,8 @@ The UI session is an HMAC-authenticated, HttpOnly, SameSite=Strict, eight-hour c
 
 The synthetic fixture preview is intentionally static. All in-workspace facts come from the authenticated D3 API and pass strict Zod contracts. `ai_completed` denotes checkpointed original-subject execution, not clearance; review-confirmed abstentions and gaps appear only after the validated D2 package is available. The candidate panel shows **six deterministic** checks, not six candidate AI runs. The UI polls the exclusive persisted event cursor, recovers from zero on refresh, and refuses source drift (HTTP 409), missing rows, schema drift and identity mismatches.
 
+The supervisor presentation uses a single light theme and separates customer request, six original-subject findings, validated evidence, conditional V0/V1 comparison, human-only action and the collapsed technical trace. The project-local, pinned Markdown-only UI skills and discovery limits are recorded in [`.agents/skills/README.md`](../../.agents/skills/README.md); they are not runtime dependencies.
+
 ## Verification
 
 ```sh
@@ -66,6 +68,8 @@ npm test
 npx playwright install chromium     # once; host needs browser libraries/fonts
 npm run test:e2e                  # with both local servers and the three secrets exported
 ```
+
+To test an updated build without stopping a previous loopback-only UI on port 3000, start a second local Next.js process with `DEALDESK_UI_ORIGIN=http://127.0.0.1:3001` on port 3001 and set `DEALDESK_E2E_BASE_URL=http://127.0.0.1:3001` for `playwright test e2e/supervisor.spec.ts`. Never expose either listener remotely. Supervisor screenshots are written to `/tmp/opencode/dealdesk-launcher-{login,scenarios}.png` and `/tmp/opencode/d6-{rc01,uc02}-{desktop,mobile}.png`.
 
 Playwright creates new RC01 and UC02 assessments, checks 21/20 ordered events, original versus candidate semantics, refresh recovery, CSRF rejection, operator cookie, logout, secrets, keyboard navigation and 390/768/1440px viewports. Screenshots land in `/tmp/opencode/d5-rc01.png` and `/tmp/opencode/d5-uc02.png`; no private artifacts are committed. The opt-in `e2e/fault-injection.spec.ts` additionally requires `D5_DISPOSABLE_ENV_FILE=/tmp/opencode/<fresh-owner-only-fixture>.env` and a **stopped** Python API. It starts its own Python process, kills/restarts only that process, and mutates **only the validated matching disposable databases** for source drift, checkpoint tampering and connection refusal; run it separately from the normal browser suite, never against shared data. On this minimal VM, browser libraries and fonts were **downloaded and extracted only under `/tmp/opencode/d4-browser-libs`** and Playwright was run with `LD_LIBRARY_PATH=/tmp/opencode/d4-browser-libs/extracted/usr/lib/aarch64-linux-gnu` and `FONTCONFIG_FILE=/tmp/opencode/d4-browser-libs/extracted/fonts.conf`. No system packages were installed. On a standard workstation these overrides are unnecessary.
 
