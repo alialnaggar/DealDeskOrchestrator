@@ -1,0 +1,51 @@
+{
+  "accepted_cases": 0,
+  "case_ids": [
+    "EVAL-PREP-001",
+    "EVAL-PREP-005",
+    "EVAL-PREP-009",
+    "EVAL-PREP-020",
+    "EVAL-PREP-023",
+    "EVAL-PREP-031"
+  ],
+  "credit_v3_file_sha256": "7655c6f82dcbe8679f8d6369748c3a81e777b186e7c2b69ba9fe4b41076d711a",
+  "distribution": "Restricted owner-only local dossier outside Git; do not give to blind reviewer or model-development paths. Digest is integrity metadata, not a public answer link.",
+  "exposure_disclosure": "AI assistant previously saw 020 recorded interpretation and a fragment of 001 earlier model draft; no independence or blind-human-review claim.",
+  "method_gates": "All prior D9 methodological gates remain pending; no accepted-answer intake modified.",
+  "private_dossier_sha256": "a6c4dfa8f119da325b10c129ff74b5ff56aa31811c75aa85448bfd1812f87c12",
+  "schema_version": 1,
+  "sources": {
+    "EVAL-PREP-001": {
+      "credit_scope_row_sha256": "85c264210845ba4958ba95b24038170bbc0f1ee2fe936c3feb3306989b12096a",
+      "packet_payload_sha256": "80d4cb16172cefca0d1f4779b14edfb0fc729efb025c2179010d2942fc527e63",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    "EVAL-PREP-005": {
+      "credit_scope_row_sha256": "907bbeddd810598152cfc526450347ed082453f1637a8245970e4b38b9ac5e57",
+      "packet_payload_sha256": "7137474bf7e6187188d59fee9520c9b161ea5f9bc61cfdd353622e23e6f2f8e9",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    "EVAL-PREP-009": {
+      "credit_scope_row_sha256": "258cc9d217aa0e5ba3e504103e41e3d4bb0e897535dcf536ee6319dc924ddbde",
+      "packet_payload_sha256": "bed348a585b9cbcaaca8e2a2082b6289bc1125b998672b441a4fda4cb43fb8f9",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    "EVAL-PREP-020": {
+      "credit_scope_row_sha256": "6fb0f128ee2c8d6661dc2b551c5f9f06ab45304694d1e0157c0dbfea43b16b48",
+      "packet_payload_sha256": "6edee7da614ce168e3422a3f1d013da26769f97e8378cacb107f0a55b036957b",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    "EVAL-PREP-023": {
+      "credit_scope_row_sha256": "2f7f538905ab869e487913654ac6069f178e60d37147a548e9666ff9b8f85c11",
+      "packet_payload_sha256": "c5cfd05dae6ede4235d26832147c6b7dd567c1d859042375a560c18c8a6fc6cd",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    },
+    "EVAL-PREP-031": {
+      "credit_scope_row_sha256": "f1c59e6772b9c7ba0801bcda60b297d8f861eee0602f642b5d570d7299060201",
+      "packet_payload_sha256": "cba1d10ad0a15512a5a75a9c1a34b2f852e49bd2831b61388bf568c253c284ce",
+      "provider_file_sha256": "6f217c34d69b2ef93c2124ae6e08a565626e33da0d258b782934b99fb56efcf8"
+    }
+  },
+  "status": "private_ai_draft_not_accepted",
+  "v2_index_sha256": "7deac5b7a9337a49e3a64b60ca99cd1c0118bb9cfa61ea9abe73b3cacfa444dc"
+}
