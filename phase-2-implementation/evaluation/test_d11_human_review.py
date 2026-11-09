@@ -26,11 +26,11 @@ class WorkflowTests(unittest.TestCase):
 
     def synthetic_complete(self):
         form = copy.deepcopy(self.blank)
-        form["reviewer"] = {"identity": "SYNTHETIC FIXTURE — NOT A HUMAN", "role": "synthetic test",
+        form["reviewer"].update({"identity": "SYNTHETIC FIXTURE — NOT A HUMAN", "role": "synthetic test",
                             "reviewed_at": "2026-01-01T00:00:00+00:00", "source_first_attestation": True,
                             "prior_ai_answer_exposure": False, "ai_assistance_used": False,
                             "assistance_details": "Synthetic structural test only; no real person",
-                            "independence_limitations": "Not a human review, not an answer"}
+                            "independence_limitations": "Not a human review, not an answer"})
         for row in form["cases"]:
             cid = row["case_id"]
             packet = json.loads((self.workspace / "sources" / cid / f"{cid}.json").read_text())["payload"]
@@ -151,6 +151,43 @@ class WorkflowTests(unittest.TestCase):
         form["cases"][0]["findings"]["Pricing"]["rule_ids"] = []
         with self.assertRaisesRegex(ValueError, "Missing, duplicate or unknown rule identifier"):
             d11.validate(form, ROOT, self.workspace, require_complete=True)
+
+    def test_v2_date_only_and_v1_precise_time_are_distinct_and_supported(self):
+        form = self.synthetic_complete()
+        self.assertEqual(form["schema_version"], 2)
+        form["reviewer"].update(reviewed_at=None, review_date="2026-11-09", review_timezone="Africa/Cairo")
+        self.assertEqual(d11.validate(form, ROOT, self.workspace, require_complete=True)["complete_drafts_not_accepted"], 6)
+        for changes in ({"review_date": "2026-11-31"}, {"review_timezone": "UTC+02:00"},
+                        {"reviewed_at": "2026-11-09T12:00:00+02:00"}, {"review_date": None},
+                        {"review_timezone": None}):
+            bad = copy.deepcopy(form)
+            bad["reviewer"].update(changes)
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                d11.validate(bad, ROOT, self.workspace, require_complete=True)
+        freeze_dir = self.parent / "date_only_synthetic_freeze"
+        path = self.parent / "date_only_synthetic.json"
+        path.write_text(json.dumps(form))
+        d11.freeze(path, self.workspace, ROOT, freeze_dir, form["reviewer"]["identity"])
+        receipt = d11.verify_freeze(freeze_dir, ROOT, self.workspace)
+        self.assertIsNone(receipt["reviewed_at"])
+        self.assertEqual((receipt["review_date"], receipt["review_timezone"]), ("2026-11-09", "Africa/Cairo"))
+        receipt["review_date"] = "2026-11-10"
+        (freeze_dir / "receipt.json").write_text(json.dumps(receipt))
+        with self.assertRaisesRegex(ValueError, "reviewer metadata differs"):
+            d11.verify_freeze(freeze_dir, ROOT, self.workspace)
+        index, pins, _ = d11.checked_sources(ROOT)
+        old = copy.deepcopy(self.synthetic_complete())
+        old["schema_version"] = 1
+        old["reviewer"].pop("review_date")
+        old["reviewer"].pop("review_timezone")
+        self.assertEqual(d11.validate(old, ROOT, self.workspace, require_complete=True)["complete_drafts_not_accepted"], 6)
+        legacy_blank = d11.template(index, pins, schema_version=1)
+        self.assertEqual(d11.validate(legacy_blank, ROOT, self.workspace)["remaining"], 6)
+        old_path = self.parent / "precise_legacy_synthetic.json"
+        old_path.write_text(json.dumps(old))
+        old_dir = self.parent / "precise_legacy_freeze"
+        d11.freeze(old_path, self.workspace, ROOT, old_dir, old["reviewer"]["identity"])
+        self.assertNotIn("review_date", d11.verify_freeze(old_dir, ROOT, self.workspace))
 
     def test_blind_workspace_has_only_sources_and_blank_fields(self):
         files = {p.relative_to(self.workspace).as_posix() for p in self.workspace.rglob("*") if p.is_file()}

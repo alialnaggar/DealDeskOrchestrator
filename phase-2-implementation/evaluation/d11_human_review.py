@@ -5,12 +5,14 @@ Only source documents and blank forms are copied into the blind workspace.
 """
 
 import argparse
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import d9_review_prep as d9
 import d10_private_dossier_check as d10
@@ -42,6 +44,32 @@ def stamp(value):
             raise ValueError("timezone missing")
     except (AttributeError, TypeError, ValueError) as exc:
         raise ValueError("reviewed_at requires an ISO-8601 timezone-aware date") from exc
+
+
+def review_provenance(reviewer, version):
+    """A review day is not an inferred clock time; reject ambiguous hybrids."""
+    if version == 1:
+        stamp(reviewer["reviewed_at"])
+        return
+    if reviewer["reviewed_at"] is not None:
+        if reviewer["review_date"] is not None or reviewer["review_timezone"] is not None:
+            refuse("Use either precise reviewed_at or date-only provenance, not both")
+        stamp(reviewer["reviewed_at"])
+        return
+    day, zone = reviewer["review_date"], reviewer["review_timezone"]
+    if not isinstance(day, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
+        refuse("Date-only review requires YYYY-MM-DD review_date")
+    try:
+        if date.fromisoformat(day).isoformat() != day:
+            refuse("Invalid review_date")
+    except ValueError as exc:
+        raise ValueError("Invalid review_date") from exc
+    if not isinstance(zone, str) or not zone or zone.startswith(("/", ".")):
+        refuse("Date-only review requires an IANA review_timezone")
+    try:
+        ZoneInfo(zone)
+    except (ZoneInfoNotFoundError, ValueError) as exc:
+        raise ValueError("Invalid IANA review_timezone") from exc
 
 
 def text(value):
@@ -92,14 +120,19 @@ def blank_case(row, scope_sha):
     }
 
 
-def template(index, scope_pins):
+def template(index, scope_pins, *, schema_version=2):
+    if schema_version not in (1, 2):
+        refuse("Unsupported review schema version")
     rows = {r["case_id"]: r for r in index["cases"]}
-    return {"schema_version": 1, "status": "human_first_pass_private_not_accepted",
+    reviewer = {"identity": None, "role": None, "reviewed_at": None,
+                "source_first_attestation": False, "prior_ai_answer_exposure": None,
+                "ai_assistance_used": None, "assistance_details": None,
+                "independence_limitations": None}
+    if schema_version == 2:
+        reviewer.update({"review_date": None, "review_timezone": None})
+    return {"schema_version": schema_version, "status": "human_first_pass_private_not_accepted",
             "index_sha256": d9.d8.PIN,
-            "reviewer": {"identity": None, "role": None, "reviewed_at": None,
-                         "source_first_attestation": False, "prior_ai_answer_exposure": None,
-                         "ai_assistance_used": None, "assistance_details": None,
-                         "independence_limitations": None},
+            "reviewer": reviewer,
             "cases": [blank_case(rows[cid], scope_pins[cid]["scope_sha256"]) for cid in IDS]}
 
 
@@ -177,7 +210,10 @@ def rules(value, known, *, allow_empty=False):
 def validate(form, root, workspace, *, require_complete=False):
     private_existing(workspace)
     index, pins, scopes = checked_sources(root)
-    blank = template(index, pins)
+    version = form.get("schema_version") if isinstance(form, dict) else None
+    if type(version) is not int or version not in (1, 2):
+        refuse("Unsupported review schema version")
+    blank = template(index, pins, schema_version=version)
     if not isinstance(form, dict) or set(form) != set(blank) or any(form[k] != blank[k] for k in ("schema_version", "status", "index_sha256")):
         refuse("Form schema/status differs; cannot claim accepted/reviewed")
     cases = form["cases"]
@@ -191,7 +227,7 @@ def validate(form, root, workspace, *, require_complete=False):
         for field in ("identity", "role", "assistance_details", "independence_limitations"):
             if not text(reviewer[field]):
                 refuse("Reviewer identity, role and assistance/independence disclosures required")
-        stamp(reviewer["reviewed_at"])
+        review_provenance(reviewer, version)
         if (reviewer["source_first_attestation"] is not True or
                 type(reviewer["prior_ai_answer_exposure"]) is not bool or
                 type(reviewer["ai_assistance_used"]) is not bool):
@@ -285,6 +321,9 @@ def freeze(form_path, workspace, root, outdir, reviewer_name):
                "reviewer_identity_claim": reviewer_name, "reviewed_at": form["reviewer"]["reviewed_at"],
                "frozen_at": datetime.now(timezone.utc).isoformat(), "source_root_index_sha256": d9.d8.PIN,
                "case_ids": list(IDS), "independence_certified": False, "accepted": 0}
+    if form["schema_version"] == 2:
+        receipt.update({"review_provenance_version": 2, "review_date": form["reviewer"]["review_date"],
+                        "review_timezone": form["reviewer"]["review_timezone"]})
     write_new(out / "receipt.json", receipt)
     return result | {"frozen_sha256": receipt["source_sha256"], "status": receipt["status"]}
 
@@ -293,14 +332,22 @@ def verify_freeze(out, root, workspace):
     private_existing(out)
     receipt = json.loads((out / "receipt.json").read_text())
     form_path = out / "first_pass.json"
-    if (set(receipt) != {"status", "source_sha256", "reviewer_identity_claim", "reviewed_at", "frozen_at",
-                        "source_root_index_sha256", "case_ids", "independence_certified", "accepted"} or
+    legacy_keys = {"status", "source_sha256", "reviewer_identity_claim", "reviewed_at", "frozen_at",
+                   "source_root_index_sha256", "case_ids", "independence_certified", "accepted"}
+    v2_keys = legacy_keys | {"review_provenance_version", "review_date", "review_timezone"}
+    if (set(receipt) not in (legacy_keys, v2_keys) or
             receipt["status"] != "frozen_first_pass_not_accepted" or receipt["independence_certified"] is not False or
             receipt["accepted"] != 0 or receipt["case_ids"] != list(IDS) or
             receipt["source_root_index_sha256"] != d9.d8.PIN or sha(form_path) != receipt["source_sha256"]):
         refuse("Frozen first pass changed or receipt invalid")
     form = json.loads(form_path.read_text())
-    if receipt["reviewer_identity_claim"] != form["reviewer"]["identity"] or receipt["reviewed_at"] != form["reviewer"]["reviewed_at"]:
+    version = form.get("schema_version")
+    if (version == 1 and set(receipt) != legacy_keys or version == 2 and
+            (set(receipt) != v2_keys or receipt["review_provenance_version"] != 2 or
+             receipt["review_date"] != form["reviewer"].get("review_date") or
+             receipt["review_timezone"] != form["reviewer"].get("review_timezone")) or
+            version not in (1, 2) or receipt["reviewer_identity_claim"] != form["reviewer"]["identity"] or
+            receipt["reviewed_at"] != form["reviewer"]["reviewed_at"]):
         refuse("Frozen reviewer metadata differs")
     validate(form, root, workspace, require_complete=True)
     return receipt
