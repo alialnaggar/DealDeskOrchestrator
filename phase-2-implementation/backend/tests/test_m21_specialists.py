@@ -7,7 +7,7 @@ import unittest
 from uuid import UUID
 
 from dealdesk_phase2.m21_specialists import (_claims, _project, build_m21_graph,
-    run_m21_offline, VERSION, CREDIT_FIXED_VIEW)
+    run_m21_offline, VERSION, CREDIT_FIXED_VIEW, POLICY_HIT_VIEW)
 from dealdesk_phase2.m21_redaction import model_view
 from dealdesk_phase2.m21_prompts import PROMPT_VERSION
 from dealdesk_phase2.graph_state import pinned_from_state
@@ -169,6 +169,115 @@ class M21Postgres(unittest.TestCase):
         with self.assertRaises(EvidenceMismatch):
             _project(pool, before, type("WrongContext", (), {**vars(pinned.context),
                 "assessment_id": "other"})(), "credit", include_fixed_credit=True)
+
+    def test_offline_policy_cites_only_sealed_triggered_hit_and_rule(self):
+        from langgraph.checkpoint.memory import InMemorySaver
+        graph, config, before = self.original(InMemorySaver(), "M5-POLICY-HIT-B01")
+        pinned = pinned_from_state(before)
+        pool = self.adapter.validate_pinned_context(pinned)
+        legacy = _project(pool, before, pinned.context, "policy")
+        self.assertEqual([r["ref"] for r in legacy], ["policy_rule:PO-BASE-DELIVERY-LATE"])
+        richer = _project(pool, before, pinned.context, "policy", include_policy_hits=True)
+        self.assertEqual([r["ref"] for r in richer], [legacy[0]["ref"],
+            "policy_hit:PO-BASE-DELIVERY-LATE:M18-L-B01"])
+        self.assertEqual(richer[1]["fields"], {"rule_id": "PO-BASE-DELIVERY-LATE",
+            "subject_scope_ref": "deal_line:M18-L-B01",
+            "result": "triggered", "severity": "approval_required"})
+        self.assertNotIn("scope", richer[0]["fields"])
+        self.assertNotIn("condition_json", richer[0]["fields"])
+        seen = []
+        def cite_hit(input, observations):
+            seen.append((input, observations))
+            rule, hit = observations[0]["records"]
+            return {"kind": "finding", "claims": [{"ref": hit["ref"],
+                "field": "result", "value": hit["fields"]["result"]},
+                {"ref": rule["ref"], "field": "required_action",
+                 "value": rule["fields"]["required_action"]}]}
+        models = {"credit": Scripted([lambda *_: {"kind": "abstain",
+            "reason_code": "model_uncertainty"}]), "policy": Scripted([inspect, cite_hit]),
+            "approval_routing": Scripted([lambda *_: {"kind": "abstain",
+                "reason_code": "model_uncertainty"}])}
+        after = run_m21_offline(graph, config, self.adapter, models)
+        self.assertEqual(after["m21_ai_results"]["policy"]["execution"], "completed")
+        self.assertEqual(after["m21_ai_results"]["policy"]["validated_claims"], [
+            {"ref": richer[1]["ref"], "field": "result", "value": "triggered"},
+            {"ref": richer[0]["ref"], "field": "required_action",
+             "value": richer[0]["fields"]["required_action"]}])
+        self.assertEqual(seen[0][0]["policy_hit_view_version"], POLICY_HIT_VIEW)
+        self.assertEqual(after["specialist_results"], before["specialist_results"])
+        self.assertEqual(after["review_status"], before["review_status"])
+        self.assertEqual(after["reviewer_package"]["m21_ai"]["fixed_review_status"],
+                         before["review_status"])
+        public, visible, aliases = model_view(seen[0][0], seen[0][1])
+        self.assertEqual(public["policy_hit_view_version"], POLICY_HIT_VIEW)
+        self.assertEqual(visible[0]["records"][1]["fields"], richer[1]["fields"])
+        self.assertEqual(aliases[visible[0]["records"][1]["ref"]], richer[1]["ref"])
+        # A deal-scoped hit cannot disclose the original subject identifier.
+        deal_scope = deepcopy(seen[0][1][0])
+        deal_scope["records"][1]["ref"] = "policy_hit:PO-BASE-DELIVERY-LATE:deal"
+        deal_scope["records"][1]["fields"]["subject_scope_ref"] = "deal"
+        deal_scope["returned_refs"][1] = deal_scope["records"][1]["ref"]
+        self.assertEqual(model_view(seen[0][0], (deal_scope,))[1][0]["records"][1][
+            "fields"]["subject_scope_ref"], "deal")
+        with self.assertRaises(ValueError):
+            model_view({k:v for k,v in seen[0][0].items() if k !=
+                "policy_hit_view_version"}, seen[0][1])
+        bad = deepcopy(seen[0][1][0])
+        bad["records"][0]["fields"]["condition_json"] = {"invented": True}
+        with self.assertRaises(ValueError):
+            model_view(seen[0][0], (bad,))
+        for field, value in (("result", "not_triggered"), ("result", "unknown"),
+                             ("rule_id", "PO-FORGED"), ("subject_scope_ref", "deal_line:OTHER")):
+            altered_view = deepcopy(seen[0][1][0])
+            altered_view["records"][1]["fields"][field] = value
+            with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                model_view(seen[0][0], (altered_view,))
+        hit = richer[1]
+        for ref, field, value in ((hit["ref"], "result", "not_triggered"),
+                                  (hit["ref"], "result", "unknown"),
+                                  ("policy_hit:FORGED", "result", "triggered"),
+                                  (hit["ref"], "prerequisites_met", True),
+                                  (hit["ref"], "underlying_evidence_ref", "invented")):
+            with self.subTest(ref=ref, field=field, value=value), self.assertRaises(ValueError):
+                _claims({"kind": "finding", "claims": [{"ref": ref,
+                    "field": field, "value": value}]}, seen[0][1])
+        with self.assertRaises(ValueError):
+            _claims({"kind": "finding", "claims": [{"ref": hit["ref"],
+                "field": "result", "value": "triggered"}]}, [{**seen[0][1][0],
+                    "returned_refs": [richer[0]["ref"]]}])
+
+    def test_policy_missing_hit_and_changed_source_fail_closed(self):
+        from langgraph.checkpoint.memory import InMemorySaver
+        graph, config, before = self.original(InMemorySaver(), "M5-POLICY-NO-HIT-N03", "N03")
+        pinned = pinned_from_state(before)
+        pool = self.adapter.validate_pinned_context(pinned)
+        self.assertEqual(_project(pool, before, pinned.context, "policy",
+                                  include_policy_hits=True), [])
+        # Zero hits is neither proof of a pass nor a rule-level unknown.
+        with self.assertRaises(ValueError):
+            _claims({"kind": "finding", "claims": [{"ref": "policy_hit:invented",
+                "field": "result", "value": "not_triggered"}]}, [{"execution":
+                "completed", "records": [], "returned_refs": []}])
+        graph, config, before = self.original(InMemorySaver(), "M5-POLICY-ADVERSE-B01")
+        pinned = pinned_from_state(before)
+        pool = self.adapter.validate_pinned_context(pinned)
+        altered = deepcopy(before)
+        altered["specialist_results"]["policy"]["payload"]["rule_hits"][0][
+            "severity"] = "blocker"
+        with self.assertRaises(EvidenceMismatch):
+            _project(pool, altered, pinned.context, "policy", include_policy_hits=True)
+        bad_pool = deepcopy(pool)
+        bad_pool["rules"]["policy_rules"] = []
+        with self.assertRaises(EvidenceMismatch):
+            _project(bad_pool, before, pinned.context, "policy", include_policy_hits=True)
+        with self.assertRaises(EvidenceMismatch):
+            _project(pool, before, type("WrongContext", (), {**vars(pinned.context),
+                "original_deal_id": "OTHER"})(), "policy", include_policy_hits=True)
+        altered = deepcopy(before)
+        altered["specialist_results"]["policy"]["payload"]["rule_hits"][0][
+            "scope"] = "M18-L-B02"
+        with self.assertRaises(EvidenceMismatch):
+            _project(pool, altered, pinned.context, "policy", include_policy_hits=True)
 
     def test_source_first_scopes_and_adverse_pool_identity(self):
         from langgraph.checkpoint.memory import InMemorySaver

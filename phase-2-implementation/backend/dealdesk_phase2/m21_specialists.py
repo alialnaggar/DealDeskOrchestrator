@@ -38,6 +38,7 @@ MAX_ACTION_BYTES = 8192
 _HOSTED_CAPABILITY = object()
 HOSTED_REPORTED_TOKEN_STOP = 24000
 CREDIT_FIXED_VIEW = "m5-credit-fixed-exposure-offline-v1"
+POLICY_HIT_VIEW = "m5-policy-fixed-hits-offline-v1"
 
 
 class M21Model(Protocol):
@@ -105,7 +106,8 @@ def _identity(context, specialist):
             "specialist": specialist}
 
 
-def _project(pool, state, context, specialist, *, include_fixed_credit=False):
+def _project(pool, state, context, specialist, *, include_fixed_credit=False,
+             include_policy_hits=False):
     """Selected, already pinned rows only; never infer a missing rule or role."""
     fixed = state["specialist_results"][specialist]["payload"]
     customer = pool["deal"]["customer_id"]
@@ -154,19 +156,54 @@ def _project(pool, state, context, specialist, *, include_fixed_credit=False):
     elif specialist == "policy":
         if fixed["per_rule_prerequisites_available"] is not False:
             raise EvidenceMismatch("M2.1 policy prerequisite interface changed")
+        if include_policy_hits:
+            from .fixed_specialists import domain_result
+            pinned = pinned_from_state(state)
+            if pinned.context != context:
+                raise EvidenceMismatch("M5 fixed policy source changed")
+            decision = unseal(state["fixed_decision"], state["fixed_decision_sha256"])
+            if (str(decision.get("run_id")) != str(context.phase1c_run_id) or
+                    decision.get("deal_id") != context.original_deal_id or
+                    decision.get("policy_set_code") != context.policy_set_code or
+                    decision.get("specialists", {}).get("policy", {}).get("rule_hits") !=
+                    [hit for hit in decision.get("commercial_rule_hits", [])
+                     if hit.get("area") == "policy"] or
+                    state["specialist_results"]["policy"] != domain_result(
+                        "policy", pinned, decision, context.assessment_id,
+                        state["specialist_results"])):
+                raise EvidenceMismatch("M5 fixed policy decision changed")
         selected = {r["policy_rule_id"]: r for r in pool["rules"]["policy_rules"]}
         records = []
+        used = set()
+        line_ids = {str(line["deal_line_id"]) for line in pool["lines"]}
         for hit in fixed["rule_hits"]:
             rule = selected.get(hit["rule_id"])
             if (rule is None or rule["policy_set_code"] != context.policy_set_code
-                    or rule["severity"] != hit["severity"]):
+                    or rule["severity"] != hit["severity"] or
+                    include_policy_hits and (hit.get("area") != "policy" or
+                        rule["is_active"] is not True or
+                        hit.get("scope") not in ("deal", *line_ids))):
                 raise EvidenceMismatch("M2.1 fixed policy hit not in selected rules")
-            records.append({"ref": "policy_rule:" + str(hit["rule_id"]),
-                "fields": _json({"rule_id": hit["rule_id"],
-                    "policy_area": rule["policy_area"], "severity": hit["severity"],
-                    "required_action": rule["required_action"], "scope": hit["scope"],
-                    "scope_type": rule["scope_type"],
-                    "scope_value": rule["scope_value"]})})
+            rule_ref = "policy_rule:" + str(hit["rule_id"])
+            if not include_policy_hits or rule_ref not in used:
+                fields = {
+                    "rule_id": hit["rule_id"], "policy_area": rule["policy_area"],
+                    "severity": hit["severity"], "required_action": rule["required_action"],
+                    "scope_type": rule["scope_type"], "scope_value": rule["scope_value"]}
+                if not include_policy_hits:
+                    fields["scope"] = hit["scope"]  # legacy hosted shape
+                records.append({"ref": rule_ref, "fields": _json(fields)})
+                used.add(rule_ref)
+            if include_policy_hits:
+                # Presence of a sealed fixed hit proves triggered, NOT that any
+                # other rule passed or had prerequisites. The selected rule and
+                # exact deal/line scope are references, not underlying fact proof.
+                scope = hit["scope"]
+                records.append({"ref": "policy_hit:" + str(hit["rule_id"]) + ":" + scope,
+                    "fields": {"rule_id": str(hit["rule_id"]),
+                        "subject_scope_ref": ("deal" if scope == "deal" else
+                            "deal_line:" + scope),
+                        "result": "triggered", "severity": hit["severity"]}})
     elif specialist == "approval_routing":
         withheld = fixed["route_withheld"]
         if withheld is not True and withheld is not False:
@@ -200,7 +237,8 @@ def _project(pool, state, context, specialist, *, include_fixed_credit=False):
     return records
 
 
-def _inspect(original, config, adapter, specialist, *, include_fixed_credit=False):
+def _inspect(original, config, adapter, specialist, *, include_fixed_credit=False,
+             include_policy_hits=False):
     state = original.get_state(config).values
     pinned = pinned_from_state(state)
     pool = adapter.validate_pinned_context(pinned)
@@ -222,10 +260,18 @@ def _inspect(original, config, adapter, specialist, *, include_fixed_credit=Fals
         raise EvidenceMismatch("M2.1 shared tool budget exhausted")
     if prior is not None:
         if prior["status"] == "completed":
+            if include_policy_hits:
+                checked = _project(pool, state, context, specialist,
+                                   include_policy_hits=True)
+                if prior.get("result") != {"version": VERSION, "tool": tool,
+                        "execution": "completed", "records": checked,
+                        "returned_refs": [r["ref"] for r in checked]}:
+                    raise EvidenceMismatch("M5 policy replay differs from sealed decision")
             return prior["result"]
         raise EvidenceMismatch("M2.1 uncertain tool receipt; never replay")
     records = _project(pool, state, context, specialist,
-                       include_fixed_credit=include_fixed_credit)
+                       include_fixed_credit=include_fixed_credit,
+                       include_policy_hits=include_policy_hits)
     result = {"version": VERSION, "tool": tool, "execution": "completed",
               "records": records, "returned_refs": [r["ref"] for r in records]}
     complete(original, config, context.assessment_id, context.bundle_sha256, call_id, result)
@@ -287,6 +333,8 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
             "fixed_finding": fixed[specialist]["finding"], "permitted_tool": TOOLS[specialist]}
         if specialist == "credit" and not hosted:
             input["credit_fixed_view_version"] = CREDIT_FIXED_VIEW
+        if specialist == "policy" and not hosted:
+            input["policy_hit_view_version"] = POLICY_HIT_VIEW
         if len(_canonical(input).encode()) > 4096:
             raise EvidenceMismatch("M2.1 input exceeds limit")
         status, reason = "error", "model_or_tool_failure"
@@ -370,7 +418,8 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
                             or action["subject_id"] != context.original_deal_id):
                         raise ValueError("M2.1 inspection identity or budget invalid")
                     observations.append(_inspect(original, config, adapter, specialist,
-                        include_fixed_credit=(specialist == "credit" and not hosted)))
+                        include_fixed_credit=(specialist == "credit" and not hosted),
+                        include_policy_hits=(specialist == "policy" and not hosted)))
                 elif action.get("kind") == "finding":
                     if not observations:
                         raise ValueError("M2.1 finding without authorized inspection")

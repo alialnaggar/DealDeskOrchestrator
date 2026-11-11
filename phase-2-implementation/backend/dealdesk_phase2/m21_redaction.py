@@ -8,7 +8,7 @@ maps an alias back to the ledger's exact reference after a response.
 from hashlib import sha256
 
 from .hybrid_pack import _canonical
-from .m21_specialists import CREDIT_FIXED_VIEW, TOOLS, VERSION
+from .m21_specialists import CREDIT_FIXED_VIEW, POLICY_HIT_VIEW, TOOLS, VERSION
 
 
 _CREDIT_FIELDS = frozenset(("credit_limit", "unbilled_committed_amount",
@@ -34,6 +34,10 @@ def model_view(input: dict, observations: tuple[dict, ...]) -> tuple[dict, tuple
     if fixed_credit_view not in (None, CREDIT_FIXED_VIEW) or (
             fixed_credit_view is not None and specialist != "credit"):
         raise ValueError("m21_redaction_unapproved_credit_view")
+    policy_hit_view = input.get("policy_hit_view_version")
+    if policy_hit_view not in (None, POLICY_HIT_VIEW) or (
+            policy_hit_view is not None and specialist != "policy"):
+        raise ValueError("m21_redaction_unapproved_policy_view")
     digest = input["bundle_sha256"]
     public = {key: input[key] for key in ("version", "prompt_version", "assessment_id",
         "phase1c_run_id", "bundle_sha256", "source_input_digest", "as_of_at",
@@ -43,6 +47,8 @@ def model_view(input: dict, observations: tuple[dict, ...]) -> tuple[dict, tuple
         public["credit_view_version"] = CREDIT_VIEW_VERSION
         if fixed_credit_view:
             public["credit_fixed_view_version"] = CREDIT_FIXED_VIEW
+    elif policy_hit_view:
+        public["policy_hit_view_version"] = POLICY_HIT_VIEW
     # Do not send customer ID, applied policy set, raw snapshot identifier,
     # invoice number, payment match or commitment evidence reference.
     ref_map = {}
@@ -54,17 +60,37 @@ def model_view(input: dict, observations: tuple[dict, ...]) -> tuple[dict, tuple
                 len(observation.get("records", [])) > 25):
             raise ValueError("m21_redaction_untrusted_observation")
         records = []
+        if specialist == "policy" and policy_hit_view:
+            source_records = {r["ref"]: r["fields"] for r in observation["records"]}
+            if len(source_records) != len(observation["records"]):
+                raise ValueError("m21_redaction_duplicate_policy_ref")
         for record in observation["records"]:
             original = record["ref"]
             kind = original.split(":", 1)[0]
+            if specialist == "policy" and policy_hit_view and kind == "policy_hit":
+                fields = record["fields"]
+                parts = original.split(":", 2)
+                if (len(parts) != 3 or set(fields) != {"rule_id", "subject_scope_ref",
+                        "result", "severity"} or fields["result"] != "triggered" or
+                        fields["rule_id"] != parts[1] or
+                        fields["subject_scope_ref"] != ("deal" if parts[2] == "deal"
+                            else "deal_line:" + parts[2]) or
+                        parts[2] != "deal" and not parts[2] or
+                        source_records.get("policy_rule:" + parts[1], {}).get("rule_id")
+                        != parts[1] or source_records["policy_rule:" + parts[1]].get(
+                            "severity") != fields["severity"]):
+                    raise ValueError("m21_redaction_invalid_policy_hit")
             if specialist == "credit":
                 allowed = {"credit_profile": _CREDIT_FIELDS, "receivable": _AR_FIELDS,
                            "payment": _PAYMENT_FIELDS,
                            "fixed_credit": frozenset(("credit_exposure",
                                "credit_over_limit_pct")) if fixed_credit_view else None}.get(kind)
             elif specialist == "policy":
-                allowed = frozenset(("rule_id", "policy_area", "severity",
-                    "required_action", "scope", "scope_type", "scope_value")) if kind == "policy_rule" else None
+                allowed = (frozenset(("rule_id", "policy_area", "severity",
+                    "required_action", "scope", "scope_type", "scope_value"))
+                    if kind == "policy_rule" else frozenset(("rule_id",
+                    "subject_scope_ref", "result", "severity")) if kind == "policy_hit"
+                    and policy_hit_view else None)
             else:
                 allowed = (frozenset(("route_withheld", "roles_available_from_fixed_interface"))
                     if kind == "fixed_route" else frozenset(("rule_id", "role", "sequence"))
