@@ -20,6 +20,18 @@ function validate(raw: string | undefined, prefix: string) {
   return Number(parts[2]) > Date.now() && same(mac(payload), parts[3]) ? parts[1] : null;
 }
 export function session(request: NextRequest) { return validate(request.cookies.get(sessionName)?.value, 'session'); }
+export function sessionFromCookie(raw: string | undefined) { return validate(raw, 'session'); }
+export function issueIntakeReceipt(nonce: string, scenario: 'rc01'|'uc02', digest: string) {
+  const payload = `${scenario}.${digest}.${Date.now() + 60 * 60_000}`;
+  return `${payload}.${mac(`intake.${nonce}.${payload}`)}`;
+}
+export function verifyIntakeReceipt(raw: string | undefined, nonce: string | null) {
+  if (!raw || !nonce || raw.length > 250) return null;
+  const parts = raw.split('.');
+  if (parts.length !== 4 || !['rc01','uc02'].includes(parts[0]) || !/^[0-9a-f]{64}$/.test(parts[1]) || !/^\d{13}$/.test(parts[2]) || !/^[0-9a-f]{64}$/.test(parts[3]) || Number(parts[2]) <= Date.now()) return null;
+  const payload=parts.slice(0,3).join('.');
+  return same(mac(`intake.${nonce}.${payload}`),parts[3]) ? {scenario:parts[0] as 'rc01'|'uc02',digest:parts[1]} : null;
+}
 export function originOK(request: NextRequest) {
   const origin = process.env.DEALDESK_UI_ORIGIN || 'http://127.0.0.1:3000';
   return request.headers.get('origin') === origin && request.headers.get('sec-fetch-site') !== 'cross-site' && request.headers.get('host') === new URL(origin).host;

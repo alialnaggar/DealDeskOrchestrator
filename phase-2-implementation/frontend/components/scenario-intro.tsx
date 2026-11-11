@@ -7,7 +7,7 @@ import { csrf, Created, json } from './client';
 import { DealRecord, ResponsibilityFlow } from './deal-record';
 import { guides, type GuideKey } from '@/lib/scenario-guide';
 
-export function ScenarioIntro({scenario, guide, publicAccess}: {scenario: GuideKey; guide: typeof guides[GuideKey]; publicAccess: boolean}) {
+export function ScenarioIntro({scenario, guide, publicAccess, intake=null}: {scenario: GuideKey; guide: typeof guides[GuideKey]; publicAccess: boolean;intake?:{digest:string;receipt:string}|null}) {
   const router = useRouter(); const launching = useRef(false);
   const [token,setToken] = useState(''); const [auth,setAuth] = useState(false);
   const [password,setPassword] = useState(''); const [busy,setBusy] = useState(false); const [error,setError] = useState('');
@@ -21,7 +21,7 @@ export function ScenarioIntro({scenario, guide, publicAccess}: {scenario: GuideK
     try {
       const result = await json('/api/assessments', Created, {method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':token,'Idempotency-Key':key},body:JSON.stringify({scenario:guide.code})});
       sessionStorage.removeItem(storageKey);
-      router.push(`/assessments/${result.assessment_id}`);
+      router.push(`/assessments/${result.assessment_id}${intake?`?intake=${encodeURIComponent(intake.receipt)}`:''}`);
     } catch (e) {
       const code = e instanceof Error && 'status' in e ? e.status : 0;
       setError(code === 429 ? 'Launch limit reached. Retry later with the same saved key.' : 'Launch unavailable. Retry will reuse the saved request key, not start a second run.');
@@ -31,6 +31,7 @@ export function ScenarioIntro({scenario, guide, publicAccess}: {scenario: GuideK
   }
   return <main id="main-content" className="workspace guided"><div className="back"><Link href="/#scenarios">← Explore scenarios</Link> / PRE-RUN BRIEF</div>
     <section className="workspace-hero"><div><span className="eyebrow">{guide.code} · SYNTHETIC SOURCE PREVIEW</span><h1>{guide.title}</h1><p>{guide.description}</p></div><span className="large-status tone-info">Focus: {guide.focus}</span></section>
+    {intake && <section className="panel intake-match" aria-label="Confirmed manual intake"><span className="eyebrow">MANUAL INTAKE · SERVER-VALIDATED MATCH</span><h2>Confirmed input matches this synthetic fixture</h2><p>Your reviewed commercial input matches the full supported {guide.code} request. This is a comparison, not a new deal record: the assessment runs the unchanged pinned fixture and retrieves its own specialist evidence. No entered deal data was persisted.</p><small>Confirmed input fingerprint: {intake.digest.slice(0,16)}… · <Link href="/intake">Start a different entry</Link></small></section>}
     <nav className="journey" aria-label="Demonstration journey"><a href="#deal-brief">Understand deal</a><a href="#deal-record">Inspect record</a><a href="#flow-title">Meet specialists</a><a href="#run-assessment">Run assessment</a></nav>
     <section id="deal-brief" className="panel"><span className="eyebrow">01 / BEFORE EXECUTION</span><h2>Deal brief</h2><div className="brief-grid"><div><strong>Customer request</strong><p>{guide.quantity} units of {guide.product}, requested by 04 Sep 2026 for Berlin. Quoted at €900 per unit, 30-day payment terms.</p></div><div><strong>What this tests</strong><p>{guide.objective}</p></div><div><strong>Constraint & risk</strong><p>{guide.risk}</p></div></div><p className="footnote">Expected behavior is a validation objective, not a prediction of a completed decision. All values in this preview are pinned synthetic fixture definitions, not a current database query.</p></section>
     <DealRecord scenario={scenario}/><ResponsibilityFlow focus={guide.focus}/>
