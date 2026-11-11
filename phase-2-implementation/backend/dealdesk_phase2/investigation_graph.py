@@ -8,6 +8,7 @@ reservation and returned source in the original PostgreSQL checkpoint.
 from datetime import date
 from hashlib import sha256
 import json
+from time import monotonic
 from typing import TypedDict
 from uuid import UUID
 
@@ -16,6 +17,7 @@ from langgraph.graph import START, END, StateGraph
 from .fulfillment_agent import (InvestigationModel, eligible_line, restricted_input,
                                  runtime_envelope, validate_contribution)
 from .fulfillment_correction import CORRECTION_VERSION, classify, feedback
+from .m4_correction_policy import disposition
 from .graph_state import pinned_from_state
 from .fulfillment_tools import FulfillmentTools
 from .phase1c_adapter import EvidenceMismatch, Phase1CAdapter
@@ -237,6 +239,14 @@ def _checkpoint(graph, config, correction, **updates):
     graph.update_state(config, {"fulfillment_correction": correction, **updates}, as_node="finish")
 
 
+def _revision_id(correction):
+    return sha256(json.dumps({"identity": correction["identity"],
+        "specialist": "fulfillment",
+        "first_attempt": correction["attempts"][0].get("attempt_id"),
+        "ordinal": 2, "version": CORRECTION_VERSION}, sort_keys=True,
+        separators=(",", ":")).encode()).hexdigest()
+
+
 def _correct(graph, config, adapter, connection_factory, model, first):
     """Resume a single revision. A reserved but unsaved response is uncertain/terminal."""
     state = graph.get_state(config).values
@@ -244,6 +254,17 @@ def _correct(graph, config, adapter, connection_factory, model, first):
     input = _correction_input(graph, config, adapter, state)
     if correction["identity"] != _correction_identity(input, model):
         raise EvidenceMismatch("Correction restart model or source identity changed")
+    if (correction.get("version") != CORRECTION_VERSION or
+            correction.get("eligibility", {}).get("eligible") is not True or
+            len(correction.get("attempts", ())) not in (1, 2) or
+            correction["attempts"][0] != first or
+            (len(correction["attempts"]) == 2 and
+             (correction["attempts"][1].get("ordinal") != 2 or
+              correction["attempts"][1].get("attempt_id") != _revision_id(correction))) or
+            (correction["status"] == "eligible" and len(correction["attempts"]) != 1) or
+            (correction["status"] in ("reserved", "response_saved") and
+             len(correction["attempts"]) != 2)):
+        raise EvidenceMismatch("Correction checkpoint or attempt identity changed")
     if correction["status"] == "reserved":
         # The provider may have received the request. Never send it again.
         correction = {**correction, "status": "uncertain_terminal"}
@@ -254,9 +275,7 @@ def _correct(graph, config, adapter, connection_factory, model, first):
         if remaining < 1 or correction["feedback"]["remaining_model_turns"] != remaining:
             raise EvidenceMismatch("Correction turn budget differs from checkpoint")
         identity = correction["identity"]
-        revision_id = sha256((identity["assessment_id"] + ":" + identity["bundle_sha256"] +
-                              ":" + identity["provider"] + ":" + identity["model"] +
-                              ":correction-v1:final").encode()).hexdigest()
+        revision_id = _revision_id(correction)
         correction = {**correction, "status": "reserved", "attempts": [
             *correction["attempts"], {"ordinal": 2, "status": "reserved",
                                        "attempt_id": revision_id}]}
@@ -265,6 +284,7 @@ def _correct(graph, config, adapter, connection_factory, model, first):
         # observations in the original checkpoint are passed to the model.
         state = graph.get_state(config).values
         observations, _ = _correction_observations(state, input)
+        started = monotonic()
         try:
             action = model.revise(input, observations, correction["feedback"], first["raw"])
             if (not isinstance(action, dict) or set(action) != {"type", "value"}
@@ -274,12 +294,14 @@ def _correct(graph, config, adapter, connection_factory, model, first):
                 raise ValueError("Revision exceeds bounded raw audit")
             correction = {**correction, "status": "response_saved", "attempts": [
                 correction["attempts"][0], {**correction["attempts"][1],
-                                              "status": "response_saved", "raw": action["value"]}]}
+                    "status": "response_saved", "raw": action["value"],
+                    "elapsed_ms": max(0, round((monotonic() - started) * 1000))}]}
             _checkpoint(graph, config, correction)
         except Exception as exc:
             correction = {**correction, "status": "terminal", "attempts": [
                 correction["attempts"][0], {**correction["attempts"][1],
-                                              "status": "error", "error_type": type(exc).__name__}]}
+                    "status": "error", "error_type": type(exc).__name__,
+                    "elapsed_ms": max(0, round((monotonic() - started) * 1000))}]}
             _checkpoint(graph, config, correction)
             return runtime_envelope(input, execution="error", error="revision_failed")
     raw = correction["attempts"][1]["raw"]
@@ -341,7 +363,13 @@ def run_original_then_investigate(original_graph, config: dict, adapter: Phase1C
             bounded = False
         if bounded and result["execution"] in ("completed", "error"):
             first = {"ordinal": 1, "status": result["execution"], "raw": raw,
-                     "result": result, "model_turns": private_result.get("model_turns", 0)}
+                      "result": result, "model_turns": private_result.get("model_turns", 0)}
+            first["attempt_id"] = sha256(json.dumps({"identity": _correction_identity(
+                _correction_input(original_graph, config, adapter,
+                                  original_graph.get_state(config).values), model),
+                "specialist": "fulfillment", "ordinal": 1,
+                "version": CORRECTION_VERSION}, sort_keys=True,
+                separators=(",", ":")).encode()).hexdigest()
             correction = {"version": CORRECTION_VERSION, "status": "classifying",
                           "identity": _correction_identity(
                               _correction_input(original_graph, config, adapter,
@@ -378,14 +406,20 @@ def run_original_then_investigate(original_graph, config: dict, adapter: Phase1C
                                        connection_factory)
                 except (EvidenceMismatch, ValueError, TypeError, KeyError):
                     pass  # Unknown pinned verifier failure is terminal.
-        if failure:
+        policy = disposition("fulfillment", failure["code"] if failure else None,
+            fully_returned=first["result"]["execution"] in ("completed", "error")
+                and first["raw"] is not None and first["result"].get("error") in (
+                    None, "malformed_contribution"),
+            remaining_turns=MAX_MODEL_TURNS - first["model_turns"])
+        if policy["eligible"]:
             _, refs = _correction_observations(original_graph.get_state(config).values, input)
-            correction = {**correction, "status": "eligible", "failure": failure,
+            correction = {**correction, "status": "eligible", "eligibility": policy,
+                           "failure": failure,
                           "feedback": feedback(failure, input, refs,
                                                MAX_MODEL_TURNS - first["model_turns"]),
                           "attempts": [{**first, "status": "rejected"}]}
         else:
-            correction = {**correction, "status": "terminal"}
+            correction = {**correction, "status": "terminal", "eligibility": policy}
         _checkpoint(original_graph, config, correction)
     if correction and correction["status"] in ("eligible", "reserved", "response_saved"):
         result = _correct(original_graph, config, adapter, connection_factory,

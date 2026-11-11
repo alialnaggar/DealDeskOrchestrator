@@ -107,6 +107,7 @@ This is the **single front-door checklist** for remaining thesis work. It comple
 - [ ] Never correct/replay on uncertain sends, transport/timeout failures, source or subject mismatch, permission/budget stop; preserve original and fixed authority.
 - [ ] Test invalid→valid, invalid→invalid, restart, tampering, identity, budgets and all six specialist stages.
 - [ ] Investigate Configuration validation, Fulfillment HTTP 400, HTTP 429/quota failures without replaying historical attempts.
+- **11 Nov bounded implementation (M4 still open):** [Fulfillment correction safety and six-stage eligibility audit](phase-2-implementation/evaluation/m4-single-correction-engineering-2026-11-11.md) adds distinct source-bound correction IDs, restart tamper checks, elapsed measurement and strict shared no-send policy for the five unsupported stages. Full fresh PostgreSQL **365/365**; no new hosted correction capability. The three M4 checkboxes above remain open pending separately budgeted, receipt-bound safe paths for other specialists.
 - **Exit evidence:** code/commit, negative tests, fresh PostgreSQL suite, documented remaining limitations.
 
 ### M5 — Enhancement review and scope freeze (16–22 Nov) — P1

@@ -15,7 +15,7 @@ from dealdesk_phase2.evidence_bundle import seal
 from dealdesk_phase2.fulfillment_agent import OfflineModelDouble
 from dealdesk_phase2.investigation_graph import run_original_then_investigate
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
-from dealdesk_phase2.phase1c_adapter import PinnedBundleV1, Phase1CAdapter
+from dealdesk_phase2.phase1c_adapter import EvidenceMismatch, PinnedBundleV1, Phase1CAdapter
 from test_original_graph import FixedAdapterDouble, RUN, AT
 
 try:
@@ -165,6 +165,11 @@ class OfflineInvestigationTests(unittest.TestCase):
         self.assertEqual([x["ordinal"] for x in correction["attempts"]], [1, 2])
         self.assertEqual(correction["attempts"][0]["raw"], first["value"])
         self.assertEqual(correction["attempts"][1]["raw"], revision["value"])
+        self.assertNotEqual(correction["attempts"][0]["attempt_id"],
+                            correction["attempts"][1]["attempt_id"])
+        self.assertEqual(correction["eligibility"]["reason"],
+                         "bounded_correction_eligible")
+        self.assertIsInstance(correction["attempts"][1]["elapsed_ms"], int)
         self.assertEqual(correction["feedback"]["remaining_model_turns"], 4)
         self.assertEqual(sum(bool(e.get("counted")) for e in state["tool_access_ledger"]), 1)
         self.assertEqual(state["ai_fulfillment_result"]["contribution"]["verification"],
@@ -182,13 +187,41 @@ class OfflineInvestigationTests(unittest.TestCase):
             assessment_id=self.id(), run_id=RUN, connection_factory=lambda: None)
         self.assertEqual(state["ai_fulfillment_result"]["contribution"]["kind"], "abstention")
         self.assertEqual(state["fulfillment_correction"]["status"], "terminal")
-
         self.setUp()
         state = run_original_then_investigate(self.graph, self.config, self.adapter,
             NoRevision((_tool(), _proposal(["inventory:FORGED"])), revision=abstention),
             assessment_id=self.id(), run_id=RUN, connection_factory=lambda: None)
         self.assertEqual(state["ai_fulfillment_result"]["error"], "unsupported_citation")
         self.assertEqual(state["fulfillment_correction"]["status"], "terminal")
+
+    def test_one_invalid_revision_is_terminal_without_another_model_call(self):
+        malformed = {"type": "contribution", "value": {"schema_version": "3",
+            "kind": "binding_proposal", "payload": {"line_id": "L1",
+            "tradeoff_code": "partial_delivery_requires_customer_acceptance",
+            "delivery_slices": [
+                {"quantity": "12.000", "delivery_date": "2026-09-04",
+                 "source_refs": ["inventory:S1"]},
+                {"quantity": "8", "delivery_date": "2026-09-17",
+                 "source_refs": ["inbound_supply:I1"]}]}}}
+        model = OfflineModelDouble(({
+            "type": "tool", "tool": "inspect_fulfillment_paths",
+            "arguments": {"line_id": "L1"}}, malformed), revision=malformed)
+        with patch("dealdesk_phase2.fulfillment_agent.validate_from_graph",
+                   side_effect=ValueError("Binding slice requires a positive whole quantity")), \
+             patch("dealdesk_phase2.fulfillment_correction.validate_from_graph",
+                   return_value={}):
+            state = run_original_then_investigate(self.graph, self.config, self.adapter,
+                model, assessment_id=self.id(), run_id=RUN,
+                connection_factory=lambda: None)
+        self.assertEqual(state["fulfillment_correction"]["status"], "terminal")
+        self.assertEqual(state["fulfillment_correction"]["attempts"][1]["status"],
+                         "rejected")
+        self.assertEqual(state["investigation_status"], "error")
+        self.assertEqual(state["specialist_results"]["fulfillment"]["execution"], "completed")
+        replay = run_original_then_investigate(self.graph, self.config, self.adapter,
+            OfflineModelDouble((), revision=None), assessment_id=self.id(), run_id=RUN,
+            connection_factory=lambda: None)
+        self.assertEqual(replay["trace"], state["trace"])
 
     def test_exhausted_shared_model_turns_cannot_start_revision(self):
         class NoRevision(OfflineModelDouble):
@@ -236,6 +269,18 @@ class OfflineInvestigationTests(unittest.TestCase):
                     assessment_id=self.id(), run_id=RUN, connection_factory=lambda: None)
         self.assertEqual(self.graph.get_state(self.config).values["fulfillment_correction"][
             "status"], "reserved")
+        saved = self.graph.get_state(self.config).values["fulfillment_correction"]
+        tampered = {**saved, "attempts": [saved["attempts"][0],
+            {**saved["attempts"][1], "attempt_id": "0" * 64}]}
+        self.graph.update_state(self.config, {"fulfillment_correction": tampered},
+                                as_node="finish")
+        restarted = build_original_graph(self.adapter, None, self.saver)
+        with self.assertRaises(EvidenceMismatch):
+            run_original_then_investigate(restarted, self.config, self.adapter,
+                Interrupted((), revision=malformed), assessment_id=self.id(), run_id=RUN,
+                connection_factory=lambda: None)
+        self.graph.update_state(self.config, {"fulfillment_correction": saved},
+                                as_node="finish")
         restarted = build_original_graph(self.adapter, None, self.saver)
         state = run_original_then_investigate(restarted, self.config, self.adapter,
             Interrupted((), revision=malformed), assessment_id=self.id(), run_id=RUN,
