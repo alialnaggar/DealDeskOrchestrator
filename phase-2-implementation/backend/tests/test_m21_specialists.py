@@ -7,7 +7,8 @@ import unittest
 from uuid import UUID
 
 from dealdesk_phase2.m21_specialists import (_claims, _project, build_m21_graph,
-    run_m21_offline, VERSION)
+    run_m21_offline, VERSION, CREDIT_FIXED_VIEW)
+from dealdesk_phase2.m21_redaction import model_view
 from dealdesk_phase2.m21_prompts import PROMPT_VERSION
 from dealdesk_phase2.graph_state import pinned_from_state
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
@@ -95,6 +96,79 @@ class M21Postgres(unittest.TestCase):
         run = next(x for x in CASES if x.case_id == case).run_id
         before = graph.invoke(initial_state(name, run), config)
         return graph, config, before
+
+    def test_offline_credit_cites_fixed_exposure_without_invented_clearance(self):
+        from langgraph.checkpoint.memory import InMemorySaver
+        graph, config, before = self.original(InMemorySaver(), "M5-CREDIT-FIXED-B01")
+        pinned = pinned_from_state(before)
+        pool = self.adapter.validate_pinned_context(pinned)
+        old = _project(pool, before, pinned.context, "credit")
+        self.assertNotIn("fixed_credit:" + pinned.context.original_deal_id,
+                         [row["ref"] for row in old])  # existing hosted view unchanged
+        enhanced = _project(pool, before, pinned.context, "credit", include_fixed_credit=True)
+        row = enhanced[-1]
+        self.assertEqual(row["ref"], "fixed_credit:" + pinned.context.original_deal_id)
+        self.assertEqual(row["fields"], {"credit_exposure": "9000.00",
+            "credit_over_limit_pct": "0"})
+        seen = []
+        def cite_exposure(input, observations):
+            seen.append((input, observations))
+            fixed = observations[0]["records"][-1]
+            profile = observations[0]["records"][0]
+            return {"kind": "finding", "claims": [{"ref": fixed["ref"],
+                "field": "credit_exposure", "value": fixed["fields"]["credit_exposure"]},
+                {"ref": profile["ref"], "field": "credit_limit",
+                 "value": profile["fields"]["credit_limit"]}]}
+        models = {"credit": Scripted([inspect, cite_exposure]),
+            "policy": Scripted([lambda *_: {"kind": "abstain",
+                "reason_code": "model_uncertainty"}]),
+            "approval_routing": Scripted([lambda *_: {"kind": "abstain",
+                "reason_code": "model_uncertainty"}])}
+        after = run_m21_offline(graph, config, self.adapter, models)
+        finding = after["m21_ai_results"]["credit"]
+        self.assertEqual(finding["execution"], "completed")
+        self.assertEqual(finding["validated_claims"], [{"ref": row["ref"],
+            "field": "credit_exposure", "value": "9000.00"},
+            {"ref": seen[0][1][0]["records"][0]["ref"], "field": "credit_limit",
+             "value": seen[0][1][0]["records"][0]["fields"]["credit_limit"]}])
+        self.assertEqual(seen[0][0]["credit_fixed_view_version"], CREDIT_FIXED_VIEW)
+        self.assertEqual(after["specialist_results"], before["specialist_results"])
+        self.assertEqual(after["review_status"], before["review_status"])
+        self.assertFalse(any("credit_exposure" in x["fields"] for x in old))
+        public, visible, aliases = model_view(seen[0][0], seen[0][1])
+        self.assertEqual(public["credit_fixed_view_version"], CREDIT_FIXED_VIEW)
+        self.assertEqual(visible[0]["records"][-1]["fields"], row["fields"])
+        self.assertEqual(aliases[visible[0]["records"][-1]["ref"]], row["ref"])
+        with self.assertRaises(ValueError):
+            model_view({k: v for k, v in seen[0][0].items() if k !=
+                "credit_fixed_view_version"}, seen[0][1])
+        with self.assertRaises(ValueError):
+            _claims({"kind": "finding", "claims": [{"ref": row["ref"],
+                "field": "credit_exposure", "value": "0"}]}, seen[0][1])
+        with self.assertRaises(ValueError):
+            _claims({"kind": "finding", "claims": [{"ref": "fixed_credit:FORGED",
+                "field": "credit_exposure", "value": "9000.00"}]}, seen[0][1])
+        with self.assertRaises(ValueError):
+            _claims({"kind": "finding", "claims": [{"ref": row["ref"],
+                "field": "credit_exposure", "value": "9000.00"}]}, [{**seen[0][1][0],
+                    "returned_refs": []}])
+
+    def test_fixed_credit_view_rejects_tampered_source_and_unavailable_result(self):
+        from langgraph.checkpoint.memory import InMemorySaver
+        graph, config, before = self.original(InMemorySaver(), "M5-CREDIT-TAMPER-B01")
+        pinned = pinned_from_state(before)
+        pool = self.adapter.validate_pinned_context(pinned)
+        altered = deepcopy(before)
+        altered["specialist_results"]["credit"]["payload"]["credit_exposure"] = "0"
+        with self.assertRaises(EvidenceMismatch):
+            _project(pool, altered, pinned.context, "credit", include_fixed_credit=True)
+        altered = deepcopy(before)
+        altered["specialist_results"]["credit"]["execution"] = "skipped"
+        with self.assertRaises(EvidenceMismatch):
+            _project(pool, altered, pinned.context, "credit", include_fixed_credit=True)
+        with self.assertRaises(EvidenceMismatch):
+            _project(pool, before, type("WrongContext", (), {**vars(pinned.context),
+                "assessment_id": "other"})(), "credit", include_fixed_credit=True)
 
     def test_source_first_scopes_and_adverse_pool_identity(self):
         from langgraph.checkpoint.memory import InMemorySaver

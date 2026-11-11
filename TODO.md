@@ -116,6 +116,7 @@ This is the **single front-door checklist** for remaining thesis work. It comple
 - [ ] Classify enhancements **implement / defer / reject** with research value, safety, effort and measurability.
 - [ ] Do not silently expand to WP4 source-writing/V2; obtain separate security/source-owner approval.
 - [ ] Freeze optional functionality by **22 Nov**; record later change control.
+- **11 Nov early M5 increment (not M5 closure):** [Six-specialist capability matrix and offline Credit fixed-exposure evidence](phase-2-implementation/evaluation/m5-specialist-capability-and-credit-2026-11-11.md). An offline Credit model may cite the already verified fixed amount alongside dated evidence; the hosted view, fixed decision and candidate scope are unchanged. Focused fresh PostgreSQL **17/17**, full fresh PostgreSQL **380/380**. Enhancement register, independent evaluation and feature freeze remain open.
 - **Exit evidence:** approved enhancement register and feature-freeze decision.
 
 ### Supervisor feedback — Pydantic v2 contract standardization (P1; optional)

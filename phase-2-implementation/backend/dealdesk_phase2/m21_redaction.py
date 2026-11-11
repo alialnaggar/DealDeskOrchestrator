@@ -8,7 +8,7 @@ maps an alias back to the ledger's exact reference after a response.
 from hashlib import sha256
 
 from .hybrid_pack import _canonical
-from .m21_specialists import TOOLS, VERSION
+from .m21_specialists import CREDIT_FIXED_VIEW, TOOLS, VERSION
 
 
 _CREDIT_FIELDS = frozenset(("credit_limit", "unbilled_committed_amount",
@@ -30,6 +30,10 @@ def model_view(input: dict, observations: tuple[dict, ...]) -> tuple[dict, tuple
     specialist = input["specialist"]
     if specialist not in TOOLS or input["permitted_tool"] != TOOLS[specialist]:
         raise ValueError("m21_redaction_wrong_specialist")
+    fixed_credit_view = input.get("credit_fixed_view_version")
+    if fixed_credit_view not in (None, CREDIT_FIXED_VIEW) or (
+            fixed_credit_view is not None and specialist != "credit"):
+        raise ValueError("m21_redaction_unapproved_credit_view")
     digest = input["bundle_sha256"]
     public = {key: input[key] for key in ("version", "prompt_version", "assessment_id",
         "phase1c_run_id", "bundle_sha256", "source_input_digest", "as_of_at",
@@ -37,6 +41,8 @@ def model_view(input: dict, observations: tuple[dict, ...]) -> tuple[dict, tuple
     public["subject_id"] = alias(digest, "subject", input["subject_id"])
     if specialist == "credit":
         public["credit_view_version"] = CREDIT_VIEW_VERSION
+        if fixed_credit_view:
+            public["credit_fixed_view_version"] = CREDIT_FIXED_VIEW
     # Do not send customer ID, applied policy set, raw snapshot identifier,
     # invoice number, payment match or commitment evidence reference.
     ref_map = {}
@@ -53,7 +59,9 @@ def model_view(input: dict, observations: tuple[dict, ...]) -> tuple[dict, tuple
             kind = original.split(":", 1)[0]
             if specialist == "credit":
                 allowed = {"credit_profile": _CREDIT_FIELDS, "receivable": _AR_FIELDS,
-                           "payment": _PAYMENT_FIELDS}.get(kind)
+                           "payment": _PAYMENT_FIELDS,
+                           "fixed_credit": frozenset(("credit_exposure",
+                               "credit_over_limit_pct")) if fixed_credit_view else None}.get(kind)
             elif specialist == "policy":
                 allowed = frozenset(("rule_id", "policy_area", "severity",
                     "required_action", "scope", "scope_type", "scope_value")) if kind == "policy_rule" else None

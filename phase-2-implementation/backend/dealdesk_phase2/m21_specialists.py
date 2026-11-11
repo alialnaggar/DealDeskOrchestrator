@@ -37,6 +37,7 @@ MAX_OBSERVATION_BYTES = 16384
 MAX_ACTION_BYTES = 8192
 _HOSTED_CAPABILITY = object()
 HOSTED_REPORTED_TOKEN_STOP = 24000
+CREDIT_FIXED_VIEW = "m5-credit-fixed-exposure-offline-v1"
 
 
 class M21Model(Protocol):
@@ -104,7 +105,7 @@ def _identity(context, specialist):
             "specialist": specialist}
 
 
-def _project(pool, state, context, specialist):
+def _project(pool, state, context, specialist, *, include_fixed_credit=False):
     """Selected, already pinned rows only; never infer a missing rule or role."""
     fixed = state["specialist_results"][specialist]["payload"]
     customer = pool["deal"]["customer_id"]
@@ -131,6 +132,25 @@ def _project(pool, state, context, specialist):
             records.append({"ref": "payment:" + str(row["payment_id"]),
                 "fields": _json({k: row[k] for k in ("invoice_number", "paid_date",
                     "paid_amount", "due_date")})})
+        if include_fixed_credit:
+            # Phase 1C's result, not a model-side exposure calculation or a
+            # credit-clearance decision. Keep it separate from source rows.
+            from .fixed_specialists import domain_result
+            pinned = pinned_from_state(state)
+            if pinned.context != context:
+                raise EvidenceMismatch("M5 fixed credit source changed")
+            decision = unseal(state["fixed_decision"], state["fixed_decision_sha256"])
+            expected = domain_result("credit", pinned, decision, context.assessment_id,
+                                     state["specialist_results"])
+            if state["specialist_results"]["credit"] != expected:
+                raise EvidenceMismatch("M5 fixed credit result changed")
+            if (fixed.get("credit_exposure") is None or
+                    fixed.get("credit_over_limit_pct") is None or
+                    state["specialist_results"]["credit"]["execution"] != "completed"):
+                raise EvidenceMismatch("M5 fixed credit exposure unavailable")
+            records.append({"ref": "fixed_credit:" + context.original_deal_id,
+                "fields": _json({"credit_exposure": fixed["credit_exposure"],
+                                 "credit_over_limit_pct": fixed["credit_over_limit_pct"]})})
     elif specialist == "policy":
         if fixed["per_rule_prerequisites_available"] is not False:
             raise EvidenceMismatch("M2.1 policy prerequisite interface changed")
@@ -180,7 +200,7 @@ def _project(pool, state, context, specialist):
     return records
 
 
-def _inspect(original, config, adapter, specialist):
+def _inspect(original, config, adapter, specialist, *, include_fixed_credit=False):
     state = original.get_state(config).values
     pinned = pinned_from_state(state)
     pool = adapter.validate_pinned_context(pinned)
@@ -204,7 +224,8 @@ def _inspect(original, config, adapter, specialist):
         if prior["status"] == "completed":
             return prior["result"]
         raise EvidenceMismatch("M2.1 uncertain tool receipt; never replay")
-    records = _project(pool, state, context, specialist)
+    records = _project(pool, state, context, specialist,
+                       include_fixed_credit=include_fixed_credit)
     result = {"version": VERSION, "tool": tool, "execution": "completed",
               "records": records, "returned_refs": [r["ref"] for r in records]}
     complete(original, config, context.assessment_id, context.bundle_sha256, call_id, result)
@@ -264,6 +285,8 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
             "data_snapshot_ref": context.data_snapshot_ref,
             "as_of_at": context.as_of_at.isoformat(), "fixed_execution": fixed[specialist]["execution"],
             "fixed_finding": fixed[specialist]["finding"], "permitted_tool": TOOLS[specialist]}
+        if specialist == "credit" and not hosted:
+            input["credit_fixed_view_version"] = CREDIT_FIXED_VIEW
         if len(_canonical(input).encode()) > 4096:
             raise EvidenceMismatch("M2.1 input exceeds limit")
         status, reason = "error", "model_or_tool_failure"
@@ -346,7 +369,8 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
                             or action["tool"] != TOOLS[specialist]
                             or action["subject_id"] != context.original_deal_id):
                         raise ValueError("M2.1 inspection identity or budget invalid")
-                    observations.append(_inspect(original, config, adapter, specialist))
+                    observations.append(_inspect(original, config, adapter, specialist,
+                        include_fixed_credit=(specialist == "credit" and not hosted)))
                 elif action.get("kind") == "finding":
                     if not observations:
                         raise ValueError("M2.1 finding without authorized inspection")
