@@ -98,6 +98,7 @@ This is the **single front-door checklist** for remaining thesis work. It comple
 - [ ] Confirm Phase 2 reader compatibility with accepted Phase 1C pin; approve changes explicitly, including any Credit v3 / controls 040–041 scope.
 - [ ] Finish prospective campaign membership, preflight, authorization, start and receipt reconciliation, including preflight/no-send and uncertain-send denominators.
 - [ ] Offline-test independent scorer, missing-aware timing/usage and matched deterministic baseline eligibility.
+- **11 Nov engineering evidence (not M3 closure):** [IR2 offline evaluation-readiness report](phase-2-implementation/evaluation/m22-ir2-offline-evaluation-readiness-2026-11-11.md) documents mock-tested registry/unknown-start accounting, measured-only timing and post-run six-domain reviewer-label interface on the pinned source. External *independent* answer acceptance, authenticator, trust root/hosted authorization and actual comparison remain open; keep the M3 checkboxes unchecked.
 - **Exit evidence:** accepted answer register, release audit, compatible pin decision, offline evaluation readiness report.
 
 ### M4 — Core engineering closure (9–18 Nov) — P0

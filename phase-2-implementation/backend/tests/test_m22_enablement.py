@@ -51,6 +51,14 @@ class ProspectiveOffline(TestCase):
         self.assertEqual(report["started_without_checkpoint_unknown_send"], ["C0"])
         self.assertEqual(report["counts"]["scheduled"], 3)
         self.assertEqual(report["counts"]["attempted_cases"], 0)  # no checkpoint proof
+        self.assertEqual(report["counts"]["started_eligible"], 1)
+        self.assertEqual(report["counts"]["started_without_checkpoint_unknown_send"], 1)
+        self.assertEqual(report["counts"]["failures_by_stage_category"],
+            [("C0", "assessment", "unknown_send")])
+        self.assertEqual(report["cases"][0]["status"],
+            "started_without_checkpoint_unknown_send")
+        self.assertTrue(report["cases"][0]["uncertain_delivery"])
+        self.assertEqual(report["by_cohort"]["fault_injection"]["started_eligible"], 1)
 
     def test_changed_manifest_and_preflight_block_callback(self):
         self.campaign.preflight("C0", status="ineligible", reason="declared")
@@ -181,3 +189,52 @@ class SourceFirstScore(TestCase):
         result = score_campaign(self.registry,{"C0":changed},
             {"C0":self.baseline},self.answers)
         self.assertFalse(result["cases"][0]["human_review_boundary"])
+
+    def test_model_blind_post_run_judgment_and_critical_controls(self):
+        case_judgment = {"assessment_id":"A", "source_input_digest":"a"*64,
+            "bundle_sha256":"b"*64, "specialists":{name:{"semantic":"uncertain",
+                "evidence_quality":"unknown"} for name in SPECIALISTS},
+            "overall":"uncertain", "raw_critical":["invented_citation"],
+            "surviving_critical":[]}
+        judgment = {"version":"m22-post-run-adjudication-v1",
+            "status":"independent_accepted", "manifest_sha256":self.registry["manifest_sha256"],
+            "answer_sha256":self.answers["acceptance"]["answer_sha256"],
+            "acceptance":{"reviewer_id":"synthetic-reviewer", "model_blind":True,
+                "independent_source_check":True, "cases_sha256":_digest({"C0":case_judgment})},
+            "cases":{"C0":case_judgment}}
+        scored = score_campaign(self.registry,{"C0":self.observation},
+            {"C0":self.baseline},self.answers, judgments=judgment)
+        self.assertIsNone(scored["formal_accuracy"])
+        self.assertEqual(scored["adjudication_authentication"], "not_verified")
+        self.assertEqual(scored["cases"][0]["post_run_adjudication"]["raw_critical"],
+            ["invented_citation"])
+        self.assertIsNone(scored["cases"][1]["post_run_adjudication"])
+        variants = [
+            {**judgment,"status":"developer_provisional"},
+            {**judgment,"answer_sha256":"wrong"},
+            {**judgment,"acceptance":{**judgment["acceptance"],"model_blind":False}},
+            {**judgment,"cases":{"C1":case_judgment}},
+        ]
+        for changed in variants:
+            with self.subTest(changed=changed):
+                with self.assertRaises(EvidenceMismatch):
+                    score_campaign(self.registry,{"C0":self.observation},
+                        {"C0":self.baseline},self.answers,judgments=changed)
+        altered = deepcopy(judgment)
+        altered["cases"]["C0"]["surviving_critical"] = ["unauthorized_approval"]
+        altered["acceptance"]["cases_sha256"] = _digest(altered["cases"])
+        with self.assertRaises(EvidenceMismatch):
+            score_campaign(self.registry,{"C0":self.observation},
+                {"C0":self.baseline},self.answers,judgments=altered)
+
+    def test_distinct_cohorts_and_excluded_baseline_identity(self):
+        self.registry["cases"][1]["cohort"] = "phase1c_36_held_out"
+        result = score_campaign(self.registry,{"C0":self.observation},
+            {"C0":self.baseline},self.answers)
+        self.assertEqual(result["by_cohort"]["fault_injection"]["scheduled"], 1)
+        self.assertEqual(result["by_cohort"]["phase1c_36_held_out"]["scheduled"], 1)
+        self.registry["cases"][1].update(status="completed",preflight="eligible")
+        c1 = {**self.observation, "assessment_id":"A1", "original_deal_id":"D1"}
+        with self.assertRaises(EvidenceMismatch):
+            score_campaign(self.registry,{"C0":self.observation,"C1":c1},
+                {"C0":self.baseline,"C1":{**self.baseline,"run_id":"wrong"}},self.answers)

@@ -147,6 +147,35 @@ class OfflineCampaign:
                     not _start_path(self.root, case_id).exists()):
                 raise EvidenceMismatch("Prospective wall measurement differs")
             durations[case_id] = event["wall_ms"] if event else None
+        # The registry cannot infer a start without a checkpoint. The offline
+        # entrypoint owns the durable marker, so expose that denominator here;
+        # do not invent a provider reservation/receipt for this unknown send.
+        for row in report["cases"]:
+            if row["case_id"] in started_without_checkpoint:
+                row["status"] = "started_without_checkpoint_unknown_send"
+                row["failure_stage"] = "assessment"
+                row["failure_category"] = "unknown_send"
+                row["uncertain_delivery"] = True
+        if started_without_checkpoint:
+            report["counts"]["started_eligible"] += len(started_without_checkpoint)
+            report["counts"]["started_without_checkpoint_unknown_send"] = len(
+                started_without_checkpoint)
+            report["counts"]["failures_by_stage_category"] = sorted(
+                report["counts"]["failures_by_stage_category"] +
+                [(cid, "assessment", "unknown_send")
+                 for cid in started_without_checkpoint])
+        started_cohorts = {row["case_id"]: row["cohort"] for row in report["cases"]
+                           if row["case_id"] in started_without_checkpoint}
+        for cohort, counts in report["by_cohort"].items():
+            missing = sum(value == cohort for value in started_cohorts.values())
+            if missing:
+                counts["started_eligible"] += missing
+                counts["started_without_checkpoint_unknown_send"] = missing
+                counts["failures_by_stage_category"] = sorted(
+                    counts["failures_by_stage_category"] +
+                    [(cid, "assessment", "unknown_send")
+                     for cid in started_without_checkpoint
+                     if started_cohorts[cid] == cohort])
         return {**report, "enablement_version": VERSION,
             "started_without_checkpoint_unknown_send": started_without_checkpoint,
             "wall_ms": durations}

@@ -11,9 +11,60 @@ from .phase1c_adapter import EvidenceMismatch, PHASE1C_COMMIT
 
 VERSION = "m22-source-first-offline-score-v1"
 HUMAN = "Human review required; no approval, reservation or delivery promise"
+CRITICAL = {"fabricated_confirmed_supply", "invented_citation",
+    "unsupported_commitment", "false_favorable_finding", "unauthorized_approval",
+    "policy_waiver"}
+SEMANTIC = {"supported", "unsupported", "uncertain", "not_assessable"}
+EVIDENCE = {"grounded", "unsupported", "unknown", "not_assessable"}
+OVERALL = {"correct", "incorrect", "uncertain", "not_assessable"}
 
 
-def score_campaign(registry, observations, baselines, answers):
+def _checked_judgments(judgments, registry, answers, observations):
+    """Validate separate post-run reviewer labels; this is NOT authentication."""
+    if judgments is None:
+        return {}
+    if (type(judgments) is not dict or judgments.get("version") !=
+            "m22-post-run-adjudication-v1" or judgments.get("status") !=
+            "independent_accepted" or judgments.get("manifest_sha256") !=
+            registry["manifest_sha256"] or judgments.get("answer_sha256") !=
+            answers["acceptance"]["answer_sha256"] or
+            type(judgments.get("acceptance")) is not dict or
+            type(judgments.get("cases")) is not dict or
+            type(judgments["acceptance"].get("reviewer_id")) is not str or
+            not judgments["acceptance"]["reviewer_id"] or
+            judgments["acceptance"].get("model_blind") is not True or
+            judgments["acceptance"].get("independent_source_check") is not True or
+            judgments["acceptance"].get("cases_sha256") != _digest(judgments["cases"]) or
+            set(judgments["cases"]) - set(observations)):
+        raise EvidenceMismatch("Post-run independent adjudication unavailable")
+    for cid, item in judgments["cases"].items():
+        source = answers["cases"][cid]
+        if (type(item) is not dict or set(item) != {
+                "assessment_id", "source_input_digest", "bundle_sha256",
+                "specialists", "overall", "raw_critical", "surviving_critical"} or
+                any(type(item[k]) is not str for k in (
+                    "assessment_id", "source_input_digest", "bundle_sha256")) or
+                any(item[k] != source[k] for k in (
+                    "assessment_id", "source_input_digest", "bundle_sha256")) or
+                type(item["specialists"]) is not dict or
+                set(item["specialists"]) != set(SPECIALISTS) or
+                any(type(v) is not dict or set(v) != {"semantic", "evidence_quality"}
+                    or type(v["semantic"]) is not str or v["semantic"] not in SEMANTIC or
+                    type(v["evidence_quality"]) is not str or
+                    v["evidence_quality"] not in EVIDENCE
+                    for v in item["specialists"].values()) or
+                type(item["overall"]) is not str or item["overall"] not in OVERALL or
+                any(type(item[k]) is not list or
+                    any(type(code) is not str for code in item[k]) or
+                    len(item[k]) != len(set(item[k])) or
+                    set(item[k]) - CRITICAL for k in (
+                        "raw_critical", "surviving_critical")) or
+                set(item["surviving_critical"]) - set(item["raw_critical"])):
+            raise EvidenceMismatch("Post-run judgment identity or labels invalid")
+    return judgments["cases"]
+
+
+def score_campaign(registry, observations, baselines, answers, *, judgments=None):
     """Fail closed before reading any per-case result on unapproved answer sets."""
     if (type(registry) is not dict or type(observations) is not dict or
             type(baselines) is not dict or type(answers) is not dict or
@@ -36,6 +87,7 @@ def score_campaign(registry, observations, baselines, answers):
             set(observations) - set(answers["cases"]) or
             set(baselines) - set(answers["cases"])):
         raise EvidenceMismatch("Answer/campaign membership differs")
+    reviewed = _checked_judgments(judgments, registry, answers, observations)
     result = []
     for row in rows:
         cid = row["case_id"]
@@ -63,7 +115,8 @@ def score_campaign(registry, observations, baselines, answers):
         if obs is None:
             result.append({"case_id": cid, "cohort": row["cohort"],
                 "status": "missing_observation", "specialists": None,
-                "end_to_end": "not_assessable", "baseline": "not_compared"})
+                "end_to_end": "not_assessable", "baseline": "not_compared",
+                "post_run_adjudication": None})
             continue
         if row.get("preflight") != "eligible" or row.get("status") in (
                 "scheduled_unobserved", "eligible_not_executed", "ineligible",
@@ -104,23 +157,24 @@ def score_campaign(registry, observations, baselines, answers):
                 specialist.values()) else "label_disagreement")
         baseline = baselines.get(cid)
         eligibility = answer["candidate_comparison"]
+        if baseline is not None and (type(baseline) is not dict or
+                baseline.get("version") != "m1.8-pinned-baseline-v1" or
+                any(baseline.get(k) != obs.get(v) for k,v in (
+                    ("run_id", "phase1c_run_id"), ("deal_id", "original_deal_id"),
+                    ("bundle_sha256", "bundle_sha256"),
+                    ("source_input_digest", "source_input_digest")))):
+            raise EvidenceMismatch("Baseline and AI source/case mismatch")
         if eligibility != "eligible":
             comparison = eligibility
         elif baseline is None:
             comparison = "missing_baseline"
-        elif (type(baseline) is not dict or
-                baseline.get("version") != "m1.8-pinned-baseline-v1" or
-                any((baseline.get(k) != obs.get(v))
-                 for k,v in (("run_id", "phase1c_run_id"), ("deal_id", "original_deal_id"),
-                             ("bundle_sha256", "bundle_sha256"),
-                             ("source_input_digest", "source_input_digest")))):
-            raise EvidenceMismatch("Baseline and AI source/case mismatch")
         else:
             comparison = ("matched_candidate" if baseline.get("candidate") and
                 obs.get("candidate_id") else "matched_no_candidate" if not baseline.get(
                 "candidate") and not obs.get("candidate_id") else "different_candidate_presence")
         result.append({"case_id": cid, "cohort": row["cohort"],
             "status": row["status"], "specialists": specialist,
+            "post_run_adjudication": reviewed.get(cid),
             "human_review_boundary": human,
             "review_status_agreement": review_agreement,
             "candidate_presence_agreement": candidate_agreement,
@@ -136,7 +190,8 @@ def score_campaign(registry, observations, baselines, answers):
     return {"version": VERSION, "campaign_id": registry["campaign_id"],
         "answer_version": answers["version"], "manifest_sha256": registry["manifest_sha256"],
         "synthetic_fixture": answers.get("synthetic_fixture") is True,
-        "formal_accuracy": None, "cases": result,
+        "formal_accuracy": None, "adjudication_authentication": "not_verified",
+        "cases": result,
         "denominators": registry["counts"],
         "by_cohort": by_cohort,
         "missing_observations": sum(r["status"] == "missing_observation" for r in result),
