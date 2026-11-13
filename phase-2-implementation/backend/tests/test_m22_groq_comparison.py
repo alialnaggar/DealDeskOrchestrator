@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from dealdesk_phase2.m22_enablement import OfflineCampaign
-from dealdesk_phase2.m22_groq_comparison import inspect_groq_pair
+from dealdesk_phase2.m22_groq_comparison import BASELINE_MODEL, inspect_groq_pair
 from dealdesk_phase2.m22_hosted_readiness import CONTRACTS, run_hosted_prospective
 from dealdesk_phase2.phase1c_adapter import EvidenceMismatch
 from test_m22_registry import case
@@ -21,9 +21,9 @@ class GroqPairNoSend(unittest.TestCase):
         self.root = Path(tmp.name)
         self.other = self.root / "other"
         self.other.mkdir(mode=0o700)
-        self.second = "synthetic/second-model-id"  # NOT a verified Groq model
+        self.second = CONTRACTS["model"]
         self.left_cases = [{**case(i), "cohort": "pinned_development",
-            "contract_versions": dict(CONTRACTS)} for i in range(2)]
+            "contract_versions": {**CONTRACTS, "model": BASELINE_MODEL}} for i in range(2)]
         self.right_cases = [{**row, "assessment_id": "B" + row["assessment_id"],
             "contract_versions": {**CONTRACTS, "model": self.second}}
             for row in self.left_cases]
@@ -45,7 +45,8 @@ class GroqPairNoSend(unittest.TestCase):
         self.assertFalse(result["independent_campaign_authorized"])
         self.assertIsNone(result["formal_accuracy"])
         self.assertEqual([arm["declared_model"] for arm in result["arms"]],
-            [CONTRACTS["model"], self.second])
+            [BASELINE_MODEL, self.second])
+        self.assertEqual([arm["phase2_sha"] for arm in result["arms"]], ["f" * 40] * 2)
         self.assertEqual([arm["cases"][0]["failure_category"] for arm in result["arms"]],
             ["test_preflight", "missing_source"])
         self.assertEqual([arm["cases"][0]["status"] for arm in result["arms"]],
@@ -60,7 +61,7 @@ class GroqPairNoSend(unittest.TestCase):
             run_hosted_prospective(self.left, "C0", authorized=True, send=Mock())
 
     def test_missing_model_invalid_or_same_id_rejected(self):
-        for value in (None, "", "fake model", CONTRACTS["model"], 1):
+        for value in (None, "", "fake model", BASELINE_MODEL, 1):
             with self.subTest(value=value), self.assertRaises(EvidenceMismatch):
                 inspect_groq_pair(self.left, self.right, second_model_id=value)
         self.right.root = self.left.root
@@ -109,8 +110,9 @@ class GroqPairNoSend(unittest.TestCase):
         changed_sha.mkdir(mode=0o700)
         candidate = OfflineCampaign.freeze(changed_sha, campaign_id="changed-sha",
             phase2_sha="e" * 40, cases=self.right_cases, adapter=self.adapter)
-        with self.assertRaises(EvidenceMismatch):
-            inspect_groq_pair(self.left, candidate, second_model_id=self.second)
+        compared = inspect_groq_pair(self.left, candidate, second_model_id=self.second)
+        self.assertEqual([arm["phase2_sha"] for arm in compared["arms"]],
+                         ["f" * 40, "e" * 40])
         self.right.digest = "0" * 64
         with self.assertRaises(EvidenceMismatch):
             self.audit()

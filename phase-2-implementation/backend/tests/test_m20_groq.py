@@ -16,7 +16,7 @@ from dealdesk_phase2.m20_groq import (GroqM20Model, WIRE_VERSION, PROMPT_VERSION
                                         system_instruction)
 from dealdesk_phase2.hybrid_pack import _canonical
 from dealdesk_phase2.m20_specialists import build_m20_graph, run_m20_evaluation
-from dealdesk_phase2.live_models import ProviderError, _json, _post
+from dealdesk_phase2.live_models import GROQ_MODEL, ProviderError, _json, _post
 from dealdesk_phase2.tool_response_diagnostic import ToolResponseError
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from dealdesk_phase2.phase1c_adapter import EvidenceMismatch, Phase1CAdapter
@@ -42,7 +42,7 @@ class GroqM20Wire(unittest.TestCase):
 
     def test_native_tool_only_bounded_request_and_typed_exact_values(self):
         body = request_body(self.input, ())
-        self.assertEqual(body["model"], "openai/gpt-oss-120b")
+        self.assertEqual(body["model"], GROQ_MODEL)
         self.assertEqual(body["max_completion_tokens"], 512)
         self.assertEqual(body["tool_choice"], "required")
         self.assertFalse(body["parallel_tool_calls"])

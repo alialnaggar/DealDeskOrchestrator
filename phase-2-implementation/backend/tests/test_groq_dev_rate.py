@@ -12,10 +12,10 @@ import os
 from multiprocessing import get_context
 
 from dealdesk_phase2.groq_dev_rate import rate_headers, send_with_limit
-from dealdesk_phase2.live_models import ProviderError, _post
+from dealdesk_phase2.live_models import GROQ_MODEL, ProviderError, _post
 
 
-BODY = {"model": "openai/gpt-oss-120b", "max_completion_tokens": 1024,
+BODY = {"model": GROQ_MODEL, "max_completion_tokens": 1024,
         "messages": [{"role": "user", "content": "synthetic"}]}
 KEY = "gsk_offline_test_placeholder_123456789"
 

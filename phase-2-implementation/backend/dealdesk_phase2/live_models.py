@@ -19,7 +19,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 from . import model_attempts
 
 
-GROQ_MODEL = "openai/gpt-oss-120b"
+GROQ_MODEL = "qwen/qwen3.8-27b"
 # Prompt identity is independent of the output schema and model-attempt protocol.
 # Historical M1.6–M1.9 observations retain their original v1 attribution.
 PROMPT_VERSION = "m16-fulfillment-claims-v2-system"

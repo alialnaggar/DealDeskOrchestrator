@@ -83,7 +83,7 @@ def _m21_campaign(graph, config, adapter, *, case_id, owner, root, key,
     checkpoint_row = graph.checkpointer.conn.execute(
         "SELECT current_database(), oid FROM pg_database WHERE datname=current_database()"
         ).fetchone()
-    manifest.update(status="standing_development" if (policy_routing_only or
+    manifest.update(model=GROQ_MODEL, status="standing_development" if (policy_routing_only or
         typed_credit or credit_only) else
         "authorized_one_case", version="m21-policy-route-standing-dev-v1" if
         policy_routing_only else "m21-original-after-candidate-standing-dev-v1" if

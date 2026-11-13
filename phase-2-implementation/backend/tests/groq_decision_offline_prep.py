@@ -19,7 +19,7 @@ from dealdesk_phase2.graph_state import pinned_from_state
 from dealdesk_phase2.hybrid_contracts import HybridContractError
 from dealdesk_phase2.hybrid_pack import _canonical, prepare_pack
 from dealdesk_phase2.hybrid_provider import GroqHybridTransportModel
-from dealdesk_phase2.live_models import TOOL_PARAMETERS, _json
+from dealdesk_phase2.live_models import GROQ_MODEL, TOOL_PARAMETERS, _json
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from dealdesk_phase2.phase1c_adapter import Phase1CAdapter, PHASE1C_COMMIT
 from m18_case_setup import SourceCase, install_disposable_cases
@@ -41,7 +41,7 @@ def _strict_wire(body, input, pack):
     """Check actual production serialization, not a reimplemented request."""
     if (set(body) != {"model", "temperature", "max_completion_tokens", "tools",
                       "tool_choice", "parallel_tool_calls", "messages"}
-            or body["model"] != "openai/gpt-oss-120b" or body["temperature"] != 0
+            or body["model"] != GROQ_MODEL or body["temperature"] != 0
             or body["max_completion_tokens"] != 512
             or body["tool_choice"] != "required" or body["parallel_tool_calls"] is not False
             or [x["function"]["name"] for x in body["tools"]] != list(EXPECTED_TOOLS)

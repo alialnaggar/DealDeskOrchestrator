@@ -18,11 +18,11 @@ from .hybrid_offline import HOSTED_BUDGET
 from .hybrid_contracts import HybridContractError
 from .hybrid_pack import _canonical
 from .hybrid_send_reservation import sanitized_failure_code
-from .live_models import ProviderError
+from .live_models import GROQ_MODEL, ProviderError
 
 
 CAMPAIGN_VERSION = "hybrid-groq-campaign-v1"
-MODEL = "openai/gpt-oss-120b"
+MODEL = GROQ_MODEL
 ELIGIBLE = ("B01", "B02", "B03", "B04", "B05", "N01", "R03")
 CONTROLS = ("N02", "N03", "N04")
 CASE_ORDER = ELIGIBLE + CONTROLS

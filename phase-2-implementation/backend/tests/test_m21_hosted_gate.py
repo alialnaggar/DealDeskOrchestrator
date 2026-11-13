@@ -10,7 +10,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from dealdesk_phase2.hybrid_pack import _canonical
-from dealdesk_phase2.live_models import ProviderError
+from dealdesk_phase2.live_models import GROQ_MODEL, ProviderError
 from dealdesk_phase2.m21_groq_contract import GroqM21Model
 from dealdesk_phase2.m21_specialists import (checked_candidate_context,
     run_m21_evaluation, TOOLS)
@@ -42,7 +42,7 @@ def models():
 def manifest(name, case):
     proposed = json.loads(Path("phase-2-implementation/evaluation/"
         "week3-hosted-validation-proposal.json").read_text())
-    proposed.update(status="authorized_one_case", maximum_posts_total=6)
+    proposed.update(model=GROQ_MODEL, status="authorized_one_case", maximum_posts_total=6)
     proposed["cases"] = [{**next(x for x in proposed["cases"] if x["case_id"] == case),
                            "assessment_id": name}]
     return proposed
@@ -317,11 +317,11 @@ class M21HostedGatePostgres(unittest.TestCase):
                                         {"quantity": "2", "delivery_date": "2026-09-08",
                                          "source_refs": ["inbound_supply:M18-IN-B01",
                                                          "inventory:M18-INV-B01"]}]}
-                                        if binding else {})})}}], "model": "openai/gpt-oss-120b",
+                                         if binding else {})})}}], "model": GROQ_MODEL,
                                 "usage": {"prompt_tokens": 100, "completion_tokens": 40}}
                         if "Input and observations: " in body["messages"][1]["content"]:
                             return {"choices": [{"finish_reason": "stop", "message": {
-                                "content": "READY"}}], "model": "openai/gpt-oss-120b",
+                                 "content": "READY"}}], "model": GROQ_MODEL,
                                 "usage": {"prompt_tokens": 100, "completion_tokens": 15}}
                         public = json.loads(body["messages"][1]["content"])["input"]
                         domain = public["specialist"]
@@ -822,7 +822,7 @@ class M21HostedGatePostgres(unittest.TestCase):
         def send(url, key, header, body, **kwargs):
             bodies.append(body)
             self.assertTrue(kwargs["capture_http_error"])
-            self.assertEqual(body["model"], "openai/gpt-oss-120b")
+            self.assertEqual(body["model"], GROQ_MODEL)
             self.assertLessEqual(len(_canonical(body).encode()), 8192)
             if len(bodies) == 1:
                 public = json.loads(body["messages"][1]["content"])["input"]

@@ -81,7 +81,8 @@ class ProposalContracts(unittest.TestCase):
                 self.assertEqual(proposal["inspection_plan"], 1)
                 self.assertEqual(proposal["budgets"], budgets(specialist, 1))
                 self.assertEqual(proposal["phase1c_pin"], PHASE1C_COMMIT)
-                self.assertEqual(proposal["model"], GROQ_MODEL)
+                # Historical GPT-OSS proposals are immutable and never authorize Qwen.
+                self.assertEqual(proposal["model"], "openai/gpt-oss-120b")
                 self.assertEqual(proposal["provider"], "groq")
                 self.assertEqual(proposal["permission_version"], PERMISSION_VERSION)
                 self.assertEqual(proposal["inspection_wire_version"],

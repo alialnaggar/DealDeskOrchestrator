@@ -192,8 +192,8 @@ def _observe(state, headers, status, now):
 
 def send_with_limit(body, key, send):
     """One Groq send under a credential+model lock; never replay on failure."""
-    from .live_models import ProviderError, _json
-    if not callable(send) or body.get("model") != "openai/gpt-oss-120b":
+    from .live_models import GROQ_MODEL, ProviderError, _json
+    if not callable(send) or body.get("model") != GROQ_MODEL:
         raise ValueError("groq_development_rate_scope_invalid")
     limits = _limits()
     estimate_input = (len(_json(body).encode()) + 2) // 3

@@ -12,6 +12,7 @@ from .m22_registry import _manifest
 from .phase1c_adapter import EvidenceMismatch
 
 VERSION = "m22-groq-pair-readonly-v1"
+BASELINE_MODEL = "openai/gpt-oss-120b"  # preserved historical arm, not a sender setting
 DEVELOPMENT_COHORTS = frozenset(("pinned_development", "supplemental_control",
                                  "fault_injection"))
 SOURCE_FIELDS = ("case_id", "original_deal_id", "phase1c_run_id", "cohort",
@@ -28,12 +29,11 @@ def inspect_groq_pair(existing, alternative, *, second_model_id):
     """
     if (type(second_model_id) is not str or not re.fullmatch(
             r"[A-Za-z0-9][A-Za-z0-9._/-]{2,127}", second_model_id)
-            or second_model_id == CONTRACTS["model"] or existing.root == alternative.root):
+            or second_model_id == BASELINE_MODEL or existing.root == alternative.root):
         raise EvidenceMismatch("Groq paired development model or owner scope invalid")
     left, right = _manifest(existing.root), _manifest(alternative.root)
     if (left["sha256"] != existing.digest or right["sha256"] != alternative.digest
-            or left["phase2_sha"] != right["phase2_sha"] or
-            left["phase1c_pin"] != right["phase1c_pin"] or
+            or left["phase1c_pin"] != right["phase1c_pin"] or
             len(left["cases"]) != len(right["cases"])):
         raise EvidenceMismatch("Groq paired campaign identity differs")
     pairs = []
@@ -41,7 +41,7 @@ def inspect_groq_pair(existing, alternative, *, second_model_id):
         if (any(first[k] != second[k] for k in SOURCE_FIELDS) or
                 first["assessment_id"] == second["assessment_id"] or
                 first["cohort"] not in DEVELOPMENT_COHORTS or
-                first["contract_versions"] != CONTRACTS or
+                first["contract_versions"] != {**CONTRACTS, "model": BASELINE_MODEL} or
                 second["contract_versions"] != {**CONTRACTS, "model": second_model_id}):
             raise EvidenceMismatch("Groq pair source, cohort or prompt/model plan differs")
         pairs.append(first["case_id"])
@@ -69,9 +69,10 @@ def inspect_groq_pair(existing, alternative, *, second_model_id):
                 "reported_tokens": None, "cost_usd": None})
         arms.append({"declared_model": manifest["cases"][0]["contract_versions"]["model"],
             "campaign_id": manifest["campaign_id"],
+            "phase2_sha": manifest["phase2_sha"],
             "manifest_sha256": campaign.digest, "counts": report["counts"],
             "cases": cases})
     return {"version": VERSION, "execution": "no_send_read_only",
         "provider_model_verified": False, "independent_campaign_authorized": False,
         "formal_accuracy": None, "phase1c_pin": left["phase1c_pin"],
-        "phase2_sha": left["phase2_sha"], "case_ids": pairs, "arms": arms}
+        "case_ids": pairs, "arms": arms}
