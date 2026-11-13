@@ -112,13 +112,14 @@ This is the **single front-door checklist** for remaining thesis work. It comple
 
 ### M5 — Enhancement review and scope freeze (16–22 Nov) — P1
 
-- [ ] Review six specialist capabilities, orchestrator, evidence coverage, reviewer UX and candidate support.
-- [ ] Classify enhancements **implement / defer / reject** with research value, safety, effort and measurability.
+- [x] Review six specialist capabilities, orchestrator, evidence coverage, reviewer UX and candidate support in the proposed M5 register (approval still pending).
+- [x] Prepare **IMPLEMENTED / DEFER / REJECT / BLOCKED** classifications with research value, risk and remaining dependencies (owner approval still pending).
 - [ ] Do not silently expand to WP4 source-writing/V2; obtain separate security/source-owner approval.
 - [ ] Freeze optional functionality by **22 Nov**; record later change control.
 - **11 Nov early M5 increment (not M5 closure):** [Six-specialist capability matrix and offline Credit fixed-exposure evidence](phase-2-implementation/evaluation/m5-specialist-capability-and-credit-2026-11-11.md). An offline Credit model may cite the already verified fixed amount alongside dated evidence; the hosted view, fixed decision and candidate scope are unchanged. Focused fresh PostgreSQL **17/17**, full fresh PostgreSQL **380/380**. Enhancement register, independent evaluation and feature freeze remain open.
 - **11 Nov M5 Policy follow-up (not M5 closure):** [Offline fixed-hit evidence and limits](phase-2-implementation/evaluation/m5-specialist-capability-and-credit-2026-11-11.md#m5-follow-up--offline-policy-fixed-hit-evidence-11-november-2026). Only triggered selected Policy hits have citable records; no not-triggered/unknown, prerequisites or underlying fact-evidence IDs are inferred. Focused fresh PostgreSQL **19/19**, full fresh PostgreSQL **382/382**; hosted Policy unchanged. Enhancement register, independent evaluation and freeze remain open.
 - **13 Nov M5 Routing follow-up (not M5 closure):** [Offline fixed route-step/reason evidence and scope-freeze assessment](phase-2-implementation/evaluation/m5-specialist-capability-and-credit-2026-11-11.md#m5-follow-up--offline-approval-routing-fixed-steps-and-withholding-reasons-13-november-2026). Citable ordered required roles or supported withheld revision code only; no approvals granted, missing roles or implied reasons. Focused fresh PostgreSQL **21/21**, full fresh PostgreSQL **384/384**; hosted Routing unchanged. Prepare the bounded enhancement register for Ali's feature-freeze decision; independent evaluation remains open.
+- **13 Nov M5 decision proposal (not approval/closure):** [Six-specialist and cross-cutting enhancement register](phase-2-implementation/planning/m5-enhancement-decision-register-2026-11-13.md) reviews actual capabilities and classifies IMPLEMENTED / DEFER / REJECT / BLOCKED with value, risk and dependencies. Ali's requested pause on optional additions is the interim working rule; **formal freeze and approved register await Ali's explicit decision**. Keep M3, M4, formal evaluation and their separate approvals open. Documentation-only; prior full fresh PostgreSQL **384/384** is historical, not a new run.
 - **Exit evidence:** approved enhancement register and feature-freeze decision.
 
 ### Supervisor feedback — Pydantic v2 contract standardization (P1; optional)
