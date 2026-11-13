@@ -12,7 +12,8 @@ from dealdesk_phase2.groq_typed_final import configuration_final_body
 from dealdesk_phase2.hybrid_pack import _canonical
 from dealdesk_phase2.live_models import GROQ_MODEL
 from dealdesk_phase2.m20_groq import (CONFIGURATION_QWEN_WIRE_VERSION, WIRE_VERSION,
-    GroqM20Model, request_body, validate_configuration_tool_wire)
+    GroqM20Model, parse_response, request_body, validate_configuration_tool_wire)
+from dealdesk_phase2.tool_response_diagnostic import ToolResponseError
 from dealdesk_phase2.typed_final_hosted import CONFIG_WIRE, _ConfigurationModel
 
 
@@ -38,6 +39,10 @@ class QwenConfigurationWire(TestCase):
         mixed["response_format"] = {"type": "json_schema"}
         with self.assertRaisesRegex(ValueError, "configuration_tool_wire_invalid"):
             validate_configuration_tool_wire(mixed)
+        required = deepcopy(corrected)
+        required["tool_choice"] = "required"
+        with self.assertRaisesRegex(ValueError, "configuration_tool_wire_invalid"):
+            validate_configuration_tool_wire(required)
         self.assertNotEqual(sha256(_canonical(original_shape).encode()).hexdigest(),
                             sha256(_canonical(corrected).encode()).hexdigest())
 
@@ -46,7 +51,7 @@ class QwenConfigurationWire(TestCase):
         validate_configuration_tool_wire(tool)
         self.assertEqual(tool["model"], GROQ_MODEL)
         self.assertEqual(tool["reasoning_format"], "parsed")
-        self.assertEqual(tool["tool_choice"], "required")
+        self.assertEqual(tool["tool_choice"], "auto")
         self.assertIs(tool["parallel_tool_calls"], False)
         self.assertEqual(tool["max_completion_tokens"], 512)
         self.assertLessEqual(len(_canonical(tool).encode()), 8192)
@@ -83,3 +88,8 @@ class QwenConfigurationWire(TestCase):
             self.assertEqual(list(Path(directory).iterdir()), [])
         send.assert_not_called()
         pre_send.assert_not_called()
+
+    def test_auto_does_not_accept_a_text_only_answer_as_evidence(self):
+        with self.assertRaises(ToolResponseError):
+            parse_response({"choices": [{"finish_reason": "stop",
+                "message": {"content": "I cannot inspect", "tool_calls": []}}]}, self.input)

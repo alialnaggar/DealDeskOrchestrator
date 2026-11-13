@@ -44,7 +44,7 @@ class GroqM20Wire(unittest.TestCase):
         body = request_body(self.input, ())
         self.assertEqual(body["model"], GROQ_MODEL)
         self.assertEqual(body["max_completion_tokens"], 512)
-        self.assertEqual(body["tool_choice"], "required")
+        self.assertEqual(body["tool_choice"], "auto")
         self.assertFalse(body["parallel_tool_calls"])
         self.assertLessEqual(len(json.dumps(body, sort_keys=True,
             separators=(",", ":")).encode()), MAX_REQUEST_BYTES)
@@ -127,7 +127,8 @@ class GroqM20Wire(unittest.TestCase):
                              messages[-1]["tool_call_id"])
             self.assertEqual(json.loads(messages[-1]["content"]), observation)
             self.assertEqual(body["max_completion_tokens"], 512)
-            self.assertEqual(body["tool_choice"], "required")
+            self.assertEqual(body["tool_choice"], "auto" if specialist ==
+                             "configuration" else "required")
             self.assertIs(body["parallel_tool_calls"], False)
             if specialist == "configuration":
                 self.assertEqual(body["reasoning_format"], "parsed")
@@ -182,7 +183,8 @@ class GroqM20Wire(unittest.TestCase):
                 self.assertEqual(json.loads(wire["messages"][3]["content"]), observation)
                 self.assertEqual(wire["messages"][3]["name"], name)
                 self.assertEqual(wire["max_completion_tokens"], 512)
-                self.assertEqual(wire["tool_choice"], "required")
+                self.assertEqual(wire["tool_choice"], "auto" if specialist ==
+                                 "configuration" else "required")
                 self.assertFalse(wire["parallel_tool_calls"])
                 self.assertNotIn("response_format", wire)
                 self.assertLessEqual(len(request.data), MAX_REQUEST_BYTES)

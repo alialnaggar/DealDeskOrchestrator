@@ -18,7 +18,7 @@ WIRE_VERSION = "m20-groq-native-tools-v1"
 # Configuration alone opts into the documented Qwen parsed-reasoning tool
 # envelope. The prompt and Pricing wire are unchanged; request hashes and the
 # Configuration stage manifest bind the new wire separately from GPT-OSS.
-CONFIGURATION_QWEN_WIRE_VERSION = "m20-qwen-configuration-tools-parsed-v1"
+CONFIGURATION_QWEN_WIRE_VERSION = "m20-qwen-configuration-tools-auto-parsed-v2"
 PROMPT_VERSION = "m20-config-pricing-system-v2"
 MAX_REQUEST_BYTES = 8192
 MAX_RESPONSE_BYTES = 16384
@@ -98,9 +98,11 @@ def request_body(input, observations, *, exchanges=()):
         "parallel_tool_calls": False, "tool_choice": "required", "tools": tools,
         "messages": messages}
     if specialist == "configuration":
-        # Explicitly exclude Qwen's raw reasoning format from a local-tool
-        # request. Groq documents parsed/hidden for tool calls; no JSON schema
-        # is combined with tools. This is not proof of the prior HTTP 400 cause.
+        # Groq documents a 400 when required tool_choice cannot produce a call.
+        # Allow Qwen to choose, but parse_response still REQUIRES exactly one
+        # authorized tool call; a text response fails closed. No schema/tools
+        # combination or extra model turn is enabled.
+        body["tool_choice"] = "auto"
         body["reasoning_format"] = "parsed"
     if len(_canonical(body).encode()) > MAX_REQUEST_BYTES:
         raise ValueError("m20_groq_request_oversize")
@@ -113,7 +115,7 @@ def validate_configuration_tool_wire(body):
     """Fail before any Qwen Configuration send if its reasoning mode drifts."""
     if (type(body) is not dict or body.get("model") != GROQ_MODEL or
             body.get("reasoning_format") != "parsed" or
-            "response_format" in body or body.get("tool_choice") != "required" or
+            "response_format" in body or body.get("tool_choice") != "auto" or
             body.get("parallel_tool_calls") is not False):
         raise ValueError("m20_qwen_configuration_tool_wire_invalid")
 
