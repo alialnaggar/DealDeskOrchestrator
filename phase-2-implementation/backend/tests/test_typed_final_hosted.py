@@ -16,7 +16,7 @@ from dealdesk_phase2.groq_typed_final import (WIRE_VERSION, PROMPT_VERSION, SCHE
                                                FINAL_SYSTEM_INSTRUCTION)
 from dealdesk_phase2.hybrid_pack import _canonical
 from dealdesk_phase2.live_models import GROQ_MODEL, ProviderError
-from dealdesk_phase2.m20_groq import (WIRE_VERSION as CONFIG_WIRE,
+from dealdesk_phase2.m20_groq import (CONFIGURATION_QWEN_WIRE_VERSION as CONFIG_WIRE,
     PROMPT_VERSION as CONFIG_PROMPT, system_instruction as config_instruction)
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from dealdesk_phase2.phase1c_adapter import EvidenceMismatch, PHASE1C_COMMIT, Phase1CAdapter

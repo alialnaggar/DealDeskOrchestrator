@@ -129,7 +129,12 @@ class GroqM20Wire(unittest.TestCase):
             self.assertEqual(body["max_completion_tokens"], 512)
             self.assertEqual(body["tool_choice"], "required")
             self.assertIs(body["parallel_tool_calls"], False)
-            shapes.append((sorted(body), [m["role"] for m in messages],
+            if specialist == "configuration":
+                self.assertEqual(body["reasoning_format"], "parsed")
+            else:
+                self.assertNotIn("reasoning_format", body)
+            shapes.append((sorted(k for k in body if k != "reasoning_format"),
+                [m["role"] for m in messages],
                 [t["function"]["name"] for t in body["tools"]][1:]))
         self.assertEqual(shapes[0], shapes[1])
 

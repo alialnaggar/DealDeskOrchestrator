@@ -17,10 +17,11 @@ from .hybrid_pack import _canonical
 from .hybrid_send_reservation import (attempt_path, claim_and_call,
                                        exclusive_owner, verify_receipt)
 from .live_models import GROQ_MODEL, ProviderError
-from .m20_groq import (GroqM20Model, WIRE_VERSION as CONFIG_WIRE,
+from .m20_groq import (GroqM20Model, CONFIGURATION_QWEN_WIRE_VERSION as CONFIG_WIRE,
                        PROMPT_VERSION as CONFIG_PROMPT, parse_response as config_parse,
                        request_body as config_request,
-                       system_instruction as config_instruction)
+                       system_instruction as config_instruction,
+                       validate_configuration_tool_wire)
 from .m20_specialists import (_one as run_configuration,
                               _identity as config_identity,
                               _validate_claims as config_validate_claims,
@@ -274,6 +275,8 @@ class _ConfigurationModel(GroqM20Model):
     def next_action(self, input, observations):
         body = self.prepare_request(input, observations)
         ordinal = len(observations)
+        if ordinal == 0:
+            validate_configuration_tool_wire(body)
         request_digest = request_sha256(body)
         if (ordinal not in (0, 1) or request_digest != self.pending_request_digest
                 or len(_canonical(body).encode()) > 8192):

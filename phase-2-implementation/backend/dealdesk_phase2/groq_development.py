@@ -12,7 +12,8 @@ from .groq_typed_final import (WIRE_VERSION, PROMPT_VERSION, SCHEMA_NAME,
     DEVELOPMENT_FINAL_INSTRUCTION, CONFIG_FINAL_INSTRUCTION)
 from .hybrid_pack import _canonical
 from .live_models import GROQ_MODEL
-from .m20_groq import WIRE_VERSION as CONFIG_WIRE, PROMPT_VERSION as CONFIG_PROMPT
+from .m20_groq import (CONFIGURATION_QWEN_WIRE_VERSION as CONFIG_WIRE,
+    PROMPT_VERSION as CONFIG_PROMPT)
 from .m20_groq import system_instruction as config_instruction
 from .m21_groq_contract import WIRE_VERSION as CREDIT_WIRE
 from .phase1c_adapter import PHASE1C_COMMIT

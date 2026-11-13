@@ -15,6 +15,10 @@ from .tool_response_diagnostic import ToolResponseError, rejected_category
 
 
 WIRE_VERSION = "m20-groq-native-tools-v1"
+# Configuration alone opts into the documented Qwen parsed-reasoning tool
+# envelope. The prompt and Pricing wire are unchanged; request hashes and the
+# Configuration stage manifest bind the new wire separately from GPT-OSS.
+CONFIGURATION_QWEN_WIRE_VERSION = "m20-qwen-configuration-tools-parsed-v1"
 PROMPT_VERSION = "m20-config-pricing-system-v2"
 MAX_REQUEST_BYTES = 8192
 MAX_RESPONSE_BYTES = 16384
@@ -93,9 +97,25 @@ def request_body(input, observations, *, exchanges=()):
     body = {"model": GROQ_MODEL, "temperature": 0, "max_completion_tokens": MAX_COMPLETION_TOKENS,
         "parallel_tool_calls": False, "tool_choice": "required", "tools": tools,
         "messages": messages}
+    if specialist == "configuration":
+        # Explicitly exclude Qwen's raw reasoning format from a local-tool
+        # request. Groq documents parsed/hidden for tool calls; no JSON schema
+        # is combined with tools. This is not proof of the prior HTTP 400 cause.
+        body["reasoning_format"] = "parsed"
     if len(_canonical(body).encode()) > MAX_REQUEST_BYTES:
         raise ValueError("m20_groq_request_oversize")
+    if specialist == "configuration":
+        validate_configuration_tool_wire(body)
     return body
+
+
+def validate_configuration_tool_wire(body):
+    """Fail before any Qwen Configuration send if its reasoning mode drifts."""
+    if (type(body) is not dict or body.get("model") != GROQ_MODEL or
+            body.get("reasoning_format") != "parsed" or
+            "response_format" in body or body.get("tool_choice") != "required" or
+            body.get("parallel_tool_calls") is not False):
+        raise ValueError("m20_qwen_configuration_tool_wire_invalid")
 
 
 def parse_response(response, input):
@@ -152,6 +172,8 @@ class GroqM20Model:
         if specialist not in TOOLS:
             raise ValueError("m20_groq_invalid_specialist")
         self.specialist = specialist
+        self.wire_version = (CONFIGURATION_QWEN_WIRE_VERSION if
+            specialist == "configuration" else WIRE_VERSION)
         self.last_usage = None
         self.pending_request_digest = None
         self.previous_calls = ()
