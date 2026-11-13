@@ -39,6 +39,7 @@ _HOSTED_CAPABILITY = object()
 HOSTED_REPORTED_TOKEN_STOP = 24000
 CREDIT_FIXED_VIEW = "m5-credit-fixed-exposure-offline-v1"
 POLICY_HIT_VIEW = "m5-policy-fixed-hits-offline-v1"
+ROUTE_VIEW = "m5-routing-fixed-steps-offline-v1"
 
 
 class M21Model(Protocol):
@@ -107,7 +108,7 @@ def _identity(context, specialist):
 
 
 def _project(pool, state, context, specialist, *, include_fixed_credit=False,
-             include_policy_hits=False):
+             include_policy_hits=False, include_route_steps=False):
     """Selected, already pinned rows only; never infer a missing rule or role."""
     fixed = state["specialist_results"][specialist]["payload"]
     customer = pool["deal"]["customer_id"]
@@ -205,6 +206,23 @@ def _project(pool, state, context, specialist, *, include_fixed_credit=False,
                             "deal_line:" + scope),
                         "result": "triggered", "severity": hit["severity"]}})
     elif specialist == "approval_routing":
+        if include_route_steps:
+            from .fixed_specialists import domain_result
+            pinned = pinned_from_state(state)
+            if pinned.context != context:
+                raise EvidenceMismatch("M5 fixed route source changed")
+            decision = unseal(state["fixed_decision"], state["fixed_decision_sha256"])
+            expected = domain_result("approval_routing", pinned, decision,
+                                     context.assessment_id, state["specialist_results"])
+            if (str(decision.get("run_id")) != str(context.phase1c_run_id) or
+                    decision.get("deal_id") != context.original_deal_id or
+                    decision.get("policy_set_code") != context.policy_set_code or
+                    decision.get("required_approvals") != decision.get("specialists", {}).get(
+                        "approval_routing", {}).get("required_roles") or
+                    decision.get("status") != state.get("review_status") or
+                    state["specialist_results"]["approval_routing"] != expected or
+                    fixed.get("route_withheld") != (decision.get("status") != "approval_required")):
+                raise EvidenceMismatch("M5 fixed route decision changed")
         withheld = fixed["route_withheld"]
         if withheld is not True and withheld is not False:
             raise EvidenceMismatch("M2.1 invalid fixed route status")
@@ -215,19 +233,43 @@ def _project(pool, state, context, specialist, *, include_fixed_credit=False,
             raise EvidenceMismatch("M2.1 route roles unavailable from fixed interface")
         records = [{"ref": "fixed_route:" + context.original_deal_id,
             "fields": {"route_withheld": withheld,
-                       "roles_available_from_fixed_interface": fixed[
-                           "roles_available_from_fixed_interface"]}}]
+                        "roles_available_from_fixed_interface": fixed[
+                            "roles_available_from_fixed_interface"]}}]
+        if include_route_steps:
+            records[0]["fields"]["fixed_business_status"] = decision["status"]
+            if withheld:
+                line_ids = {str(line["deal_line_id"]) for line in pool["lines"]}
+                for ordinal, reason in enumerate(decision["revision_reasons"]):
+                    if (type(reason) is not dict or set(reason) != {"code", "line_id"} or
+                            type(reason["code"]) is not str or not reason["code"] or
+                            reason["line_id"] not in line_ids):
+                        raise EvidenceMismatch("M5 fixed route revision reason unsupported")
+                    records.append({"ref": "fixed_route_reason:" + str(ordinal),
+                        "fields": {"reason_code": reason["code"],
+                                   "subject_scope_ref": "deal_line:" + reason["line_id"]}})
         if not withheld:
             selected = {r["approval_rule_id"]: r for r in pool["rules"]["approval_rules"]}
+            previous_sequence = -1
             for role in fixed["required_roles"]:
                 rule = selected.get(role["rule_id"])
                 if (rule is None or rule["policy_set_code"] != context.policy_set_code
                         or role["role"] != rule["required_role"]
-                        or role["sequence"] != rule["approval_sequence"]):
+                        or role["sequence"] != rule["approval_sequence"] or
+                        include_route_steps and (type(role["sequence"]) is not int or
+                            role["sequence"] <= previous_sequence or
+                            rule["is_active"] is not True)):
                     raise EvidenceMismatch("M2.1 fixed route role not in selected rules")
-                records.append({"ref": "fixed_role:" + str(role["rule_id"]),
-                    "fields": _json({"rule_id": role["rule_id"], "role": role["role"],
-                                     "sequence": role["sequence"]})})
+                previous_sequence = role["sequence"]
+                if include_route_steps:
+                    records.append({"ref": "fixed_route_step:" + str(role["sequence"]) +
+                        ":" + str(role["rule_id"]), "fields": _json({
+                        "rule_id": role["rule_id"], "role": role["role"],
+                        "sequence": role["sequence"],
+                        "step_type": "required_human_review"})})
+                else:
+                    records.append({"ref": "fixed_role:" + str(role["rule_id"]),
+                        "fields": _json({"rule_id": role["rule_id"], "role": role["role"],
+                                          "sequence": role["sequence"]})})
     else:
         raise AuthorizationDenied("M2.1 specialist outside scope")
     if len(records) > MAX_RECORDS or len(_canonical(records).encode()) > MAX_OBSERVATION_BYTES:
@@ -238,7 +280,7 @@ def _project(pool, state, context, specialist, *, include_fixed_credit=False,
 
 
 def _inspect(original, config, adapter, specialist, *, include_fixed_credit=False,
-             include_policy_hits=False):
+             include_policy_hits=False, include_route_steps=False):
     state = original.get_state(config).values
     pinned = pinned_from_state(state)
     pool = adapter.validate_pinned_context(pinned)
@@ -260,18 +302,20 @@ def _inspect(original, config, adapter, specialist, *, include_fixed_credit=Fals
         raise EvidenceMismatch("M2.1 shared tool budget exhausted")
     if prior is not None:
         if prior["status"] == "completed":
-            if include_policy_hits:
+            if include_policy_hits or include_route_steps:
                 checked = _project(pool, state, context, specialist,
-                                   include_policy_hits=True)
+                                   include_policy_hits=include_policy_hits,
+                                   include_route_steps=include_route_steps)
                 if prior.get("result") != {"version": VERSION, "tool": tool,
                         "execution": "completed", "records": checked,
                         "returned_refs": [r["ref"] for r in checked]}:
-                    raise EvidenceMismatch("M5 policy replay differs from sealed decision")
+                    raise EvidenceMismatch("M5 specialist replay differs from sealed decision")
             return prior["result"]
         raise EvidenceMismatch("M2.1 uncertain tool receipt; never replay")
     records = _project(pool, state, context, specialist,
                        include_fixed_credit=include_fixed_credit,
-                       include_policy_hits=include_policy_hits)
+                       include_policy_hits=include_policy_hits,
+                       include_route_steps=include_route_steps)
     result = {"version": VERSION, "tool": tool, "execution": "completed",
               "records": records, "returned_refs": [r["ref"] for r in records]}
     complete(original, config, context.assessment_id, context.bundle_sha256, call_id, result)
@@ -335,6 +379,8 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
             input["credit_fixed_view_version"] = CREDIT_FIXED_VIEW
         if specialist == "policy" and not hosted:
             input["policy_hit_view_version"] = POLICY_HIT_VIEW
+        if specialist == "approval_routing" and not hosted:
+            input["route_view_version"] = ROUTE_VIEW
         if len(_canonical(input).encode()) > 4096:
             raise EvidenceMismatch("M2.1 input exceeds limit")
         status, reason = "error", "model_or_tool_failure"
@@ -419,7 +465,8 @@ def _one(original, config, adapter, specialist, model, *, hosted=False):
                         raise ValueError("M2.1 inspection identity or budget invalid")
                     observations.append(_inspect(original, config, adapter, specialist,
                         include_fixed_credit=(specialist == "credit" and not hosted),
-                        include_policy_hits=(specialist == "policy" and not hosted)))
+                        include_policy_hits=(specialist == "policy" and not hosted),
+                        include_route_steps=(specialist == "approval_routing" and not hosted)))
                 elif action.get("kind") == "finding":
                     if not observations:
                         raise ValueError("M2.1 finding without authorized inspection")

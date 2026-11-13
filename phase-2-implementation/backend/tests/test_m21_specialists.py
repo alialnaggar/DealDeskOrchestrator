@@ -7,7 +7,7 @@ import unittest
 from uuid import UUID
 
 from dealdesk_phase2.m21_specialists import (_claims, _project, build_m21_graph,
-    run_m21_offline, VERSION, CREDIT_FIXED_VIEW, POLICY_HIT_VIEW)
+    run_m21_offline, VERSION, CREDIT_FIXED_VIEW, POLICY_HIT_VIEW, ROUTE_VIEW)
 from dealdesk_phase2.m21_redaction import model_view
 from dealdesk_phase2.m21_prompts import PROMPT_VERSION
 from dealdesk_phase2.graph_state import pinned_from_state
@@ -278,6 +278,176 @@ class M21Postgres(unittest.TestCase):
             "scope"] = "M18-L-B02"
         with self.assertRaises(EvidenceMismatch):
             _project(pool, altered, pinned.context, "policy", include_policy_hits=True)
+
+    def test_offline_route_step_order_and_required_roles_are_citable_not_approvals(self):
+        from langgraph.checkpoint.memory import InMemorySaver
+        saver = InMemorySaver()
+        connect = lambda: psycopg.connect(os.environ["DATABASE_URL"])
+        graph = build_original_graph(self.adapter, connect, saver)
+        config = {"configurable": {"thread_id": "M5-ROUTING-OPEN-REFERENCE"}}
+        before = graph.invoke(initial_state(config["configurable"]["thread_id"],
+            UUID("00000000-0000-4000-8000-000000110001")), config)
+        pinned = pinned_from_state(before)
+        pool = self.adapter.validate_pinned_context(pinned)
+        self.assertEqual(before["review_status"], "approval_required")
+        legacy = _project(pool, before, pinned.context, "approval_routing")
+        self.assertEqual([r["ref"].split(":")[0] for r in legacy],
+            ["fixed_route", "fixed_role", "fixed_role"])
+        checked = _project(pool, before, pinned.context, "approval_routing",
+                           include_route_steps=True)
+        self.assertEqual([r["fields"]["sequence"] for r in checked[1:]], [0, 3])
+        self.assertEqual([r["fields"]["role"] for r in checked[1:]],
+                         ["Regional_Manager", "Finance_Director"])
+        self.assertEqual({r["fields"]["step_type"] for r in checked[1:]},
+                         {"required_human_review"})
+        self.assertEqual(checked[0]["fields"], {"route_withheld": False,
+            "roles_available_from_fixed_interface": True,
+            "fixed_business_status": "approval_required"})
+        seen = []
+        def cite_route(input, observations):
+            seen.append((input, observations))
+            return {"kind": "finding", "claims": [{"ref": row["ref"],
+                "field": "role", "value": row["fields"]["role"]}
+                for row in observations[0]["records"][1:]]}
+        models = {"credit": Scripted([lambda *_: {"kind": "abstain",
+            "reason_code": "model_uncertainty"}]),
+            "policy": Scripted([lambda *_: {"kind": "abstain",
+                "reason_code": "model_uncertainty"}]),
+            "approval_routing": Scripted([inspect, cite_route])}
+        after = run_m21_offline(graph, config, self.adapter, models)
+        self.assertEqual(after["m21_ai_results"]["approval_routing"]["execution"], "completed")
+        self.assertEqual([x["value"] for x in after["m21_ai_results"]["approval_routing"][
+            "validated_claims"]], ["Regional_Manager", "Finance_Director"])
+        self.assertEqual(seen[0][0]["route_view_version"], ROUTE_VIEW)
+        self.assertEqual(after["specialist_results"], before["specialist_results"])
+        self.assertEqual(after["review_status"], before["review_status"])
+        self.assertEqual(after["reviewer_package"]["m21_ai"]["fixed_review_status"],
+                         before["review_status"])
+        public, visible, mapping = model_view(seen[0][0], seen[0][1])
+        self.assertEqual(public["route_view_version"], ROUTE_VIEW)
+        self.assertEqual([x["fields"]["sequence"] for x in visible[0]["records"][1:]], [0, 3])
+        self.assertEqual(mapping[visible[0]["records"][1]["ref"]], checked[1]["ref"])
+        with self.assertRaises(ValueError):
+            model_view({k: v for k, v in seen[0][0].items() if k != "route_view_version"},
+                       seen[0][1])
+        for ref, field, value in ((checked[1]["ref"], "role", "Invented_Manager"),
+                                  ("fixed_route_step:0:FORGED", "role", "Regional_Manager"),
+                                  (checked[1]["ref"], "approved", True),
+                                  (checked[1]["ref"], "approved_at", "2026-09-01"),
+                                  (checked[1]["ref"], "waived", True)):
+            with self.subTest(ref=ref, field=field), self.assertRaises(ValueError):
+                _claims({"kind": "finding", "claims": [{"ref": ref,
+                    "field": field, "value": value}]}, seen[0][1])
+        for kind in ("approve", "reject", "waive"):
+            with self.assertRaises(ValueError):
+                _claims({"kind": kind, "claims": []}, seen[0][1])
+        for field, value in (("sequence", 5), ("step_type", "approved")):
+            injected = deepcopy(seen[0][1][0])
+            injected["records"][1]["fields"][field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                model_view(seen[0][0], (injected,))
+        swapped = deepcopy(seen[0][1][0])
+        swapped["records"][1:] = reversed(swapped["records"][1:])
+        with self.assertRaises(ValueError):
+            model_view(seen[0][0], (swapped,))
+        cross_subject = deepcopy(seen[0][1][0])
+        cross_subject["records"][0]["ref"] = "fixed_route:OTHER"
+        with self.assertRaises(ValueError):
+            model_view(seen[0][0], (cross_subject,))
+        altered = deepcopy(before)
+        altered["specialist_results"]["approval_routing"]["payload"]["required_roles"].reverse()
+        with self.assertRaises(EvidenceMismatch):
+            _project(pool, altered, pinned.context, "approval_routing", include_route_steps=True)
+        altered = deepcopy(before)
+        altered["specialist_results"]["approval_routing"]["payload"]["required_roles"][0][
+            "role"] = "Invented_Manager"
+        with self.assertRaises(EvidenceMismatch):
+            _project(pool, altered, pinned.context, "approval_routing", include_route_steps=True)
+        altered = deepcopy(before)
+        altered["specialist_results"]["approval_routing"]["payload"]["required_roles"][0][
+            "sequence"] = 1
+        with self.assertRaises(EvidenceMismatch):
+            _project(pool, altered, pinned.context, "approval_routing", include_route_steps=True)
+        bad = deepcopy(pool)
+        bad["rules"]["approval_rules"] = []
+        with self.assertRaises(EvidenceMismatch):
+            _project(bad, before, pinned.context, "approval_routing", include_route_steps=True)
+        with self.assertRaises(EvidenceMismatch):
+            _project(pool, before, type("WrongContext", (), {**vars(pinned.context),
+                "original_deal_id": "OTHER"})(), "approval_routing",
+                include_route_steps=True)
+
+    def test_offline_withheld_route_reports_only_sealed_revision_reason(self):
+        from langgraph.checkpoint.memory import InMemorySaver
+        graph, config, before = self.original(InMemorySaver(), "M5-ROUTING-WITHHELD-B01")
+        pinned = pinned_from_state(before)
+        pool = self.adapter.validate_pinned_context(pinned)
+        rows = _project(pool, before, pinned.context, "approval_routing",
+                        include_route_steps=True)
+        self.assertEqual(rows[0]["fields"], {"route_withheld": True,
+            "roles_available_from_fixed_interface": False,
+            "fixed_business_status": "needs_revision"})
+        self.assertEqual(rows[1], {"ref": "fixed_route_reason:0", "fields": {
+            "reason_code": "requested_date_not_supported",
+            "subject_scope_ref": "deal_line:M18-L-B01"}})
+        self.assertEqual(len(rows), 2)
+        seen = []
+        def cite_reason(input, observations):
+            seen.append((input, observations))
+            row = observations[0]["records"][1]
+            return {"kind": "finding", "claims": [{"ref": row["ref"],
+                "field": "reason_code", "value": row["fields"]["reason_code"]}]}
+        after = run_m21_offline(graph, config, self.adapter, {
+            "credit": Scripted([lambda *_: {"kind": "abstain",
+                "reason_code": "model_uncertainty"}]),
+            "policy": Scripted([lambda *_: {"kind": "abstain",
+                "reason_code": "model_uncertainty"}]),
+            "approval_routing": Scripted([inspect, cite_reason])})
+        self.assertEqual(after["m21_ai_results"]["approval_routing"]["validated_claims"],
+                         [{"ref": rows[1]["ref"], "field": "reason_code",
+                           "value": "requested_date_not_supported"}])
+        self.assertEqual(after["specialist_results"], before["specialist_results"])
+        self.assertTrue(after["m21_review"]["fixed_route_withheld"])
+        public, visible, _ = model_view(seen[0][0], seen[0][1])
+        self.assertEqual(visible[0]["records"][1]["fields"]["reason_code"],
+                         rows[1]["fields"]["reason_code"])
+        self.assertNotIn("M18-L-B01", str(visible))
+        self.assertNotEqual(visible[0]["records"][1]["fields"]["subject_scope_ref"],
+                            rows[1]["fields"]["subject_scope_ref"])
+        self.assertTrue(visible[0]["records"][1]["fields"]["subject_scope_ref"].startswith(
+            "deal_line:"))
+        changed = deepcopy(seen[0][1][0])
+        changed["records"].append({"ref": "fixed_route_step:0:FORGED", "fields": {
+            "rule_id": "FORGED", "role": "Invented", "sequence": 0,
+            "step_type": "required_human_review"}})
+        changed["returned_refs"].append("fixed_route_step:0:FORGED")
+        with self.assertRaises(ValueError):
+            model_view(seen[0][0], (changed,))
+        modified = deepcopy(before)
+        modified["specialist_results"]["approval_routing"]["payload"]["required_roles"] = [
+            {"role": "Invented", "sequence": 0, "rule_id": "FORGED"}]
+        with self.assertRaises(EvidenceMismatch):
+            _project(pool, modified, pinned.context, "approval_routing",
+                     include_route_steps=True)
+        bad_reason = deepcopy(seen[0][1][0])
+        bad_reason["records"][1]["fields"]["approval_status"] = "granted"
+        with self.assertRaises(ValueError):
+            model_view(seen[0][0], (bad_reason,))
+        for ref, field, value in (("fixed_route_reason:FORGED", "reason_code",
+                                   "requested_date_not_supported"),
+                                  (rows[1]["ref"], "reason_code", "credit_declined"),
+                                  (rows[0]["ref"], "approved", True)):
+            with self.subTest(ref=ref, field=field), self.assertRaises(ValueError):
+                _claims({"kind": "finding", "claims": [{"ref": ref, "field": field,
+                    "value": value}]}, seen[0][1])
+        graph, config, no_reason = self.original(InMemorySaver(), "M5-ROUTING-UNKNOWN-N03", "N03")
+        unknown_pinned = pinned_from_state(no_reason)
+        unknown_pool = self.adapter.validate_pinned_context(unknown_pinned)
+        unknown = _project(unknown_pool, no_reason, unknown_pinned.context,
+                           "approval_routing", include_route_steps=True)
+        self.assertEqual(len(unknown), 1)
+        self.assertEqual(unknown[0]["fields"]["fixed_business_status"], "needs_evidence")
+        self.assertTrue(unknown[0]["fields"]["route_withheld"])
 
     def test_source_first_scopes_and_adverse_pool_identity(self):
         from langgraph.checkpoint.memory import InMemorySaver
