@@ -1,4 +1,4 @@
-"""Offline, sanitized reproductions of four historical N01 inspection digests.
+"""Offline, sanitized reproductions of historical N01 inspection digests.
 
 Only synthetic subject IDs, source fingerprints and committed receipt hashes are
 used; no database, credential, provider response or historical send is accessed.
@@ -30,6 +30,8 @@ CASES = (
      "b43b8a5d4c6d796089cff0ac164a423ebe51f82be58ed6ae5362c1e9595ba8e2"),
     ("GROQ-DEV-f243bb5acba44ec49f96412f45319ff3", PLAIN, "auto",
      "b1b37eb1f7f04587b4ef1554d1aee32188017b4fe7bb6f8dc69a4fdbb9ddbec4"),
+    ("GROQ-DEV-925e3f37a9d24e13bb428a487ac814d5", UC02, "auto",
+     "2c85331d675c6f40f0e9d6b0240183b82f507dcf68dda8fdd80ff014b51904d2"),
 )
 
 
