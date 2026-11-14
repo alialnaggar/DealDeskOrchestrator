@@ -97,8 +97,8 @@ def _observation(graph, config, state, pinned, pool, line_id):
 
 
 def run_configuration_correction_offline(graph, config, adapter, model, *,
-                                         rejected_content, line_id, budget, owner_dir,
-                                         opt_in=False):
+                                          rejected_content, line_id, budget, owner_dir,
+                                          opt_in=False, original_capture_start=None):
     """One explicit separate budget, one call max; restart verifies, never sends.
 
     A forged checkpoint is outside the trust boundary of PostgreSQL itself;
@@ -118,6 +118,13 @@ def run_configuration_correction_offline(graph, config, adapter, model, *,
     with exclusive_owner(owner_dir, ctx.assessment_id):
         state, pinned, pool = _checked_context(graph, config, adapter, owner_dir)
         observation = _observation(graph, config, state, pinned, pool, line_id)
+        if original_capture_start is not None or state.get("m4_configuration_original_capture"):
+            if original_capture_start is None:
+                raise EvidenceMismatch("m4_configuration_original_capture_required")
+            from .m4_configuration_original_capture import checked_original_capture
+            checked_original_capture(graph, config, adapter, owner_dir=owner_dir,
+                line_id=line_id, model=model.model, rejected_content=rejected_content,
+                start_digest=original_capture_start)
         input = {**identity, "version": M20_VERSION,
             "line_ids": [str(x["deal_line_id"]) for x in pool["lines"]],
             "fixed_execution": state["specialist_results"]["configuration"]["execution"],

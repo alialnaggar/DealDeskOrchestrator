@@ -103,7 +103,7 @@ def attempt_path(directory: Path, *, assessment_id: str, start_digest: str,
             or len(start_digest) != 64 or any(c not in "0123456789abcdef" for c in start_digest)
             or stage not in ("owner", "decision", "final", "revision_intent", "revision",
                              "typed_configuration", "typed_inspection", "typed_final",
-                             "configuration_correction")
+                              "configuration_correction", "configuration_original_offline")
             or type(ordinal) is not int or ordinal < 0 or ordinal > 6):
         raise HybridContractError("invalid_send_reservation_scope")
     identity = f"{assessment_id}:{start_digest}:{stage}:{ordinal}"
@@ -136,11 +136,11 @@ def verify_receipt(path: Path, *, start_digest: str, stage: str,
                 or events[0]["request_sha256"] != request_digest
                 or not isinstance(events[0]["reserved_at_utc"], str)
                  or len(events) == 2 and (not isinstance(events[1], dict)
-                      or not ((stage != "configuration_correction" and
+                      or not ((stage not in ("configuration_correction", "configuration_original_offline") and
                                set(events[1]) == {"event", "returned_at_utc"}
                               and events[1]["event"] == "returned"
                               and isinstance(events[1]["returned_at_utc"], str))
-                              or (stage == "configuration_correction" and
+                               or (stage in ("configuration_correction", "configuration_original_offline") and
                                   set(events[1]) == {"event", "returned_at_utc", "response_sha256"}
                                   and events[1]["event"] == "returned" and
                                   isinstance(events[1]["returned_at_utc"], str) and
@@ -148,7 +148,7 @@ def verify_receipt(path: Path, *, start_digest: str, stage: str,
                                   len(events[1]["response_sha256"]) == 64)
                               or _valid_failure(events[1])))):
             raise HybridContractError("send_receipt_invalid")
-        if stage == "configuration_correction" and len(events) == 2 and events[1]["event"] == "returned" and (
+        if stage in ("configuration_correction", "configuration_original_offline") and len(events) == 2 and events[1]["event"] == "returned" and (
                 response_digest is None or events[1].get("response_sha256") != response_digest):
             raise HybridContractError("send_receipt_response_changed")
         return len(events) == 2 and events[1]["event"] == "returned"
@@ -168,9 +168,10 @@ def claim_and_call(directory: Path, *, assessment_id: str, start_digest: str,
     """
     if (not isinstance(request_digest, str) or len(request_digest) != 64
             or any(c not in "0123456789abcdef" for c in request_digest)
-             or not callable(send) or (stage == "configuration_correction" and
+              or not callable(send) or (stage in ("configuration_correction", "configuration_original_offline") and
                  bind_response is not True) or (bind_response is not False and
-                 (bind_response is not True or stage != "configuration_correction"))):
+                  (bind_response is not True or stage not in (
+                      "configuration_correction", "configuration_original_offline")))):
         raise HybridContractError("invalid_send_request")
     path = attempt_path(directory, assessment_id=assessment_id,
                         start_digest=start_digest, stage=stage, ordinal=ordinal)

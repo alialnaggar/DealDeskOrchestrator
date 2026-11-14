@@ -78,6 +78,7 @@ class AssessmentStateV1(TypedDict, total=False):
     typed_final_hosted_start: dict
     # Opt-in offline-only Configuration correction; not read by hosted graphs.
     m4_configuration_correction: dict
+    m4_configuration_original_capture: dict
 
 
 def context_to_record(context: RunContextV1) -> dict:

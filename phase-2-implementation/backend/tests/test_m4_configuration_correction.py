@@ -11,6 +11,8 @@ from dealdesk_phase2.hybrid_send_reservation import attempt_path
 from dealdesk_phase2.m20_specialists import _inspect
 from dealdesk_phase2.m4_configuration_correction import (
     BUDGET_VERSION, ScriptedConfigurationCorrection, run_configuration_correction_offline)
+from dealdesk_phase2.m4_configuration_original_capture import (
+    STAGE as ORIGINAL_STAGE, ScriptedOriginalFinal, capture_original_final_offline)
 from dealdesk_phase2.orchestrator import build_original_graph, initial_state
 from dealdesk_phase2.phase1c_adapter import EvidenceMismatch, Phase1CAdapter
 from m18_case_setup import CASES, install_disposable_cases
@@ -199,6 +201,100 @@ class ConfigurationCorrectionPostgres(unittest.TestCase):
         self.graph.update_state(self.config, {"tool_access_ledger": ledger}, as_node="finish")
         with self.assertRaises(EvidenceMismatch):
             self.run_correction()
+        self.assertEqual(self.model.calls, 0)
+
+    def capture_original(self, response=None):
+        original = ScriptedOriginalFinal(self.model.model, json.dumps(self.raw)
+            if response is None else response)
+        saved = capture_original_final_offline(self.graph, self.config, self.adapter,
+            original, line_id=self.kw["line_id"], owner_dir=self.owner, opt_in=True)
+        return original, saved
+
+    def test_returned_original_digest_receipt_binds_one_correction_and_restart(self):
+        original, saved = self.capture_original()
+        self.assertEqual(saved["status"], "returned")
+        self.assertEqual(saved["content"], self.kw["rejected_content"])
+        result = self.run_correction(original_capture_start=saved["start_sha256"])
+        self.assertEqual(result["validation"], "valid")
+        self.assertEqual(self.run_correction(graph=self.reopen(),
+            original_capture_start=saved["start_sha256"]), result)
+        again = capture_original_final_offline(self.reopen(), self.config, self.adapter,
+            original, line_id=self.kw["line_id"], owner_dir=self.owner, opt_in=True)
+        self.assertEqual(again, saved)
+        self.assertEqual(original.calls, 1)
+        self.assertEqual(self.model.calls, 1)
+        state = self.graph.get_state(self.config).values
+        self.assertEqual(state["specialist_results"], self.before["specialist_results"])
+        self.assertEqual(state["review_status"], self.before["review_status"])
+
+    def test_captured_original_cannot_be_substituted_or_skipped(self):
+        original, saved = self.capture_original()
+        for change in ({}, {"original_capture_start": "0" * 64},
+                       {"original_capture_start": saved["start_sha256"],
+                        "rejected_content": json.dumps(self.corrected)}):
+            with self.subTest(change=change), self.assertRaises(EvidenceMismatch):
+                self.run_correction(**change)
+        self.assertEqual(self.model.calls, 0)
+        self.assertEqual(original.calls, 1)
+
+    def test_original_missing_receipt_or_lost_checkpoint_is_not_replayable(self):
+        original, saved = self.capture_original()
+        path = attempt_path(self.owner, assessment_id=self.config["configurable"]["thread_id"],
+            start_digest=saved["start_sha256"], stage=ORIGINAL_STAGE, ordinal=0)
+        content = path.read_bytes()
+        path.unlink()
+        with self.assertRaises(EvidenceMismatch):
+            self.run_correction(original_capture_start=saved["start_sha256"])
+        path.write_bytes(content.splitlines(keepends=True)[0])
+        path.chmod(0o600)
+        with self.assertRaises(EvidenceMismatch):
+            self.run_correction(original_capture_start=saved["start_sha256"])
+        path.write_bytes(content)
+        state = self.graph.get_state(self.config).values
+        self.graph.update_state(self.config, {"m4_configuration_original_capture": {
+            **state["m4_configuration_original_capture"], "content": None,
+            "status": "reserved", "response_sha256": None}}, as_node="finish")
+        with self.assertRaises(EvidenceMismatch):
+            capture_original_final_offline(self.reopen(), self.config, self.adapter,
+                original, line_id=self.kw["line_id"], owner_dir=self.owner, opt_in=True)
+        self.assertEqual(original.calls, 1)
+        self.assertEqual(self.model.calls, 0)
+
+    def test_failed_original_is_terminal_without_correction(self):
+        failed = ScriptedOriginalFinal(self.model.model,
+            lambda _: (_ for _ in ()).throw(TimeoutError("mock only")))
+        with self.assertRaises(TimeoutError):
+            capture_original_final_offline(self.graph, self.config, self.adapter,
+                failed, line_id=self.kw["line_id"], owner_dir=self.owner, opt_in=True)
+        with self.assertRaises(EvidenceMismatch):
+            capture_original_final_offline(self.reopen(), self.config, self.adapter,
+                failed, line_id=self.kw["line_id"], owner_dir=self.owner, opt_in=True)
+        self.assertEqual(failed.calls, 1)
+        self.assertEqual(self.model.calls, 0)
+
+    def test_valid_original_is_returned_but_not_correction_eligible(self):
+        original = ScriptedOriginalFinal(self.model.model, json.dumps(self.corrected))
+        with self.assertRaisesRegex(EvidenceMismatch, "not_rejected"):
+            capture_original_final_offline(self.graph, self.config, self.adapter,
+                original, line_id=self.kw["line_id"], owner_dir=self.owner, opt_in=True)
+        saved = self.graph.get_state(self.config).values["m4_configuration_original_capture"]
+        self.assertEqual(saved["status"], "returned")
+        with self.assertRaises(EvidenceMismatch):
+            self.run_correction(original_capture_start=saved["start_sha256"])
+        self.assertEqual(original.calls, 1)
+        self.assertEqual(self.model.calls, 0)
+
+    def test_original_checkpoint_content_and_digest_cannot_replace_receipt(self):
+        from hashlib import sha256
+        _, saved = self.capture_original()
+        forged = json.dumps({**self.raw, "claims": [{**self.raw["claims"][0],
+            "value_json": '"false"'}]})
+        self.graph.update_state(self.config, {"m4_configuration_original_capture": {
+            **saved, "content": forged, "response_sha256": sha256(forged.encode()).hexdigest()}},
+            as_node="finish")
+        with self.assertRaises(EvidenceMismatch):
+            self.run_correction(rejected_content=forged,
+                original_capture_start=saved["start_sha256"])
         self.assertEqual(self.model.calls, 0)
 
 
