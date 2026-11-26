@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deal Desk Review Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>try{var t=localStorage.getItem("dd-theme");if(t==="teal"||t==="horizon")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Visual language follows the supervisor demo: slate page, white rounded panels with soft shadow, tinted inner boxes, teal accent, tight bold Inter headlines. */
+:root{
+  --bg:#f8fafc; --surface:#ffffff; --inner:#f8fafc; --ink:#1e293b; --ink2:#475569; --line:#e2e8f0; --line2:#cbd5e1;
+  --accent:#0f766e; --accent-d:#115e59; --accent-bg:#e9f5f2; --accent-line:#b8ddd4; --accent-tint:#f0faf7; --accent-ink:#134e48; --accent2:#2563eb; --ring:rgb(15 118 110 / 15%);
+  --grad:linear-gradient(90deg,var(--accent),var(--accent2));
+  --ok:#245b43; --ok-bg:#e4f1e8; --warn:#92400e; --warn-dot:#d97706; --warn-bg:#fff4df; --warn-line:#efd6a9; --crit:#b42318; --crit-bg:#fdecea; --unk:#334155; --unk-bg:#f1f5f9;
+  --shadow:0 5px 24px rgb(15 23 42 / 4%); --shadow-up:0 14px 35px rgb(15 23 42 / 9%);
+  --font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{min-height:100%}
+body{margin:0;background-color:var(--bg);background-image:radial-gradient(900px 420px at 88% -8%,color-mix(in srgb,var(--accent) 9%,transparent),transparent),radial-gradient(700px 380px at -6% 0%,color-mix(in srgb,var(--accent2) 8%,transparent),transparent);background-repeat:no-repeat;color:var(--ink);font:400 15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p{margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,4.2vw,54px);line-height:1.04;letter-spacing:-.055em;font-weight:800}
+h2{font-size:clamp(22px,2.4vw,30px);line-height:1.15;letter-spacing:-.04em;font-weight:750}
+h3{font-size:17px;line-height:1.3;letter-spacing:-.02em;font-weight:700}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:6px}
+.eyebrow{display:block;font-size:11px;letter-spacing:.12em;font-weight:800;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+.muted{color:var(--ink2)} .small{font-size:13px}
+/* top bar */
+.topbar{position:sticky;top:0;z-index:25;min-height:76px;padding:14px clamp(18px,4vw,56px);background:rgb(255 255 255 / 82%);-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line);box-shadow:0 2px 12px rgb(15 23 42 / 3%);display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--ink);font-weight:800;letter-spacing:.09em;font-size:15px}
+.brand small{display:block;font-size:11px;font-weight:500;letter-spacing:.06em;color:var(--ink2)}
+.brandmark{background-image:linear-gradient(135deg,var(--accent-bg),#fff);display:grid;place-items:center;width:42px;height:38px;border-radius:9px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-line);font-size:13px;font-weight:800;letter-spacing:.04em}
+.nav{display:flex;align-items:center;gap:8px}
+.nav a{padding:9px 14px;border-radius:8px;text-decoration:none;color:var(--ink);font-weight:650;font-size:14px;transition:background .18s}
+.nav a:hover{background:var(--bg)}
+.nav a[aria-current="page"]{background:var(--accent-bg);color:var(--accent-d)}
+.nav .header-action{background-image:linear-gradient(135deg,var(--accent),var(--accent-d));color:#fff}
+.nav .header-action:hover{background:var(--accent-d)}
+.count{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:99px;background:var(--line);font-size:12px;text-align:center;color:var(--ink2)}
+main{max-width:1260px;margin:0 auto;padding:36px clamp(18px,4vw,48px) 90px;min-width:0}
+footer{padding:22px clamp(18px,4vw,56px);background:#fff;border-top:1px solid var(--line);color:var(--ink2);font-size:13px}
+/* surfaces */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:clamp(20px,3vw,34px);margin-bottom:22px}
+.panel.flush{padding:0;overflow:hidden}
+.inner{background:var(--inner);border:1px solid var(--line);border-radius:10px;padding:18px}
+.stack{display:grid;gap:16px}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.crumb{font-size:12px;letter-spacing:.1em;color:var(--ink2);margin-bottom:18px;text-transform:uppercase}
+.crumb a{font-weight:700;text-underline-offset:3px}
+.page-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;flex-wrap:wrap;margin:6px 0 28px}
+.page-head p{color:var(--ink2);margin-top:12px;max-width:62ch;font-size:17px;line-height:1.6}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.sec-head .eyebrow{margin-bottom:8px}
+/* buttons and chips */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:11px 18px;border-radius:8px;border:1px solid var(--line2);background:#fff;cursor:pointer;font-weight:700;font-size:14px;text-decoration:none;color:var(--ink);transition:background .18s,border-color .18s,box-shadow .18s}
+.btn:hover{border-color:var(--accent);box-shadow:0 2px 10px color-mix(in srgb,var(--accent) 14%,transparent)}
+.btn.primary{background-image:linear-gradient(135deg,var(--accent),var(--accent-d));background-color:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-d)}
+.btn.small{padding:6px 12px;font-size:13px}
+.chip{padding:8px 13px;border-radius:7px;border:1px solid var(--accent-line);background:#fff;color:var(--accent-d);cursor:pointer;font-weight:650;font-size:13px;transition:background .18s}
+.chip:hover{background:var(--accent-bg)}
+.chip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip b{margin-left:8px;font-weight:700;opacity:.8}
+.filters,.journey{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+/* status pills */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:6px;font-size:12.5px;font-weight:650;white-space:nowrap;border:1px solid transparent;line-height:1.4}
+.pill svg{width:14px;height:14px;flex:none}
+.pill.s-pass,.pill.s-approval,.pill.s-fail,.pill.o-ready,.pill.o-needs_correction{box-shadow:0 0 14px -6px currentColor}
+.pill.s-pass,.pill.o-ready{color:var(--ok);background:var(--ok-bg)}
+.pill.s-approval{color:var(--warn);background:var(--warn-bg)}
+.pill.s-fail,.pill.o-needs_correction{color:var(--crit);background:var(--crit-bg)}
+.pill.s-unknown,.pill.o-cannot_confirm{color:var(--unk);background:var(--unk-bg);border:1px dashed #94a3b8}
+.pill.s-skip{color:var(--ink2);background:#fff;border:1px solid var(--line)}
+.pill.o-rejected{color:var(--crit);background:#fff;border:1px solid #f1b5af}
+.pill.o-failed{color:#fff;background:var(--crit)}
+.pill.o-running{color:var(--accent-d);background:var(--accent-bg);border:1px solid var(--accent-line)}
+.o-running i{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25;transform:scale(.7)}}
+.hero-side .pill{padding:9px 16px;border-radius:999px;font-size:13px;font-weight:750}
+/* queue */
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:780px}
+th{font-weight:700;color:var(--ink2);text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:14px 20px;background:var(--inner);border-bottom:1px solid var(--line)}
+td{padding:18px 20px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr{cursor:pointer;transition:background .15s}
+tbody tr:hover{background:#fafdfc}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right}
+.deal-id{font-weight:750;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.deal-id:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.sub{display:block;color:var(--ink2);font-size:13px}
+.empty{padding:48px 16px;text-align:center;color:var(--ink2)}
+/* form */
+.formgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.field{display:grid;gap:6px}
+.field label,.legend{font-size:13px;font-weight:650;color:var(--ink2)}
+.field input,.field select,.page-head select{padding:11px 12px;border:1px solid var(--line2);border-radius:8px;background:#fff;width:100%;min-width:0;transition:border-color .18s,box-shadow .18s}
+.page-head select{width:auto}
+.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--ring);outline:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.linebox{border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;background:var(--inner)}
+.linehead{display:flex;justify-content:space-between;align-items:center}
+.checks{display:flex;gap:8px 16px;flex-wrap:wrap}
+.checks label{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);font-weight:500}
+input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+pre.json{margin:0;padding:16px;background:var(--inner);border:1px solid var(--line);border-radius:10px;overflow:auto;font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;max-height:560px}
+.banner{padding:14px 18px;border-radius:10px;background:var(--warn-bg);border:1px solid var(--warn-line);border-left:4px solid #d97706;color:#78350f;font-size:14px;margin-bottom:20px}
+.banner.info{background:var(--accent-bg);border-color:var(--accent-line);border-left-color:var(--accent);color:var(--accent-d)}
+/* hero (outcome) */
+.hero{position:relative;overflow:hidden;padding-top:clamp(26px,3.4vw,42px)}
+.hero::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--stripe);transform-origin:left;animation:grow .7s ease-out}
+@keyframes grow{from{transform:scaleX(0)}}
+.hero.o-ready{--stripe:var(--accent)} .hero.o-ready::before{background:var(--grad)} .hero.o-needs_correction,.hero.o-failed,.hero.o-rejected{--stripe:var(--crit)} .hero.o-cannot_confirm{--stripe:#64748b} .hero.o-running{--stripe:var(--accent)}
+.hero-top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;flex-wrap:wrap}
+.hero h1{font-size:clamp(30px,3.8vw,48px);max-width:20ch}
+.lede{margin-top:16px;font-size:17px;line-height:1.65;color:var(--ink2);max-width:68ch}
+.next{margin-top:22px;padding-top:20px;border-top:1px solid var(--line);display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.summary>div{background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 4px 14px rgb(15 23 42 / 3%);padding:16px 18px;display:grid;gap:6px;align-content:start;min-width:0}
+.summary span{font-size:11px;letter-spacing:.1em;font-weight:800;color:var(--ink2);text-transform:uppercase}
+.summary strong{font-size:16px;font-weight:700;overflow-wrap:anywhere}
+.summary a{font-weight:700}
+.sectionhold{scroll-margin-top:96px}
+/* actions */
+.action{display:grid;grid-template-columns:170px 1fr;gap:8px 20px;padding:18px;background:var(--inner);border:1px solid var(--line);border-radius:10px}
+.action + .action{margin-top:12px}
+.who{font-weight:750;color:var(--accent-d)}
+.why{color:var(--ink2);font-size:14px;margin-top:4px}
+details.msg{margin-top:12px}
+details.msg summary{cursor:pointer;color:var(--accent-d);font-size:14px;font-weight:650}
+.msgbody{margin-top:10px;padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:8px;font-size:14px;white-space:pre-wrap;line-height:1.6}
+.ai{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:5px;border:1px solid var(--line2);color:var(--ink2);background:#fff;vertical-align:middle;margin-left:8px;letter-spacing:.02em}
+/* problems */
+.issue{padding:20px;background:var(--inner);border:1px solid var(--line);border-radius:10px;display:grid;gap:10px}
+.issue + .issue{margin-top:12px}
+.issue .row{justify-content:space-between}
+.fix{padding:12px 14px;border-radius:8px;background:var(--accent-tint);border:1px solid var(--accent-line);border-left:4px solid var(--accent);font-size:14px;color:var(--accent-ink)}
+.fix.gap{background:var(--unk-bg);border-color:var(--line2);border-left-color:#64748b;color:var(--ink)}
+.refs{display:flex;gap:6px;flex-wrap:wrap}
+.ref{font-size:12px;padding:2px 9px;border-radius:6px;background:#fff;color:var(--ink2);border:1px solid var(--line)}
+.ref b{color:var(--ink);font-weight:650}
+.cmp{width:100%;min-width:560px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cmp td,.cmp th{padding:12px 16px}
+.cmp .to{color:var(--accent-d);font-weight:700}
+.resrow{display:flex;gap:12px;align-items:flex-start;padding:8px 0}
+/* findings */
+.checkcard{padding:20px;background:var(--inner);border:1px solid var(--line);border-radius:10px;display:grid;gap:10px}
+.checkcard + .checkcard{margin-top:12px}
+.checkcard .row{justify-content:space-between}
+.finding{display:grid;gap:6px;padding-top:10px;border-top:1px solid var(--line)}
+.calc{font-size:14px;color:var(--ink2)}
+/* matrix */
+.matrix{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.mtable{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(160px,1fr);min-width:max-content}
+.mcol{display:grid;grid-template-rows:42px repeat(5,60px);border-left:1px solid var(--line)}
+.mcol.labels{border-left:0;min-width:220px;background:var(--inner)}
+.mhead{display:flex;align-items:center;padding:0 14px;font-weight:700;font-size:13px;background:var(--inner);border-bottom:1px solid var(--line)}
+.mcell{display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--line);font-size:14px;gap:8px}
+.mcol .mcell:last-child{border-bottom:0}
+.mcol.labels .mcell{color:var(--ink2);font-weight:500}
+.mcell.hidden{background:repeating-linear-gradient(135deg,transparent 0 6px,var(--inner) 6px 12px)}
+.mcell.running{background:var(--accent-bg)}
+.mcell.running .spin{width:14px;height:14px;border:2px solid var(--accent-line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mcell.new .pill{animation:pop .32s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.6)}to{transform:scale(1)}}
+.mcol.enter{animation:colin .35s ease-out}
+@keyframes colin{from{transform:translateX(16px)}to{transform:none}}
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.step{padding:8px 14px;border:1px solid var(--line);border-radius:8px;font-size:14px;color:var(--ink2);display:flex;gap:8px;align-items:center;background:#fff;transition:border-color .2s,color .2s}
+.step.done{color:var(--ink);border-color:var(--accent-line);background:var(--accent-bg)}
+.step.done svg{color:var(--accent);width:14px;height:14px}
+.step.now{color:var(--ink);border-color:var(--accent)}
+.roundnote{font-size:15px;color:var(--ink2);margin-bottom:16px}
+/* timeline */
+.timeline{list-style:none;margin:0;padding:4px 4px 4px;position:relative}
+.timeline li{position:relative;padding:9px 0 9px 28px;display:grid;grid-template-columns:1fr auto;gap:0 12px}
+.timeline li::before{content:"";position:absolute;left:5px;top:0;bottom:0;border-left:2px solid var(--line)}
+.timeline li::after{content:"";position:absolute;left:0;top:15px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--dot,var(--line2))}
+.timeline li.round{font-weight:750;padding-top:18px}
+.timeline li.round::after{--dot:var(--accent);background:var(--accent)}
+.timeline li.t-pass{--dot:#2f855a}.timeline li.t-approval{--dot:#d97706}.timeline li.t-fail,.timeline li.t-error{--dot:var(--crit)}.timeline li.t-unknown{--dot:#64748b}
+.timeline .when{color:var(--ink2);font-size:13px;text-align:right}
+.timeline .tn{color:var(--ink2);font-size:14px;grid-column:1}
+/* intake problems */
+.problem{display:grid;gap:4px;padding:18px;background:var(--inner);border:1px solid var(--line);border-radius:10px}
+.problem + .problem{margin-top:12px}
+.tech{color:var(--ink2);font-size:13px}
+.tech code{font:12.5px ui-monospace,Menlo,monospace}
+/* chat */
+.fab{position:fixed;right:24px;bottom:24px;z-index:20;box-shadow:var(--shadow-up);padding:14px 22px;border-radius:10px}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:100%;background:rgb(255 255 255 / 92%);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgb(15 23 42 / 10%);z-index:40;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s ease;visibility:hidden}
+.drawer.open{transform:none;visibility:visible}
+.dhead{padding:20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.dhead h2{font-size:20px}
+.dlog{flex:1;overflow:auto;padding:18px 20px;display:grid;gap:12px;align-content:start;background:var(--bg)}
+.bubble{padding:12px 14px;border-radius:12px;font-size:14px;max-width:92%;white-space:pre-wrap;line-height:1.55}
+.bubble.me{background:var(--accent);color:#fff;justify-self:end;border-bottom-right-radius:4px}
+.bubble.bot{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+.bubble .tag{display:inline-block;font-size:12px;font-weight:700;color:var(--warn);background:var(--warn-bg);padding:1px 9px;border-radius:5px;margin-bottom:8px}
+.bubble .refline{margin-top:10px;font-size:12.5px;color:var(--ink2)}
+.dform{display:flex;gap:8px;padding:16px 20px;border-top:1px solid var(--line)}
+.dform input{flex:1;padding:11px 12px;border:1px solid var(--line2);border-radius:8px;min-width:0}
+.dform input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--ring);outline:0}
+.typing i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ink2);margin-right:4px;animation:pulse 1s infinite}
+
+:root[data-theme="horizon"]{
+  --bg:#f5f6f7; --inner:#f7f9fb; --ink:#223548; --ink2:#556b82; --line:#dde3e8; --line2:#b6c2ce;
+  --accent:#0070f2; --accent-d:#0057d2; --accent-bg:#ebf8ff; --accent-line:#a9d4ff; --accent-tint:#f0f7ff; --accent-ink:#00418f; --accent2:#4db1ff; --ring:rgb(0 112 242 / 18%);
+  --ok:#256f3a; --ok-bg:#e7f3ea; --warn:#a84a00; --warn-dot:#e76500; --warn-bg:#fff0e0; --warn-line:#f4cfa6; --crit:#aa0808; --crit-bg:#fdecec; --unk:#475f76; --unk-bg:#eef1f4;
+}
+/* theme switch */
+.themes{display:flex;gap:6px;align-items:center;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fff}
+.themes button{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;background-clip:padding-box;transition:transform .18s,border-color .18s}
+.themes button:hover{transform:scale(1.08)}
+.themes button[aria-pressed="true"]{border-color:var(--ink)}
+.themes .t-teal{background:linear-gradient(135deg,#0f766e,#2563eb)}
+.themes .t-horizon{background:linear-gradient(135deg,#0070f2,#4db1ff)}
+.kbd{display:inline-flex;gap:8px;align-items:center;padding:7px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;color:var(--ink2);font-size:13px}
+.kbd kbd{font:600 11px ui-monospace,Menlo,monospace;padding:1px 6px;border:1px solid var(--line2);border-radius:4px;background:var(--inner);color:var(--ink)}
+.kbd:hover{border-color:var(--accent)}
+/* motion */
+main.page-in{animation:pagein .26s ease-out}
+@keyframes pagein{from{opacity:.0;transform:translateY(8px)}to{opacity:1;transform:none}}
+tbody tr{animation:rowin .4s ease-out both}
+@keyframes rowin{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.hero.reveal h1{animation:wipe .8s cubic-bezier(.3,.7,.2,1) both}
+@keyframes wipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.hero.reveal .hero-side .pill{animation:pop .45s .55s cubic-bezier(.2,1.4,.4,1) both}
+.hero.reveal .lede{animation:fadeup .5s .4s ease-out both}
+@keyframes fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* pipeline strip */
+.pipe-panel{padding-block:26px}
+.pipe{position:relative}
+.pipe-line{position:absolute;left:10%;right:10%;top:15px;height:4px;border-radius:4px;background:var(--line)}
+.pipe-line i{display:block;height:100%;width:0;border-radius:4px;background:var(--grad);transition:width .6s ease}
+.pipe-nodes{position:relative;display:grid;grid-template-columns:repeat(5,1fr)}
+.pnode{display:grid;justify-items:center;gap:10px;text-align:center;font-size:13px;color:var(--ink2);font-weight:600}
+.pnode .dot{width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid var(--line2);display:grid;place-items:center;transition:background .3s,border-color .3s,box-shadow .3s}
+.pnode .dot svg{width:16px;height:16px}
+.pnode.st-pass .dot{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);box-shadow:0 0 16px -4px var(--ok)}
+.pnode.st-approval .dot{background:var(--warn-bg);border-color:var(--warn-dot);color:var(--warn);box-shadow:0 0 16px -4px var(--warn-dot)}
+.pnode.st-fail .dot{background:var(--crit-bg);border-color:var(--crit);color:var(--crit);box-shadow:0 0 16px -4px var(--crit)}
+.pnode.st-unknown .dot{background:var(--unk-bg);border-color:#64748b;border-style:dashed;color:var(--unk)}
+.pnode.st-running .dot{border-color:var(--accent);box-shadow:0 0 0 6px var(--ring)}
+.pnode.st-running{color:var(--ink)}
+.pulse{position:absolute;top:10px;left:10%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--grad);box-shadow:0 0 18px 4px color-mix(in srgb,var(--accent) 45%,transparent);transition:left .55s cubic-bezier(.4,0,.2,1),opacity .4s;z-index:2;pointer-events:none}
+.pulse.off{opacity:0}
+.pipe-note{margin-top:18px;font-size:15px;color:var(--ink2);text-align:center}
+/* numbers at a glance */
+.vizgrid{display:grid;gap:14px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.viz{padding:18px 20px 40px;background:var(--inner);border:1px solid var(--line);border-radius:10px}
+.viz-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:22px;font-size:14px;flex-wrap:wrap}
+.viz-top strong{font-weight:750}
+.gauge{position:relative;height:14px;border-radius:8px}
+.gauge .zones{display:flex;height:100%;border-radius:8px;overflow:hidden}
+.gauge .zones i:nth-child(1){background:var(--ok-bg)} .gauge .zones i:nth-child(2){background:var(--warn-bg)} .gauge .zones i:nth-child(3){background:var(--crit-bg)}
+.gauge .fill{position:absolute;left:0;top:3px;bottom:3px;width:0;border-radius:6px;background:var(--ok);transition:width 1s cubic-bezier(.3,.7,.2,1)}
+.gauge.warn .fill{background:var(--warn-dot)} .gauge.crit .fill{background:var(--crit)}
+.gauge.in .fill{width:var(--w)}
+.gauge.unk .zones{background:repeating-linear-gradient(135deg,var(--unk-bg) 0 6px,#fff 6px 12px);border:1px dashed #94a3b8;border-radius:8px}
+.gauge.unk .zones i{display:none}
+.mark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.mark em{position:absolute;font-style:normal;font-size:12px;color:var(--ink2);white-space:nowrap;transform:translateX(-50%)}
+.mark em.up{bottom:calc(100% + 2px)} .mark em.dn{top:calc(100% + 2px)}
+.mark:last-child em{transform:translateX(-30%)}
+.ladder{position:relative;display:flex;height:14px;border-radius:7px;overflow:hidden}
+.ladder span{display:block}
+.ladder span:nth-child(1){background:var(--ok-bg);box-shadow:inset 0 0 0 1px var(--ok)} .ladder span:nth-child(2){background:var(--warn-bg);box-shadow:inset 0 0 0 1px var(--warn)} .ladder span:nth-child(3){background:#ffe3c2;box-shadow:inset 0 0 0 1px var(--warn)} .ladder span:nth-child(4){background:var(--crit-bg);box-shadow:inset 0 0 0 1px var(--crit)}
+.ladlbl{display:flex;margin-top:6px;font-size:11px;font-weight:650;color:var(--ink2)}
+.ladlbl span{white-space:nowrap;overflow:hidden;padding-left:2px}.ladlbl span:last-child{overflow:visible;text-align:right;padding-right:2px}
+.ladderwrap{position:relative;margin-top:14px}
+.pin{position:absolute;top:-8px;bottom:-4px;width:3px;background:var(--ink);border-radius:2px;left:0;transition:left 1s cubic-bezier(.3,.7,.2,1)}
+.pin b{display:none;position:absolute;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);font-size:12px;background:var(--ink);color:#fff;border-radius:5px;padding:1px 7px;white-space:nowrap}
+.ref{transition:background .15s,border-color .15s,color .15s}
+.ref.hl{background:var(--accent-bg);border-color:var(--accent);color:var(--accent-ink)}
+/* command bar */
+#palette{position:fixed;inset:0;z-index:60;background:rgb(15 23 42 / 35%);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;padding:12vh 16px 0}
+#palette.open{display:flex;animation:fadein .15s}
+@keyframes fadein{from{opacity:0}}
+.pbox{width:min(600px,100%);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-up);overflow:hidden}
+.pbox input{width:100%;border:0;border-bottom:1px solid var(--line);padding:18px 20px;font-size:16px;outline:0}
+.plist{list-style:none;margin:0;padding:8px;max-height:340px;overflow:auto}
+.plist li{padding:10px 12px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.plist li[aria-selected="true"]{background:var(--accent-bg);color:var(--accent-ink)}
+.phint{padding:10px 20px;border-top:1px solid var(--line);font-size:12px;color:var(--ink2)}
+.shimmer{display:grid;gap:8px;width:180px}
+.shimmer i{height:10px;border-radius:5px;background:linear-gradient(90deg,var(--line) 25%,#fff 50%,var(--line) 75%);background-size:200% 100%;animation:shim 1.2s linear infinite}
+@keyframes shim{to{background-position:-200% 0}}
+@media (max-width:900px){.vizgrid{grid-template-columns:1fr}.kbd span{display:none}.pnode{font-size:11px}}
+@media (max-width:900px){
+  .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .formgrid{grid-template-columns:1fr}
+  .action{grid-template-columns:1fr}
+  .grid3{grid-template-columns:1fr 1fr}
+  .topbar{padding-block:10px}
+  .brand small{display:none}
+}
+@media (max-width:520px){.summary{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.nav a{padding:8px 10px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}}
+
+</style>
+</head>
+<body>
+<header class="topbar"><a class="brand" href="#queue"><span class="brandmark">DD</span><span>DEAL DESK<small>Review console</small></span></a>
+  <nav class="nav" aria-label="Main"><button class="kbd" data-action="palette" aria-label="Open search"><span>Search</span><kbd>/</kbd></button><div class="themes" role="group" aria-label="Colour theme"><button class="t-teal" data-theme-pick="teal" aria-label="Teal and blue theme" title="Teal and blue" aria-pressed="true"></button><button class="t-horizon" data-theme-pick="horizon" aria-label="Horizon blue theme" title="Horizon blue" aria-pressed="false"></button></div><a href="#queue" id="nav-queue">Deal queue <span class="count" id="qcount"></span></a><a href="#new" id="nav-new" class="header-action">New deal</a></nav></header>
+<main id="main" tabindex="-1"></main>
+<div id="palette" role="dialog" aria-modal="true" aria-label="Search"><div class="pbox"><input id="pq" aria-label="Search deals and commands" placeholder="Search deals, or type a command" autocomplete="off"><ul class="plist" id="plist" role="listbox"></ul><div class="phint">Arrow keys to move, Enter to open, Esc to close</div></div></div>
+<footer>Prototype with sample data. Intake checks run on what you enter. Results are prepared sample packages, not live assessments.</footer>
+<aside class="drawer" id="drawer" aria-label="Ask about this package" aria-hidden="true"></aside>
+
+<script>
+/* ---------- constants (sample data) ---------- */
+const BUSINESS_DATE='2027-01-20';
+const CUST={D1:['Altmühl Systemhaus GmbH','Germany'],D2:['Nordfeld Industrie AG','Germany'],D3:['Brandt & Weiss Consulting','Germany'],D4:['Havelstadt Stadtwerke','Germany'],D5:['Rheinwerk Logistik GmbH','Germany'],D6:['Kinzig Medizintechnik','Germany'],D7:['Elbtal Verlagshaus','Germany'],D8:['Teutoburg Maschinenbau','Germany'],E1:['Delta Foods Trading','Egypt'],E2:['Nile Crest Telecom','Egypt'],E3:['Giza Freight Services','Egypt'],E4:['Alexandria Port Logistics','Egypt'],E5:['Cairo Metro Contractors','Egypt'],E6:['Red Sea Hospitality','Egypt']};
+const DEST={'DE-BE':'Berlin','DE-BY':'Bavaria','DE-HH':'Hamburg','DE-NW':'North Rhine-Westphalia','EG-C':'Cairo','EG-ALX':'Alexandria'};
+const PROD={'SELL-0233':['Rack server, 2U',19000],'SELL-0871':['Storage array, 24 bay',32000],'SELL-0560':['Core network switch',7400],'SELL-0412':['Managed support, 12 months',14200],'SELL-1190':['Installation service, standard',6500],'SELL-1195':['Installation service, advanced',6500]};
+const PAYDAYS=[15,30,45,60,90];
+const CHANGES=['None','Penalties','Liability','Data and licence terms','Other changes'];
+const CHECKS=['Intake','Configuration','Fulfillment','Pricing','Credit and payment terms'];
+const LABEL={pass:'Pass',approval:'Pass, approval needed',fail:'Fail',unknown:'Cannot confirm',skip:'Not assessed'};
+const OLABEL={ready:'Ready for approval',needs_correction:'Needs correction',cannot_confirm:'Cannot confirm',rejected:'Intake rejected',failed:'Run failed',running:'Running'};
+const eur=n=>'€'+Math.round(n).toLocaleString('en-GB');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ICON={
+ pass:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>',
+ fail:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+ approval:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5l6 10.5H2z"/><path d="M8 7v3M8 11.6v.1"/></svg>',
+ unknown:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke-dasharray="2.5 2"/><path d="M6.4 6.3a1.7 1.7 0 013.2.6c0 1.1-1.6 1.3-1.6 2.4M8 11.6v.1"/></svg>',
+ skip:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 8h8"/></svg>'
+};
+const pill=s=>`<span class="pill s-${s}">${ICON[s]}${LABEL[s]}</span>`;
+const opill=o=>o==='running'?`<span class="pill o-running"><i></i>Running</span>`:`<span class="pill o-${o}">${o==='ready'?ICON.pass:o==='needs_correction'||o==='failed'||o==='rejected'?ICON.fail:ICON.unknown}${OLABEL[o]}</span>`;
+const ref=(p,id)=>`<span class="ref" data-id="${esc(id)}"><b>${esc(p)}</b> ${esc(id)}</span>`;
+
+/* ---------- sample deals (draft JSON = what the rep submitted) ---------- */
+const L=(p,q,pr,inst)=>({product_id:p,quantity:q,quoted_unit_price:pr,options:'',group_code:'',installation_requested:!!inst});
+const T=(d,a,m,ch)=>({payment_days:d,advance_payment_pct:a,contract_months:m,allow_partial_delivery:true,contract_changes:ch||['None']});
+const DRAFT={
+ repair:{customer_id:'D5',destination:'DE-BY',requested_date:'2027-02-17',terms:T(30,0,36),lines:[L('SELL-0233',12,18400),L('SELL-0871',2,23200),L('SELL-1195',1,6500,true)]},
+ repairFixed:{customer_id:'D5',destination:'DE-BY',requested_date:'2027-02-17',terms:T(30,25,36),lines:[L('SELL-0233',12,18400),L('SELL-0871',2,24320),L('SELL-1190',1,6500,true)]},
+ honest:{customer_id:'D8',destination:'DE-NW',requested_date:'2027-02-24',terms:T(30,0,24),lines:[L('SELL-0233',4,18400),L('SELL-0560',6,7400)]},
+ clean:{customer_id:'E2',destination:'EG-C',requested_date:'2027-03-10',terms:T(45,30,36),lines:[L('SELL-0233',20,16720),L('SELL-0871',4,32000),L('SELL-0560',5,7400)]}
+};
+const val=d=>d.lines.reduce((s,l)=>s+(+l.quantity||0)*(+l.quoted_unit_price||0),0);
+
+/* rounds: results per check [intake,config,fulfil,pricing,credit]; n = short note */
+const C=(s,n)=>({s,n});
+const SK=C('skip','');
+const ROUNDS={
+ repair:[
+  {label:'Original deal',cells:[C('pass','All fields valid'),C('fail','Advanced installation service is not eligible in Bavaria'),SK,SK,SK]},
+  {label:'Repair round 1',cells:[C('pass','Candidate accepted'),C('pass','Standard installation service is eligible'),C('fail','12 servers requested, 8 free at WH-EU-CENTRAL'),SK,SK]},
+  {label:'Repair round 2',cells:[C('pass','Candidate accepted'),C('pass','No eligibility problem'),C('pass','8 from WH-EU-CENTRAL, 4 from WH-EU-WEST'),C('fail','Line 2 discount 27.5% is above the 25% cap'),SK]},
+  {label:'Repair round 3',cells:[C('pass','Candidate accepted'),C('pass','No eligibility problem'),C('pass','Both shipments arrive in time'),C('approval','Line 2 discount 24%; VP Sales needed'),C('fail','Exposure €465,940 is above the €420,000 cap')]},
+  {label:'Repair round 4',cells:[C('pass','Candidate accepted'),C('pass','No eligibility problem'),C('pass','Both shipments arrive in time'),C('approval','VP Sales for discount and deal value'),C('pass','Exposure €396,955 is within the €400,000 limit')]}
+ ],
+ honest:[{label:'Original deal',cells:[C('pass','All fields valid'),C('pass','No eligibility problem'),C('pass','All 10 units free at WH-EU-WEST'),C('approval','Deal value above €50,000: Sales Director'),C('unknown','Unbilled commitments figure is 9 days old; the limit is 7')]}],
+ clean:[{label:'Original deal',cells:[C('pass','All fields valid'),C('pass','No eligibility problem'),C('pass','Stock covers all 29 units'),C('approval','Deal value above €300,000: VP Sales'),C('approval','Exposure €539,580 is above the €500,000 limit: Finance Director')]}]
+};
+
+/* ---------- the three prepared packages ---------- */
+const PKG={};
+PKG.repair={
+ id:'DD-2027-0142',customer:'D5',dest:'DE-BY',requested:'17 Feb 2027',submitted:'20 Jan 2027, 07:42',outcome:'needs_correction',scn:'repair',
+ headline:'Needs correction. A verified fix is ready for the sales rep.',
+ reason:'The quote fails Configuration, and the repair loop found a corrected version that passes all four checks after four rounds.',
+ next:'Send the corrected quote to the sales rep. They resubmit it as a new deal.',
+ actions:[
+  {who:'Sales rep',what:'Review the corrected quote and resubmit it.',why:'Four problems found: installation service not offered in Bavaria, 4 servers short, storage discount above the cap, credit exposure above the cap.',message:'Hi, DD-2027-0142 can\'t go to approval as quoted. Four changes make it work: swap the installation service to SELL-1190 (the advanced one isn\'t offered in Bavaria), ship 4 of the 12 servers from WH-EU-WEST, cut the storage discount from 27.5% to 24%, and agree a 25% advance payment with Rheinwerk. Please resubmit with these changes. The corrected deal will need VP Sales approval.'},
+  {who:'Deal Desk analyst',what:'Do not route the original quote for approval.',why:'A deal that needs correction goes back to the sales rep first.',message:null}
+ ],
+ problems:[
+  {kind:'fix',title:'Installation service is not offered in Bavaria',check:'Configuration',detail:'Line 3 asks for SELL-1195 (advanced installation) in DE-BY. The rulebook marks it as not eligible there.',fix:'Replace line 3 with SELL-1190, standard installation, which is eligible in DE-BY.',refs:[['Eligibility rule','CFG-ELIG-1195-DE-BY']]},
+  {kind:'fix',title:'Not enough servers at the Central warehouse',check:'Fulfillment',detail:'12 SELL-0233 requested for 17 Feb. WH-EU-CENTRAL has 8 free (stock record of 20 Jan, 06:00).',fix:'Ship 8 from WH-EU-CENTRAL and 4 from WH-EU-WEST. Both shipments arrive before 17 Feb. The deal allows partial delivery.',refs:[['Free stock','STK-EU-CENTRAL-0233'],['Free stock','STK-EU-WEST-0233'],['Transit','LANE-EUW-DE-BY']]},
+  {kind:'fix',title:'Storage discount is above the Germany cap',check:'Pricing',detail:'Line 2 is discounted 27.5% (list €32,000, quoted €23,200). The Germany cap is 25%.',fix:'Set the line 2 price to €24,320 (24% discount). Deal value rises from €273,700 to €275,940.',refs:[['Discount ladder, Germany','PRC-DE-LADDER'],['Price list','PL-0871']]},
+  {kind:'fix',title:'Credit exposure is above the cap',check:'Credit and payment terms',detail:'Exposure would be €465,940 with no advance payment. The limit is €400,000 and the cap is €420,000 (5% band).',fix:'Ask for at least 23.9% advance payment. The candidate uses 25%, which gives an exposure of €396,955.',refs:[['Credit limit, D5','CRD-LIMIT-D5'],['Open invoices','INV-OPEN-D5'],['Unbilled commitments','COM-D5-0119']]}
+ ],
+ candidate:{note:'Round 4 of a maximum of 5. The candidate passes every check.',changes:[['Line 3 product','SELL-1195 advanced installation','SELL-1190 standard installation'],['Shipping','One shipment from WH-EU-CENTRAL','8 from WH-EU-CENTRAL, 4 from WH-EU-WEST'],['Line 2 unit price','€23,200 (27.5% off)','€24,320 (24% off)'],['Advance payment','0%','25%'],['Deal value','€273,700','€275,940']],result:[['pass','Configuration','No eligibility problem.'],['pass','Fulfillment','12 of 12 servers covered, both shipments in time.'],['approval','Pricing','VP Sales: discount 24% is above 15%, and deal value €275,940 is above €150,000.'],['pass','Credit and payment terms','Exposure €396,955 is within the €400,000 limit. 30 days is the Germany standard.']],ai:'Four changes, each tied to one failed check. The discount change raised the deal value, so the advance payment was recalculated on the new value.'},
+ checks:[
+  {name:'Configuration',s:'fail',lead:'Line 3 cannot be installed in Bavaria.',rows:[{t:'SELL-1195 has an eligibility row for DE-BY marked not eligible.',refs:[['Eligibility rule','CFG-ELIG-1195-DE-BY']]},{t:'No requested contract changes (None).',refs:[['Terms','DEAL-0142.terms']]}]},
+  {name:'Fulfillment',s:'skip',lead:'Not assessed: an earlier check failed.'},{name:'Pricing',s:'skip',lead:'Not assessed: an earlier check failed.'},{name:'Credit and payment terms',s:'skip',lead:'Not assessed: an earlier check failed.'}
+ ],
+ draft:DRAFT.repair,candidateDraft:DRAFT.repairFixed,
+ viz:{gauges:[{label:'Credit exposure, round 3 (no advance payment)',value:465940,limit:400000,cap:420000},{label:'Credit exposure, verified candidate (25% advance)',value:396955,limit:400000,cap:420000}],ladders:[{label:'Line 2 storage discount, original',value:27.5,steps:[5,15,25]},{label:'Line 2 storage discount, candidate',value:24,steps:[5,15,25]}]},
+ chat:[
+  {re:/pricing|discount/i,a:'In the original quote, Pricing was not assessed because Configuration failed first. In repair round 2 it failed on line 2: a 27.5% discount against the Germany cap of 25%. The fix is a 24% discount, a unit price of €24,320.',r:['PRC-DE-LADDER','PL-0871']},
+  {re:/approv|sign|who/i,a:'Nobody yet. This package needs correction first. The corrected quote would need VP Sales: the line 2 discount of 24% is above 15%, and the deal value of €275,940 is above €150,000.',r:['PRC-DE-LADDER','PRC-DE-VALUE']},
+  {re:/credit|exposure/i,a:'Exposure = unbilled commitments and open invoices (€190,000) + deal value × (1 − advance). In round 3 with no advance: 190,000 + 275,940 = €465,940, above the €420,000 cap. With 25% advance: 190,000 + 206,955 = €396,955.',r:['CRD-LIMIT-D5','INV-OPEN-D5','COM-D5-0119']},
+  {re:/what if|if the|advance/i,whatIf:true,a:'With a 40% advance payment: exposure = 190,000 + 275,940 × 60% = €355,564. That is within the €400,000 limit.',r:['CRD-LIMIT-D5']},
+  {re:/ship|stock|warehouse|server/i,a:'WH-EU-CENTRAL has 8 free servers, and 12 were requested. The fix ships 4 from WH-EU-WEST, with 3 workdays transit to Bavaria.',r:['STK-EU-CENTRAL-0233','STK-EU-WEST-0233','LANE-EUW-DE-BY']}
+ ]
+};
+PKG.honest={
+ id:'DD-2027-0145',customer:'D8',dest:'DE-NW',requested:'24 Feb 2027',submitted:'20 Jan 2027, 08:15',outcome:'cannot_confirm',scn:'honest',
+ headline:'Cannot confirm. The credit figure is out of date.',
+ reason:'Configuration and Fulfillment pass, and Pricing passes with one approval. Credit cannot be confirmed because the unbilled commitments figure for this customer is 9 days old, and the limit is 7 days.',
+ next:'Ask Finance to refresh the figure, then resubmit the deal unchanged.',
+ actions:[
+  {who:'Finance Director',what:'Refresh the unbilled commitments figure for D8.',why:'The last update was 11 Jan 2027. Credit exposure cannot be computed without it.',message:'Hi, we are reviewing DD-2027-0145 for Teutoburg Maschinenbau (D8). The unbilled commitments figure was last updated on 11 Jan 2027, which is older than our 7 day limit. Could you refresh it so we can confirm the credit position?'},
+  {who:'Deal Desk analyst',what:'Resubmit DD-2027-0145 once the figure is fresh.',why:'The deal itself needs no change.',message:null}
+ ],
+ problems:[{kind:'gap',title:'Unbilled commitments figure is out of date',check:'Credit and payment terms',detail:'Open invoices are known (€62,300). The unbilled commitments figure is dated 11 Jan 2027, 9 days before the business date. The limit for this figure is 7 days.',fix:'Missing: a figure dated 13 Jan 2027 or later. Who can supply it: Finance Director.',refs:[['Credit limit, D8','CRD-LIMIT-D8'],['Unbilled commitments','COM-D8-0111']]}],
+ candidate:null,
+ checks:[
+  {name:'Configuration',s:'pass',lead:'No eligibility problem for DE-NW.',rows:[{t:'All 2 products have eligible rows for the destination.',refs:[['Eligibility rows','CFG-ELIG-DE-NW']]}]},
+  {name:'Fulfillment',s:'pass',lead:'All 10 units are free and arrive before 24 Feb.',rows:[{t:'4 servers and 6 switches are free at WH-EU-WEST, stock record fresh (20 Jan, 06:00).',refs:[['Free stock','STK-EU-WEST-0233'],['Free stock','STK-EU-WEST-0560']]}]},
+  {name:'Pricing',s:'approval',lead:'Approval needed for deal value.',rows:[{t:'Line 1 discount is 3.2%. The Germany routine limit is 5%.',refs:[['Discount ladder, Germany','PRC-DE-LADDER']]},{t:'Deal value €118,000 is above €50,000: Sales Director.',refs:[['Deal value rule, Germany','PRC-DE-VALUE']]}]},
+  {name:'Credit and payment terms',s:'unknown',lead:'Exposure cannot be computed.',rows:[{t:'Unbilled commitments figure is 9 days old. Limit: 7 days. The system does not guess or treat the figure as zero.',refs:[['Unbilled commitments','COM-D8-0111']],calc:'Exposure = unbilled commitments (stale) + open invoices €62,300 + deal value × (1 − advance)'}]}
+ ],
+ draft:DRAFT.honest,candidateDraft:null,
+ viz:{gauges:[{label:'Credit exposure',unknown:true,limit:250000,cap:262500}],ladders:[{label:'Line 1 server discount',value:3.2,steps:[5,15,25]}]},
+ chat:[
+  {re:/why|credit|confirm|stale|figure/i,a:'The unbilled commitments figure for D8 is dated 11 Jan 2027. The business date is 20 Jan, so it is 9 days old. The limit is 7 days. Without a fresh figure the exposure cannot be computed, so the system says it cannot confirm instead of guessing.',r:['COM-D8-0111','CRD-LIMIT-D8']},
+  {re:/approv|sign|who/i,a:'Not yet. Approvers are only listed when the deal is ready for approval. Once credit is confirmed, Sales Director would approve the deal value of €118,000, which is above the Germany threshold of €50,000.',r:['PRC-DE-VALUE']},
+  {re:/what if|if the/i,whatIf:true,a:'A what-if cannot help here. The missing input is the unbilled commitments figure, not a deal term. A fresh figure from Finance is needed.',r:['COM-D8-0111']}
+ ]
+};
+PKG.clean={
+ id:'DD-2027-0148',customer:'E2',dest:'EG-C',requested:'10 Mar 2027',submitted:'20 Jan 2027, 09:03',outcome:'ready',scn:'clean',
+ headline:'Ready for approval. Two approvals needed.',
+ reason:'All four checks pass. Two exceptions need sign-off: the deal value and the credit exposure.',
+ next:'Route to VP Sales, then to Finance Director.',
+ actions:[
+  {who:'VP Sales',what:'Approve the deal.',why:'Deal value €499,400 is above the Egypt threshold of €300,000. This covers the line 1 discount of 12%, which would otherwise need Sales Director.',message:'Hi, DD-2027-0148 for Nile Crest Telecom is ready for your approval. Deal value is €499,400, above the €300,000 threshold. Line 1 carries a 12% discount; margin is 9.6%, above the 7% servers floor. All checks pass.'},
+  {who:'Finance Director',what:'Approve the credit exposure.',why:'Exposure €539,580 is above the €500,000 limit but inside the 15% band (cap €575,000).',message:'Hi, DD-2027-0148 needs your approval on credit. Projected exposure is €539,580 against a limit of €500,000, within the 15% exception band. Existing exposure is €190,000 and the customer pays 30% in advance.'}
+ ],
+ problems:[],candidate:null,
+ checks:[
+  {name:'Configuration',s:'pass',lead:'No eligibility problem for EG-C.',rows:[{t:'All 3 products have eligible rows for Cairo. No contract changes requested.',refs:[['Eligibility rows','CFG-ELIG-EG-C']]}]},
+  {name:'Fulfillment',s:'pass',lead:'Stock covers all 29 units. Arrival is before 10 Mar.',rows:[{t:'Free stock at WH-EU-CENTRAL covers the order. Standard shipping takes 7 workdays to Cairo.',refs:[['Free stock','STK-EU-CENTRAL-0233'],['Transit','LANE-EUC-EG-C']]}]},
+  {name:'Pricing',s:'approval',lead:'Approval needed for deal value.',rows:[{t:'Line 1 discount is 12%. Egypt ladder: 10% routine, 20% next level.',refs:[['Discount ladder, Egypt','PRC-EG-LADDER']]},{t:'Line 1 margin is 9.6%, above the 7% servers floor.',refs:[['Margin floor, servers','PRC-FLOOR-SRV']]},{t:'Deal value €499,400 is above €300,000: VP Sales.',refs:[['Deal value rule, Egypt','PRC-EG-VALUE']]}]},
+  {name:'Credit and payment terms',s:'approval',lead:'Exposure is above the limit but inside the exception band.',rows:[{t:'Exposure = 190,000 + 499,400 × (1 − 30%) = €539,580. Limit €500,000, cap €575,000.',refs:[['Credit limit, E2','CRD-LIMIT-E2'],['Open invoices','INV-OPEN-E2']]},{t:'45 days is the Egypt standard maximum.',refs:[['Payment terms, Egypt','PAY-EG']]}]}
+ ],
+ draft:DRAFT.clean,candidateDraft:null,
+ viz:{gauges:[{label:'Credit exposure (30% advance)',value:539580,limit:500000,cap:575000},{label:'What-if: 40% advance',value:489640,limit:500000,cap:575000,whatif:true}],ladders:[{label:'Line 1 server discount',value:12,steps:[10,20,35]}]},
+ chat:[
+  {re:/what if|if the|advance|40/i,whatIf:true,a:'With a 40% advance payment: exposure = 190,000 + 499,400 × 60% = €489,640, about €490,000. That is within the €500,000 limit, so Finance Director approval would no longer be needed. VP Sales approval stays.',r:['CRD-LIMIT-E2','INV-OPEN-E2']},
+  {re:/approv|sign|who/i,a:'Two approvals, in this order: VP Sales (deal value €499,400 above €300,000), then Finance Director (exposure €539,580 above the €500,000 limit, within the 15% band).',r:['PRC-EG-VALUE','CRD-LIMIT-E2']},
+  {re:/credit|exposure/i,a:'Exposure = 190,000 + 499,400 × (1 − 30% advance) = €539,580. The limit is €500,000 and the cap is €575,000.',r:['CRD-LIMIT-E2','INV-OPEN-E2']},
+  {re:/discount|margin|pricing/i,a:'Line 1 has a 12% discount against a 10% routine limit, and a 9.6% margin against a 7% floor. The value rule needs VP Sales anyway, so only VP Sales is listed.',r:['PRC-EG-LADDER','PRC-FLOOR-SRV']}
+ ]
+};
+
+/* ---------- store ---------- */
+const state={deals:[],seq:152,filter:'all',form:null,chat:{},drawer:false};
+const mk=(p,over)=>Object.assign({kind:'package',pkg:p,status:p.outcome,customer:p.customer,value:val(p.draft),supersedes:null,version:1},over||{});
+state.deals=[
+ mk(PKG.clean,{id:'DD-2027-0148'}),
+ mk(PKG.honest,{id:'DD-2027-0145'}),
+ mk(PKG.repair,{id:'DD-2027-0142'}),
+ {id:'DD-2027-0139',kind:'rejected',status:'rejected',customer:'D17',value:45200,submitted:'19 Jan 2027, 16:20',supersedes:null,version:1,
+  draft:{customer_id:'D17',destination:'DE-BE',requested_date:'2027-01-04',terms:T(50,0,12),lines:[L('SELL-0412',3,14200)]},
+  problems:[['Customer ID not found','Customer D17 is not in the customer master. Check the ID against the customer record.','customer_id = "D17"'],['Requested date is in the past','The requested date 4 Jan 2027 is before the business date, 20 Jan 2027. Choose a date on or after 20 Jan 2027.','requested_date = "2027-01-04"'],['Payment terms not allowed','Payment terms of 50 days are not allowed. Choose 15, 30, 45, 60 or 90 days.','terms.payment_days = 50']]},
+ {id:'DD-2027-0136',kind:'failed',status:'failed',customer:'D3',value:88500,submitted:'19 Jan 2027, 11:05',supersedes:null,version:1,draft:{customer_id:'D3',destination:'DE-BE',requested_date:'2027-02-10',terms:T(30,0,24),lines:[L('SELL-0560',10,7400),L('SELL-0412',1,14500)]},scn:'failed'}
+];
+state.deals.forEach(d=>{d.submitted=d.submitted||d.pkg.submitted});
+const byId=id=>state.deals.find(d=>d.id===id);
+const cname=id=>CUST[id]?CUST[id][0]:'Unknown customer';
+const cregion=id=>CUST[id]?CUST[id][1]:'Unknown';
+
+const hero=(o,eyebrow,h,reason,next,btn)=>`<section class="panel hero reveal o-${o}"><div class="hero-top"><div><span class="eyebrow">${eyebrow}</span><h1>${h}</h1></div><div class="hero-side">${opill(o)}</div></div><p class="lede">${reason}</p>${next?`<div class="next"><span>${next}</span>${btn||''}</div>`:''}</section>`;
+const crumb=t=>`<div class="crumb"><a href="#queue">← Deal queue</a> / ${t}</div>`;
+
+/* ---------- motion helpers ---------- */
+const REDUCE=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+function countUps(){
+  document.querySelectorAll('[data-count]').forEach(el=>{
+    const to=+el.dataset.count,pre=el.dataset.prefix||'';if(REDUCE()||!isFinite(to))return;
+    const t0=performance.now(),dur=800;
+    const f=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=pre+Math.round(to*e).toLocaleString('en-GB');if(k<1)requestAnimationFrame(f)};
+    requestAnimationFrame(f);
+  });
+}
+function afterRender(){
+  countUps();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('.gauge').forEach(g=>g.classList.add('in'));
+    document.querySelectorAll('.pin').forEach(p=>{p.style.left=p.style.getPropertyValue('--to')});
+  }));
+}
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  try{localStorage.setItem('dd-theme',t)}catch(e){}
+  document.querySelectorAll('[data-theme-pick]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themePick===t)));
+}
+/* ---------- pipeline strip (persistent so the pulse can travel) ---------- */
+function pipeHTML(){return `<section class="panel pipe-panel"><div class="pipe" id="pipe"><div class="pipe-line"><i id="pipefill"></i></div><div class="pulse" id="pulse"></div><div class="pipe-nodes">${CHECKS.map((c,i)=>`<div class="pnode" data-i="${i}"><span class="dot"></span><span>${c==='Credit and payment terms'?'Credit and terms':c}</span></div>`).join('')}</div><div class="pipe-note" id="pipenote" aria-live="polite"></div></div></section>`}
+function pipeUpdate(d,k,kk,fin){
+  const rounds=ROUNDS[d.scn],ord=ordinals(d.scn),total=totalTicks(d.scn);
+  let rr=0;rounds.forEach((r,i)=>{const o=ord[i].filter(v=>v!==null);if(k>=o[0])rr=i});
+  const cells=rounds[rr].cells;let ci=-1;
+  const nodes=document.querySelectorAll('.pnode');
+  cells.forEach((c,i)=>{
+    const n=ord[rr][i];let st='idle';
+    if(c.s==='skip')st=(fin||k>=total||k>Math.max(...ord[rr].filter(v=>v!==null)))?'skip':'idle';
+    else if(n<k)st=c.s;else if(n===k){st='running';ci=i}
+    if(nodes[i]){nodes[i].className='pnode st-'+st;nodes[i].querySelector('.dot').innerHTML=st==='running'?'':(ICON[st]||'')}
+  });
+  const done=fin||k>=total,pulse=$('#pulse'),fill=$('#pipefill');
+  if(pulse){pulse.classList.toggle('off',done);if(ci>=0)pulse.style.left=((ci+0.5)/5*100)+'%'}
+  if(fill)fill.style.width=done?'100%':(ci>=0?(ci/4*100):0)+'%';
+  const note=$('#pipenote');
+  if(note)note.textContent=done?(kk>=POST.length||fin?'Checks finished.':'Checks finished. Preparing the review package.'):rr===0?'Checking the original deal.':`Repair round ${rr} of 5 maximum. The previous round found a fix, so the chain runs again from the top.`;
+}
+/* ---------- command bar ---------- */
+let pSel=0,pItems=[];
+function paletteItems(q){
+  const base=[['New deal','Open the deal form',()=>{location.hash='new'}],['Deal queue','Go to the queue',()=>{location.hash='queue'}],['Theme: Teal and blue','Switch colours',()=>setTheme('teal')],['Theme: Horizon blue','Switch colours',()=>setTheme('horizon')]];
+  const deals=state.deals.map(d=>[d.id+'  '+cname(d.customer),OLABEL[d.status],()=>{location.hash=(d.status==='running'?'run-':'deal-')+d.id}]);
+  const all=base.concat(deals),t=q.trim().toLowerCase();
+  return t?all.filter(i=>(i[0]+' '+i[1]).toLowerCase().includes(t)):all;
+}
+function paintPalette(){
+  $('#plist').innerHTML=pItems.length?pItems.map((it,i)=>`<li role="option" data-pi="${i}" aria-selected="${i===pSel}"><span>${esc(it[0])}</span><span class="muted small">${esc(it[1])}</span></li>`).join(''):'<li class="muted">Nothing matches.</li>';
+}
+function openPalette(){const p=$('#palette');p.classList.add('open');$('#pq').value='';pSel=0;pItems=paletteItems('');paintPalette();setTimeout(()=>$('#pq').focus(),20)}
+function closePalette(){$('#palette').classList.remove('open')}
+function runPalette(i){const it=pItems[i];if(it){closePalette();it[2]()}}
+/* ---------- router ---------- */
+const $=s=>document.querySelector(s);
+function route(){
+  const h=location.hash.slice(1)||'queue';
+  closeDrawer();
+  let html;
+  if(h==='queue')html=viewQueue();
+  else if(h==='new')html=viewForm();
+  else if(h.startsWith('deal-')||h.startsWith('run-')){
+    const d=byId(h.slice(h.indexOf('-')+1));
+    html=!d?viewMissing():d.status==='running'?viewRun(d):d.kind==='rejected'?viewRejected(d):d.kind==='failed'?viewFailed(d):viewPackage(d);
+  }else html=viewMissing();
+  const mn=$('#main');mn.innerHTML=html;mn.classList.remove('page-in');void mn.offsetWidth;mn.classList.add('page-in');
+  $('#nav-queue').setAttribute('aria-current',h==='queue'||h.startsWith('deal-')||h.startsWith('run-')?'page':'false');
+  
+  $('#qcount').textContent=state.deals.length;
+  document.title=h==='queue'?'Deal Desk Review Console':(h==='new'?'New deal':h.replace(/^(deal|run)-/,''))+' · Deal Desk';
+  if(h==='new')updatePreview();
+  const cd=(h.startsWith('deal-')||h.startsWith('run-'))?byId(h.slice(h.indexOf('-')+1)):null;
+  if(cd&&cd.status==='running')paintRun(cd);
+  else if(cd&&cd.pkg&&h.startsWith('deal-'))initChat(cd);
+  window.scrollTo(0,0);afterRender();
+}
+window.addEventListener('hashchange',route);
+const viewMissing=()=>`<div class="empty"><h1>Deal not found</h1><p class="muted">Open the deal queue and pick a deal.</p><p><a class="btn" href="#queue">Back to the queue</a></p></div>`;
+
+/* ---------- queue ---------- */
+function bucket(d){return ['ready','needs_correction','cannot_confirm'].includes(d.status)?d.status:'other'}
+function viewQueue(){
+  const f=state.filter,counts={all:state.deals.length};
+  state.deals.forEach(d=>counts[bucket(d)]=(counts[bucket(d)]||0)+1);
+  const chips=[['all','All'],['ready','Ready for approval'],['needs_correction','Needs correction'],['cannot_confirm','Cannot confirm'],['other','Not processed']];
+  const rows=state.deals.filter(d=>f==='all'||bucket(d)===f).map((d,i)=>`<tr style="animation-delay:${i*45}ms" data-go="deal-${d.id}">
+   <td><a class="deal-id" href="#deal-${d.id}">${d.id}</a>${d.supersedes?`<span class="sub">Corrects ${d.supersedes}, version ${d.version}</span>`:''}</td>
+   <td>${esc(cname(d.customer))}<span class="sub">${esc(d.customer)}</span></td><td>${cregion(d.customer)}</td>
+   <td class="num">${eur(d.value)}</td><td>${esc(d.submitted)}</td><td>${opill(d.status)}</td></tr>`).join('');
+  return `<div class="page-head"><div><span class="eyebrow">Deal Desk / Review queue</span><h1>Every deal, one outcome each.</h1><p>The system's latest outcome for each submitted deal. Open a deal to read its review package.</p></div></div>
+  <div class="filters" role="group" aria-label="Filter by outcome">${chips.map(([k,t])=>`<button class="chip" data-filter="${k}" aria-pressed="${f===k}">${t}<b>${counts[k]||0}</b></button>`).join('')}</div>
+  <div class="panel flush tablewrap">${rows?`<table><thead><tr><th>Deal</th><th>Customer</th><th>Region</th><th class="num">Deal value</th><th>Submitted</th><th>Outcome</th></tr></thead><tbody>${rows}</tbody></table>`:`<div class="empty">No deals in this view.</div>`}</div>`;
+}
+
+/* ---------- form ---------- */
+function blankForm(){return {customer_id:'',destination:'DE-BE',requested_date:'2027-02-17',terms:T(30,0,12),lines:[L('SELL-0233',1,18400)]}}
+function setPath(o,path,v){const k=path.split('.');let t=o;for(let i=0;i<k.length-1;i++)t=t[k[i]];t[k[k.length-1]]=v}
+function viewForm(){
+  if(!state.form)state.form=blankForm();
+  const F=state.form,from=F._from;
+  const opt=(o,sel)=>Object.entries(o).map(([k,v])=>`<option value="${k}" ${k===sel?'selected':''}>${k}  ${esc(Array.isArray(v)?v[0]:v)}</option>`).join('');
+  const lines=F.lines.map((l,i)=>`<div class="linebox"><div class="linehead"><h3>Line ${i+1}</h3>${F.lines.length>1?`<button class="btn small" data-action="rmline" data-i="${i}">Remove line</button>`:''}</div>
+   <div class="field"><label for="l${i}p">Product</label><select id="l${i}p" data-path="lines.${i}.product_id">${opt(PROD,l.product_id)}</select></div>
+   <div class="grid3"><div class="field"><label for="l${i}q">Quantity</label><input id="l${i}q" type="number" min="1" data-type="num" data-path="lines.${i}.quantity" value="${esc(l.quantity)}"></div>
+   <div class="field"><label for="l${i}u">Quoted unit price (EUR)</label><input id="l${i}u" type="number" min="0" step="10" data-type="num" data-path="lines.${i}.quoted_unit_price" value="${esc(l.quoted_unit_price)}"></div>
+   <div class="field"><label for="l${i}g">Group code (optional)</label><input id="l${i}g" data-path="lines.${i}.group_code" value="${esc(l.group_code)}"></div></div>
+   <label class="checks"><span style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-type="bool" data-path="lines.${i}.installation_requested" ${l.installation_requested?'checked':''}> Installation requested</span></label></div>`).join('');
+  return `<div class="page-head"><div><span class="eyebrow">Deal Desk / Submit</span><h1>Submit a deal for review.</h1><p>Fill in the form or upload a deal as JSON. Both produce the same deal record, shown on the right.</p></div>
+   <div class="row"><label class="btn" for="upload">Upload JSON</label><input id="upload" type="file" accept=".json,application/json" hidden>
+   <select id="example" aria-label="Load an example deal"><option value="">Load an example</option><option value="repair">Needs correction (D5, Germany)</option><option value="honest">Cannot confirm (D8, Germany)</option><option value="clean">Ready for approval (E2, Egypt)</option></select></div></div>
+  ${from?`<div class="banner info">Pre-filled from ${esc(from.id)}${from.fixed?' with the verified fixes applied':''}. Review the fields, then submit. It is saved as a new deal that corrects ${esc(from.id)}.</div>`:''}
+  <div class="formgrid"><form id="deal-form" class="stack" novalidate>
+   <div class="panel stack" style="margin:0"><h2>Deal</h2>
+    <div class="grid2"><div class="field"><label for="cust">Customer ID</label><input id="cust" list="custs" data-path="customer_id" value="${esc(F.customer_id)}" placeholder="For example D5"><datalist id="custs">${Object.entries(CUST).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</datalist></div>
+    <div class="field"><label for="dest">Delivery destination</label><select id="dest" data-path="destination">${opt(DEST,F.destination)}</select></div></div>
+    <div class="grid2"><div class="field"><label for="rdate">Requested delivery date</label><input id="rdate" type="date" data-path="requested_date" value="${esc(F.requested_date)}"></div>
+    <div class="field"><label for="months">Contract length (months)</label><input id="months" type="number" min="1" data-type="num" data-path="terms.contract_months" value="${esc(F.terms.contract_months)}"></div></div></div>
+   <div class="panel stack" style="margin:0"><h2>Terms</h2>
+    <div class="grid2"><div class="field"><label for="pay">Payment days</label><select id="pay" data-type="num" data-path="terms.payment_days">${PAYDAYS.map(p=>`<option ${p==F.terms.payment_days?'selected':''}>${p}</option>`).join('')}</select></div>
+    <div class="field"><label for="adv">Advance payment (%)</label><input id="adv" type="number" data-type="num" data-path="terms.advance_payment_pct" value="${esc(F.terms.advance_payment_pct)}"></div></div>
+    <label class="checks"><span style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-type="bool" data-path="terms.allow_partial_delivery" ${F.terms.allow_partial_delivery?'checked':''}> Partial delivery allowed</span></label>
+    <div><div class="legend">Requested contract changes</div><div class="checks" role="group" aria-label="Requested contract changes">${CHANGES.map(c=>`<label><input type="checkbox" data-change="${c}" ${F.terms.contract_changes.includes(c)?'checked':''}> ${c}</label>`).join('')}</div></div></div>
+   <div class="stack"><h2 style="margin-top:4px">Lines</h2>${lines}<div><button type="button" class="btn" data-action="addline">Add line</button></div></div>
+   <div class="row"><button type="submit" class="btn primary">Submit for review</button><button type="button" class="btn" data-action="resetform">Clear form</button></div></form>
+   <div class="panel" style="position:sticky;top:96px;margin:0"><div class="sec-head" style="margin-bottom:14px"><h2>Deal record</h2><span class="muted small" id="total"></span></div><pre class="json" id="preview" aria-live="polite"></pre></div></div>`;
+}
+function cleanForm(){const F=state.form,o=JSON.parse(JSON.stringify(F));delete o._from;return o}
+function updatePreview(){const p=$('#preview');if(!p)return;p.textContent=JSON.stringify(cleanForm(),null,2);$('#total').textContent='Deal value '+eur(val(state.form))}
+
+/* ---------- intake validation (fixed templates, all problems at once) ---------- */
+function validate(F){
+  const P=[],isNum=v=>typeof v==='number'&&isFinite(v);
+  if(!CUST[F.customer_id])P.push(['Customer ID not found',`Customer ${F.customer_id||'(empty)'} is not in the customer master. Check the ID against the customer record.`,`customer_id = ${JSON.stringify(F.customer_id)}`]);
+  if(!DEST[F.destination])P.push(['Destination not recognised','Choose one of the six delivery destinations.',`destination = ${JSON.stringify(F.destination)}`]);
+  if(!F.requested_date||F.requested_date<BUSINESS_DATE)P.push(['Requested date is in the past',`The requested date ${F.requested_date||'(empty)'} is before the business date, 20 Jan 2027. Choose a date on or after 20 Jan 2027.`,`requested_date = ${JSON.stringify(F.requested_date)}`]);
+  const t=F.terms||{};
+  if(!PAYDAYS.includes(t.payment_days))P.push(['Payment terms not allowed',`Payment terms of ${t.payment_days} days are not allowed. Choose 15, 30, 45, 60 or 90 days.`,`terms.payment_days = ${t.payment_days}`]);
+  if(!isNum(t.advance_payment_pct)||t.advance_payment_pct<0||t.advance_payment_pct>100)P.push(['Advance payment out of range','Enter an advance payment between 0% and 100%.',`terms.advance_payment_pct = ${t.advance_payment_pct}`]);
+  const cc=t.contract_changes||[];
+  if(!cc.length||cc.some(c=>!CHANGES.includes(c))||(cc.includes('None')&&cc.length>1))P.push(['Contract changes are not valid','Pick None on its own, or one or more of the listed changes.',`terms.contract_changes = ${JSON.stringify(cc)}`]);
+  if(!(F.lines||[]).length)P.push(['The deal has no lines','Add at least one line.','lines = []']);
+  (F.lines||[]).forEach((l,i)=>{
+    if(!PROD[l.product_id])P.push([`Line ${i+1}: product not found`,`Product ${l.product_id} is unknown or inactive. Choose an active product.`,`lines[${i}].product_id = ${JSON.stringify(l.product_id)}`]);
+    if(!isNum(l.quantity)||l.quantity<1||l.quantity%1)P.push([`Line ${i+1}: quantity is not valid`,'Enter a whole number of 1 or more.',`lines[${i}].quantity = ${l.quantity}`]);
+    if(!isNum(l.quoted_unit_price)||l.quoted_unit_price<=0)P.push([`Line ${i+1}: price is not valid`,'Enter a unit price above 0.',`lines[${i}].quoted_unit_price = ${l.quoted_unit_price}`]);
+  });
+  return P;
+}
+const nowLabel=()=>{const d=new Date();return '20 Jan 2027, '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+function submitForm(){
+  const F=cleanForm(),from=state.form._from,P=validate(F),id='DD-2027-'+String(state.seq++).padStart(4,'0');
+  const base={id,customer:F.customer_id,value:val(F),submitted:nowLabel(),draft:F,supersedes:from?from.id:null,version:from?(byId(from.id).version||1)+1:1};
+  if(P.length){state.deals.unshift(Object.assign(base,{kind:'rejected',status:'rejected',problems:P}))}
+  else{
+    const scn=F.customer_id==='D5'?'repair':F.customer_id==='D8'?'honest':'clean';
+    const pkg=structuredClone(PKG[scn]);pkg.id=id;pkg.customer=F.customer_id;pkg.dest=F.destination;pkg.submitted=base.submitted;pkg.draft=F;
+    pkg.requested=new Date(F.requested_date+'T00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    state.deals.unshift(Object.assign(base,{kind:'package',pkg,status:'running',final:pkg.outcome,scn,sim:{k:0,kk:0}}));
+    startSim(state.deals[0]);
+  }
+  state.form=null;
+  location.hash=(P.length?'deal-':'run-')+id;
+}
+
+/* ---------- run simulation + matrix ---------- */
+const POST=['Combine approvals','Build review package','Write wording (AI)','Check run is complete'];
+function ordinals(scn){let n=0;return ROUNDS[scn].map(r=>r.cells.map(c=>c.s==='skip'?null:n++))}
+const totalTicks=scn=>ordinals(scn).flat().filter(v=>v!==null).length;
+function matrixHTML(scn,k,flashAll){
+  const rounds=ROUNDS[scn],ord=ordinals(scn);
+  const labels=`<div class="mcol labels"><div class="mhead">Check</div>${CHECKS.map(c=>`<div class="mcell">${c}</div>`).join('')}</div>`;
+  let cols='';
+  rounds.forEach((r,ri)=>{
+    const o=ord[ri].filter(v=>v!==null),first=o[0],last=o[o.length-1];
+    if(k<first)return;
+    const done=k>last;
+    cols+=`<div class="mcol ${k===first?'enter':''}"><div class="mhead">${r.label}</div>${r.cells.map((c,ci)=>{
+      const n=ord[ri][ci];let inner,cls='mcell';
+      if(c.s==='skip'){inner=done||flashAll?pill('skip'):'';cls+=done||flashAll?'':' hidden'}
+      else if(n<k){inner=pill(c.s);if(n===k-1&&!flashAll)cls+=' new'}
+      else if(n===k){inner='<span class="spin" aria-hidden="true"></span><span class="muted">Checking</span>';cls+=' running'}
+      else{inner='';cls+=' hidden'}
+      return `<div class="${cls}" title="${esc(c.n)}">${inner}</div>`}).join('')}</div>`;
+  });
+  return `<div class="mtable">${labels}${cols}</div>`;
+}
+function startSim(d){
+  const total=totalTicks(d.scn),reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const tick=()=>{
+    const s=d.sim;if(!s)return;
+    if(s.k<total)s.k++;else if(s.kk<POST.length)s.kk++;
+    if(s.k>=total&&s.kk>=POST.length){finishSim(d);return}
+    paintRun(d);
+    s.timer=setTimeout(tick,reduce?40:(s.k<total?700:480));
+  };
+  d.sim.timer=setTimeout(tick,reduce?40:500);
+}
+function finishSim(d){clearTimeout(d.sim&&d.sim.timer);d.sim=null;d.status=d.final;if(location.hash.endsWith(d.id)){paintRun(d,true);afterRender()}}
+function skipSim(d){if(d.sim){d.sim.k=totalTicks(d.scn);d.sim.kk=POST.length}finishSim(d)}
+function viewRun(d){
+  return `${crumb('Running')}<div class="page-head"><div><span class="eyebrow">${d.id} / Live run</span><h1>Checking ${esc(cname(d.customer))}.</h1><p>Checks run in order and stop at the first failing check. When the system finds a fix, it runs the whole chain again as a repair round, up to 5.</p></div><button class="btn" data-action="skip" data-id="${d.id}">Skip to result</button></div>
+  <div id="runbody">${pipeHTML()}<div id="runmain"></div></div>`;
+}
+function paintRun(d,fin){
+  const box=$('#runmain');if(!box||!location.hash.endsWith(d.id))return;
+  const s=d.sim,k=s?s.k:totalTicks(d.scn),kk=s?s.kk:POST.length;
+  const rounds=ROUNDS[d.scn],ord=ordinals(d.scn);
+  let rr=0;rounds.forEach((r,i)=>{const o=ord[i].filter(v=>v!==null);if(k>=o[0])rr=i});
+  const note=fin||kk>0?'Checks finished.':rr===0?'Checking the original deal.':`Repair round ${rr} of 5 maximum. The previous round found a fix, so the chain runs again from the top.`;
+  const steps=POST.map((p,i)=>`<div class="step ${i<kk?'done':i===kk&&k>=totalTicks(d.scn)?'now':''}">${i<kk?ICON.pass:''}${p}</div>`).join('');
+  pipeUpdate(d,k,kk,fin);
+  box.innerHTML=`<section class="panel"><div class="matrix">${matrixHTML(d.scn,k,fin)}</div><div class="steps">${steps}</div></section>
+  ${fin?hero(d.status,esc(d.id)+' / Result',esc(d.pkg.headline),esc(d.pkg.reason),esc(d.pkg.next),`<a class="btn primary" href="#deal-${d.id}">Open review package</a>`):''}`;
+}
+
+/* ---------- rejected / failed ---------- */
+function viewRejected(d){
+  const name=cname(d.customer)==='Unknown customer'?'Customer '+esc(d.customer):esc(cname(d.customer));
+  return `${crumb(esc(d.id))}
+  ${hero('rejected',esc(d.id)+' / Intake',`Not assessed. Fix ${d.problems.length} problem${d.problems.length>1?'s':''} and submit again.`,'Intake stopped this deal before any check ran, so there is no outcome for it. The sales rep fixes the problems below and resubmits.','All problems are listed together so they can be fixed in one go.',`<button class="btn primary" data-action="prefill" data-id="${d.id}">Open pre-filled form</button>`)}
+  <section class="panel"><div class="sec-head"><div><span class="eyebrow">What to change</span><h2>Problems to fix</h2></div><span class="muted small">${name} · submitted ${esc(d.submitted)}</span></div>
+  ${d.problems.map(p=>`<div class="problem"><h3>${esc(p[0])}</h3><p>${esc(p[1])}</p><p class="tech"><code>${esc(p[2])}</code></p></div>`).join('')}</section>`;
+}
+function viewFailed(d){
+  return `${crumb(esc(d.id))}
+  ${hero('failed',esc(d.id)+' / System problem','The run failed. There is no assessment for this deal.','The Pricing result was missing when the run was finished. This is a system problem, not a finding about the deal, and it is different from "cannot confirm".','Resubmit the deal. If it fails again, tell the system owner and give them this deal ID.',`<button class="btn primary" data-action="prefill" data-id="${d.id}">Open pre-filled form</button>`)}
+  <section class="panel"><div class="sec-head"><div><span class="eyebrow">What happened</span><h2>Run record</h2></div><span class="muted small">Complete up to the failure</span></div>${timeline(failedTrace())}</section>`;
+}
+function failedTrace(){return [{l:'Intake validation',s:'pass',n:'All fields valid',w:'11:05:01'},{l:'Configuration',s:'pass',n:'No eligibility problem',w:'11:05:02'},{l:'Fulfillment',s:'pass',n:'Stock covers 11 units',w:'11:05:04'},{l:'Pricing',s:'error',n:'No result was recorded for this check',w:'11:05:06'},{l:'Reconcile',s:'error',n:'Stopped: a check result is missing. Run marked failed.',w:'11:05:06'}]}
+
+/* ---------- package ---------- */
+function timeline(items){return `<ol class="timeline">${items.map(t=>`<li class="${t.round?'round':'t-'+t.s}"><span>${esc(t.l)}${t.s&&!t.round?` ${t.s==='error'?'<span class="pill o-failed">Error</span>':pill(t.s)}`:''}</span><span class="when">${esc(t.w||'')}</span>${t.n?`<span class="tn">${esc(t.n)}</span>`:''}</li>`).join('')}</ol>`}
+function buildTrace(d){
+  const p=d.pkg,rounds=ROUNDS[p.scn];let sec=parseInt(p.submitted.slice(-5,-3))*3600+parseInt(p.submitted.slice(-2))*60;const f=()=>{const h=Math.floor(sec/3600)%24,m=Math.floor(sec/60)%60,s=sec%60;return [h,m,s].map(x=>String(x).padStart(2,'0')).join(':')};
+  const out=[];
+  rounds.forEach((r,ri)=>{
+    out.push({l:r.label,round:true,w:f()});
+    const skipped=[];
+    r.cells.forEach((c,ci)=>{if(c.s==='skip'){skipped.push(CHECKS[ci]);return}sec+=1+((ri+ci)%3);out.push({l:CHECKS[ci],s:c.s,n:c.n,w:f()})});
+    if(skipped.length)out.push({l:'Not assessed',n:skipped.join(', ')+' (an earlier check failed)',s:'skip',w:f()});
+  });
+  sec+=1;out.push({l:'Combine approvals',s:'pass',n:p.outcome==='ready'?'Highest sales role only, no duplicates, in order':'Applied to the final candidate',w:f()});
+  sec+=1;out.push({l:'Build review package (JSON)',s:'pass',n:'Single source of truth for this page and the chatbot',w:f()});
+  sec+=3;out.push({l:'Write wording (AI)',s:'pass',n:'Every number and reference checked by code',w:f()});
+  sec+=1;out.push({l:'Reconcile',s:'pass',n:'All results present. Outcome: '+OLABEL[p.outcome],w:f()});
+  return out;
+}
+const gaugeHTML=g=>{const max=g.cap*1.12,pc=v=>Math.min(100,v/max*100),z=g.unknown?'unk':g.value<=g.limit?'ok':g.value<=g.cap?'warn':'crit';
+  return `<div class="viz"><div class="viz-top"><span>${esc(g.label)}${g.whatif?'<span class="ai">What-if</span>':''}</span><strong>${g.unknown?'Cannot be computed':eur(g.value)}</strong></div>
+  <div class="gauge ${z}"><div class="zones"><i style="width:${pc(g.limit)}%"></i><i style="width:${pc(g.cap)-pc(g.limit)}%"></i><i style="flex:1"></i></div>${g.unknown?'':`<div class="fill" style="--w:${pc(g.value)}%"></div>`}<span class="mark" style="left:${pc(g.limit)}%"><em class="up">Limit ${eur(g.limit)}</em></span><span class="mark" style="left:${pc(g.cap)}%"><em class="dn">Cap ${eur(g.cap)}</em></span></div></div>`};
+const ladderHTML=l=>{const [a,b,c]=l.steps,max=c*1.2,pc=v=>v/max*100;
+  const w=[pc(a),pc(b)-pc(a),pc(c)-pc(b)],names=['Routine','Sales Director','VP Sales'];
+  return `<div class="viz"><div class="viz-top"><span>${esc(l.label)}</span><strong>${l.value}%</strong></div><div class="ladderwrap"><div class="ladder">${w.map(x=>`<span style="width:${x}%"></span>`).join('')}<span style="flex:1"></span><div class="pin" style="--to:${pc(l.value)}%"></div></div></div><div class="ladlbl">${w.map((x,i)=>`<span style="width:${x}%">${names[i]}</span>`).join('')}<span style="flex:1">Above cap</span></div></div>`};
+function viewPackage(d){
+  const p=d.pkg,o=p.outcome,reg=cregion(d.customer);
+  const tile=(k,v)=>`<div><span>${k}</span><strong>${v}</strong></div>`;
+  const actions=p.actions.map(a=>`<div class="action"><div class="who">${esc(a.who)}</div><div><div><b>${esc(a.what)}</b></div><div class="why">${esc(a.why)}</div>${a.message?`<details class="msg"><summary>Ready-to-send message</summary><div class="msgbody">${esc(a.message)}<span class="ai">AI</span></div></details>`:''}</div></div>`).join('');
+  const problems=p.problems.length?`<section class="panel sectionhold" id="sec-problems"><div class="sec-head"><div><span class="eyebrow">What is wrong</span><h2>Problems, grouped by root cause</h2></div></div>${p.problems.map(x=>`<div class="issue"><div class="row"><h3>${esc(x.title)}</h3><span class="muted small">${esc(x.check)}</span></div><p>${esc(x.detail)}</p><div class="fix ${x.kind==='gap'?'gap':''}">${esc(x.fix)}${x.kind==='fix'?'<span class="ai">AI</span>':''}</div><div class="refs">${x.refs.map(r=>ref(...r)).join('')}</div></div>`).join('')}</section>`:'';
+  const cand=p.candidate?`<section class="panel sectionhold" id="sec-candidate"><div class="sec-head"><div><span class="eyebrow">The fix, verified</span><h2>Corrected quote</h2></div><span class="muted small">${esc(p.candidate.note)}</span></div>
+   <div class="tablewrap"><table class="cmp"><thead><tr><th>What changes</th><th>Original</th><th>Candidate</th></tr></thead><tbody>${p.candidate.changes.map(c=>`<tr><td>${esc(c[0])}</td><td>${esc(c[1])}</td><td class="to">${esc(c[2])}</td></tr>`).join('')}</tbody></table></div>
+   <div class="inner" style="margin-top:18px"><h3 style="margin-bottom:8px">Candidate result by check</h3>${p.candidate.result.map(r=>`<div class="resrow">${pill(r[0])}<span><b>${esc(r[1])}.</b> ${esc(r[2])}</span></div>`).join('')}<p class="muted small" style="margin-top:12px">${esc(p.candidate.ai)}<span class="ai">AI</span></p></div>
+   <h3 style="margin:26px 0 12px">Check results by round</h3><div class="matrix">${matrixHTML(p.scn,totalTicks(p.scn),true)}</div></section>`:'';
+  const checks=p.checks.map((c,i)=>`<div class="checkcard"><div class="row"><h3>${i+1}. ${esc(c.name)}</h3>${pill(c.s)}</div><p>${esc(c.lead)}</p>${(c.rows||[]).map(r=>`<div class="finding"><span>${esc(r.t)}</span>${r.calc?`<span class="calc">${esc(r.calc)}</span>`:''}<div class="refs">${r.refs.map(x=>ref(...x)).join('')}</div></div>`).join('')}</div>`).join('');
+  const nav=[['sec-actions','Actions'],['sec-numbers','Numbers'],p.problems.length?['sec-problems','Problems']:null,p.candidate?['sec-candidate','Corrected quote']:null,['sec-findings','Findings by check'],['sec-trace','Run record']].filter(Boolean);
+  return `${crumb('Review package')}
+  ${hero(o,esc(d.id)+' / Review package',esc(p.headline)+'<span class="ai">AI</span>',esc(p.reason),'<b>Next step.</b> '+esc(p.next),`<button class="btn" data-action="resubmit" data-id="${d.id}">${p.candidateDraft?'Resubmit corrected deal':'Resubmit this deal'}</button>`)}
+  <div class="summary">${tile('Customer',esc(cname(d.customer))+' ('+esc(d.customer)+')')}${tile('Sales region',reg)}${tile('Destination',esc(p.dest)+' '+esc(DEST[p.dest]||''))}${tile('Requested date',esc(p.requested))}${tile('Deal value',`<span data-count="${d.value}" data-prefix="€">${eur(d.value)}</span>`)}${tile('Submitted',esc(d.submitted))}${tile('Company data as of','20 Jan 2027, 06:00 UTC')}${d.supersedes?tile('Corrects','<a href="#deal-'+d.supersedes+'">'+d.supersedes+'</a>, version '+d.version):''}</div>
+  <div class="journey" role="group" aria-label="Jump to a section">${nav.map(n=>`<button class="chip" data-scroll="${n[0]}">${n[1]}</button>`).join('')}</div>
+  <section class="panel sectionhold" id="sec-actions"><div class="sec-head"><div><span class="eyebrow">What to do</span><h2>Actions</h2></div><span class="muted small">Roles, not people</span></div>${actions}</section>
+  ${problems}${cand}
+  <section class="panel sectionhold" id="sec-numbers"><div class="sec-head"><div><span class="eyebrow">How close to the limits</span><h2>Numbers at a glance</h2></div><span class="muted small">Region limits for ${reg}</span></div><div class="vizgrid">${p.viz.gauges.map(gaugeHTML).join('')}${p.viz.ladders.map(ladderHTML).join('')}</div></section>
+  <section class="panel sectionhold" id="sec-findings"><div class="sec-head"><div><span class="eyebrow">How each check ended</span><h2>Findings by check</h2></div><span class="muted small">In the order the checks run</span></div>${checks}</section>
+  <section class="panel sectionhold" id="sec-trace"><div class="sec-head"><div><span class="eyebrow">How the run went</span><h2>Run record</h2></div><span class="muted small">Built from the one trace of this run</span></div>${timeline(buildTrace(d))}</section>
+  <button class="btn primary fab" data-action="chat">Ask about this package</button>`;
+}
+
+/* ---------- chatbot (stage 1 Q&A, stage 2 what-if), read only ---------- */
+function initChat(d){
+  const dr=$('#drawer');state.chat[d.id]=state.chat[d.id]||[];
+  dr.innerHTML=`<div class="dhead"><div><h2>Ask about ${d.id}</h2><p class="muted small">Answers come from this package only. The chatbot cannot approve, change an outcome or reserve stock.</p></div><button class="btn small" data-action="closechat" aria-label="Close chat">Close</button></div>
+  <div class="dlog" id="dlog" role="log" aria-live="polite"></div>
+  <form class="dform" id="chatform" data-id="${d.id}"><input id="chatq" aria-label="Your question" placeholder="Why did pricing fail?" autocomplete="off"><button class="btn primary" type="submit">Ask</button></form>`;
+  paintChat(d.id);
+}
+function paintChat(id){
+  const log=$('#dlog');if(!log)return;const m=state.chat[id];
+  log.innerHTML=(m.length?'':`<div class="muted small">Ask a question about this deal, or a what-if such as a different advance payment.</div>`)+m.map(x=>x.me?`<div class="bubble me">${esc(x.t)}</div>`:x.typing?`<div class="bubble bot"><div class="shimmer"><i></i><i></i><i></i></div></div>`:`<div class="bubble bot">${x.whatIf?'<span class="tag">What-if, not a recommendation</span><br>':''}${esc(x.t)}${x.r&&x.r.length?`<div class="refline">References: ${x.r.map(esc).join(', ')}</div>`:''}</div>`).join('');
+  log.scrollTop=log.scrollHeight;
+}
+function answer(d,q){
+  if(/^\s*(please\s+)?(approve|waive|override|reserve|book|send)\b|\b(can|could|will|would|please|go ahead and)\s+(you\s+)?(approve|waive|override|reserve|book)\b|change the (outcome|verdict)|mark (it|this) as (approved|ready)/i.test(q))return {t:'I cannot do that. I am read-only: I answer from this package and cannot approve, waive a rule, change an outcome or reserve stock.',r:[]};
+  const hit=d.pkg.chat.find(c=>c.re.test(q));
+  return hit?{t:hit.a,r:hit.r,whatIf:hit.whatIf}:{t:'That is not in this package.',r:[]};
+}
+function openDrawer(){const dr=$('#drawer');dr.classList.add('open');dr.setAttribute('aria-hidden','false');setTimeout(()=>$('#chatq')&&$('#chatq').focus(),260);state.drawer=true}
+function closeDrawer(){const dr=$('#drawer');if(!dr)return;dr.classList.remove('open');dr.setAttribute('aria-hidden','true');state.drawer=false}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const sc=e.target.closest('[data-scroll]');if(sc){const el=document.getElementById(sc.dataset.scroll);if(el)el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});return}
+  const f=e.target.closest('[data-filter]');if(f){state.filter=f.dataset.filter;$('#main').innerHTML=viewQueue();return}
+  const a=e.target.closest('[data-action]');
+  if(a){
+    const act=a.dataset.action,d=byId(a.dataset.id);
+    if(act==='addline'){state.form.lines.push(L('SELL-0233',1,19000));$('#main').innerHTML=viewForm();updatePreview()}
+    else if(act==='rmline'){state.form.lines.splice(+a.dataset.i,1);$('#main').innerHTML=viewForm();updatePreview()}
+    else if(act==='resetform'){state.form=blankForm();$('#main').innerHTML=viewForm();updatePreview()}
+    else if(act==='skip'&&d)skipSim(d);
+    else if(act==='prefill'&&d){state.form=JSON.parse(JSON.stringify(d.draft));state.form._from={id:d.id};location.hash='new'}
+    else if(act==='resubmit'&&d){const src=d.pkg&&d.pkg.candidateDraft?d.pkg.candidateDraft:d.draft;state.form=JSON.parse(JSON.stringify(src));state.form._from={id:d.id,fixed:!!(d.pkg&&d.pkg.candidateDraft)};location.hash='new'}
+    else if(act==='chat')openDrawer();
+    else if(act==='closechat')closeDrawer();
+    return;
+  }
+  const r=e.target.closest('tr[data-go]');if(r&&!e.target.closest('a'))location.hash=r.dataset.go;
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.change){const cc=state.form.terms.contract_changes;const c=t.dataset.change;if(t.checked&&!cc.includes(c))cc.push(c);if(!t.checked)state.form.terms.contract_changes=cc.filter(x=>x!==c);updatePreview();return}
+  if(t.dataset&&t.dataset.path&&state.form){let v=t.value;if(t.dataset.type==='num')v=v===''?NaN:+v;if(t.dataset.type==='bool')v=t.checked;setPath(state.form,t.dataset.path,v);updatePreview()}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='example'&&t.value){state.form=JSON.parse(JSON.stringify(DRAFT[t.value]));$('#main').innerHTML=viewForm();updatePreview()}
+  if(t.id==='upload'&&t.files[0]){
+    const fr=new FileReader();fr.onload=()=>{
+      try{const j=JSON.parse(fr.result);if(!j||typeof j!=='object'||Array.isArray(j))throw new Error('Top level must be one deal object');
+        j.terms=Object.assign(T(30,0,12),j.terms||{});j.lines=Array.isArray(j.lines)?j.lines.map(l=>Object.assign(L('SELL-0233',1,1),l)):[];state.form=j;$('#main').innerHTML=viewForm();updatePreview()}
+      catch(err){const id='DD-2027-'+String(state.seq++).padStart(4,'0');state.deals.unshift({id,kind:'rejected',status:'rejected',customer:'?',value:0,submitted:nowLabel(),supersedes:null,version:1,draft:blankForm(),problems:[['The file is not valid JSON','Fix the syntax in the file and upload it again. Nothing was read from the deal.',String(err.message)]]});location.hash='deal-'+id}
+    };fr.readAsText(t.files[0]);
+  }
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.id==='deal-form')submitForm();
+  if(e.target.id==='chatform'){
+    const d=byId(e.target.dataset.id),q=$('#chatq').value.trim();if(!q)return;
+    const m=state.chat[d.id];m.push({me:true,t:q});m.push({typing:true});paintChat(d.id);$('#chatq').value='';
+    setTimeout(()=>{
+      m.pop();const ans=answer(d,q),msg={t:'',r:[],whatIf:ans.whatIf};m.push(msg);
+      const words=ans.t.split(' ');let i=0;
+      const iv=setInterval(()=>{i++;msg.t=words.slice(0,i).join(' ');if(i>=words.length){clearInterval(iv);msg.r=ans.r}paintChat(d.id)},REDUCE()?1:30);
+    },650);
+  }
+});
+document.addEventListener('keydown',e=>{
+  const pal=$('#palette').classList.contains('open');
+  if(e.key==='Escape'){if(pal)closePalette();else if(state.drawer)closeDrawer();return}
+  if(pal){
+    if(e.key==='ArrowDown'){e.preventDefault();pSel=Math.min(pItems.length-1,pSel+1);paintPalette()}
+    else if(e.key==='ArrowUp'){e.preventDefault();pSel=Math.max(0,pSel-1);paintPalette()}
+    else if(e.key==='Enter'){e.preventDefault();runPalette(pSel)}
+    return;
+  }
+  const tag=(e.target.tagName||'').toLowerCase();
+  if((e.key==='/'&&!['input','textarea','select'].includes(tag))||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k')){e.preventDefault();openPalette()}
+});
+document.addEventListener('click',e=>{
+  const tp=e.target.closest('[data-theme-pick]');if(tp){setTheme(tp.dataset.themePick);return}
+  if(e.target.closest('[data-action="palette"]')){openPalette();return}
+  const pi=e.target.closest('[data-pi]');if(pi){runPalette(+pi.dataset.pi);return}
+  if(e.target.id==='palette')closePalette();
+});
+document.addEventListener('input',e=>{if(e.target.id==='pq'){pItems=paletteItems(e.target.value);pSel=0;paintPalette()}});
+document.addEventListener('mouseover',e=>{const r=e.target.closest('.ref');if(!r)return;document.querySelectorAll('.ref').forEach(x=>x.classList.toggle('hl',x.dataset.id===r.dataset.id))});
+document.addEventListener('mouseout',e=>{if(e.target.closest('.ref'))document.querySelectorAll('.ref.hl').forEach(x=>x.classList.remove('hl'))});
+try{const t=localStorage.getItem('dd-theme');setTheme(t==='horizon'?'horizon':'teal')}catch(e){setTheme('teal')}
+route();
+</script>
+</body>
+</html>
