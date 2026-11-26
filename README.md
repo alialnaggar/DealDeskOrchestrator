@@ -1,5 +1,7 @@
 # Deal Desk Orchestrator
 
+**Live prototype (mock data): [dealdeskdemo.duckdns.org](https://dealdeskdemo.duckdns.org)**
+
 A governed pre-approval assessment of B2B sales deals. A salesperson submits one deal as JSON; four rule checks decide whether it can go to approval, what must be corrected, or what cannot be confirmed; a repair loop builds and re-checks corrected copies; the result is a referenced review package that names exactly who must act. Language models only word the result and answer questions about it. **The system is complete and correct with AI switched off.**
 
 > Bachelor thesis project by Ali Alnaggar, Business Informatics, German International University (GIU), Cairo. In progress. The source code, company data and test deals are in a private repository and are available on request until the front end is ready for people to test. This page describes the design, the stack and the current status.
@@ -85,7 +87,7 @@ See [`examples/sample-review-package-full-repair.json`](examples/sample-review-p
 - **Measures:** constraint compliance, escalation accuracy, stopping-check accuracy, approver correctness, latency and cost per round, share of AI outputs rejected by validation, and trace metrics against final-output accuracy (research question 2).
 
 ## Front-end prototype
-A clickable review console with mock data is in [`docs/`](docs/PROTOTYPE.md): open [`docs/index.html`](docs/index.html) locally, or use the live page if GitHub Pages is enabled for this repository. It shows the deal queue, intake validation, the run screen with repair rounds, the review package and the chat drawer. The production front end is rebuilt on the real system in December.
+A clickable review console with mock data is in [`docs/`](docs/PROTOTYPE.md): open [`docs/index.html`](docs/index.html) locally, or use the live page at [dealdeskdemo.duckdns.org](https://dealdeskdemo.duckdns.org). It shows the deal queue, intake validation, the run screen with repair rounds, the review package and the chat drawer. The production front end is rebuilt on the real system in December.
 
 ## Technology
 Python 3.12 · FastAPI and Uvicorn (assessment API; Pydantic only at the API edge) · PyYAML · LangGraph 1.2 with PostgresSaver · PostgreSQL 16 with psycopg 3 · a plain-Python rule engine (no framework) · unittest (hundreds of tests, including checkpoint-resume tests on a real database) · GitHub Actions CI · Groq-hosted `openai/gpt-oss-120b` for the wording step and chatbot, behind a replaceable adapter · front end being rebuilt (React). LangChain is not used.
