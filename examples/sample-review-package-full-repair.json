@@ -1,0 +1,579 @@
+{
+ "actions": [
+  {
+   "id": "A1",
+   "kind": "sales_fix",
+   "message": null,
+   "numbers": {
+    "candidate_round": 1,
+    "line": 4,
+    "type": "add_line"
+   },
+   "what": "Add line 4: 10 x SELL-MANAGED_SUPPORT_AND_WARRANTY-003 at 4,840.00 each (a rule requires this product).",
+   "who": "Sales rep",
+   "why": "compatibility_rule_failed"
+  },
+  {
+   "id": "A2",
+   "kind": "sales_fix",
+   "message": null,
+   "numbers": {
+    "candidate_round": 2,
+    "line": 2,
+    "type": "switch_option"
+   },
+   "what": "Switch line 2 from option standard to option alternate.",
+   "who": "Sales rep",
+   "why": "supply_or_capacity_shortfall"
+  },
+  {
+   "id": "A3",
+   "kind": "sales_fix",
+   "message": null,
+   "numbers": {
+    "candidate_round": 3,
+    "line": 1,
+    "type": "set_price"
+   },
+   "what": "Raise the price on line 1 from 8,492.00 to 8,715.54 EUR.",
+   "who": "Sales rep",
+   "why": "PO-DE-MARGIN-SHORTFALL"
+  },
+  {
+   "id": "A4",
+   "kind": "sales_fix",
+   "message": null,
+   "numbers": {
+    "candidate_round": 4,
+    "line": null,
+    "type": "set_advance_payment"
+   },
+   "what": "Set the advance payment to 46.9% (it was 0%).",
+   "who": "Sales rep",
+   "why": "PO-DE-CREDIT-CAP"
+  }
+ ],
+ "candidate": {
+  "anomaly": null,
+  "best_attempt": null,
+  "round_log": [
+   {
+    "changes": [
+     {
+      "after": {
+       "group_code": null,
+       "installation_requested": false,
+       "options": [],
+       "product_id": "SELL-MANAGED_SUPPORT_AND_WARRANTY-003",
+       "quantity": 10,
+       "quoted_unit_price": 4840.0
+      },
+      "before": null,
+      "check": "configuration",
+      "line": 4,
+      "type": "add_line"
+     }
+    ],
+    "finding_ids": [
+     "supply_or_capacity_shortfall"
+    ],
+    "outcome": "needs_correction",
+    "round": 1,
+    "run_state": "completed",
+    "stopped_at": "fulfillment"
+   },
+   {
+    "changes": [
+     {
+      "after": [
+       "alternate"
+      ],
+      "before": [
+       "standard"
+      ],
+      "check": "fulfillment",
+      "line": 2,
+      "type": "switch_option"
+     }
+    ],
+    "finding_ids": [
+     "PO-DE-MARGIN-SHORTFALL"
+    ],
+    "outcome": "needs_correction",
+    "round": 2,
+    "run_state": "completed",
+    "stopped_at": "pricing"
+   },
+   {
+    "changes": [
+     {
+      "after": 8715.54,
+      "before": 8492.0,
+      "check": "pricing",
+      "line": 1,
+      "type": "set_price"
+     }
+    ],
+    "finding_ids": [
+     "PO-DE-CREDIT-CAP"
+    ],
+    "outcome": "needs_correction",
+    "round": 3,
+    "run_state": "completed",
+    "stopped_at": "credit"
+   },
+   {
+    "changes": [
+     {
+      "after": 46.9,
+      "before": 0,
+      "check": "credit",
+      "line": null,
+      "type": "set_advance_payment"
+     }
+    ],
+    "finding_ids": [],
+    "outcome": "ready_for_approval",
+    "round": 4,
+    "run_state": "completed",
+    "stopped_at": null
+   }
+  ],
+  "rounds": 4,
+  "stop_reason": "passed",
+  "suggested": {
+   "approvers": [
+    {
+     "check": "pricing",
+     "checks": [
+      "pricing"
+     ],
+     "numbers_missing": [],
+     "reason": "Sales Director: approve, because the deal value is 188,185.40 EUR and the limit without Sales Director approval is 100,000 EUR (rule AP-DE-VALUE-DIRECTOR)",
+     "role": "Sales Director",
+     "rule_ids": [
+      "AP-DE-VALUE-DIRECTOR"
+     ]
+    },
+    {
+     "check": "credit",
+     "checks": [
+      "credit"
+     ],
+     "numbers_missing": [],
+     "reason": "Finance Director: approve, because the payment terms are 60 days, terms above 30 days need Finance approval and 60 days is the most allowed (rule PO-DE-PAYMENT-EXCEPTION)",
+     "role": "Finance Director",
+     "rule_ids": [
+      "PO-DE-PAYMENT-EXCEPTION"
+     ]
+    },
+    {
+     "check": "configuration",
+     "checks": [
+      "configuration"
+     ],
+     "numbers_missing": [],
+     "reason": "Legal Counsel: approve, because the deal changes contract terms (Liability) (rule PO-DE-CONTRACT-CHANGES)",
+     "role": "Legal Counsel",
+     "rule_ids": [
+      "PO-DE-CONTRACT-CHANGES"
+     ]
+    }
+   ],
+   "chain": {
+    "checks": {
+     "configuration": {
+      "approvers": [
+       "Legal_Compliance"
+      ],
+      "computed": true,
+      "counted": true,
+      "findings": [
+       {
+        "approver": "Legal_Compliance",
+        "id": "PO-DE-CONTRACT-CHANGES",
+        "kind": "rule_hit",
+        "result": "pass_approval_needed",
+        "scope": "deal",
+        "topics": [
+         "Liability"
+        ]
+       }
+      ],
+      "result": "pass_approval_needed"
+     },
+     "credit": {
+      "approvers": [
+       "Finance_Director"
+      ],
+      "computed": true,
+      "counted": true,
+      "findings": [
+       {
+        "approver": "Finance_Director",
+        "id": "PO-DE-PAYMENT-EXCEPTION",
+        "kind": "rule_hit",
+        "result": "pass_approval_needed",
+        "scope": "deal"
+       }
+      ],
+      "result": "pass_approval_needed"
+     },
+     "fulfillment": {
+      "approvers": [],
+      "computed": true,
+      "counted": true,
+      "findings": [
+       {
+        "id": "production_supported_not_reserved",
+        "kind": "supported_path",
+        "line_id": "D-20270120-7e4f335c8c-L1",
+        "result": "information"
+       },
+       {
+        "id": "production_supported_not_reserved",
+        "kind": "supported_path",
+        "line_id": "D-20270120-7e4f335c8c-L2",
+        "result": "information"
+       }
+      ],
+      "result": "pass"
+     },
+     "pricing": {
+      "approvers": [
+       "Sales_Director"
+      ],
+      "computed": true,
+      "counted": true,
+      "findings": [
+       {
+        "approver": "Sales_Director",
+        "id": "AP-DE-VALUE-DIRECTOR",
+        "kind": "rule_hit",
+        "result": "pass_approval_needed",
+        "scope": "deal"
+       }
+      ],
+      "result": "pass_approval_needed"
+     }
+    },
+    "ignored": [],
+    "note": "One engine evaluation computes all four checks; the chain decides which results count.",
+    "outcome": "ready_for_approval",
+    "run_failed_reason": null,
+    "run_state": "completed",
+    "stopped_at": null
+   },
+   "deal": {
+    "customer_id": "C-DE-005",
+    "destination": "DE-BE",
+    "lines": [
+     {
+      "group_code": null,
+      "installation_requested": false,
+      "options": [
+       "standard"
+      ],
+      "product_id": "SELL-SERVERS_AND_COMPUTE_INFRASTRUCTURE-002",
+      "quantity": 10,
+      "quoted_unit_price": 8715.54
+     },
+     {
+      "group_code": null,
+      "installation_requested": false,
+      "options": [
+       "alternate"
+      ],
+      "product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-009",
+      "quantity": 20,
+      "quoted_unit_price": 817.0
+     },
+     {
+      "group_code": null,
+      "installation_requested": false,
+      "options": [],
+      "product_id": "SELL-END_USER_COMPUTING_AND_DIGITAL_WORKPLACE-003",
+      "quantity": 20,
+      "quoted_unit_price": 1814.5
+     },
+     {
+      "group_code": null,
+      "installation_requested": false,
+      "options": [],
+      "product_id": "SELL-MANAGED_SUPPORT_AND_WARRANTY-003",
+      "quantity": 10,
+      "quoted_unit_price": 4840.0
+     }
+    ],
+    "requested_date": "2027-02-19",
+    "terms": {
+     "advance_payment_pct": 46.9,
+     "allow_partial_delivery": true,
+     "contract_changes": [
+      "Liability"
+     ],
+     "contract_months": 36,
+     "payment_days": 60
+    }
+   }
+  }
+ },
+ "findings": [
+  {
+   "check": "configuration",
+   "counted": true,
+   "evidence": [
+    {
+     "detail": "result pass_approval_needed, approver Legal Counsel",
+     "id": "PO-DE-CONTRACT-CHANGES",
+     "kind": "rule_hit",
+     "line_id": null
+    },
+    {
+     "detail": "result fail, rule CFG-REQ-01",
+     "id": "compatibility_rule_failed",
+     "kind": "block",
+     "line_id": null
+    }
+   ],
+   "explanation": "Configuration: failed with 1 problem(s) that must be corrected.",
+   "result": "fail",
+   "title": "Configuration"
+  },
+  {
+   "check": "fulfillment",
+   "counted": false,
+   "evidence": [],
+   "explanation": "Not assessed: an earlier check failed.",
+   "result": "not_assessed",
+   "title": "Fulfillment"
+  },
+  {
+   "check": "pricing",
+   "counted": false,
+   "evidence": [],
+   "explanation": "Not assessed: an earlier check failed.",
+   "result": "not_assessed",
+   "title": "Pricing"
+  },
+  {
+   "check": "credit",
+   "counted": false,
+   "evidence": [],
+   "explanation": "Not assessed: an earlier check failed.",
+   "result": "not_assessed",
+   "title": "Credit and payment terms"
+  }
+ ],
+ "header": {
+  "customer_id": "C-DE-005",
+  "customer_name": "Becker IT Services GmbH",
+  "data_as_of": "2027-01-20T06:00:00+00:00",
+  "deal_id": "D-20270120-7e4f335c8c",
+  "destination": "DE-BE",
+  "requested_date": "2027-02-19",
+  "rule_set": "BASELINE_2026",
+  "sales_region": "Germany",
+  "submitted_at": "2027-01-20T06:00:00+00:00"
+ },
+ "notes": [
+  "Everything shown as feasible is supported by current data and is not reserved."
+ ],
+ "package_version": 1,
+ "problems": {
+  "could_not_confirm": [],
+  "fixable": [
+   {
+    "check": "configuration",
+    "explanation": "A configuration rule is violated: Rack server 2U is only sold with Premium vendor support, 24x7.",
+    "id": "P1",
+    "items": [
+     "compatibility_rule_failed"
+    ],
+    "line_id": null,
+    "no_safe_alternative": false,
+    "suggested_fix": {
+     "candidate_round": 1,
+     "changes": [
+      {
+       "after": {
+        "group_code": null,
+        "installation_requested": false,
+        "options": [],
+        "product_id": "SELL-MANAGED_SUPPORT_AND_WARRANTY-003",
+        "quantity": 10,
+        "quoted_unit_price": 4840.0
+       },
+       "before": null,
+       "check": "configuration",
+       "line": 4,
+       "type": "add_line"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "run": {
+  "intake_problems": [],
+  "outcome": "needs_correction",
+  "run_failed_reason": null,
+  "run_state": "completed",
+  "stopped_at": "configuration"
+ },
+ "run_record": {
+  "summary": {
+   "anomalies": 0,
+   "candidate_rounds": 4,
+   "chain_ms": 0.051,
+   "engine_ms": 61.801,
+   "errors": 0,
+   "first_event_at": "2026-11-25T13:24:47.633573+00:00",
+   "last_event_at": "2026-11-25T13:24:49.146365+00:00",
+   "resumes": 0,
+   "steps_completed": 8,
+   "total_ms": 1512.792
+  },
+  "timeline": [
+   {
+    "duration_ms": null,
+    "label": "Run started",
+    "note": null,
+    "produced": "Run started",
+    "seq": 1,
+    "status": "info",
+    "step": "run"
+   },
+   {
+    "duration_ms": 6.453,
+    "label": "Check the submitted deal file",
+    "note": null,
+    "produced": "Intake: accepted",
+    "seq": 2,
+    "status": "completed",
+    "step": "intake"
+   },
+   {
+    "duration_ms": 49.128,
+    "label": "Read the deal and the company data",
+    "note": null,
+    "produced": "Deal and company data read and sealed",
+    "seq": 4,
+    "status": "completed",
+    "step": "pin_evidence"
+   },
+   {
+    "duration_ms": 417.455,
+    "label": "Configuration check",
+    "note": "Later checks are not assessed: computed but not counted.",
+    "produced": "Configuration: fail (2 items); later checks not assessed: computed but not counted",
+    "seq": 6,
+    "status": "completed",
+    "step": "configuration"
+   },
+   {
+    "duration_ms": null,
+    "label": "Engine evaluation (all four checks computed at once)",
+    "note": null,
+    "produced": "One engine evaluation 61.801 ms, chain step 0.051 ms; Outcome: needs correction, stopped at configuration",
+    "seq": 7,
+    "status": "info",
+    "step": "engine_evaluation"
+   },
+   {
+    "duration_ms": 259.716,
+    "label": "Check that the run is complete",
+    "note": null,
+    "produced": "Outcome: needs correction, stopped at configuration; next: candidate_loop",
+    "seq": 9,
+    "status": "completed",
+    "step": "reconcile"
+   },
+   {
+    "duration_ms": 567.506,
+    "label": "Look for a corrected deal",
+    "note": null,
+    "produced": "Stop: passed after 4 round(s)",
+    "seq": 11,
+    "status": "completed",
+    "step": "candidate_loop"
+   },
+   {
+    "duration_ms": null,
+    "label": "Candidate round",
+    "note": "Later checks are not assessed: computed but not counted.",
+    "produced": "Round 1: configuration add_line line 4 -> stopped at fulfillment (needs correction)",
+    "seq": 12,
+    "status": "info",
+    "step": "candidate_round"
+   },
+   {
+    "duration_ms": null,
+    "label": "Candidate round",
+    "note": "Later checks are not assessed: computed but not counted.",
+    "produced": "Round 2: fulfillment switch_option line 2 -> stopped at pricing (needs correction)",
+    "seq": 13,
+    "status": "info",
+    "step": "candidate_round"
+   },
+   {
+    "duration_ms": null,
+    "label": "Candidate round",
+    "note": null,
+    "produced": "Round 3: pricing set_price line 1 -> stopped at credit (needs correction)",
+    "seq": 14,
+    "status": "info",
+    "step": "candidate_round"
+   },
+   {
+    "duration_ms": null,
+    "label": "Candidate round",
+    "note": null,
+    "produced": "Round 4: credit set_advance_payment -> passed every check",
+    "seq": 15,
+    "status": "info",
+    "step": "candidate_round"
+   },
+   {
+    "duration_ms": 40.23,
+    "label": "Work out who has to approve",
+    "note": null,
+    "produced": "No approver lines",
+    "seq": 17,
+    "status": "completed",
+    "step": "combine"
+   },
+   {
+    "duration_ms": 39.329,
+    "label": "Build the review package",
+    "note": null,
+    "produced": "Package built: Outcome: needs correction, stopped at configuration",
+    "seq": 19,
+    "status": "completed",
+    "step": "package"
+   },
+   {
+    "duration_ms": 2.08,
+    "label": "Finish the run",
+    "note": null,
+    "produced": "Run closed; the run record is complete",
+    "seq": 21,
+    "status": "completed",
+    "step": "finish"
+   },
+   {
+    "duration_ms": null,
+    "label": "Run finished",
+    "note": null,
+    "produced": "Outcome: needs correction, stopped at configuration",
+    "seq": 23,
+    "status": "info",
+    "step": "run"
+   }
+  ]
+ },
+ "summary": {
+  "next_step_sentence": "Apply the 4 suggested change(s) (candidate in section candidate.suggested): the corrected deal passes all four checks and is ready for approval by Sales Director, Finance Director, Legal Counsel. Technical detail: the first check that stopped was configuration, after 4 candidate round(s).",
+  "outcome_sentence": "This deal cannot go to approval as submitted: the Configuration check found 1 problem(s) that must be corrected."
+ }
+}
