@@ -2,7 +2,7 @@
 
 A governed pre-approval assessment of B2B sales deals. A salesperson submits one deal as JSON; four rule checks decide whether it can go to approval, what must be corrected, or what cannot be confirmed; a repair loop builds and re-checks corrected copies; the result is a referenced review package that names exactly who must act. Language models only word the result and answer questions about it. **The system is complete and correct with AI switched off.**
 
-> Bachelor thesis project (Business Informatics), in progress. The source code, company data and test deals are in a private repository and are available on request. This page describes the design, the stack and the current status.
+> Bachelor thesis project by Ali Alnaggar, Business Informatics, German International University (GIU), Cairo. In progress. The source code, company data and test deals are in a private repository and are available on request until the front end is ready for people to test. This page describes the design, the stack and the current status.
 
 ## The problem
 In an enterprise technology provider, a quote with discounts, custom configuration, delivery dates, credit terms and contract changes is checked by hand against many rules and many people. This is slow, inconsistent and hard to audit. The project asks two questions:
@@ -91,4 +91,4 @@ Python 3.12 · FastAPI and Uvicorn (assessment API; Pydantic only at the API edg
 Data frozen; intake, the four checks, the candidate loop, combine step, review package, one trace with automatic resume and the scoring harness are built and tested; first full run over the 107 test deals completes without crashes (99 assessed, 8 intake rejections by design). Next: scoring against the independent expected answers, the wording step and chatbot, the evaluation runs, the rebuilt front end, and the thesis text (final submission 5 Jan 2027).
 
 ## Contact
-Code, data and the thesis are available on request.
+Code is available on request until the front end is ready for public testing.
