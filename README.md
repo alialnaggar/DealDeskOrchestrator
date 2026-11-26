@@ -1,5 +1,7 @@
 # Deal Desk Orchestrator
 
+**Live prototype (mock data): https://alialnaggar.github.io/DealDeskOrchestrator/**
+
 **Live prototype (mock data): [dealdeskdemo.duckdns.org](https://dealdeskdemo.duckdns.org)**
 
 A governed pre-approval assessment of B2B sales deals. A salesperson submits one deal as JSON; four rule checks decide whether it can go to approval, what must be corrected, or what cannot be confirmed; a repair loop builds and re-checks corrected copies; the result is a referenced review package that names exactly who must act. Language models only word the result and answer questions about it. **The system is complete and correct with AI switched off.**
